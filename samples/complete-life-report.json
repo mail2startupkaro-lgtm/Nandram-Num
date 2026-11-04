@@ -1,0 +1,2000 @@
+{
+  "schemaVersion": 1,
+  "engineVersion": "1.0.0",
+  "asOf": "2026-11-03",
+  "modules": [
+    "complete"
+  ],
+  "client": {
+    "fullName": "Rahul Kumar Sharma",
+    "commonName": "Rahul Sharma",
+    "gender": "male",
+    "dob": "28-08-1990",
+    "maritalStatus": "engaged",
+    "profession": "Software engineer",
+    "city": "Jaipur",
+    "state": "Rajasthan",
+    "mobile": "9876543210",
+    "aadhaarConsent": true,
+    "concerns": [
+      "career",
+      "marriage",
+      "money"
+    ],
+    "language": "hinglish",
+    "partner": {
+      "name": "Priya Verma",
+      "gender": "female",
+      "dob": "15-05-1992"
+    },
+    "aadhaarMasked": "XXXX-XXXX-0124"
+  },
+  "results": {
+    "dob": {
+      "module": "dob",
+      "dob": {
+        "day": 28,
+        "month": 8,
+        "year": 1990,
+        "iso": "1990-08-28"
+      },
+      "gender": "male",
+      "age": 36,
+      "moolank": {
+        "value": 1,
+        "compound": 28,
+        "master": null,
+        "planet": "sun",
+        "planetInfo": {
+          "name": "Sun",
+          "hindi": "Surya"
+        }
+      },
+      "bhagyank": {
+        "value": 1,
+        "compound": 37,
+        "chain": [
+          37,
+          10,
+          1
+        ],
+        "master": null,
+        "planet": "sun",
+        "planetInfo": {
+          "name": "Sun",
+          "hindi": "Surya"
+        }
+      },
+      "moolankBhagyankRelation": "friend",
+      "kua": {
+        "value": 1,
+        "basis": "male",
+        "group": "East",
+        "favourable": {
+          "success": "South-East",
+          "health": "East",
+          "relationships": "South",
+          "personalGrowth": "North"
+        },
+        "unfavourable": {
+          "mishaps": "West",
+          "fiveGhosts": "North-East",
+          "sixKillings": "North-West",
+          "totalLoss": "South-West"
+        }
+      },
+      "loShu": {
+        "layout": [
+          [
+            4,
+            9,
+            2
+          ],
+          [
+            3,
+            5,
+            7
+          ],
+          [
+            8,
+            1,
+            6
+          ]
+        ],
+        "sources": [
+          {
+            "digit": 2,
+            "source": "dob"
+          },
+          {
+            "digit": 8,
+            "source": "dob"
+          },
+          {
+            "digit": 8,
+            "source": "dob"
+          },
+          {
+            "digit": 1,
+            "source": "dob"
+          },
+          {
+            "digit": 9,
+            "source": "dob"
+          },
+          {
+            "digit": 9,
+            "source": "dob"
+          },
+          {
+            "digit": 1,
+            "source": "moolank"
+          },
+          {
+            "digit": 1,
+            "source": "bhagyank"
+          },
+          {
+            "digit": 1,
+            "source": "kua"
+          }
+        ],
+        "counts": {
+          "1": 4,
+          "2": 1,
+          "3": 0,
+          "4": 0,
+          "5": 0,
+          "6": 0,
+          "7": 0,
+          "8": 2,
+          "9": 2
+        },
+        "cells": [
+          {
+            "number": 4,
+            "row": 0,
+            "col": 0,
+            "count": 0,
+            "status": "missing",
+            "planet": "rahu"
+          },
+          {
+            "number": 9,
+            "row": 0,
+            "col": 1,
+            "count": 2,
+            "status": "repeated",
+            "planet": "mars"
+          },
+          {
+            "number": 2,
+            "row": 0,
+            "col": 2,
+            "count": 1,
+            "status": "present",
+            "planet": "moon"
+          },
+          {
+            "number": 3,
+            "row": 1,
+            "col": 0,
+            "count": 0,
+            "status": "missing",
+            "planet": "jupiter"
+          },
+          {
+            "number": 5,
+            "row": 1,
+            "col": 1,
+            "count": 0,
+            "status": "missing",
+            "planet": "mercury"
+          },
+          {
+            "number": 7,
+            "row": 1,
+            "col": 2,
+            "count": 0,
+            "status": "missing",
+            "planet": "ketu"
+          },
+          {
+            "number": 8,
+            "row": 2,
+            "col": 0,
+            "count": 2,
+            "status": "repeated",
+            "planet": "saturn"
+          },
+          {
+            "number": 1,
+            "row": 2,
+            "col": 1,
+            "count": 4,
+            "status": "repeated",
+            "planet": "sun"
+          },
+          {
+            "number": 6,
+            "row": 2,
+            "col": 2,
+            "count": 0,
+            "status": "missing",
+            "planet": "venus"
+          }
+        ],
+        "present": [
+          1,
+          2,
+          8,
+          9
+        ],
+        "missing": [
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "repeated": [
+          {
+            "number": 1,
+            "count": 4
+          },
+          {
+            "number": 8,
+            "count": 2
+          },
+          {
+            "number": 9,
+            "count": 2
+          }
+        ],
+        "planes": [
+          {
+            "id": "mental",
+            "name": "Mental Plane",
+            "numbers": [
+              4,
+              9,
+              2
+            ],
+            "orientation": "horizontal",
+            "presentCount": 2,
+            "status": "partial",
+            "arrow": null,
+            "yog": null
+          },
+          {
+            "id": "emotional",
+            "name": "Emotional Plane",
+            "numbers": [
+              3,
+              5,
+              7
+            ],
+            "orientation": "horizontal",
+            "presentCount": 0,
+            "status": "empty",
+            "arrow": "Arrow of Hypersensitivity",
+            "yog": null
+          },
+          {
+            "id": "practical",
+            "name": "Practical Plane",
+            "numbers": [
+              8,
+              1,
+              6
+            ],
+            "orientation": "horizontal",
+            "presentCount": 2,
+            "status": "partial",
+            "arrow": null,
+            "yog": null
+          },
+          {
+            "id": "thought",
+            "name": "Thought Plane",
+            "numbers": [
+              4,
+              3,
+              8
+            ],
+            "orientation": "vertical",
+            "presentCount": 1,
+            "status": "partial",
+            "arrow": null,
+            "yog": null
+          },
+          {
+            "id": "will",
+            "name": "Will Plane",
+            "numbers": [
+              9,
+              5,
+              1
+            ],
+            "orientation": "vertical",
+            "presentCount": 2,
+            "status": "partial",
+            "arrow": null,
+            "yog": null
+          },
+          {
+            "id": "action",
+            "name": "Action Plane",
+            "numbers": [
+              2,
+              7,
+              6
+            ],
+            "orientation": "vertical",
+            "presentCount": 1,
+            "status": "partial",
+            "arrow": null,
+            "yog": null
+          }
+        ],
+        "diagonals": [
+          {
+            "id": "golden",
+            "name": "Success Line (4-5-6)",
+            "numbers": [
+              4,
+              5,
+              6
+            ],
+            "orientation": "diagonal",
+            "presentCount": 0,
+            "status": "empty",
+            "arrow": "Arrow of Scepticism",
+            "yog": null
+          },
+          {
+            "id": "raj",
+            "name": "Property Line (2-5-8)",
+            "numbers": [
+              2,
+              5,
+              8
+            ],
+            "orientation": "diagonal",
+            "presentCount": 2,
+            "status": "partial",
+            "arrow": null,
+            "yog": null
+          }
+        ],
+        "yogs": [],
+        "arrowsOfStrength": [],
+        "arrowsOfWeakness": [
+          {
+            "name": "Arrow of Hypersensitivity",
+            "lineId": "emotional",
+            "numbers": [
+              3,
+              5,
+              7
+            ]
+          },
+          {
+            "name": "Arrow of Scepticism",
+            "lineId": "golden",
+            "numbers": [
+              4,
+              5,
+              6
+            ]
+          }
+        ]
+      },
+      "vedicGrid": {
+        "layout": [
+          [
+            3,
+            1,
+            9
+          ],
+          [
+            6,
+            7,
+            5
+          ],
+          [
+            2,
+            8,
+            4
+          ]
+        ],
+        "cells": [
+          {
+            "number": 3,
+            "row": 0,
+            "col": 0,
+            "count": 0,
+            "status": "missing",
+            "planet": "jupiter",
+            "planetName": "Jupiter",
+            "planetHindi": "Guru (Brihaspati)"
+          },
+          {
+            "number": 1,
+            "row": 0,
+            "col": 1,
+            "count": 3,
+            "status": "repeated",
+            "planet": "sun",
+            "planetName": "Sun",
+            "planetHindi": "Surya"
+          },
+          {
+            "number": 9,
+            "row": 0,
+            "col": 2,
+            "count": 2,
+            "status": "repeated",
+            "planet": "mars",
+            "planetName": "Mars",
+            "planetHindi": "Mangal"
+          },
+          {
+            "number": 6,
+            "row": 1,
+            "col": 0,
+            "count": 0,
+            "status": "missing",
+            "planet": "venus",
+            "planetName": "Venus",
+            "planetHindi": "Shukra"
+          },
+          {
+            "number": 7,
+            "row": 1,
+            "col": 1,
+            "count": 0,
+            "status": "missing",
+            "planet": "ketu",
+            "planetName": "Ketu",
+            "planetHindi": "Ketu"
+          },
+          {
+            "number": 5,
+            "row": 1,
+            "col": 2,
+            "count": 0,
+            "status": "missing",
+            "planet": "mercury",
+            "planetName": "Mercury",
+            "planetHindi": "Budh"
+          },
+          {
+            "number": 2,
+            "row": 2,
+            "col": 0,
+            "count": 1,
+            "status": "present",
+            "planet": "moon",
+            "planetName": "Moon",
+            "planetHindi": "Chandra"
+          },
+          {
+            "number": 8,
+            "row": 2,
+            "col": 1,
+            "count": 2,
+            "status": "repeated",
+            "planet": "saturn",
+            "planetName": "Saturn",
+            "planetHindi": "Shani"
+          },
+          {
+            "number": 4,
+            "row": 2,
+            "col": 2,
+            "count": 0,
+            "status": "missing",
+            "planet": "rahu",
+            "planetName": "Rahu",
+            "planetHindi": "Rahu"
+          }
+        ],
+        "strongPlanets": [
+          "sun",
+          "saturn",
+          "mars"
+        ],
+        "weakPlanets": [
+          "jupiter",
+          "rahu",
+          "mercury",
+          "venus",
+          "ketu"
+        ]
+      },
+      "personalCycles": {
+        "asOf": "2026-11-03",
+        "current": {
+          "personalYear": 1,
+          "personalMonth": 3,
+          "personalDay": 6
+        },
+        "timeline": [
+          {
+            "year": 2026,
+            "universalYear": 1,
+            "personalYear": 1
+          },
+          {
+            "year": 2027,
+            "universalYear": 2,
+            "personalYear": 2
+          },
+          {
+            "year": 2028,
+            "universalYear": 3,
+            "personalYear": 3
+          },
+          {
+            "year": 2029,
+            "universalYear": 4,
+            "personalYear": 4
+          },
+          {
+            "year": 2030,
+            "universalYear": 5,
+            "personalYear": 5
+          },
+          {
+            "year": 2031,
+            "universalYear": 6,
+            "personalYear": 6
+          },
+          {
+            "year": 2032,
+            "universalYear": 7,
+            "personalYear": 7
+          },
+          {
+            "year": 2033,
+            "universalYear": 8,
+            "personalYear": 8
+          },
+          {
+            "year": 2034,
+            "universalYear": 9,
+            "personalYear": 9
+          }
+        ],
+        "detailed": [
+          {
+            "year": 2026,
+            "universalYear": 1,
+            "personalYear": 1,
+            "months": [
+              {
+                "month": 1,
+                "personalMonth": 2
+              },
+              {
+                "month": 2,
+                "personalMonth": 3
+              },
+              {
+                "month": 3,
+                "personalMonth": 4
+              },
+              {
+                "month": 4,
+                "personalMonth": 5
+              },
+              {
+                "month": 5,
+                "personalMonth": 6
+              },
+              {
+                "month": 6,
+                "personalMonth": 7
+              },
+              {
+                "month": 7,
+                "personalMonth": 8
+              },
+              {
+                "month": 8,
+                "personalMonth": 9
+              },
+              {
+                "month": 9,
+                "personalMonth": 1
+              },
+              {
+                "month": 10,
+                "personalMonth": 2
+              },
+              {
+                "month": 11,
+                "personalMonth": 3
+              },
+              {
+                "month": 12,
+                "personalMonth": 4
+              }
+            ]
+          },
+          {
+            "year": 2027,
+            "universalYear": 2,
+            "personalYear": 2,
+            "months": [
+              {
+                "month": 1,
+                "personalMonth": 3
+              },
+              {
+                "month": 2,
+                "personalMonth": 4
+              },
+              {
+                "month": 3,
+                "personalMonth": 5
+              },
+              {
+                "month": 4,
+                "personalMonth": 6
+              },
+              {
+                "month": 5,
+                "personalMonth": 7
+              },
+              {
+                "month": 6,
+                "personalMonth": 8
+              },
+              {
+                "month": 7,
+                "personalMonth": 9
+              },
+              {
+                "month": 8,
+                "personalMonth": 1
+              },
+              {
+                "month": 9,
+                "personalMonth": 2
+              },
+              {
+                "month": 10,
+                "personalMonth": 3
+              },
+              {
+                "month": 11,
+                "personalMonth": 4
+              },
+              {
+                "month": 12,
+                "personalMonth": 5
+              }
+            ]
+          },
+          {
+            "year": 2028,
+            "universalYear": 3,
+            "personalYear": 3,
+            "months": [
+              {
+                "month": 1,
+                "personalMonth": 4
+              },
+              {
+                "month": 2,
+                "personalMonth": 5
+              },
+              {
+                "month": 3,
+                "personalMonth": 6
+              },
+              {
+                "month": 4,
+                "personalMonth": 7
+              },
+              {
+                "month": 5,
+                "personalMonth": 8
+              },
+              {
+                "month": 6,
+                "personalMonth": 9
+              },
+              {
+                "month": 7,
+                "personalMonth": 1
+              },
+              {
+                "month": 8,
+                "personalMonth": 2
+              },
+              {
+                "month": 9,
+                "personalMonth": 3
+              },
+              {
+                "month": 10,
+                "personalMonth": 4
+              },
+              {
+                "month": 11,
+                "personalMonth": 5
+              },
+              {
+                "month": 12,
+                "personalMonth": 6
+              }
+            ]
+          },
+          {
+            "year": 2029,
+            "universalYear": 4,
+            "personalYear": 4,
+            "months": [
+              {
+                "month": 1,
+                "personalMonth": 5
+              },
+              {
+                "month": 2,
+                "personalMonth": 6
+              },
+              {
+                "month": 3,
+                "personalMonth": 7
+              },
+              {
+                "month": 4,
+                "personalMonth": 8
+              },
+              {
+                "month": 5,
+                "personalMonth": 9
+              },
+              {
+                "month": 6,
+                "personalMonth": 1
+              },
+              {
+                "month": 7,
+                "personalMonth": 2
+              },
+              {
+                "month": 8,
+                "personalMonth": 3
+              },
+              {
+                "month": 9,
+                "personalMonth": 4
+              },
+              {
+                "month": 10,
+                "personalMonth": 5
+              },
+              {
+                "month": 11,
+                "personalMonth": 6
+              },
+              {
+                "month": 12,
+                "personalMonth": 7
+              }
+            ]
+          }
+        ]
+      },
+      "numberRelations": {
+        "forMoolank": {
+          "friend": [
+            1,
+            2,
+            3,
+            9
+          ],
+          "neutral": [
+            5
+          ],
+          "enemy": [
+            4,
+            6,
+            7,
+            8
+          ]
+        },
+        "forBhagyank": {
+          "friend": [
+            1,
+            2,
+            3,
+            9
+          ],
+          "neutral": [
+            5
+          ],
+          "enemy": [
+            4,
+            6,
+            7,
+            8
+          ]
+        },
+        "combined": {
+          "friendly": [
+            1,
+            2,
+            3,
+            9
+          ],
+          "neutral": [
+            5
+          ],
+          "enemy": [
+            4,
+            6,
+            7,
+            8
+          ]
+        }
+      },
+      "lifeCycles": [
+        {
+          "index": 1,
+          "name": "Formative",
+          "number": 8,
+          "fromAge": 0,
+          "toAge": 35,
+          "current": false
+        },
+        {
+          "index": 2,
+          "name": "Productive",
+          "number": 1,
+          "fromAge": 36,
+          "toAge": 62,
+          "current": true
+        },
+        {
+          "index": 3,
+          "name": "Harvest",
+          "number": 1,
+          "fromAge": 63,
+          "toAge": null,
+          "current": false
+        }
+      ],
+      "pinnacles": [
+        {
+          "index": 1,
+          "number": 9,
+          "master": null,
+          "fromAge": 0,
+          "toAge": 35,
+          "current": false
+        },
+        {
+          "index": 2,
+          "number": 2,
+          "master": null,
+          "fromAge": 36,
+          "toAge": 44,
+          "current": true
+        },
+        {
+          "index": 3,
+          "number": 2,
+          "master": 11,
+          "fromAge": 45,
+          "toAge": 53,
+          "current": false
+        },
+        {
+          "index": 4,
+          "number": 9,
+          "master": null,
+          "fromAge": 54,
+          "toAge": null,
+          "current": false
+        }
+      ],
+      "challenges": [
+        {
+          "index": 1,
+          "number": 7,
+          "fromAge": 0,
+          "toAge": 35,
+          "current": false
+        },
+        {
+          "index": 2,
+          "number": 0,
+          "fromAge": 36,
+          "toAge": 44,
+          "current": true
+        },
+        {
+          "index": 3,
+          "number": 7,
+          "fromAge": 45,
+          "toAge": 53,
+          "current": false
+        },
+        {
+          "index": 4,
+          "number": 7,
+          "fromAge": 54,
+          "toAge": null,
+          "current": false
+        }
+      ],
+      "lifeAreaScores": {
+        "career": 88,
+        "money": 43,
+        "love": 53,
+        "health": 70,
+        "family": 57,
+        "spirituality": 50
+      },
+      "strengths": [
+        "MOOLANK_BHAGYANK_FRIENDLY"
+      ],
+      "weaknesses": [
+        "ARROW_WEAKNESS_EMOTIONAL",
+        "ARROW_WEAKNESS_GOLDEN",
+        "MISSING_3",
+        "MISSING_4",
+        "MISSING_5",
+        "MISSING_6",
+        "MISSING_7",
+        "EXCESS_1_x4"
+      ],
+      "flags": []
+    },
+    "name": {
+      "module": "name",
+      "analysedName": "RAHUL SHARMA",
+      "chaldean": {
+        "system": "chaldean",
+        "name": "RAHUL SHARMA",
+        "letters": [
+          {
+            "letter": "R",
+            "value": 2,
+            "vowel": false
+          },
+          {
+            "letter": "A",
+            "value": 1,
+            "vowel": true
+          },
+          {
+            "letter": "H",
+            "value": 5,
+            "vowel": false
+          },
+          {
+            "letter": "U",
+            "value": 6,
+            "vowel": true
+          },
+          {
+            "letter": "L",
+            "value": 3,
+            "vowel": false
+          },
+          {
+            "letter": "S",
+            "value": 3,
+            "vowel": false
+          },
+          {
+            "letter": "H",
+            "value": 5,
+            "vowel": false
+          },
+          {
+            "letter": "A",
+            "value": 1,
+            "vowel": true
+          },
+          {
+            "letter": "R",
+            "value": 2,
+            "vowel": false
+          },
+          {
+            "letter": "M",
+            "value": 4,
+            "vowel": false
+          },
+          {
+            "letter": "A",
+            "value": 1,
+            "vowel": true
+          }
+        ],
+        "words": [
+          {
+            "word": "RAHUL",
+            "compound": 17,
+            "single": 8
+          },
+          {
+            "word": "SHARMA",
+            "compound": 16,
+            "single": 7
+          }
+        ],
+        "nameNumber": {
+          "compound": 33,
+          "single": 6,
+          "master": 33,
+          "category": "favourable"
+        },
+        "soulUrge": {
+          "compound": 9,
+          "single": 9,
+          "master": null
+        },
+        "personality": {
+          "compound": 24,
+          "single": 6,
+          "master": null
+        },
+        "expression": {
+          "compound": 33,
+          "single": 6,
+          "master": 33
+        }
+      },
+      "pythagorean": {
+        "system": "pythagorean",
+        "name": "RAHUL SHARMA",
+        "letters": [
+          {
+            "letter": "R",
+            "value": 9,
+            "vowel": false
+          },
+          {
+            "letter": "A",
+            "value": 1,
+            "vowel": true
+          },
+          {
+            "letter": "H",
+            "value": 8,
+            "vowel": false
+          },
+          {
+            "letter": "U",
+            "value": 3,
+            "vowel": true
+          },
+          {
+            "letter": "L",
+            "value": 3,
+            "vowel": false
+          },
+          {
+            "letter": "S",
+            "value": 1,
+            "vowel": false
+          },
+          {
+            "letter": "H",
+            "value": 8,
+            "vowel": false
+          },
+          {
+            "letter": "A",
+            "value": 1,
+            "vowel": true
+          },
+          {
+            "letter": "R",
+            "value": 9,
+            "vowel": false
+          },
+          {
+            "letter": "M",
+            "value": 4,
+            "vowel": false
+          },
+          {
+            "letter": "A",
+            "value": 1,
+            "vowel": true
+          }
+        ],
+        "words": [
+          {
+            "word": "RAHUL",
+            "compound": 24,
+            "single": 6
+          },
+          {
+            "word": "SHARMA",
+            "compound": 24,
+            "single": 6
+          }
+        ],
+        "nameNumber": {
+          "compound": 48,
+          "single": 3,
+          "master": null,
+          "category": "mixed"
+        },
+        "soulUrge": {
+          "compound": 6,
+          "single": 6,
+          "master": null
+        },
+        "personality": {
+          "compound": 42,
+          "single": 6,
+          "master": null
+        },
+        "expression": {
+          "compound": 48,
+          "single": 3,
+          "master": null
+        }
+      },
+      "officialName": {
+        "name": "RAHUL KUMAR SHARMA",
+        "nameNumber": {
+          "compound": 48,
+          "single": 3,
+          "master": null,
+          "category": "mixed"
+        }
+      },
+      "relationWithBhagyank": "enemy",
+      "relationWithMoolank": "enemy",
+      "compatibilityScore": 20,
+      "needsCorrection": true,
+      "corrections": [
+        {
+          "spelling": "Rahull",
+          "fullName": "Rahull Sharma",
+          "compound": 36,
+          "single": 9,
+          "category": "favourable",
+          "score": 100,
+          "changes": [
+            "double 'L'"
+          ]
+        },
+        {
+          "spelling": "Raahull",
+          "fullName": "Raahull Sharma",
+          "compound": 37,
+          "single": 1,
+          "category": "favourable",
+          "score": 100,
+          "changes": [
+            "double 'A'",
+            "double 'L'"
+          ]
+        },
+        {
+          "spelling": "Rahhool",
+          "fullName": "Rahhool Sharma",
+          "compound": 46,
+          "single": 1,
+          "category": "favourable",
+          "score": 100,
+          "changes": [
+            "double 'H'",
+            "'U' → 'OO'"
+          ]
+        },
+        {
+          "spelling": "Rahuul",
+          "fullName": "Rahuul Sharma",
+          "compound": 39,
+          "single": 3,
+          "category": "mixed",
+          "score": 90,
+          "changes": [
+            "double 'U'"
+          ]
+        },
+        {
+          "spelling": "Raahhul",
+          "fullName": "Raahhul Sharma",
+          "compound": 39,
+          "single": 3,
+          "category": "mixed",
+          "score": 90,
+          "changes": [
+            "double 'A'",
+            "double 'H'"
+          ]
+        }
+      ],
+      "strengths": [
+        "COMPOUND_33_FAVOURABLE"
+      ],
+      "weaknesses": [
+        "NAME_BHAGYANK_ENEMY",
+        "NAME_MOOLANK_ENEMY"
+      ]
+    },
+    "mobile": {
+      "module": "mobile",
+      "masked": "98XXXXXX10",
+      "number": "9876543210",
+      "total": {
+        "compound": 45,
+        "single": 9,
+        "master": null,
+        "category": "favourable"
+      },
+      "relationWithBhagyank": "friend",
+      "relationWithMoolank": "friend",
+      "digitFrequency": {
+        "0": 1,
+        "1": 1,
+        "2": 1,
+        "3": 1,
+        "4": 1,
+        "5": 1,
+        "6": 1,
+        "7": 1,
+        "8": 1,
+        "9": 1
+      },
+      "repeatingDigits": [],
+      "zeroCount": 1,
+      "pairs": [
+        {
+          "position": 1,
+          "pair": "98",
+          "kind": "neutral"
+        },
+        {
+          "position": 2,
+          "pair": "87",
+          "kind": "neutral"
+        },
+        {
+          "position": 3,
+          "pair": "76",
+          "kind": "neutral"
+        },
+        {
+          "position": 4,
+          "pair": "65",
+          "kind": "supportive"
+        },
+        {
+          "position": 5,
+          "pair": "54",
+          "kind": "supportive"
+        },
+        {
+          "position": 6,
+          "pair": "43",
+          "kind": "neutral"
+        },
+        {
+          "position": 7,
+          "pair": "32",
+          "kind": "neutral"
+        },
+        {
+          "position": 8,
+          "pair": "21",
+          "kind": "supportive"
+        },
+        {
+          "position": 9,
+          "pair": "10",
+          "kind": "neutral"
+        }
+      ],
+      "maleficPairs": [],
+      "conflictPairs": [],
+      "missingNumbersFilled": [
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "last4": {
+        "digits": "3210",
+        "compound": 6,
+        "single": 6,
+        "relationWithBhagyank": "enemy"
+      },
+      "scoreBreakdown": {
+        "base": 50,
+        "bhagyankRelation": 18,
+        "moolankRelation": 14,
+        "compound": 6,
+        "heavy48": 0,
+        "maleficPairs": 0,
+        "zeros": 0,
+        "repeatedEnemyDigits": 0,
+        "missingFilled": 8,
+        "last4": -4
+      },
+      "score": 92,
+      "verdict": "Highly Lucky",
+      "suggestion": {
+        "idealTotals": [
+          1,
+          2,
+          3,
+          9
+        ],
+        "idealCompounds": [
+          19,
+          21,
+          27,
+          36,
+          37,
+          45,
+          46,
+          55,
+          64
+        ],
+        "favourableDigitPairs": [
+          "11",
+          "12",
+          "13",
+          "19",
+          "21",
+          "22",
+          "31",
+          "33",
+          "39",
+          "91",
+          "93",
+          "99"
+        ],
+        "avoidDigits": [
+          4,
+          6,
+          7,
+          8
+        ],
+        "avoidPairs": [
+          "48",
+          "84",
+          "44",
+          "88",
+          "00"
+        ]
+      },
+      "flags": []
+    },
+    "aadhaar": {
+      "module": "aadhaar",
+      "masked": "XXXX-XXXX-0124",
+      "total": {
+        "compound": 51,
+        "single": 6,
+        "master": null,
+        "category": "favourable"
+      },
+      "relationWithBhagyank": "enemy",
+      "relationWithMoolank": "enemy",
+      "gridEffect": {
+        "missingNumbersFilled": [
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "overloadedNumbers": [
+          1
+        ]
+      },
+      "score": 29,
+      "verdict": "Needs Change",
+      "note": "An Aadhaar number cannot be changed; use this vibration only to choose supportive remedies."
+    },
+    "couple": {
+      "module": "couple",
+      "partnerA": {
+        "name": "RAHUL SHARMA",
+        "moolank": 1,
+        "bhagyank": 1,
+        "nameNumber": 6,
+        "kua": 1,
+        "missing": [
+          3,
+          4,
+          5,
+          6,
+          7
+        ]
+      },
+      "partnerB": {
+        "name": "PRIYA VERMA",
+        "moolank": 6,
+        "bhagyank": 5,
+        "nameNumber": 4,
+        "kua": 7,
+        "missing": [
+          3,
+          4,
+          8
+        ]
+      },
+      "relations": {
+        "moolank": {
+          "aToB": "enemy",
+          "bToA": "enemy",
+          "harmony": 0
+        },
+        "bhagyank": {
+          "aToB": "neutral",
+          "bToA": "friend",
+          "harmony": 75
+        },
+        "nameNumber": {
+          "aToB": "friend",
+          "bToA": "friend",
+          "harmony": 100
+        }
+      },
+      "areaScores": {
+        "love": 42,
+        "communication": 78,
+        "finance": 80,
+        "family": 75,
+        "health": 40,
+        "stability": 88
+      },
+      "overall": 69,
+      "combinedGrid": {
+        "overlay": [
+          {
+            "number": 1,
+            "partnerA": 4,
+            "partnerB": 2,
+            "combined": 6,
+            "aBringsToB": false,
+            "bBringsToA": false,
+            "bothMissing": false
+          },
+          {
+            "number": 2,
+            "partnerA": 1,
+            "partnerB": 1,
+            "combined": 2,
+            "aBringsToB": false,
+            "bBringsToA": false,
+            "bothMissing": false
+          },
+          {
+            "number": 3,
+            "partnerA": 0,
+            "partnerB": 0,
+            "combined": 0,
+            "aBringsToB": false,
+            "bBringsToA": false,
+            "bothMissing": true
+          },
+          {
+            "number": 4,
+            "partnerA": 0,
+            "partnerB": 0,
+            "combined": 0,
+            "aBringsToB": false,
+            "bBringsToA": false,
+            "bothMissing": true
+          },
+          {
+            "number": 5,
+            "partnerA": 0,
+            "partnerB": 3,
+            "combined": 3,
+            "aBringsToB": false,
+            "bBringsToA": true,
+            "bothMissing": false
+          },
+          {
+            "number": 6,
+            "partnerA": 0,
+            "partnerB": 1,
+            "combined": 1,
+            "aBringsToB": false,
+            "bBringsToA": true,
+            "bothMissing": false
+          },
+          {
+            "number": 7,
+            "partnerA": 0,
+            "partnerB": 1,
+            "combined": 1,
+            "aBringsToB": false,
+            "bBringsToA": true,
+            "bothMissing": false
+          },
+          {
+            "number": 8,
+            "partnerA": 2,
+            "partnerB": 0,
+            "combined": 2,
+            "aBringsToB": true,
+            "bBringsToA": false,
+            "bothMissing": false
+          },
+          {
+            "number": 9,
+            "partnerA": 2,
+            "partnerB": 2,
+            "combined": 4,
+            "aBringsToB": false,
+            "bBringsToA": false,
+            "bothMissing": false
+          }
+        ],
+        "bothMissing": [
+          3,
+          4
+        ]
+      },
+      "marriage": {
+        "favourableDateNumbers": [
+          3,
+          5,
+          9
+        ],
+        "favourableDatesOfMonth": [
+          3,
+          5,
+          9,
+          12,
+          14,
+          18,
+          21,
+          23,
+          27,
+          30
+        ],
+        "auspiciousYears": [
+          {
+            "year": 2034,
+            "personalYearA": 9,
+            "personalYearB": 2,
+            "score": 3
+          }
+        ],
+        "yearTable": [
+          {
+            "year": 2026,
+            "personalYearA": 1,
+            "personalYearB": 3,
+            "score": 2
+          },
+          {
+            "year": 2027,
+            "personalYearA": 2,
+            "personalYearB": 4,
+            "score": 2
+          },
+          {
+            "year": 2028,
+            "personalYearA": 3,
+            "personalYearB": 5,
+            "score": 2
+          },
+          {
+            "year": 2029,
+            "personalYearA": 4,
+            "personalYearB": 6,
+            "score": 2
+          },
+          {
+            "year": 2030,
+            "personalYearA": 5,
+            "personalYearB": 7,
+            "score": 1
+          },
+          {
+            "year": 2031,
+            "personalYearA": 6,
+            "personalYearB": 8,
+            "score": 2
+          },
+          {
+            "year": 2032,
+            "personalYearA": 7,
+            "personalYearB": 9,
+            "score": 1
+          },
+          {
+            "year": 2033,
+            "personalYearA": 8,
+            "personalYearB": 1,
+            "score": 1
+          },
+          {
+            "year": 2034,
+            "personalYearA": 9,
+            "personalYearB": 2,
+            "score": 3
+          },
+          {
+            "year": 2035,
+            "personalYearA": 1,
+            "personalYearB": 3,
+            "score": 2
+          }
+        ]
+      }
+    },
+    "remedies": {
+      "module": "remedies",
+      "rulingPlanet": {
+        "number": 1,
+        "id": "sun",
+        "name": "Sun",
+        "hindi": "Surya"
+      },
+      "destinyPlanet": {
+        "number": 1,
+        "id": "sun",
+        "name": "Sun",
+        "hindi": "Surya"
+      },
+      "lucky": {
+        "numbers": [
+          1,
+          2,
+          3,
+          9
+        ],
+        "dates": [
+          1,
+          2,
+          3,
+          9,
+          10,
+          11,
+          12,
+          18,
+          19,
+          20,
+          21,
+          27,
+          28,
+          29,
+          30
+        ],
+        "days": [
+          "Sunday",
+          "Monday",
+          "Thursday"
+        ],
+        "colours": [
+          "Golden",
+          "Orange",
+          "Saffron"
+        ],
+        "avoidColours": [
+          "Grey",
+          "White",
+          "Smoky grey",
+          "Navy blue"
+        ],
+        "directions": {
+          "success": "South-East",
+          "health": "East",
+          "relationships": "South",
+          "personalGrowth": "North"
+        },
+        "avoidDirections": {
+          "mishaps": "West",
+          "fiveGhosts": "North-East",
+          "sixKillings": "North-West",
+          "totalLoss": "South-West"
+        }
+      },
+      "gemstones": [
+        {
+          "for": "Moolank",
+          "planet": "Sun",
+          "name": "Ruby",
+          "hindi": "Manik",
+          "alternatives": [
+            "Red Garnet",
+            "Sunstone"
+          ],
+          "metal": "Gold / Copper",
+          "finger": "Ring finger",
+          "caution": "Consult a qualified astrologer/numerologist before wearing any gemstone.",
+          "rudraksha": "1 or 12 Mukhi"
+        }
+      ],
+      "mantra": {
+        "planet": "Sun",
+        "deity": "Surya Dev (offer Arghya at sunrise)",
+        "mantra": "Om Hraam Hreem Hraum Sah Suryaya Namah",
+        "day": "Sunday",
+        "dailyCount": 108,
+        "fullJapa": 7000
+      },
+      "loShuRemedies": [
+        {
+          "number": 3,
+          "element": "Wood",
+          "direction": "East",
+          "colour": "Green",
+          "crystal": "Green aventurine",
+          "placement": "Healthy green plants in the East",
+          "wristband": "Green aventurine bracelet",
+          "dailyHabit": "Read or learn something new for 15 minutes daily.",
+          "planet": "Jupiter"
+        },
+        {
+          "number": 4,
+          "element": "Wood",
+          "direction": "South-East",
+          "colour": "Green",
+          "crystal": "Green jade",
+          "placement": "Money plant or bamboo in the South-East",
+          "wristband": "Green jade bracelet",
+          "dailyHabit": "Plan the next day in writing every night.",
+          "planet": "Rahu"
+        },
+        {
+          "number": 5,
+          "element": "Earth",
+          "direction": "Centre",
+          "colour": "Yellow / Earth tones",
+          "crystal": "Citrine",
+          "placement": "Keep the centre of the home clutter-free; place a crystal bowl there",
+          "wristband": "Citrine bracelet",
+          "dailyHabit": "Walk for 20 minutes; keep your wallet and desk organised.",
+          "planet": "Mercury"
+        },
+        {
+          "number": 6,
+          "element": "Metal",
+          "direction": "North-West",
+          "colour": "White / Silver",
+          "crystal": "Clear quartz",
+          "placement": "Metal wind chime (6 rods) in the North-West",
+          "wristband": "Clear quartz bracelet",
+          "dailyHabit": "Help a family member each day; keep a fragrance at home.",
+          "planet": "Venus"
+        },
+        {
+          "number": 7,
+          "element": "Metal",
+          "direction": "West",
+          "colour": "White / Grey",
+          "crystal": "Amethyst",
+          "placement": "Metal bowl or brass items in the West",
+          "wristband": "Amethyst bracelet",
+          "dailyHabit": "Meditate for 10 minutes; spend time in nature weekly.",
+          "planet": "Ketu"
+        }
+      ],
+      "daan": [
+        "Wheat",
+        "Jaggery (gud)"
+      ],
+      "fastingDay": "Sunday",
+      "dailyHabits": [
+        "Read or learn something new for 15 minutes daily.",
+        "Plan the next day in writing every night.",
+        "Walk for 20 minutes; keep your wallet and desk organised.",
+        "Help a family member each day; keep a fragrance at home."
+      ],
+      "signature": [
+        "Sign with a slight upward slope from left to right.",
+        "Do not cut through or strike your own name.",
+        "Avoid ending with a dot or a downward stroke.",
+        "Start with a bold, clear first letter; keep the signature rising upward."
+      ],
+      "favourableYears": {
+        "marriage": [
+          {
+            "year": 2027,
+            "personalYear": 2
+          },
+          {
+            "year": 2031,
+            "personalYear": 6
+          }
+        ],
+        "jobChange": [
+          {
+            "year": 2026,
+            "personalYear": 1
+          },
+          {
+            "year": 2030,
+            "personalYear": 5
+          },
+          {
+            "year": 2035,
+            "personalYear": 1
+          }
+        ],
+        "businessStart": [
+          {
+            "year": 2026,
+            "personalYear": 1
+          },
+          {
+            "year": 2028,
+            "personalYear": 3
+          },
+          {
+            "year": 2030,
+            "personalYear": 5
+          },
+          {
+            "year": 2035,
+            "personalYear": 1
+          }
+        ],
+        "propertyPurchase": [
+          {
+            "year": 2029,
+            "personalYear": 4
+          },
+          {
+            "year": 2031,
+            "personalYear": 6
+          },
+          {
+            "year": 2033,
+            "personalYear": 8
+          }
+        ]
+      },
+      "nameCorrection": {
+        "needed": true,
+        "currentScore": 20,
+        "options": [
+          {
+            "spelling": "Rahull",
+            "fullName": "Rahull Sharma",
+            "compound": 36,
+            "single": 9,
+            "category": "favourable",
+            "score": 100,
+            "changes": [
+              "double 'L'"
+            ]
+          },
+          {
+            "spelling": "Raahull",
+            "fullName": "Raahull Sharma",
+            "compound": 37,
+            "single": 1,
+            "category": "favourable",
+            "score": 100,
+            "changes": [
+              "double 'A'",
+              "double 'L'"
+            ]
+          },
+          {
+            "spelling": "Rahhool",
+            "fullName": "Rahhool Sharma",
+            "compound": 46,
+            "single": 1,
+            "category": "favourable",
+            "score": 100,
+            "changes": [
+              "double 'H'",
+              "'U' → 'OO'"
+            ]
+          },
+          {
+            "spelling": "Rahuul",
+            "fullName": "Rahuul Sharma",
+            "compound": 39,
+            "single": 3,
+            "category": "mixed",
+            "score": 90,
+            "changes": [
+              "double 'U'"
+            ]
+          },
+          {
+            "spelling": "Raahhul",
+            "fullName": "Raahhul Sharma",
+            "compound": 39,
+            "single": 3,
+            "category": "mixed",
+            "score": 90,
+            "changes": [
+              "double 'A'",
+              "double 'H'"
+            ]
+          }
+        ]
+      },
+      "mobileSuggestion": {
+        "currentScore": 92,
+        "verdict": "Highly Lucky",
+        "idealTotals": [
+          1,
+          2,
+          3,
+          9
+        ],
+        "idealCompounds": [
+          19,
+          21,
+          27,
+          36,
+          37,
+          45,
+          46,
+          55,
+          64
+        ],
+        "favourableDigitPairs": [
+          "11",
+          "12",
+          "13",
+          "19",
+          "21",
+          "22",
+          "31",
+          "33",
+          "39",
+          "91",
+          "93",
+          "99"
+        ],
+        "avoidDigits": [
+          4,
+          6,
+          7,
+          8
+        ],
+        "avoidPairs": [
+          "48",
+          "84",
+          "44",
+          "88",
+          "00"
+        ]
+      },
+      "career": {
+        "suitableFields": [
+          "Government service",
+          "Administration",
+          "Leadership roles"
+        ]
+      },
+      "relationship": {
+        "compatiblePartnerNumbers": [
+          1,
+          2,
+          3,
+          9
+        ],
+        "challengingPartnerNumbers": [
+          4,
+          6,
+          7,
+          8
+        ]
+      },
+      "disclaimer": "Gemstones and remedies are traditional guidance. Consult a qualified expert before wearing any gemstone."
+    }
+  }
+}

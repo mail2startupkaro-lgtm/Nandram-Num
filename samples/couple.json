@@ -1,0 +1,233 @@
+{
+  "module": "couple",
+  "partnerA": {
+    "name": "RAHUL SHARMA",
+    "moolank": 1,
+    "bhagyank": 1,
+    "nameNumber": 6,
+    "kua": 1,
+    "missing": [
+      3,
+      4,
+      5,
+      6,
+      7
+    ]
+  },
+  "partnerB": {
+    "name": "PRIYA VERMA",
+    "moolank": 6,
+    "bhagyank": 5,
+    "nameNumber": 4,
+    "kua": 7,
+    "missing": [
+      3,
+      4,
+      8
+    ]
+  },
+  "relations": {
+    "moolank": {
+      "aToB": "enemy",
+      "bToA": "enemy",
+      "harmony": 0
+    },
+    "bhagyank": {
+      "aToB": "neutral",
+      "bToA": "friend",
+      "harmony": 75
+    },
+    "nameNumber": {
+      "aToB": "friend",
+      "bToA": "friend",
+      "harmony": 100
+    }
+  },
+  "areaScores": {
+    "love": 42,
+    "communication": 78,
+    "finance": 80,
+    "family": 75,
+    "health": 40,
+    "stability": 88
+  },
+  "overall": 69,
+  "combinedGrid": {
+    "overlay": [
+      {
+        "number": 1,
+        "partnerA": 4,
+        "partnerB": 2,
+        "combined": 6,
+        "aBringsToB": false,
+        "bBringsToA": false,
+        "bothMissing": false
+      },
+      {
+        "number": 2,
+        "partnerA": 1,
+        "partnerB": 1,
+        "combined": 2,
+        "aBringsToB": false,
+        "bBringsToA": false,
+        "bothMissing": false
+      },
+      {
+        "number": 3,
+        "partnerA": 0,
+        "partnerB": 0,
+        "combined": 0,
+        "aBringsToB": false,
+        "bBringsToA": false,
+        "bothMissing": true
+      },
+      {
+        "number": 4,
+        "partnerA": 0,
+        "partnerB": 0,
+        "combined": 0,
+        "aBringsToB": false,
+        "bBringsToA": false,
+        "bothMissing": true
+      },
+      {
+        "number": 5,
+        "partnerA": 0,
+        "partnerB": 3,
+        "combined": 3,
+        "aBringsToB": false,
+        "bBringsToA": true,
+        "bothMissing": false
+      },
+      {
+        "number": 6,
+        "partnerA": 0,
+        "partnerB": 1,
+        "combined": 1,
+        "aBringsToB": false,
+        "bBringsToA": true,
+        "bothMissing": false
+      },
+      {
+        "number": 7,
+        "partnerA": 0,
+        "partnerB": 1,
+        "combined": 1,
+        "aBringsToB": false,
+        "bBringsToA": true,
+        "bothMissing": false
+      },
+      {
+        "number": 8,
+        "partnerA": 2,
+        "partnerB": 0,
+        "combined": 2,
+        "aBringsToB": true,
+        "bBringsToA": false,
+        "bothMissing": false
+      },
+      {
+        "number": 9,
+        "partnerA": 2,
+        "partnerB": 2,
+        "combined": 4,
+        "aBringsToB": false,
+        "bBringsToA": false,
+        "bothMissing": false
+      }
+    ],
+    "bothMissing": [
+      3,
+      4
+    ]
+  },
+  "marriage": {
+    "favourableDateNumbers": [
+      3,
+      5,
+      9
+    ],
+    "favourableDatesOfMonth": [
+      3,
+      5,
+      9,
+      12,
+      14,
+      18,
+      21,
+      23,
+      27,
+      30
+    ],
+    "auspiciousYears": [
+      {
+        "year": 2034,
+        "personalYearA": 9,
+        "personalYearB": 2,
+        "score": 3
+      }
+    ],
+    "yearTable": [
+      {
+        "year": 2026,
+        "personalYearA": 1,
+        "personalYearB": 3,
+        "score": 2
+      },
+      {
+        "year": 2027,
+        "personalYearA": 2,
+        "personalYearB": 4,
+        "score": 2
+      },
+      {
+        "year": 2028,
+        "personalYearA": 3,
+        "personalYearB": 5,
+        "score": 2
+      },
+      {
+        "year": 2029,
+        "personalYearA": 4,
+        "personalYearB": 6,
+        "score": 2
+      },
+      {
+        "year": 2030,
+        "personalYearA": 5,
+        "personalYearB": 7,
+        "score": 1
+      },
+      {
+        "year": 2031,
+        "personalYearA": 6,
+        "personalYearB": 8,
+        "score": 2
+      },
+      {
+        "year": 2032,
+        "personalYearA": 7,
+        "personalYearB": 9,
+        "score": 1
+      },
+      {
+        "year": 2033,
+        "personalYearA": 8,
+        "personalYearB": 1,
+        "score": 1
+      },
+      {
+        "year": 2034,
+        "personalYearA": 9,
+        "personalYearB": 2,
+        "score": 3
+      },
+      {
+        "year": 2035,
+        "personalYearA": 1,
+        "personalYearB": 3,
+        "score": 2
+      }
+    ]
+  }
+}

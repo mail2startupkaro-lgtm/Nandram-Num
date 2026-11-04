@@ -1,0 +1,926 @@
+{
+  "module": "dob",
+  "dob": {
+    "day": 28,
+    "month": 8,
+    "year": 1990,
+    "iso": "1990-08-28"
+  },
+  "gender": "male",
+  "age": 36,
+  "moolank": {
+    "value": 1,
+    "compound": 28,
+    "master": null,
+    "planet": "sun",
+    "planetInfo": {
+      "name": "Sun",
+      "hindi": "Surya"
+    }
+  },
+  "bhagyank": {
+    "value": 1,
+    "compound": 37,
+    "chain": [
+      37,
+      10,
+      1
+    ],
+    "master": null,
+    "planet": "sun",
+    "planetInfo": {
+      "name": "Sun",
+      "hindi": "Surya"
+    }
+  },
+  "moolankBhagyankRelation": "friend",
+  "kua": {
+    "value": 1,
+    "basis": "male",
+    "group": "East",
+    "favourable": {
+      "success": "South-East",
+      "health": "East",
+      "relationships": "South",
+      "personalGrowth": "North"
+    },
+    "unfavourable": {
+      "mishaps": "West",
+      "fiveGhosts": "North-East",
+      "sixKillings": "North-West",
+      "totalLoss": "South-West"
+    }
+  },
+  "loShu": {
+    "layout": [
+      [
+        4,
+        9,
+        2
+      ],
+      [
+        3,
+        5,
+        7
+      ],
+      [
+        8,
+        1,
+        6
+      ]
+    ],
+    "sources": [
+      {
+        "digit": 2,
+        "source": "dob"
+      },
+      {
+        "digit": 8,
+        "source": "dob"
+      },
+      {
+        "digit": 8,
+        "source": "dob"
+      },
+      {
+        "digit": 1,
+        "source": "dob"
+      },
+      {
+        "digit": 9,
+        "source": "dob"
+      },
+      {
+        "digit": 9,
+        "source": "dob"
+      },
+      {
+        "digit": 1,
+        "source": "moolank"
+      },
+      {
+        "digit": 1,
+        "source": "bhagyank"
+      },
+      {
+        "digit": 1,
+        "source": "kua"
+      }
+    ],
+    "counts": {
+      "1": 4,
+      "2": 1,
+      "3": 0,
+      "4": 0,
+      "5": 0,
+      "6": 0,
+      "7": 0,
+      "8": 2,
+      "9": 2
+    },
+    "cells": [
+      {
+        "number": 4,
+        "row": 0,
+        "col": 0,
+        "count": 0,
+        "status": "missing",
+        "planet": "rahu"
+      },
+      {
+        "number": 9,
+        "row": 0,
+        "col": 1,
+        "count": 2,
+        "status": "repeated",
+        "planet": "mars"
+      },
+      {
+        "number": 2,
+        "row": 0,
+        "col": 2,
+        "count": 1,
+        "status": "present",
+        "planet": "moon"
+      },
+      {
+        "number": 3,
+        "row": 1,
+        "col": 0,
+        "count": 0,
+        "status": "missing",
+        "planet": "jupiter"
+      },
+      {
+        "number": 5,
+        "row": 1,
+        "col": 1,
+        "count": 0,
+        "status": "missing",
+        "planet": "mercury"
+      },
+      {
+        "number": 7,
+        "row": 1,
+        "col": 2,
+        "count": 0,
+        "status": "missing",
+        "planet": "ketu"
+      },
+      {
+        "number": 8,
+        "row": 2,
+        "col": 0,
+        "count": 2,
+        "status": "repeated",
+        "planet": "saturn"
+      },
+      {
+        "number": 1,
+        "row": 2,
+        "col": 1,
+        "count": 4,
+        "status": "repeated",
+        "planet": "sun"
+      },
+      {
+        "number": 6,
+        "row": 2,
+        "col": 2,
+        "count": 0,
+        "status": "missing",
+        "planet": "venus"
+      }
+    ],
+    "present": [
+      1,
+      2,
+      8,
+      9
+    ],
+    "missing": [
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "repeated": [
+      {
+        "number": 1,
+        "count": 4
+      },
+      {
+        "number": 8,
+        "count": 2
+      },
+      {
+        "number": 9,
+        "count": 2
+      }
+    ],
+    "planes": [
+      {
+        "id": "mental",
+        "name": "Mental Plane",
+        "numbers": [
+          4,
+          9,
+          2
+        ],
+        "orientation": "horizontal",
+        "presentCount": 2,
+        "status": "partial",
+        "arrow": null,
+        "yog": null
+      },
+      {
+        "id": "emotional",
+        "name": "Emotional Plane",
+        "numbers": [
+          3,
+          5,
+          7
+        ],
+        "orientation": "horizontal",
+        "presentCount": 0,
+        "status": "empty",
+        "arrow": "Arrow of Hypersensitivity",
+        "yog": null
+      },
+      {
+        "id": "practical",
+        "name": "Practical Plane",
+        "numbers": [
+          8,
+          1,
+          6
+        ],
+        "orientation": "horizontal",
+        "presentCount": 2,
+        "status": "partial",
+        "arrow": null,
+        "yog": null
+      },
+      {
+        "id": "thought",
+        "name": "Thought Plane",
+        "numbers": [
+          4,
+          3,
+          8
+        ],
+        "orientation": "vertical",
+        "presentCount": 1,
+        "status": "partial",
+        "arrow": null,
+        "yog": null
+      },
+      {
+        "id": "will",
+        "name": "Will Plane",
+        "numbers": [
+          9,
+          5,
+          1
+        ],
+        "orientation": "vertical",
+        "presentCount": 2,
+        "status": "partial",
+        "arrow": null,
+        "yog": null
+      },
+      {
+        "id": "action",
+        "name": "Action Plane",
+        "numbers": [
+          2,
+          7,
+          6
+        ],
+        "orientation": "vertical",
+        "presentCount": 1,
+        "status": "partial",
+        "arrow": null,
+        "yog": null
+      }
+    ],
+    "diagonals": [
+      {
+        "id": "golden",
+        "name": "Success Line (4-5-6)",
+        "numbers": [
+          4,
+          5,
+          6
+        ],
+        "orientation": "diagonal",
+        "presentCount": 0,
+        "status": "empty",
+        "arrow": "Arrow of Scepticism",
+        "yog": null
+      },
+      {
+        "id": "raj",
+        "name": "Property Line (2-5-8)",
+        "numbers": [
+          2,
+          5,
+          8
+        ],
+        "orientation": "diagonal",
+        "presentCount": 2,
+        "status": "partial",
+        "arrow": null,
+        "yog": null
+      }
+    ],
+    "yogs": [],
+    "arrowsOfStrength": [],
+    "arrowsOfWeakness": [
+      {
+        "name": "Arrow of Hypersensitivity",
+        "lineId": "emotional",
+        "numbers": [
+          3,
+          5,
+          7
+        ]
+      },
+      {
+        "name": "Arrow of Scepticism",
+        "lineId": "golden",
+        "numbers": [
+          4,
+          5,
+          6
+        ]
+      }
+    ]
+  },
+  "vedicGrid": {
+    "layout": [
+      [
+        3,
+        1,
+        9
+      ],
+      [
+        6,
+        7,
+        5
+      ],
+      [
+        2,
+        8,
+        4
+      ]
+    ],
+    "cells": [
+      {
+        "number": 3,
+        "row": 0,
+        "col": 0,
+        "count": 0,
+        "status": "missing",
+        "planet": "jupiter",
+        "planetName": "Jupiter",
+        "planetHindi": "Guru (Brihaspati)"
+      },
+      {
+        "number": 1,
+        "row": 0,
+        "col": 1,
+        "count": 3,
+        "status": "repeated",
+        "planet": "sun",
+        "planetName": "Sun",
+        "planetHindi": "Surya"
+      },
+      {
+        "number": 9,
+        "row": 0,
+        "col": 2,
+        "count": 2,
+        "status": "repeated",
+        "planet": "mars",
+        "planetName": "Mars",
+        "planetHindi": "Mangal"
+      },
+      {
+        "number": 6,
+        "row": 1,
+        "col": 0,
+        "count": 0,
+        "status": "missing",
+        "planet": "venus",
+        "planetName": "Venus",
+        "planetHindi": "Shukra"
+      },
+      {
+        "number": 7,
+        "row": 1,
+        "col": 1,
+        "count": 0,
+        "status": "missing",
+        "planet": "ketu",
+        "planetName": "Ketu",
+        "planetHindi": "Ketu"
+      },
+      {
+        "number": 5,
+        "row": 1,
+        "col": 2,
+        "count": 0,
+        "status": "missing",
+        "planet": "mercury",
+        "planetName": "Mercury",
+        "planetHindi": "Budh"
+      },
+      {
+        "number": 2,
+        "row": 2,
+        "col": 0,
+        "count": 1,
+        "status": "present",
+        "planet": "moon",
+        "planetName": "Moon",
+        "planetHindi": "Chandra"
+      },
+      {
+        "number": 8,
+        "row": 2,
+        "col": 1,
+        "count": 2,
+        "status": "repeated",
+        "planet": "saturn",
+        "planetName": "Saturn",
+        "planetHindi": "Shani"
+      },
+      {
+        "number": 4,
+        "row": 2,
+        "col": 2,
+        "count": 0,
+        "status": "missing",
+        "planet": "rahu",
+        "planetName": "Rahu",
+        "planetHindi": "Rahu"
+      }
+    ],
+    "strongPlanets": [
+      "sun",
+      "saturn",
+      "mars"
+    ],
+    "weakPlanets": [
+      "jupiter",
+      "rahu",
+      "mercury",
+      "venus",
+      "ketu"
+    ]
+  },
+  "personalCycles": {
+    "asOf": "2026-11-03",
+    "current": {
+      "personalYear": 1,
+      "personalMonth": 3,
+      "personalDay": 6
+    },
+    "timeline": [
+      {
+        "year": 2026,
+        "universalYear": 1,
+        "personalYear": 1
+      },
+      {
+        "year": 2027,
+        "universalYear": 2,
+        "personalYear": 2
+      },
+      {
+        "year": 2028,
+        "universalYear": 3,
+        "personalYear": 3
+      },
+      {
+        "year": 2029,
+        "universalYear": 4,
+        "personalYear": 4
+      },
+      {
+        "year": 2030,
+        "universalYear": 5,
+        "personalYear": 5
+      },
+      {
+        "year": 2031,
+        "universalYear": 6,
+        "personalYear": 6
+      },
+      {
+        "year": 2032,
+        "universalYear": 7,
+        "personalYear": 7
+      },
+      {
+        "year": 2033,
+        "universalYear": 8,
+        "personalYear": 8
+      },
+      {
+        "year": 2034,
+        "universalYear": 9,
+        "personalYear": 9
+      }
+    ],
+    "detailed": [
+      {
+        "year": 2026,
+        "universalYear": 1,
+        "personalYear": 1,
+        "months": [
+          {
+            "month": 1,
+            "personalMonth": 2
+          },
+          {
+            "month": 2,
+            "personalMonth": 3
+          },
+          {
+            "month": 3,
+            "personalMonth": 4
+          },
+          {
+            "month": 4,
+            "personalMonth": 5
+          },
+          {
+            "month": 5,
+            "personalMonth": 6
+          },
+          {
+            "month": 6,
+            "personalMonth": 7
+          },
+          {
+            "month": 7,
+            "personalMonth": 8
+          },
+          {
+            "month": 8,
+            "personalMonth": 9
+          },
+          {
+            "month": 9,
+            "personalMonth": 1
+          },
+          {
+            "month": 10,
+            "personalMonth": 2
+          },
+          {
+            "month": 11,
+            "personalMonth": 3
+          },
+          {
+            "month": 12,
+            "personalMonth": 4
+          }
+        ]
+      },
+      {
+        "year": 2027,
+        "universalYear": 2,
+        "personalYear": 2,
+        "months": [
+          {
+            "month": 1,
+            "personalMonth": 3
+          },
+          {
+            "month": 2,
+            "personalMonth": 4
+          },
+          {
+            "month": 3,
+            "personalMonth": 5
+          },
+          {
+            "month": 4,
+            "personalMonth": 6
+          },
+          {
+            "month": 5,
+            "personalMonth": 7
+          },
+          {
+            "month": 6,
+            "personalMonth": 8
+          },
+          {
+            "month": 7,
+            "personalMonth": 9
+          },
+          {
+            "month": 8,
+            "personalMonth": 1
+          },
+          {
+            "month": 9,
+            "personalMonth": 2
+          },
+          {
+            "month": 10,
+            "personalMonth": 3
+          },
+          {
+            "month": 11,
+            "personalMonth": 4
+          },
+          {
+            "month": 12,
+            "personalMonth": 5
+          }
+        ]
+      },
+      {
+        "year": 2028,
+        "universalYear": 3,
+        "personalYear": 3,
+        "months": [
+          {
+            "month": 1,
+            "personalMonth": 4
+          },
+          {
+            "month": 2,
+            "personalMonth": 5
+          },
+          {
+            "month": 3,
+            "personalMonth": 6
+          },
+          {
+            "month": 4,
+            "personalMonth": 7
+          },
+          {
+            "month": 5,
+            "personalMonth": 8
+          },
+          {
+            "month": 6,
+            "personalMonth": 9
+          },
+          {
+            "month": 7,
+            "personalMonth": 1
+          },
+          {
+            "month": 8,
+            "personalMonth": 2
+          },
+          {
+            "month": 9,
+            "personalMonth": 3
+          },
+          {
+            "month": 10,
+            "personalMonth": 4
+          },
+          {
+            "month": 11,
+            "personalMonth": 5
+          },
+          {
+            "month": 12,
+            "personalMonth": 6
+          }
+        ]
+      },
+      {
+        "year": 2029,
+        "universalYear": 4,
+        "personalYear": 4,
+        "months": [
+          {
+            "month": 1,
+            "personalMonth": 5
+          },
+          {
+            "month": 2,
+            "personalMonth": 6
+          },
+          {
+            "month": 3,
+            "personalMonth": 7
+          },
+          {
+            "month": 4,
+            "personalMonth": 8
+          },
+          {
+            "month": 5,
+            "personalMonth": 9
+          },
+          {
+            "month": 6,
+            "personalMonth": 1
+          },
+          {
+            "month": 7,
+            "personalMonth": 2
+          },
+          {
+            "month": 8,
+            "personalMonth": 3
+          },
+          {
+            "month": 9,
+            "personalMonth": 4
+          },
+          {
+            "month": 10,
+            "personalMonth": 5
+          },
+          {
+            "month": 11,
+            "personalMonth": 6
+          },
+          {
+            "month": 12,
+            "personalMonth": 7
+          }
+        ]
+      }
+    ]
+  },
+  "numberRelations": {
+    "forMoolank": {
+      "friend": [
+        1,
+        2,
+        3,
+        9
+      ],
+      "neutral": [
+        5
+      ],
+      "enemy": [
+        4,
+        6,
+        7,
+        8
+      ]
+    },
+    "forBhagyank": {
+      "friend": [
+        1,
+        2,
+        3,
+        9
+      ],
+      "neutral": [
+        5
+      ],
+      "enemy": [
+        4,
+        6,
+        7,
+        8
+      ]
+    },
+    "combined": {
+      "friendly": [
+        1,
+        2,
+        3,
+        9
+      ],
+      "neutral": [
+        5
+      ],
+      "enemy": [
+        4,
+        6,
+        7,
+        8
+      ]
+    }
+  },
+  "lifeCycles": [
+    {
+      "index": 1,
+      "name": "Formative",
+      "number": 8,
+      "fromAge": 0,
+      "toAge": 35,
+      "current": false
+    },
+    {
+      "index": 2,
+      "name": "Productive",
+      "number": 1,
+      "fromAge": 36,
+      "toAge": 62,
+      "current": true
+    },
+    {
+      "index": 3,
+      "name": "Harvest",
+      "number": 1,
+      "fromAge": 63,
+      "toAge": null,
+      "current": false
+    }
+  ],
+  "pinnacles": [
+    {
+      "index": 1,
+      "number": 9,
+      "master": null,
+      "fromAge": 0,
+      "toAge": 35,
+      "current": false
+    },
+    {
+      "index": 2,
+      "number": 2,
+      "master": null,
+      "fromAge": 36,
+      "toAge": 44,
+      "current": true
+    },
+    {
+      "index": 3,
+      "number": 2,
+      "master": 11,
+      "fromAge": 45,
+      "toAge": 53,
+      "current": false
+    },
+    {
+      "index": 4,
+      "number": 9,
+      "master": null,
+      "fromAge": 54,
+      "toAge": null,
+      "current": false
+    }
+  ],
+  "challenges": [
+    {
+      "index": 1,
+      "number": 7,
+      "fromAge": 0,
+      "toAge": 35,
+      "current": false
+    },
+    {
+      "index": 2,
+      "number": 0,
+      "fromAge": 36,
+      "toAge": 44,
+      "current": true
+    },
+    {
+      "index": 3,
+      "number": 7,
+      "fromAge": 45,
+      "toAge": 53,
+      "current": false
+    },
+    {
+      "index": 4,
+      "number": 7,
+      "fromAge": 54,
+      "toAge": null,
+      "current": false
+    }
+  ],
+  "lifeAreaScores": {
+    "career": 88,
+    "money": 43,
+    "love": 53,
+    "health": 70,
+    "family": 57,
+    "spirituality": 50
+  },
+  "strengths": [
+    "MOOLANK_BHAGYANK_FRIENDLY"
+  ],
+  "weaknesses": [
+    "ARROW_WEAKNESS_EMOTIONAL",
+    "ARROW_WEAKNESS_GOLDEN",
+    "MISSING_3",
+    "MISSING_4",
+    "MISSING_5",
+    "MISSING_6",
+    "MISSING_7",
+    "EXCESS_1_x4"
+  ],
+  "flags": []
+}

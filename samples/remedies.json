@@ -1,0 +1,358 @@
+{
+  "module": "remedies",
+  "rulingPlanet": {
+    "number": 1,
+    "id": "sun",
+    "name": "Sun",
+    "hindi": "Surya"
+  },
+  "destinyPlanet": {
+    "number": 1,
+    "id": "sun",
+    "name": "Sun",
+    "hindi": "Surya"
+  },
+  "lucky": {
+    "numbers": [
+      1,
+      2,
+      3,
+      9
+    ],
+    "dates": [
+      1,
+      2,
+      3,
+      9,
+      10,
+      11,
+      12,
+      18,
+      19,
+      20,
+      21,
+      27,
+      28,
+      29,
+      30
+    ],
+    "days": [
+      "Sunday",
+      "Monday",
+      "Thursday"
+    ],
+    "colours": [
+      "Golden",
+      "Orange",
+      "Saffron"
+    ],
+    "avoidColours": [
+      "Grey",
+      "White",
+      "Smoky grey",
+      "Navy blue"
+    ],
+    "directions": {
+      "success": "South-East",
+      "health": "East",
+      "relationships": "South",
+      "personalGrowth": "North"
+    },
+    "avoidDirections": {
+      "mishaps": "West",
+      "fiveGhosts": "North-East",
+      "sixKillings": "North-West",
+      "totalLoss": "South-West"
+    }
+  },
+  "gemstones": [
+    {
+      "for": "Moolank",
+      "planet": "Sun",
+      "name": "Ruby",
+      "hindi": "Manik",
+      "alternatives": [
+        "Red Garnet",
+        "Sunstone"
+      ],
+      "metal": "Gold / Copper",
+      "finger": "Ring finger",
+      "caution": "Consult a qualified astrologer/numerologist before wearing any gemstone.",
+      "rudraksha": "1 or 12 Mukhi"
+    }
+  ],
+  "mantra": {
+    "planet": "Sun",
+    "deity": "Surya Dev (offer Arghya at sunrise)",
+    "mantra": "Om Hraam Hreem Hraum Sah Suryaya Namah",
+    "day": "Sunday",
+    "dailyCount": 108,
+    "fullJapa": 7000
+  },
+  "loShuRemedies": [
+    {
+      "number": 3,
+      "element": "Wood",
+      "direction": "East",
+      "colour": "Green",
+      "crystal": "Green aventurine",
+      "placement": "Healthy green plants in the East",
+      "wristband": "Green aventurine bracelet",
+      "dailyHabit": "Read or learn something new for 15 minutes daily.",
+      "planet": "Jupiter"
+    },
+    {
+      "number": 4,
+      "element": "Wood",
+      "direction": "South-East",
+      "colour": "Green",
+      "crystal": "Green jade",
+      "placement": "Money plant or bamboo in the South-East",
+      "wristband": "Green jade bracelet",
+      "dailyHabit": "Plan the next day in writing every night.",
+      "planet": "Rahu"
+    },
+    {
+      "number": 5,
+      "element": "Earth",
+      "direction": "Centre",
+      "colour": "Yellow / Earth tones",
+      "crystal": "Citrine",
+      "placement": "Keep the centre of the home clutter-free; place a crystal bowl there",
+      "wristband": "Citrine bracelet",
+      "dailyHabit": "Walk for 20 minutes; keep your wallet and desk organised.",
+      "planet": "Mercury"
+    },
+    {
+      "number": 6,
+      "element": "Metal",
+      "direction": "North-West",
+      "colour": "White / Silver",
+      "crystal": "Clear quartz",
+      "placement": "Metal wind chime (6 rods) in the North-West",
+      "wristband": "Clear quartz bracelet",
+      "dailyHabit": "Help a family member each day; keep a fragrance at home.",
+      "planet": "Venus"
+    },
+    {
+      "number": 7,
+      "element": "Metal",
+      "direction": "West",
+      "colour": "White / Grey",
+      "crystal": "Amethyst",
+      "placement": "Metal bowl or brass items in the West",
+      "wristband": "Amethyst bracelet",
+      "dailyHabit": "Meditate for 10 minutes; spend time in nature weekly.",
+      "planet": "Ketu"
+    }
+  ],
+  "daan": [
+    "Wheat",
+    "Jaggery (gud)"
+  ],
+  "fastingDay": "Sunday",
+  "dailyHabits": [
+    "Read or learn something new for 15 minutes daily.",
+    "Plan the next day in writing every night.",
+    "Walk for 20 minutes; keep your wallet and desk organised.",
+    "Help a family member each day; keep a fragrance at home."
+  ],
+  "signature": [
+    "Sign with a slight upward slope from left to right.",
+    "Do not cut through or strike your own name.",
+    "Avoid ending with a dot or a downward stroke.",
+    "Start with a bold, clear first letter; keep the signature rising upward."
+  ],
+  "favourableYears": {
+    "marriage": [
+      {
+        "year": 2027,
+        "personalYear": 2
+      },
+      {
+        "year": 2031,
+        "personalYear": 6
+      }
+    ],
+    "jobChange": [
+      {
+        "year": 2026,
+        "personalYear": 1
+      },
+      {
+        "year": 2030,
+        "personalYear": 5
+      },
+      {
+        "year": 2035,
+        "personalYear": 1
+      }
+    ],
+    "businessStart": [
+      {
+        "year": 2026,
+        "personalYear": 1
+      },
+      {
+        "year": 2028,
+        "personalYear": 3
+      },
+      {
+        "year": 2030,
+        "personalYear": 5
+      },
+      {
+        "year": 2035,
+        "personalYear": 1
+      }
+    ],
+    "propertyPurchase": [
+      {
+        "year": 2029,
+        "personalYear": 4
+      },
+      {
+        "year": 2031,
+        "personalYear": 6
+      },
+      {
+        "year": 2033,
+        "personalYear": 8
+      }
+    ]
+  },
+  "nameCorrection": {
+    "needed": true,
+    "currentScore": 20,
+    "options": [
+      {
+        "spelling": "Rahull",
+        "fullName": "Rahull Sharma",
+        "compound": 36,
+        "single": 9,
+        "category": "favourable",
+        "score": 100,
+        "changes": [
+          "double 'L'"
+        ]
+      },
+      {
+        "spelling": "Raahull",
+        "fullName": "Raahull Sharma",
+        "compound": 37,
+        "single": 1,
+        "category": "favourable",
+        "score": 100,
+        "changes": [
+          "double 'A'",
+          "double 'L'"
+        ]
+      },
+      {
+        "spelling": "Rahhool",
+        "fullName": "Rahhool Sharma",
+        "compound": 46,
+        "single": 1,
+        "category": "favourable",
+        "score": 100,
+        "changes": [
+          "double 'H'",
+          "'U' → 'OO'"
+        ]
+      },
+      {
+        "spelling": "Rahuul",
+        "fullName": "Rahuul Sharma",
+        "compound": 39,
+        "single": 3,
+        "category": "mixed",
+        "score": 90,
+        "changes": [
+          "double 'U'"
+        ]
+      },
+      {
+        "spelling": "Raahhul",
+        "fullName": "Raahhul Sharma",
+        "compound": 39,
+        "single": 3,
+        "category": "mixed",
+        "score": 90,
+        "changes": [
+          "double 'A'",
+          "double 'H'"
+        ]
+      }
+    ]
+  },
+  "mobileSuggestion": {
+    "currentScore": 92,
+    "verdict": "Highly Lucky",
+    "idealTotals": [
+      1,
+      2,
+      3,
+      9
+    ],
+    "idealCompounds": [
+      19,
+      21,
+      27,
+      36,
+      37,
+      45,
+      46,
+      55,
+      64
+    ],
+    "favourableDigitPairs": [
+      "11",
+      "12",
+      "13",
+      "19",
+      "21",
+      "22",
+      "31",
+      "33",
+      "39",
+      "91",
+      "93",
+      "99"
+    ],
+    "avoidDigits": [
+      4,
+      6,
+      7,
+      8
+    ],
+    "avoidPairs": [
+      "48",
+      "84",
+      "44",
+      "88",
+      "00"
+    ]
+  },
+  "career": {
+    "suitableFields": [
+      "Government service",
+      "Administration",
+      "Leadership roles"
+    ]
+  },
+  "relationship": {
+    "compatiblePartnerNumbers": [
+      1,
+      2,
+      3,
+      9
+    ],
+    "challengingPartnerNumbers": [
+      4,
+      6,
+      7,
+      8
+    ]
+  },
+  "disclaimer": "Gemstones and remedies are traditional guidance. Consult a qualified expert before wearing any gemstone."
+}

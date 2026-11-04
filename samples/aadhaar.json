@@ -1,0 +1,27 @@
+{
+  "module": "aadhaar",
+  "masked": "XXXX-XXXX-0124",
+  "total": {
+    "compound": 51,
+    "single": 6,
+    "master": null,
+    "category": "favourable"
+  },
+  "relationWithBhagyank": "enemy",
+  "relationWithMoolank": "enemy",
+  "gridEffect": {
+    "missingNumbersFilled": [
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "overloadedNumbers": [
+      1
+    ]
+  },
+  "score": 29,
+  "verdict": "Needs Change",
+  "note": "An Aadhaar number cannot be changed; use this vibration only to choose supportive remedies."
+}

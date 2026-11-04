@@ -1,0 +1,272 @@
+{
+  "module": "name",
+  "analysedName": "RAHUL SHARMA",
+  "chaldean": {
+    "system": "chaldean",
+    "name": "RAHUL SHARMA",
+    "letters": [
+      {
+        "letter": "R",
+        "value": 2,
+        "vowel": false
+      },
+      {
+        "letter": "A",
+        "value": 1,
+        "vowel": true
+      },
+      {
+        "letter": "H",
+        "value": 5,
+        "vowel": false
+      },
+      {
+        "letter": "U",
+        "value": 6,
+        "vowel": true
+      },
+      {
+        "letter": "L",
+        "value": 3,
+        "vowel": false
+      },
+      {
+        "letter": "S",
+        "value": 3,
+        "vowel": false
+      },
+      {
+        "letter": "H",
+        "value": 5,
+        "vowel": false
+      },
+      {
+        "letter": "A",
+        "value": 1,
+        "vowel": true
+      },
+      {
+        "letter": "R",
+        "value": 2,
+        "vowel": false
+      },
+      {
+        "letter": "M",
+        "value": 4,
+        "vowel": false
+      },
+      {
+        "letter": "A",
+        "value": 1,
+        "vowel": true
+      }
+    ],
+    "words": [
+      {
+        "word": "RAHUL",
+        "compound": 17,
+        "single": 8
+      },
+      {
+        "word": "SHARMA",
+        "compound": 16,
+        "single": 7
+      }
+    ],
+    "nameNumber": {
+      "compound": 33,
+      "single": 6,
+      "master": 33,
+      "category": "favourable"
+    },
+    "soulUrge": {
+      "compound": 9,
+      "single": 9,
+      "master": null
+    },
+    "personality": {
+      "compound": 24,
+      "single": 6,
+      "master": null
+    },
+    "expression": {
+      "compound": 33,
+      "single": 6,
+      "master": 33
+    }
+  },
+  "pythagorean": {
+    "system": "pythagorean",
+    "name": "RAHUL SHARMA",
+    "letters": [
+      {
+        "letter": "R",
+        "value": 9,
+        "vowel": false
+      },
+      {
+        "letter": "A",
+        "value": 1,
+        "vowel": true
+      },
+      {
+        "letter": "H",
+        "value": 8,
+        "vowel": false
+      },
+      {
+        "letter": "U",
+        "value": 3,
+        "vowel": true
+      },
+      {
+        "letter": "L",
+        "value": 3,
+        "vowel": false
+      },
+      {
+        "letter": "S",
+        "value": 1,
+        "vowel": false
+      },
+      {
+        "letter": "H",
+        "value": 8,
+        "vowel": false
+      },
+      {
+        "letter": "A",
+        "value": 1,
+        "vowel": true
+      },
+      {
+        "letter": "R",
+        "value": 9,
+        "vowel": false
+      },
+      {
+        "letter": "M",
+        "value": 4,
+        "vowel": false
+      },
+      {
+        "letter": "A",
+        "value": 1,
+        "vowel": true
+      }
+    ],
+    "words": [
+      {
+        "word": "RAHUL",
+        "compound": 24,
+        "single": 6
+      },
+      {
+        "word": "SHARMA",
+        "compound": 24,
+        "single": 6
+      }
+    ],
+    "nameNumber": {
+      "compound": 48,
+      "single": 3,
+      "master": null,
+      "category": "mixed"
+    },
+    "soulUrge": {
+      "compound": 6,
+      "single": 6,
+      "master": null
+    },
+    "personality": {
+      "compound": 42,
+      "single": 6,
+      "master": null
+    },
+    "expression": {
+      "compound": 48,
+      "single": 3,
+      "master": null
+    }
+  },
+  "officialName": {
+    "name": "RAHUL KUMAR SHARMA",
+    "nameNumber": {
+      "compound": 48,
+      "single": 3,
+      "master": null,
+      "category": "mixed"
+    }
+  },
+  "relationWithBhagyank": "enemy",
+  "relationWithMoolank": "enemy",
+  "compatibilityScore": 20,
+  "needsCorrection": true,
+  "corrections": [
+    {
+      "spelling": "Rahull",
+      "fullName": "Rahull Sharma",
+      "compound": 36,
+      "single": 9,
+      "category": "favourable",
+      "score": 100,
+      "changes": [
+        "double 'L'"
+      ]
+    },
+    {
+      "spelling": "Raahull",
+      "fullName": "Raahull Sharma",
+      "compound": 37,
+      "single": 1,
+      "category": "favourable",
+      "score": 100,
+      "changes": [
+        "double 'A'",
+        "double 'L'"
+      ]
+    },
+    {
+      "spelling": "Rahhool",
+      "fullName": "Rahhool Sharma",
+      "compound": 46,
+      "single": 1,
+      "category": "favourable",
+      "score": 100,
+      "changes": [
+        "double 'H'",
+        "'U' → 'OO'"
+      ]
+    },
+    {
+      "spelling": "Rahuul",
+      "fullName": "Rahuul Sharma",
+      "compound": 39,
+      "single": 3,
+      "category": "mixed",
+      "score": 90,
+      "changes": [
+        "double 'U'"
+      ]
+    },
+    {
+      "spelling": "Raahhul",
+      "fullName": "Raahhul Sharma",
+      "compound": 39,
+      "single": 3,
+      "category": "mixed",
+      "score": 90,
+      "changes": [
+        "double 'A'",
+        "double 'H'"
+      ]
+    }
+  ],
+  "strengths": [
+    "COMPOUND_33_FAVOURABLE"
+  ],
+  "weaknesses": [
+    "NAME_BHAGYANK_ENEMY",
+    "NAME_MOOLANK_ENEMY"
+  ]
+}

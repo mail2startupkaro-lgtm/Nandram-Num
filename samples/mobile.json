@@ -1,0 +1,150 @@
+{
+  "module": "mobile",
+  "masked": "98XXXXXX10",
+  "number": "9876543210",
+  "total": {
+    "compound": 45,
+    "single": 9,
+    "master": null,
+    "category": "favourable"
+  },
+  "relationWithBhagyank": "friend",
+  "relationWithMoolank": "friend",
+  "digitFrequency": {
+    "0": 1,
+    "1": 1,
+    "2": 1,
+    "3": 1,
+    "4": 1,
+    "5": 1,
+    "6": 1,
+    "7": 1,
+    "8": 1,
+    "9": 1
+  },
+  "repeatingDigits": [],
+  "zeroCount": 1,
+  "pairs": [
+    {
+      "position": 1,
+      "pair": "98",
+      "kind": "neutral"
+    },
+    {
+      "position": 2,
+      "pair": "87",
+      "kind": "neutral"
+    },
+    {
+      "position": 3,
+      "pair": "76",
+      "kind": "neutral"
+    },
+    {
+      "position": 4,
+      "pair": "65",
+      "kind": "supportive"
+    },
+    {
+      "position": 5,
+      "pair": "54",
+      "kind": "supportive"
+    },
+    {
+      "position": 6,
+      "pair": "43",
+      "kind": "neutral"
+    },
+    {
+      "position": 7,
+      "pair": "32",
+      "kind": "neutral"
+    },
+    {
+      "position": 8,
+      "pair": "21",
+      "kind": "supportive"
+    },
+    {
+      "position": 9,
+      "pair": "10",
+      "kind": "neutral"
+    }
+  ],
+  "maleficPairs": [],
+  "conflictPairs": [],
+  "missingNumbersFilled": [
+    3,
+    4,
+    5,
+    6,
+    7
+  ],
+  "last4": {
+    "digits": "3210",
+    "compound": 6,
+    "single": 6,
+    "relationWithBhagyank": "enemy"
+  },
+  "scoreBreakdown": {
+    "base": 50,
+    "bhagyankRelation": 18,
+    "moolankRelation": 14,
+    "compound": 6,
+    "heavy48": 0,
+    "maleficPairs": 0,
+    "zeros": 0,
+    "repeatedEnemyDigits": 0,
+    "missingFilled": 8,
+    "last4": -4
+  },
+  "score": 92,
+  "verdict": "Highly Lucky",
+  "suggestion": {
+    "idealTotals": [
+      1,
+      2,
+      3,
+      9
+    ],
+    "idealCompounds": [
+      19,
+      21,
+      27,
+      36,
+      37,
+      45,
+      46,
+      55,
+      64
+    ],
+    "favourableDigitPairs": [
+      "11",
+      "12",
+      "13",
+      "19",
+      "21",
+      "22",
+      "31",
+      "33",
+      "39",
+      "91",
+      "93",
+      "99"
+    ],
+    "avoidDigits": [
+      4,
+      6,
+      7,
+      8
+    ],
+    "avoidPairs": [
+      "48",
+      "84",
+      "44",
+      "88",
+      "00"
+    ]
+  },
+  "flags": []
+}

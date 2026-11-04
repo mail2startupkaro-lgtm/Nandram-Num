@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 38 56% 96%;
+    --foreground: 252 38% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 252 38% 13%;
+    --primary: 351 60% 30%;
+    --primary-foreground: 40 60% 96%;
+    --secondary: 40 45% 90%;
+    --secondary-foreground: 351 60% 25%;
+    --muted: 38 30% 90%;
+    --muted-foreground: 252 12% 38%;
+    --accent: 43 70% 47%;
+    --accent-foreground: 252 38% 10%;
+    --gold: 43 70% 44%;
+    --maroon: 351 60% 32%;
+    --success: 152 50% 32%;
+    --warning: 32 85% 42%;
+    --danger: 0 65% 45%;
+    --border: 38 30% 82%;
+    --input: 38 30% 80%;
+    --ring: 43 70% 47%;
+    --glass: 0 0% 100%;
+    --glass-alpha: 0.72;
+  }
+  .dark {
+    --background: 250 45% 8%;
+    --foreground: 42 55% 90%;
+    --card: 250 38% 13%;
+    --card-foreground: 42 55% 90%;
+    --primary: 43 72% 54%;
+    --primary-foreground: 250 45% 8%;
+    --secondary: 350 45% 22%;
+    --secondary-foreground: 42 55% 90%;
+    --muted: 250 25% 18%;
+    --muted-foreground: 42 18% 68%;
+    --accent: 351 55% 42%;
+    --accent-foreground: 42 55% 95%;
+    --gold: 43 72% 56%;
+    --maroon: 351 55% 46%;
+    --success: 152 45% 50%;
+    --warning: 35 85% 58%;
+    --danger: 0 70% 62%;
+    --border: 250 25% 24%;
+    --input: 250 25% 28%;
+    --ring: 43 72% 54%;
+    --glass: 250 38% 14%;
+    --glass-alpha: 0.62;
+  }
+  * { @apply border-border; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { @apply bg-background text-foreground font-sans antialiased; }
+  h1, h2, h3 { @apply font-serif tracking-tight; }
+  :lang(hi) body, [lang='hi'] { font-family: 'Noto Sans Devanagari', Poppins, sans-serif; }
+}
+
+@layer components {
+  .glass {
+    background: hsl(var(--glass) / var(--glass-alpha));
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    @apply border border-gold/25 shadow-[0_8px_30px_-12px_rgba(60,20,30,0.25)];
+  }
+  .gold-text {
+    background: linear-gradient(100deg, hsl(var(--gold)), hsl(43 90% 70%), hsl(var(--gold)));
+    background-size: 200% 100%;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    @apply animate-shimmer;
+  }
+  .num-badge { @apply font-serif tabular-nums; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin-slow, .animate-shimmer { animation: none !important; }
+}
