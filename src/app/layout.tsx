@@ -7,7 +7,7 @@ import { CosmicBackground } from '@/components/layout/cosmic-bg';
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL || 'http://localhost:3000'),
-  title: { default: '[Brand Name] – Numerology Reading', template: '%s · [Brand Name]' },
+  title: { default: 'mynumerologist.com – Numerology Reading', template: '%s · mynumerologist.com' },
   description: 'Moolank, Bhagyank, Lo Shu Grid, name, mobile and marriage compatibility numerology with practical remedies.',
 };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#140f2b' };

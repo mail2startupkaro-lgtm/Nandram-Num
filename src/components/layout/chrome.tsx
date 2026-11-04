@@ -29,6 +29,22 @@ export function MandalaBackground() {
   );
 }
 
+/** Brand wordmark: "my" italic, main name in a gold gradient, ".com" small and muted. */
+function Wordmark({ brand }: { brand: string }) {
+  const m = /^(my)(.+?)(\.[a-z]{2,})$/i.exec(brand);
+  if (!m) return <span className="hidden font-serif text-lg font-semibold sm:inline">{brand}</span>;
+  return (
+    <span className="hidden flex-col leading-none sm:flex" aria-label={brand}>
+      <span className="font-serif text-xl tracking-wide">
+        <span className="italic font-light text-foreground/70">{m[1]}</span>
+        <span className="bg-gradient-to-r from-gold via-amber-300 to-gold bg-clip-text font-bold text-transparent">{m[2]}</span>
+        <span className="ml-0.5 align-baseline text-xs font-medium tracking-widest text-muted-foreground">{m[3]}</span>
+      </span>
+      <span className="mt-1 text-[9px] uppercase tracking-[0.3em] text-gold/80">Numbers · Destiny · Clarity</span>
+    </span>
+  );
+}
+
 export function Header() {
   const { t, lang, setLang, theme, setTheme, me, refreshMe } = useApp();
   const router = useRouter();
@@ -43,7 +59,7 @@ export function Header() {
       <div className="container flex h-16 items-center gap-2">
         <Link href="/" className="flex items-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-maroon to-gold font-serif text-lg font-bold text-white">ॐ</span>
-          <span className="hidden font-serif text-lg font-semibold sm:inline">{t.brand}</span>
+          <Wordmark brand={t.brand} />
         </Link>
         <nav className="ml-auto flex items-center gap-0.5 sm:gap-1">
           <Link href="/reading" className="hidden whitespace-nowrap rounded-md px-3 py-2 text-sm hover:bg-muted lg:inline-block">{t.nav.reading}</Link>

@@ -66,7 +66,7 @@ export interface Branding {
 }
 
 export const DEFAULT_BRANDING: Branding = {
-  brandName: process.env.BRAND_NAME || '[Brand Name]',
+  brandName: process.env.BRAND_NAME || 'mynumerologist.com',
   expertName: process.env.EXPERT_NAME || '[Expert Name]',
   expertTitle: 'Numerologist · Vedic, Chaldean & Lo Shu',
   contactLine: process.env.EXPERT_CONTACT || '[Phone] · [Email] · [City]',

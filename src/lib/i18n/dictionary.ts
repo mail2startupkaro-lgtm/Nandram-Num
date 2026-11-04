@@ -2,7 +2,7 @@
 export type Lang = 'en' | 'hi';
 
 const en = {
-  brand: '[Brand Name]',
+  brand: 'mynumerologist.com',
   tagline: 'Vedic, Chaldean & Lo Shu numerology by [Expert Name]',
   nav: { reading: 'Get your reading', dashboard: 'My reports', pricing: 'Pricing', calculators: 'Free calculators' },
   home: {
@@ -93,7 +93,7 @@ const en = {
 type Dict = typeof en;
 
 const hi: Dict = {
-  brand: '[Brand Name]',
+  brand: 'mynumerologist.com',
   tagline: '[Expert Name] द्वारा वैदिक, कैल्डियन और लो शू अंक ज्योतिष',
   nav: { reading: 'अपनी रीडिंग पाएं', dashboard: 'मेरी रिपोर्ट', pricing: 'मूल्य', calculators: 'मुफ़्त कैलकुलेटर' },
   home: {
