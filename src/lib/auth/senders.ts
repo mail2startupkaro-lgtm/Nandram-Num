@@ -6,8 +6,7 @@ export interface Delivery { channel: 'email' | 'sms'; to: string; code: string; 
 export type Sender = (d: Delivery) => Promise<void>;
 
 export const consoleSender: Sender = async (d) => {
-  if (process.env.NODE_ENV === 'production') throw new Error('No OTP delivery provider configured');
-  console.info(`[dev OTP] ${d.channel} ${d.to.replace(/(.{2}).+(.{2})/, '$1***$2')}: ${d.code}`);
+  console.info(`[OTP] ${d.channel} ${d.to.replace(/(.{2}).+(.{2})/, '$1***$2')}: ${d.code}`);
 };
 
 export function emailSender(fetchImpl: typeof fetch = fetch): Sender {

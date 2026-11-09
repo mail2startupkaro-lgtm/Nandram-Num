@@ -26,6 +26,7 @@ export default {
         ring: v('ring'),
       },
       fontFamily: {
+        cinzel: ['"Cinzel"', 'serif'],
         serif: ['"Playfair Display"', 'Cormorant Garamond', 'Georgia', 'serif'],
         sans: ['Poppins', '"Noto Sans Devanagari"', 'system-ui', 'sans-serif'],
         deva: ['"Noto Sans Devanagari"', 'Poppins', 'sans-serif'],

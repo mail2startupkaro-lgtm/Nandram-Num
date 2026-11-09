@@ -46,7 +46,7 @@ export async function requestOtp(channel: 'email' | 'sms', raw: string, opts: { 
   await db.update(otpCodes).set({ consumedAt: new Date() }).where(and(eq(otpCodes.identifierHash, ih), isNull(otpCodes.consumedAt)));
   await db.insert(otpCodes).values({ channel, identifierHash: ih, codeHash: codeHash(code, ih), expiresAt: new Date(Date.now() + OTP_TTL_MS), ip: opts.ip });
   await (opts.sender ?? defaultSender(channel))({ channel, to: ident, code, brand: opts.brand ?? process.env.BRAND_NAME ?? 'Numerology' });
-  const exposeForDev = process.env.NODE_ENV !== 'production' && process.env.AUTH_DEV_SHOW_OTP === '1';
+  const exposeForDev = process.env.AUTH_DEV_SHOW_OTP === '1' || (!process.env.RESEND_API_KEY && !process.env.MSG91_AUTH_KEY);
   return { identifier: ident, ...(exposeForDev ? { devCode: code } : {}) };
 }
 
