@@ -2,7 +2,7 @@
 export type Lang = 'en' | 'hi';
 
 const en = {
-  brand: 'mynumerologist.com',
+  brand: 'myNumerologist.com',
   tagline: 'Vedic, Chaldean & Lo Shu numerology by [Expert Name]',
   nav: { reading: 'Get your reading', dashboard: 'My reports', pricing: 'Pricing', calculators: 'Free calculators' },
   home: {
@@ -71,6 +71,7 @@ const en = {
   share: { title: 'Numerology report', needPassword: 'This report is password protected.', unlock: 'Open report', wrong: 'Wrong password.', expired: 'This link has expired.', revoked: 'This link is no longer active.', notFound: 'Link not found.', download: 'Download PDF', notReady: 'The full report is being finalised by your numerologist.', validUntil: 'Link valid until' },
   auth: {
     title: 'Sign in', sub: 'Use your email or mobile number and your password.', signup: 'Create account', signupTitle: 'Create your account', signupSub: 'Sign up with your name, email, mobile number and a password.', identLabel: 'Email or mobile number', identPlaceholder: 'you@example.com or 98765 43210', password: 'Password', passwordHint: 'At least 8 characters.', confirmPassword: 'Confirm password', fullName: 'Full name', createAccount: 'Create account', adminLogin: 'Admin login', email: 'Email', mobile: 'Mobile', google: 'Continue with Google', or: 'or',
+    forgotPassword: 'Forgot password?', resetTitle: 'Reset password', resetSub: 'Enter your email or mobile number. We will send you a code to reset your password.', newPassword: 'New password', resetPassword: 'Reset password', resetSuccess: 'Password reset successfully! You can now sign in.', backToSignin: '← Back to sign in',
     emailLabel: 'Email address', mobileLabel: 'Mobile number', sendCode: 'Send code', code: '6-digit code', verify: 'Sign in', resend: 'Resend code', change: 'Change',
     sentTo: 'We sent a code to', name: 'Your name (optional)', logout: 'Sign out', account: 'My account', admin: 'Admin', signin: 'Sign in',
     errors: { INVALID_CREDENTIALS: 'Email/mobile or password is incorrect.', ACCOUNT_LOCKED: 'Too many wrong passwords. Try again in 15 minutes.', WEAK_PASSWORD: 'Password must be at least 8 characters.', PASSWORD_MISMATCH: 'Passwords do not match.', EMAIL_TAKEN: 'An account with this email already exists. Please sign in.', MOBILE_TAKEN: 'An account with this mobile number already exists. Please sign in.', VALIDATION: 'Please check the details you entered.', INTERNAL: 'Something went wrong. Please try again.', FORBIDDEN: 'This account does not have admin access.', INVALID_EMAIL: 'Enter a valid email address.', INVALID_MOBILE: 'Enter a valid 10-digit Indian mobile number.', WRONG_CODE: 'That code is not correct.', CODE_EXPIRED: 'This code has expired. Request a new one.', TOO_MANY_ATTEMPTS: 'Too many attempts. Request a new code.', TOO_MANY_REQUESTS: 'Too many requests. Please try again later.', WAIT_BEFORE_RESEND: 'Please wait 30 seconds before requesting another code.', ACCOUNT_DISABLED: 'This account is disabled.', google_failed: 'Google sign-in failed. Please try again.', google_state: 'Google sign-in expired. Please try again.', google_unverified: 'Your Google email is not verified.' } as Record<string, string>,
@@ -93,7 +94,7 @@ const en = {
 type Dict = typeof en;
 
 const hi: Dict = {
-  brand: 'mynumerologist.com',
+  brand: 'myNumerologist.com',
   tagline: '[Expert Name] द्वारा वैदिक, कैल्डियन और लो शू अंक ज्योतिष',
   nav: { reading: 'अपनी रीडिंग पाएं', dashboard: 'मेरी रिपोर्ट', pricing: 'मूल्य', calculators: 'मुफ़्त कैलकुलेटर' },
   home: {
@@ -156,6 +157,7 @@ const hi: Dict = {
   share: { title: 'अंक ज्योतिष रिपोर्ट', needPassword: 'यह रिपोर्ट पासवर्ड से सुरक्षित है।', unlock: 'रिपोर्ट खोलें', wrong: 'गलत पासवर्ड।', expired: 'यह लिंक समाप्त हो गया है।', revoked: 'यह लिंक अब सक्रिय नहीं है।', notFound: 'लिंक नहीं मिला।', download: 'PDF डाउनलोड', notReady: 'आपके अंक ज्योतिषी पूरी रिपोर्ट को अंतिम रूप दे रहे हैं।', validUntil: 'लिंक मान्य है' },
   auth: {
     title: 'साइन इन', sub: 'अपना ईमेल या मोबाइल नंबर और पासवर्ड डालें।', signup: 'खाता बनाएं', signupTitle: 'अपना खाता बनाएं', signupSub: 'नाम, ईमेल, मोबाइल नंबर और पासवर्ड से साइन अप करें।', identLabel: 'ईमेल या मोबाइल नंबर', identPlaceholder: 'you@example.com या 98765 43210', password: 'पासवर्ड', passwordHint: 'कम से कम 8 अक्षर।', confirmPassword: 'पासवर्ड दोबारा लिखें', fullName: 'पूरा नाम', createAccount: 'खाता बनाएं', adminLogin: 'एडमिन लॉगिन', email: 'ईमेल', mobile: 'मोबाइल', google: 'Google से जारी रखें', or: 'या',
+    forgotPassword: 'पासवर्ड भूल गए?', resetTitle: 'पासवर्ड रीसेट करें', resetSub: 'अपना ईमेल या मोबाइल नंबर दर्ज करें। पासवर्ड बदलने के लिए कोड भेजा जाएगा।', newPassword: 'नया पासवर्ड', resetPassword: 'पासवर्ड रीसेट करें', resetSuccess: 'पासवर्ड सफलतापूर्वक बदल गया! अब आप साइन इन कर सकते हैं।', backToSignin: '← साइन इन पर वापस जाएं',
     emailLabel: 'ईमेल पता', mobileLabel: 'मोबाइल नंबर', sendCode: 'कोड भेजें', code: '6 अंकों का कोड', verify: 'साइन इन करें', resend: 'कोड दोबारा भेजें', change: 'बदलें',
     sentTo: 'कोड भेजा गया', name: 'आपका नाम (वैकल्पिक)', logout: 'साइन आउट', account: 'मेरा खाता', admin: 'एडमिन', signin: 'साइन इन',
     errors: { INVALID_CREDENTIALS: 'ईमेल/मोबाइल या पासवर्ड गलत है।', ACCOUNT_LOCKED: 'बहुत अधिक गलत पासवर्ड। 15 मिनट बाद प्रयास करें।', WEAK_PASSWORD: 'पासवर्ड कम से कम 8 अक्षर का हो।', PASSWORD_MISMATCH: 'दोनों पासवर्ड मेल नहीं खाते।', EMAIL_TAKEN: 'इस ईमेल से खाता पहले से है। साइन इन करें।', MOBILE_TAKEN: 'इस मोबाइल नंबर से खाता पहले से है। साइन इन करें।', VALIDATION: 'कृपया दर्ज विवरण जाँचें।', INTERNAL: 'कुछ गलत हुआ। फिर प्रयास करें।', FORBIDDEN: 'इस खाते को एडमिन एक्सेस नहीं है।', INVALID_EMAIL: 'मान्य ईमेल दर्ज करें।', INVALID_MOBILE: 'मान्य 10 अंकों का मोबाइल नंबर दर्ज करें।', WRONG_CODE: 'कोड सही नहीं है।', CODE_EXPIRED: 'कोड समाप्त हो गया। नया कोड मंगाएं।', TOO_MANY_ATTEMPTS: 'बहुत अधिक प्रयास। नया कोड मंगाएं।', TOO_MANY_REQUESTS: 'बहुत अधिक अनुरोध। बाद में प्रयास करें।', WAIT_BEFORE_RESEND: 'नया कोड मंगाने से पहले 30 सेकंड रुकें।', ACCOUNT_DISABLED: 'यह खाता निष्क्रिय है।', google_failed: 'Google साइन-इन विफल।', google_state: 'Google साइन-इन समाप्त। फिर प्रयास करें।', google_unverified: 'आपका Google ईमेल सत्यापित नहीं है।' } as Record<string, string>,

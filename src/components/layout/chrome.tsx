@@ -29,19 +29,39 @@ export function MandalaBackground() {
   );
 }
 
-/** Brand wordmark: "my" italic, main name in a gold gradient, ".com" small and muted. */
-function Wordmark({ brand }: { brand: string }) {
-  const m = /^(my)(.+?)(\.[a-z]{2,})$/i.exec(brand);
-  if (!m) return <span className="hidden font-serif text-lg font-semibold sm:inline">{brand}</span>;
+/** Brand Logo: "myNumerologist.com" with sacred emblem and glowing gold styling. */
+function BrandLogo() {
   return (
-    <span className="hidden flex-col leading-none sm:flex" aria-label={brand}>
-      <span className="font-serif text-xl tracking-wide">
-        <span className="italic font-light text-foreground/70">{m[1]}</span>
-        <span className="bg-gradient-to-r from-gold via-amber-300 to-gold bg-clip-text font-bold text-transparent">{m[2]}</span>
-        <span className="ml-0.5 align-baseline text-xs font-medium tracking-widest text-muted-foreground">{m[3]}</span>
-      </span>
-      <span className="mt-1 text-[9px] uppercase tracking-[0.3em] text-gold/80">Numbers · Destiny · Clarity</span>
-    </span>
+    <div className="group flex items-center gap-2.5 transition-transform duration-200 hover:scale-[1.02]">
+      {/* Sacred Emblem Icon */}
+      <div className="relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/30 via-maroon/40 to-amber-900/40 p-[1.5px] shadow-[0_0_14px_rgba(245,158,11,0.25)] border border-amber-400/40 backdrop-blur-sm group-hover:border-amber-300 group-hover:shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all duration-300">
+        <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-gradient-to-br from-[#2a0e1b] via-[#1a0a14] to-[#24130a]">
+          <span className="font-serif text-base sm:text-lg font-bold bg-gradient-to-b from-amber-100 via-amber-300 to-amber-500 bg-clip-text text-transparent drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+            ॐ
+          </span>
+        </div>
+        {/* Subtle decorative gold sparkle ring */}
+        <span className="absolute -inset-0.5 -z-10 rounded-xl bg-gradient-to-r from-gold/30 via-amber-300/20 to-gold/30 opacity-0 blur-sm group-hover:opacity-100 transition-opacity duration-300" />
+      </div>
+
+      {/* Brand Name Typography */}
+      <div className="flex flex-col leading-none" aria-label="myNumerologist.com">
+        <span className="flex items-baseline tracking-normal">
+          <span className="font-serif italic font-normal text-foreground/85 text-[18px] sm:text-[21px] select-none">
+            my
+          </span>
+          <span className="font-cinzel font-bold bg-gradient-to-r from-amber-200 via-amber-300 to-amber-500 bg-clip-text text-transparent text-[19px] sm:text-[22px] tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)] select-none">
+            Numerologist
+          </span>
+          <span className="font-sans font-semibold text-[11px] sm:text-[12px] text-amber-400/90 tracking-wide select-none ml-0.5">
+            .com
+          </span>
+        </span>
+        <span className="mt-0.5 hidden text-[8.5px] uppercase tracking-[0.28em] font-medium text-gold/80 sm:block">
+          Numbers · Destiny · Remedies
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -57,9 +77,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-gold/20 bg-background/70 backdrop-blur-md">
       <div className="container flex h-16 items-center gap-2">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-maroon to-gold font-serif text-lg font-bold text-white">ॐ</span>
-          <Wordmark brand={t.brand} />
+        <Link href="/" className="flex items-center">
+          <BrandLogo />
         </Link>
         <nav className="ml-auto flex items-center gap-0.5 sm:gap-1">
           <Link href="/reading" className="hidden whitespace-nowrap rounded-md px-3 py-2 text-sm hover:bg-muted lg:inline-block">{t.nav.reading}</Link>
