@@ -1,5 +1,10 @@
 /** Mulank (Root / Psychic Number) profiles, 1–9. Mulank = day of birth reduced to a single digit. */
+import { MULANK_COMPATIBILITY } from '@/lib/numerology/data/relations';
+
 export type MulankProfile = {
+  /** From the engine's friendship table – the same numbers every report and score uses. */
+  compatible: number[];
+  avoid: number[];
   n: number;
   title: string;
   tagline: string;
@@ -20,12 +25,10 @@ export type MulankProfile = {
   health: string;
   money: string;
   remedies: string[];
-  compatible: number[];
-  avoid: number[];
   famousDates: string;
 };
 
-export const MULANK: MulankProfile[] = [
+const MULANK_TEXT: Omit<MulankProfile, 'compatible' | 'avoid'>[] = [
   {
     n: 1, title: 'The Leader', tagline: 'Born to begin, built to lead.',
     planet: 'Sun (Surya)', element: 'Fire', direction: 'East',
@@ -40,7 +43,6 @@ export const MULANK: MulankProfile[] = [
     health: 'Watch the heart, blood pressure, eyes and spine. Stress from over-work is your main trigger, so protect time for rest and morning sunlight.',
     money: 'Good earning power through initiative and positions of authority. Avoid risky bets driven by pride; build steady reserves before expanding.',
     remedies: ['Offer water to the rising Sun each morning', 'Wear gold or copper on the ring finger after astrologer advice', 'Chant "Om Suryaya Namah"', 'Donate wheat or jaggery on Sundays'],
-    compatible: [2, 3, 5, 9], avoid: [8],
     famousDates: 'Born on 1, 10, 19, 28',
   },
   {
@@ -57,7 +59,6 @@ export const MULANK: MulankProfile[] = [
     health: 'Digestion, sleep, fluid balance and emotional well-being are linked for you. Regular routine, hydration and time near water or in calm places help.',
     money: 'Income is steadier in partnerships or service roles. Avoid emotional spending and lending beyond your comfort.',
     remedies: ['Keep a small silver item or wear a pearl after guidance', 'Chant "Om Chandraya Namah"', 'Offer milk or white flowers on Mondays', 'Spend time under moonlight, meditating'],
-    compatible: [1, 4, 6, 7], avoid: [5, 9],
     famousDates: 'Born on 2, 11, 20, 29',
   },
   {
@@ -74,7 +75,6 @@ export const MULANK: MulankProfile[] = [
     health: 'Liver, weight, cholesterol and diabetes risk can rise with comfort eating. Moderate sweets, walk daily and keep a regular sleep pattern.',
     money: 'Wealth comes through knowledge and advice. Guard against generosity that outpaces savings.',
     remedies: ['Respect teachers, elders and gurus', 'Chant "Om Gurave Namah"', 'Donate yellow lentils or turmeric on Thursdays', 'Wear yellow on Thursdays'],
-    compatible: [1, 2, 5, 9], avoid: [4, 8],
     famousDates: 'Born on 3, 12, 21, 30',
   },
   {
@@ -91,7 +91,6 @@ export const MULANK: MulankProfile[] = [
     health: 'Nervous tension, skin, back and sleep issues. Grounding habits, regular exercise and screen breaks help.',
     money: 'Slow but solid gains. Avoid shortcuts, speculation and get-rich schemes, which often backfire for this number.',
     remedies: ['Chant "Om Rahave Namah"', 'Feed birds or serve the needy on Saturdays', 'Keep your workspace tidy and uncluttered', 'Practice daily breathing exercises'],
-    compatible: [1, 5, 7, 8], avoid: [3, 9],
     famousDates: 'Born on 4, 13, 22, 31',
   },
   {
@@ -108,7 +107,6 @@ export const MULANK: MulankProfile[] = [
     health: 'Nervous system, skin, respiratory and stress-related issues. Meditation, balanced meals and good sleep keep the mind calm.',
     money: 'Strong earning through trade and ideas, but money can slip away just as quickly. Automate savings.',
     remedies: ['Chant "Om Budhaya Namah"', 'Donate green moong on Wednesdays', 'Keep a green plant at home', 'Journal daily to channel scattered thoughts'],
-    compatible: [1, 3, 4, 6], avoid: [2],
     famousDates: 'Born on 5, 14, 23',
   },
   {
@@ -125,7 +123,6 @@ export const MULANK: MulankProfile[] = [
     health: 'Throat, kidneys, hormones and weight. Balance indulgence with movement and mindful eating.',
     money: 'Comfortable lifestyle and income through creative or relationship-driven work. Watch spending on appearances.',
     remedies: ['Chant "Om Shukraya Namah"', 'Offer white flowers or sweets on Fridays', 'Keep your home clean, fragrant and bright', 'Respect women and elders of the household'],
-    compatible: [3, 5, 9, 2], avoid: [1, 8],
     famousDates: 'Born on 6, 15, 24',
   },
   {
@@ -142,7 +139,6 @@ export const MULANK: MulankProfile[] = [
     health: 'Nervous system, sleep, digestion and mental fatigue. Meditation, nature and digital rest restore you.',
     money: 'Income through specialised knowledge. Avoid impulsive or secretive financial moves; keep records clear.',
     remedies: ['Chant "Om Ketave Namah"', 'Meditate daily at a fixed time', 'Donate blankets or food to the needy', 'Spend regular time in nature'],
-    compatible: [1, 2, 4], avoid: [8, 9],
     famousDates: 'Born on 7, 16, 25',
   },
   {
@@ -159,7 +155,6 @@ export const MULANK: MulankProfile[] = [
     health: 'Joints, bones, teeth, chronic fatigue and stress. Regular exercise, calcium and rest are important.',
     money: 'Wealth builds slowly and stays when earned honestly. Avoid shortcuts and exploiting others; Saturn returns what is given.',
     remedies: ['Chant "Om Shanaischaraya Namah"', 'Serve the elderly, workers and the poor on Saturdays', 'Light a sesame oil lamp on Saturday evenings', 'Keep promises and be punctual'],
-    compatible: [4, 5, 6], avoid: [1, 2, 3, 7, 9],
     famousDates: 'Born on 8, 17, 26',
   },
   {
@@ -176,10 +171,11 @@ export const MULANK: MulankProfile[] = [
     health: 'Blood pressure, injuries, inflammation and fevers. Channel energy into exercise and keep a cooling diet.',
     money: 'Earns well through effort and risk-taking in action-oriented fields. Avoid rash investments in anger or excitement.',
     remedies: ['Chant "Om Mangalaya Namah"', 'Offer red lentils on Tuesdays', 'Practice yoga or sport to release heat', 'Serve a cause beyond yourself'],
-    compatible: [1, 3, 6], avoid: [4, 7, 8],
     famousDates: 'Born on 9, 18, 27',
   },
 ];
+
+export const MULANK: MulankProfile[] = MULANK_TEXT.map((m) => ({ ...m, ...MULANK_COMPATIBILITY[m.n] }));
 
 export function getMulank(n: number): MulankProfile | undefined {
   return MULANK.find((m) => m.n === n);

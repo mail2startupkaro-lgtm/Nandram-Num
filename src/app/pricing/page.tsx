@@ -9,10 +9,9 @@ import { Field, Input, Select } from '@/components/ui/form';
 import { api, ApiError } from '@/lib/client/api';
 
 interface Plan { code: string; name: string; description: string; pricePaise: number; intervalDays: number | null; credits: number; features: Record<string, boolean | number | null> }
-interface Order { gateway: 'cashfree' | 'razorpay'; mode: string; paymentSessionId: string; keyId: string; mock: boolean; orderId: string; amountPaise: number; discountPaise: number; plan: { code: string; name: string }; prefill: { name: string; email: string; contact: string } }
+interface Order { gateway: 'cashfree' | 'mock'; mode: string; paymentSessionId: string; mock: boolean; orderId: string; amountPaise: number; discountPaise: number; plan: { code: string; name: string }; prefill: { name: string; email: string; contact: string } }
 type CashfreeResult = { error?: { message?: string }; redirect?: boolean; paymentDetails?: { paymentMessage?: string } };
 declare global { interface Window {
-  Razorpay?: new (o: Record<string, unknown>) => { open: () => void; on: (e: string, cb: (r: unknown) => void) => void };
   Cashfree?: (o: { mode: string }) => { checkout: (o: { paymentSessionId: string; redirectTarget?: string }) => Promise<CashfreeResult> };
 } }
 
@@ -36,15 +35,6 @@ async function confirmCashfree(orderId: string, tries = 6): Promise<'paid' | 'pe
 }
 
 const inr = (p: number) => `₹${(p / 100).toLocaleString('en-IN', { minimumFractionDigits: p % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;
-
-function loadCheckoutJs(): Promise<void> {
-  return new Promise((res, rej) => {
-    if (window.Razorpay) return res();
-    const s = Object.assign(document.createElement('script'), { src: 'https://checkout.razorpay.com/v1/checkout.js', async: true });
-    s.onload = () => res(); s.onerror = () => rej(new Error('Could not load Razorpay'));
-    document.body.appendChild(s);
-  });
-}
 
 export default function PricingPage() {
   const { t, me, refreshMe } = useApp();
@@ -130,8 +120,8 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
     catch (e) { setDiscount(0); setCouponMsg(e instanceof ApiError ? (e.body as { error?: string }).error ?? 'Invalid' : 'Invalid'); }
   }
 
-  async function verify(resp: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) {
-    await api('/api/billing/verify', { method: 'POST', json: resp });
+  async function simulatePayment(orderId: string) {
+    await api('/api/billing/mock-pay', { method: 'POST', json: { orderId } });
     setDone('ok'); await onPaid();
   }
 
@@ -154,14 +144,7 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
         setBusy(false);
         return;
       }
-      if (o.mock) return; // test mode: the dialog shows a "simulate" button
-      await loadCheckoutJs();
-      const rz = new window.Razorpay!({
-        key: o.keyId, order_id: o.orderId, amount: o.amountPaise, currency: 'INR', name: t.brand, description: o.plan.name, prefill: o.prefill,
-        theme: { color: '#7A1E2C' }, handler: (resp: never) => verify(resp).catch(() => setDone('fail')), modal: { ondismiss: () => setBusy(false) },
-      });
-      rz.on('payment.failed', () => setDone('fail'));
-      rz.open();
+      setBusy(false); // test mode (no Cashfree keys, development only): the dialog shows a "simulate" button
     } catch (e) { setPending(false); setError(e instanceof ApiError ? (t.pricing.errors[e.body.error ?? ''] ?? e.message) : t.err.server); setBusy(false); }
   }
 
@@ -187,7 +170,7 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
             {order?.mock ? (
               <div className="space-y-2 rounded-md border border-warning/40 bg-warning/10 p-3">
                 <p className="text-xs">{t.pricing.mockNote}</p>
-                <Button variant="gold" className="w-full" onClick={async () => { try { await verify(await api('/api/billing/mock-pay', { method: 'POST', json: { orderId: order.orderId } })); } catch { setDone('fail'); } }}>{t.pricing.simulate}</Button>
+                <Button variant="gold" className="w-full" onClick={async () => { try { await simulatePayment(order.orderId); } catch { setDone('fail'); } }}>{t.pricing.simulate}</Button>
               </div>
             ) : (
               <Button variant="gold" className="w-full" disabled={busy || !state} onClick={pay}>{pending ? t.pricing.pending : busy ? t.pricing.paying : `${t.pricing.pay} ${inr(plan.pricePaise - discount)}`}</Button>

@@ -11,8 +11,8 @@ import { createSession, destroySession, userFromSession } from '@/lib/auth/sessi
 import { exchangeGoogleCode } from '@/lib/auth/google';
 import { financialYear, splitGstInclusive } from '@/lib/billing/gst';
 import { rupeesInWords, renderInvoicePdf } from '@/lib/billing/invoice';
-import { CheckoutError, createCheckout, fulfilPayment, validateCoupon } from '@/lib/billing/checkout';
-import { createRazorpayOrder, mockPaymentSignature, razorpayConfig, verifyPaymentSignature, verifyWebhookSignature } from '@/lib/billing/razorpay';
+import { activeGateway, CheckoutError, createCheckout, fulfilPayment, isMockOrder, validateCoupon } from '@/lib/billing/checkout';
+import { cashfreeConfig, cashfreePhone, createCashfreeOrder, verifyCashfreeWebhook } from '@/lib/billing/cashfree';
 import { assertCanAddProfiles, getAccount, isReportUnlocked, unlockReport } from '@/lib/billing/entitlements';
 import { getPlan } from '@/lib/billing/plans';
 import { pdfStyleFor, saveBranding, validateImageDataUrl } from '@/lib/branding';
@@ -44,23 +44,41 @@ describe('pure helpers', () => {
     expect(rupeesInWords(24_99_900)).toBe('Twenty Four Thousand Nine Hundred Ninety Nine Rupees Only');
     expect(rupeesInWords(1_25_00_050)).toBe('One Lakh Twenty Five Thousand Rupees and Fifty Paise Only');
   });
-  it('Razorpay signatures (checkout + webhook)', () => {
-    const cfg = { keyId: 'k', keySecret: 'secret', webhookSecret: 'wh', mock: false };
-    const sig = require('node:crypto').createHmac('sha256', 'secret').update('order_1|pay_1').digest('hex');
-    expect(verifyPaymentSignature(cfg, 'order_1', 'pay_1', sig)).toBe(true);
-    expect(verifyPaymentSignature(cfg, 'order_1', 'pay_2', sig)).toBe(false);
-    const body = '{"event":"payment.captured"}';
-    const wsig = require('node:crypto').createHmac('sha256', 'wh').update(body).digest('hex');
-    expect(verifyWebhookSignature(cfg, body, wsig)).toBe(true);
-    expect(verifyWebhookSignature(cfg, body + ' ', wsig)).toBe(false);
+  it('Cashfree webhook signature (base64 HMAC of timestamp + body)', () => {
+    const cfg = { appId: 'app', secretKey: 'cfsk_ma_test_secret', mode: 'sandbox' as const, baseUrl: 'https://sandbox.cashfree.com/pg' };
+    const body = '{"type":"PAYMENT_SUCCESS_WEBHOOK","data":{"order":{"order_id":"cf_1"}}}';
+    const sig = require('node:crypto').createHmac('sha256', cfg.secretKey).update('1700000000' + body).digest('base64');
+    expect(verifyCashfreeWebhook(cfg, body, sig, '1700000000')).toBe(true);
+    expect(verifyCashfreeWebhook(cfg, body + ' ', sig, '1700000000')).toBe(false);
+    expect(verifyCashfreeWebhook(cfg, body, sig, '1700000001')).toBe(false);
+    expect(verifyCashfreeWebhook(cfg, body, 'é'.repeat(sig.length), '1700000000')).toBe(false); // multi-byte, same string length
+    expect(verifyCashfreeWebhook(cfg, body, null, '1700000000')).toBe(false);
   });
-  it('creates real Razorpay orders with basic auth', async () => {
-    const f = vi.fn(async () => new Response(JSON.stringify({ id: 'order_X', amount: 49_900, currency: 'INR', receipt: 'r' }), { status: 200 }));
-    const o = await createRazorpayOrder({ keyId: 'rzp_test_1', keySecret: 's', webhookSecret: '', mock: false }, 49_900, 'r', {}, f as unknown as typeof fetch);
-    expect(o.id).toBe('order_X');
+  it('Cashfree config: mode from key, env override, phone normalisation', () => {
+    const old = { ...process.env };
+    process.env.CASHFREE_APP_ID = 'app'; process.env.CASHFREE_SECRET_KEY = 'cfsk_ma_prod_x'; delete process.env.CASHFREE_ENV;
+    expect(cashfreeConfig()?.mode).toBe('production');
+    expect(cashfreeConfig()?.baseUrl).toBe('https://api.cashfree.com/pg');
+    expect(activeGateway()).toBe('cashfree');
+    process.env.CASHFREE_ENV = 'sandbox';
+    expect(cashfreeConfig()?.baseUrl).toBe('https://sandbox.cashfree.com/pg');
+    delete process.env.CASHFREE_APP_ID;
+    expect(cashfreeConfig()).toBeNull();
+    expect(activeGateway()).toBe('mock'); // test / development
+    process.env = old;
+    expect(cashfreePhone('+91 98765 43210')).toBe('9876543210');
+    expect(cashfreePhone('12345')).toBeNull();
+  });
+  it('creates Cashfree orders with API headers and checks the amount', async () => {
+    const cfg = { appId: 'app', secretKey: 'sec', mode: 'sandbox' as const, baseUrl: 'https://sandbox.cashfree.com/pg' };
+    const f = vi.fn(async () => new Response(JSON.stringify({ cf_order_id: 1, order_id: 'cf_x', order_amount: 499, order_currency: 'INR', order_status: 'ACTIVE', payment_session_id: 'sess' }), { status: 200 }));
+    const o = await createCashfreeOrder(cfg, { orderId: 'cf_x', amountPaise: 49_900, customer: { id: 'u-1', phone: '9876543210' } }, f as unknown as typeof fetch);
+    expect(o.payment_session_id).toBe('sess');
     const [url, init] = f.mock.calls[0] as unknown as [string, RequestInit];
-    expect(url).toBe('https://api.razorpay.com/v1/orders');
-    expect((init.headers as Record<string, string>).authorization).toBe(`Basic ${Buffer.from('rzp_test_1:s').toString('base64')}`);
+    expect(url).toBe('https://sandbox.cashfree.com/pg/orders');
+    expect((init.headers as Record<string, string>)['x-client-id']).toBe('app');
+    expect((init.headers as Record<string, string>)['x-api-version']).toBe('2023-08-01');
+    await expect(createCashfreeOrder(cfg, { orderId: 'cf_x', amountPaise: 50_000, customer: { id: 'u', phone: '9876543210' } }, f as unknown as typeof fetch)).rejects.toThrow(/amount mismatch/);
   });
   it('rejects unsafe or fake images for branding', () => {
     expect(validateImageDataUrl(PNG_1PX)).toBe(PNG_1PX);
@@ -158,16 +176,14 @@ describe.skipIf(!URL)('database-backed', () => {
 
   it('checkout → verify → fulfil is idempotent; invoices are sequential; credits & Pro granted', async () => {
     const buyer = await upsertVerifiedUser({ email: 'buyer@example.com' }, 'Buyer', db);
-    const cfg = razorpayConfig();
-    expect(cfg.mock).toBe(true);
+    expect(activeGateway()).toBe('mock'); // no Cashfree keys in tests → development test mode
     await expect(createCheckout(buyer, { planCode: 'SINGLE', billingState: 'Delhi', gstin: 'BAD' }, {}, db)).rejects.toBeInstanceOf(CheckoutError);
 
     const c1 = await createCheckout(buyer, { planCode: 'PACK5', billingState: 'Rajasthan', coupon: 'DIWALI20' }, {}, db);
     expect(c1.amountPaise).toBe(1_99_900 - 39_980);
-    const s1 = mockPaymentSignature(cfg, c1.orderId);
-    expect(verifyPaymentSignature(cfg, s1.razorpay_order_id, s1.razorpay_payment_id, s1.razorpay_signature)).toBe(true);
-    const f1 = await fulfilPayment(c1.orderId, s1.razorpay_payment_id, db);
-    const again = await fulfilPayment(c1.orderId, s1.razorpay_payment_id, db); // webhook arrives too
+    expect(isMockOrder(c1.orderId)).toBe(true);
+    const f1 = await fulfilPayment(c1.orderId, 'mockpay_1', db);
+    const again = await fulfilPayment(c1.orderId, 'mockpay_1', db); // webhook arrives too
     expect(again.alreadyPaid).toBe(true);
     expect((await getAccount(buyer.id, db)).credits).toBe(5);
     expect(f1.payment.cgstPaise + f1.payment.sgstPaise).toBe(f1.payment.amountPaise - f1.payment.taxablePaise);

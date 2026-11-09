@@ -153,12 +153,13 @@ const W: Record<string, Writer> = {
   },
 
   forecast: (f, c, kb, l, s) => {
-    const years = f.years as { year: number; personalYear: number }[];
+    const years = f.years as { year: number; personalYear: number; period?: string }[];
     const body = (py: number) => kb.find((k) => k.key === `PY_${py}`)?.body ?? '';
     const focus = c.concerns.length ? c.concerns[0].replace(/([A-Z])/g, ' $1').toLowerCase() : '';
     return years.map((y, i) => {
-      if (l === 'hinglish') return `${y.year} mein aapka Personal Year ${y.personalYear} hai. ${body(y.personalYear)}${i === 0 && focus ? ` ${focus} ke liye is saal ki shuruaat ka sahi upyog karein.` : ''}`;
-      const opener = i === 0 ? pick([`Right now, in ${y.year}, you are in Personal Year ${y.personalYear}.`, `${y.year} is Personal Year ${y.personalYear} for you.`], s) : pick([`${y.year} moves you into Personal Year ${y.personalYear}.`, `In ${y.year} the energy shifts to Personal Year ${y.personalYear}.`, `Then comes ${y.year}, Personal Year ${y.personalYear}.`], s + y.year);
+      if (l === 'hinglish') return `${y.period ?? y.year} – is avadhi mein aapka Personal Year ${y.personalYear} hai. ${body(y.personalYear)}${i === 0 && focus ? ` ${focus} ke liye is saal ki shuruaat ka sahi upyog karein.` : ''}`;
+      const when = y.period ?? String(y.year);
+      const opener = i === 0 ? pick([`Right now (${when}) you are in Personal Year ${y.personalYear}.`, `From your birthday in ${y.year} until your next birthday you are in Personal Year ${y.personalYear}.`], s) : pick([`Your birthday in ${y.year} moves you into Personal Year ${y.personalYear} (${when}).`, `From your birthday in ${y.year} the energy shifts to Personal Year ${y.personalYear}.`, `Then comes Personal Year ${y.personalYear}, from your birthday in ${y.year}.`], s + y.year);
       return `${opener} ${body(y.personalYear)}${i === 0 && focus ? ` For ${focus}, use this energy deliberately rather than waiting for the right moment.` : ''}`;
     });
   },
@@ -302,8 +303,8 @@ const W: Record<string, Writer> = {
 
   closing: (f, c, kb, l) => {
     const close = kbText(kb, 'CLOSING')[0] ?? '';
-    if (l === 'hinglish') return [`${c.address}, ${close} ${f.currentYear} ka Personal Year ${f.personalYear} aur ${f.nextYear} ka Personal Year ${f.nextPersonalYear} aapke liye naye avsar laa rahe hain. Upay niyamit roop se karein aur vishwas rakhein. Shubhkamnaon sahit.`];
-    return [`${close} With Personal Year ${f.personalYear} in ${f.currentYear} and Personal Year ${f.nextPersonalYear} waiting in ${f.nextYear}, the timing is on your side, ${c.address}. Follow the remedies with patience and you will feel the difference. With my blessings and best wishes.`];
+    if (l === 'hinglish') return [`${c.address}, ${close} abhi chal raha Personal Year ${f.personalYear} aur agle janmdin se shuru hone wala Personal Year ${f.nextPersonalYear} aapke liye naye avsar laa rahe hain. Upay niyamit roop se karein aur vishwas rakhein. Shubhkamnaon sahit.`];
+    return [`${close} With Personal Year ${f.personalYear} running now and Personal Year ${f.nextPersonalYear} starting on your next birthday, the timing is on your side, ${c.address}. Follow the remedies with patience and you will feel the difference. With my blessings and best wishes.`];
   },
 };
 

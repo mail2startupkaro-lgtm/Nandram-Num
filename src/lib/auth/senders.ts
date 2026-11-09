@@ -39,5 +39,9 @@ export function smsSender(fetchImpl: typeof fetch = fetch): Sender {
 export function defaultSender(channel: 'email' | 'sms'): Sender {
   if (channel === 'email' && process.env.RESEND_API_KEY) return emailSender();
   if (channel === 'sms' && process.env.MSG91_AUTH_KEY) return smsSender();
+  // Never fall back to printing codes on a live site: the code would have nowhere safe to go.
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(`OTP delivery provider not configured for ${channel} (set ${channel === 'email' ? 'RESEND_API_KEY' : 'MSG91_AUTH_KEY + MSG91_TEMPLATE_ID'})`);
+  }
   return consoleSender;
 }

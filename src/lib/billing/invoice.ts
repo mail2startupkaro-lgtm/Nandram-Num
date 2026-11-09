@@ -38,7 +38,7 @@ export function buildInvoiceHtml(p: Payment, user: Pick<User, 'name' | 'email' |
     .h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm}.h h1{font-size:22pt}.box2{border:1px solid ${t.border};border-radius:2mm;padding:3mm 4mm;font-size:9pt;line-height:1.5}
     td,th{font-size:9.5pt}</style></head><body>
     <div class="h"><div><h1>Tax Invoice</h1><div class="small muted">${esc(brand.brandName)}</div></div>
-      <div style="text-align:right;font-size:9.5pt"><b>${esc(p.invoiceNumber ?? 'DRAFT')}</b><br>Date: ${esc(date)}<br>Order: ${esc(p.razorpayOrderId)}<br>Payment: ${esc(p.razorpayPaymentId ?? '—')}</div></div>
+      <div style="text-align:right;font-size:9.5pt"><b>${esc(p.invoiceNumber ?? 'DRAFT')}</b><br>Date: ${esc(date)}<br>Order: ${esc(p.gatewayOrderId)}<br>Payment: ${esc(p.gatewayPaymentId ?? '—')}</div></div>
     <div class="row" style="margin-bottom:6mm">
       <div class="box2"><b>Supplier</b><br>${esc(seller.legalName)}<br>${esc(seller.address)}<br>${esc(seller.state)} (State code ${esc(seller.stateCode)})${seller.gstin ? `<br>GSTIN: <b>${esc(seller.gstin)}</b>` : ''}${seller.email ? `<br>${esc(seller.email)}` : ''}</div>
       <div class="box2"><b>Bill to</b><br>${esc(p.billingName || user.name || '—')}<br>${esc(user.email ?? user.phone ?? '')}<br>Place of supply: ${esc(p.billingState ?? '—')}${p.gstin ? `<br>GSTIN: <b>${esc(p.gstin)}</b>` : ''}</div>
@@ -50,7 +50,7 @@ export function buildInvoiceHtml(p: Payment, user: Pick<User, 'name' | 'email' |
       <tr><td colspan="3" style="text-align:right"><b>Total (incl. GST)</b></td><td style="text-align:right"><b>${formatInr(p.amountPaise)}</b></td></tr>
     </tbody></table>
     <p style="margin-top:4mm;text-align:left"><b>Amount in words:</b> ${esc(rupeesInWords(p.amountPaise))}</p>
-    <p class="small muted" style="text-align:left;margin-top:10mm">This is a computer-generated invoice and does not require a signature. Paid online via Razorpay.${seller.gstin ? '' : ' Supplier GSTIN to be added in Admin → Settings before going live.'}</p>
+    <p class="small muted" style="text-align:left;margin-top:10mm">This is a computer-generated invoice and does not require a signature. Paid online via Cashfree Payments.${seller.gstin ? '' : ' Supplier GSTIN to be added in Admin → Settings before going live.'}</p>
   </body></html>`;
 }
 

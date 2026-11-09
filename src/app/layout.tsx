@@ -4,6 +4,7 @@ import './cosmic.css';
 import { Providers } from '@/components/layout/providers';
 import { Footer, Header } from '@/components/layout/chrome';
 import { CosmicBackground } from '@/components/layout/cosmic-bg';
+import { fontVariables } from './fonts';
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL || 'http://localhost:3000'),
@@ -17,12 +18,9 @@ const themeScript = `try{var t=localStorage.getItem('theme');if(t!=='light'){doc
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={fontVariables} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:wght@500;600&family=Playfair+Display:wght@500;600;700&family=Poppins:wght@300;400;500;600&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet" />
       </head>
       <body>
         <Providers>

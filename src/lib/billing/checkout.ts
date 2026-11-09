@@ -1,12 +1,11 @@
-/** Checkout: price → coupon → GST split → Razorpay order; fulfilment is idempotent (client verify + webhook). */
+/** Checkout: price → coupon → GST split → Cashfree order; fulfilment is idempotent (client verify + webhook). */
 import { and, eq, sql } from 'drizzle-orm';
 import { getDb, type Db } from '@/lib/db/client';
 import { coupons, creditLedger, invoiceCounters, payments, subscriptions, users, type Coupon, type Plan, type User } from '@/lib/db/schema';
 import { getSetting } from '@/lib/admin/settings';
 import { financialYear, GSTIN_RE, splitGstInclusive } from './gst';
 import { getPlan } from './plans';
-import { cashfreeConfig, cashfreePhone, createCashfreeOrder, getCashfreeOrder, getCashfreePayments, isCashfreeOrder, newCashfreeOrderId, toPaise } from './cashfree';
-import { createRazorpayOrder, razorpayConfig } from './razorpay';
+import { CASHFREE_ORDER_PREFIX, cashfreeConfig, cashfreePhone, createCashfreeOrder, getCashfreeOrder, getCashfreePayments, isCashfreeOrder, newCashfreeOrderId, toPaise } from './cashfree';
 
 export class CheckoutError extends Error { constructor(public code: string) { super(code); } }
 
@@ -17,16 +16,23 @@ export async function validateCoupon(code: string, plan: Plan, db: Db = getDb())
   if (c.maxUses !== null && c.used >= c.maxUses) throw new CheckoutError('COUPON_USED_UP');
   if (c.planCodes?.length && !c.planCodes.includes(plan.code)) throw new CheckoutError('COUPON_NOT_FOR_PLAN');
   let discountPaise = c.percentOff ? Math.round((plan.pricePaise * Math.min(c.percentOff, 100)) / 100) : (c.amountOffPaise ?? 0);
-  discountPaise = Math.min(discountPaise, plan.pricePaise - 100); // Razorpay minimum charge ₹1
+  discountPaise = Math.min(discountPaise, plan.pricePaise - 100); // gateway minimum charge ₹1
   return { coupon: c, discountPaise: Math.max(0, discountPaise) };
 }
 
 export interface CheckoutInput { planCode: string; coupon?: string; billingName?: string; billingState: string; gstin?: string; phone?: string }
 
-/** Which gateway new orders use: Cashfree when its keys are set (unless PAYMENT_GATEWAY=razorpay), else Razorpay (mock in development). */
-export function activeGateway(): 'cashfree' | 'razorpay' {
-  if (process.env.PAYMENT_GATEWAY?.trim().toLowerCase() === 'razorpay') return 'razorpay';
-  return cashfreeConfig() ? 'cashfree' : 'razorpay';
+/** Orders created without gateway keys in development (never in production). */
+export const MOCK_ORDER_PREFIX = 'mock_';
+export const isMockOrder = (orderId: string) => orderId.startsWith(MOCK_ORDER_PREFIX);
+
+/**
+ * Cashfree is the only payment gateway. Without CASHFREE_APP_ID / CASHFREE_SECRET_KEY a local development
+ * server uses a test mode ("Simulate payment" button); production refuses to take orders.
+ */
+export function activeGateway(): 'cashfree' | 'mock' | null {
+  if (cashfreeConfig()) return 'cashfree';
+  return process.env.NODE_ENV === 'production' ? null : 'mock';
 }
 
 const httpsAppUrl = () => { const u = process.env.APP_URL?.trim().replace(/\/$/, ''); return u && u.startsWith('https://') ? u : null; };
@@ -47,14 +53,16 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
     couponCode: coupon?.code ?? null, billingName, billingState: input.billingState, gstin,
   };
 
-  if (activeGateway() === 'cashfree') {
+  const gateway = activeGateway();
+  if (!gateway) throw new CheckoutError('GATEWAY_NOT_CONFIGURED');
+  if (gateway === 'cashfree') {
     const cf = cashfreeConfig()!;
     const phone = cashfreePhone(input.phone) ?? cashfreePhone(user.phone);
     if (!phone) throw new CheckoutError('PHONE_REQUIRED');
     const orderId = newCashfreeOrderId();
     const base = httpsAppUrl();
     // Insert first so a webhook can never arrive for an order we don't know.
-    await db.insert(payments).values({ ...row, razorpayOrderId: orderId });
+    await db.insert(payments).values({ ...row, gatewayOrderId: orderId });
     let order;
     try {
       order = await createCashfreeOrder(cf, {
@@ -64,25 +72,25 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
         note: plan.name, tags: { plan: plan.code },
       }, opts.fetchImpl);
     } catch (e) {
-      await db.update(payments).set({ status: 'failed' }).where(eq(payments.razorpayOrderId, orderId));
+      await db.update(payments).set({ status: 'failed' }).where(eq(payments.gatewayOrderId, orderId));
       throw e;
     }
     if (user.billingState !== input.billingState) await db.update(users).set({ billingState: input.billingState }).where(eq(users.id, user.id));
     return {
-      gateway: 'cashfree' as const, mode: cf.mode, paymentSessionId: order.payment_session_id, keyId: '', mock: false,
+      gateway: 'cashfree' as const, mode: cf.mode, paymentSessionId: order.payment_session_id, mock: false,
       orderId, amountPaise, currency: 'INR' as const, discountPaise, plan: { code: plan.code, name: plan.name },
       prefill: { name: billingName ?? '', email: user.email ?? '', contact: phone },
     };
   }
 
-  const cfg = razorpayConfig();
-  const receipt = `r_${Date.now().toString(36)}_${user.id.slice(0, 8)}`;
-  const order = await createRazorpayOrder(cfg, amountPaise, receipt, { userId: user.id, plan: plan.code }, opts.fetchImpl);
-  await db.insert(payments).values({ ...row, razorpayOrderId: order.id });
+  // Development test mode (no keys): the pricing dialog shows a "Simulate payment" button.
+  const orderId = `${MOCK_ORDER_PREFIX}${newCashfreeOrderId().slice(CASHFREE_ORDER_PREFIX.length)}`;
+  await db.insert(payments).values({ ...row, gatewayOrderId: orderId });
   if (user.billingState !== input.billingState) await db.update(users).set({ billingState: input.billingState }).where(eq(users.id, user.id));
   return {
-    gateway: 'razorpay' as const, mode: cfg.mock ? 'mock' : 'live', paymentSessionId: '', keyId: cfg.keyId, mock: cfg.mock, orderId: order.id, amountPaise, currency: 'INR' as const, discountPaise, plan: { code: plan.code, name: plan.name },
-    prefill: { name: input.billingName || user.name || '', email: user.email ?? '', contact: user.phone ?? '' },
+    gateway: 'mock' as const, mode: 'mock', paymentSessionId: '', mock: true,
+    orderId, amountPaise, currency: 'INR' as const, discountPaise, plan: { code: plan.code, name: plan.name },
+    prefill: { name: billingName ?? '', email: user.email ?? '', contact: user.phone ?? '' },
   };
 }
 
@@ -91,7 +99,7 @@ export async function fulfilPayment(orderId: string, paymentId: string, db: Db =
   return db.transaction(async (tx) => {
     const locked = await tx.execute(sql`select id from payments where razorpay_order_id = ${orderId} for update`);
     if (!locked.rows.length) throw new CheckoutError('ORDER_NOT_FOUND');
-    const [p] = await tx.select().from(payments).where(eq(payments.razorpayOrderId, orderId)).limit(1);
+    const [p] = await tx.select().from(payments).where(eq(payments.gatewayOrderId, orderId)).limit(1);
     if (p.status === 'paid') return { payment: p, alreadyPaid: true };
 
     const plan = await getPlan(p.planCode, tx as unknown as Db);
@@ -102,7 +110,7 @@ export async function fulfilPayment(orderId: string, paymentId: string, db: Db =
       .onConflictDoUpdate({ target: invoiceCounters.fy, set: { last: sql`${invoiceCounters.last} + 1` } }).returning();
     const invoiceNumber = `${seller.invoicePrefix}/${fy}/${String(counter.last).padStart(5, '0')}`;
 
-    const [paid] = await tx.update(payments).set({ status: 'paid', razorpayPaymentId: paymentId, paidAt: new Date(), invoiceNumber }).where(eq(payments.id, p.id)).returning();
+    const [paid] = await tx.update(payments).set({ status: 'paid', gatewayPaymentId: paymentId, paidAt: new Date(), invoiceNumber }).where(eq(payments.id, p.id)).returning();
     if (p.couponCode) await tx.update(coupons).set({ used: sql`${coupons.used} + 1` }).where(eq(coupons.code, p.couponCode));
     if (plan.credits > 0) {
       await tx.update(users).set({ credits: sql`${users.credits} + ${plan.credits}` }).where(eq(users.id, p.userId));
@@ -123,7 +131,7 @@ export async function fulfilPayment(orderId: string, paymentId: string, db: Db =
 }
 
 export async function markPaymentFailed(orderId: string, db: Db = getDb()) {
-  await db.update(payments).set({ status: 'failed' }).where(and(eq(payments.razorpayOrderId, orderId), eq(payments.status, 'created')));
+  await db.update(payments).set({ status: 'failed' }).where(and(eq(payments.gatewayOrderId, orderId), eq(payments.status, 'created')));
 }
 
 /**
@@ -134,7 +142,7 @@ export async function syncCashfreeOrder(orderId: string, db: Db = getDb()): Prom
   if (!isCashfreeOrder(orderId)) throw new CheckoutError('ORDER_NOT_FOUND');
   const cf = cashfreeConfig();
   if (!cf) throw new Error('Cashfree is not configured (CASHFREE_APP_ID / CASHFREE_SECRET_KEY)');
-  const [p] = await db.select().from(payments).where(eq(payments.razorpayOrderId, orderId)).limit(1);
+  const [p] = await db.select().from(payments).where(eq(payments.gatewayOrderId, orderId)).limit(1);
   if (!p) throw new CheckoutError('ORDER_NOT_FOUND');
   if (p.status === 'paid') return { status: 'paid', invoiceNumber: p.invoiceNumber, paymentId: p.id };
   const order = await getCashfreeOrder(cf, orderId);

@@ -6,22 +6,23 @@
 :root { --saffron: 24 100% 58%; --violet: 256 100% 65%; }
 .dark { --saffron: 24 100% 62%; }
 
-.font-cinzel { font-family: 'Cinzel', 'Playfair Display', Georgia, serif; }
-.font-cormorant { font-family: 'Cormorant Garamond', Georgia, serif; }
+.font-cinzel { font-family: var(--font-cinzel), var(--font-playfair), Georgia, serif; }
+.font-cormorant { font-family: var(--font-cormorant), Georgia, serif; }
 
 /* ---------- global background ---------- */
 .cz-stars { position: fixed; inset: 0; z-index: -30; pointer-events: none; }
-.cz-nebula { position: fixed; inset: -20%; z-index: -20; pointer-events: none; filter: blur(70px); opacity: .5;
-  background: radial-gradient(circle at 20% 30%, hsl(var(--violet) / .32), transparent 35%),
-              radial-gradient(circle at 80% 20%, hsl(var(--maroon) / .35), transparent 35%),
-              radial-gradient(circle at 60% 80%, hsl(var(--gold) / .22), transparent 40%);
+.cz-nebula { position: fixed; inset: -20%; z-index: -20; pointer-events: none; opacity: .5; will-change: transform;
+  /* No filter: blur() – a blurred, animated full-screen layer is very expensive on phones; wider soft stops give the same glow. */
+  background: radial-gradient(circle at 20% 30%, hsl(var(--violet) / .32), transparent 42%),
+              radial-gradient(circle at 80% 20%, hsl(var(--maroon) / .35), transparent 42%),
+              radial-gradient(circle at 60% 80%, hsl(var(--gold) / .22), transparent 48%);
   animation: cz-drift 40s ease-in-out infinite alternate; }
 html:not(.dark) .cz-nebula { opacity: .28; }
 @keyframes cz-drift { to { transform: translate(4%, -3%) rotate(8deg); } }
-.cz-glow { position: fixed; width: 420px; height: 420px; border-radius: 50%; pointer-events: none; z-index: -10; transform: translate(-50%, -50%);
-  background: radial-gradient(circle, hsl(var(--gold) / .12), transparent 65%); left: -500px; top: -500px; }
+.cz-glow { position: fixed; width: 420px; height: 420px; border-radius: 50%; pointer-events: none; z-index: -10; transform: translate3d(-600px, -600px, 0);
+  background: radial-gradient(circle, hsl(var(--gold) / .12), transparent 65%); left: 0; top: 0; will-change: transform; }
 .cz-floaters { position: fixed; inset: 0; z-index: -10; pointer-events: none; overflow: hidden; }
-.cz-floaters span { position: absolute; bottom: -60px; font-family: 'Cinzel', serif; color: hsl(var(--gold)); opacity: 0; animation: cz-rise linear infinite; }
+.cz-floaters span { position: absolute; bottom: -60px; font-family: var(--font-cinzel), serif; color: hsl(var(--gold)); opacity: 0; animation: cz-rise linear infinite; }
 @keyframes cz-rise { 0% { transform: translateY(0) rotate(0); opacity: 0 } 10% { opacity: .3 } 90% { opacity: .15 } 100% { transform: translateY(-115vh) rotate(200deg); opacity: 0 } }
 
 /* ---------- shared bits ---------- */
@@ -64,7 +65,7 @@ html[lang='hi'] .cz-kicker, html[lang='hi'] .cz-track { letter-spacing: .04em; }
   background: radial-gradient(circle at 35% 30%, hsl(43 95% 76% / .35), hsl(var(--maroon) / .4) 55%, hsl(250 45% 8% / .85));
   box-shadow: 0 0 60px hsl(var(--saffron) / .45), inset 0 0 40px hsl(43 95% 76% / .25); animation: cz-breathe 5s ease-in-out infinite; }
 @keyframes cz-breathe { 50% { box-shadow: 0 0 100px hsl(var(--saffron) / .7), inset 0 0 60px hsl(43 95% 76% / .4); transform: scale(1.03); } }
-.cz-core b { display: block; font-family: 'Cinzel', serif; font-size: clamp(46px, 7vw, 82px); line-height: 1; color: hsl(43 95% 76%); text-shadow: 0 0 25px rgba(255,200,100,.8); transition: opacity .4s, transform .4s; }
+.cz-core b { display: block; font-family: var(--font-cinzel), serif; font-size: clamp(46px, 7vw, 82px); line-height: 1; color: hsl(43 95% 76%); text-shadow: 0 0 25px rgba(255,200,100,.8); transition: opacity .4s, transform .4s; }
 .cz-core small { font-size: 11px; letter-spacing: .25em; text-transform: uppercase; color: #f3e9cc; opacity: .9; }
 .cz-orbit { position: absolute; inset: 0; animation: cz-spin 24s linear infinite; }
 .cz-orbit.o2 { animation-duration: 38s; animation-direction: reverse; inset: 8%; }
@@ -84,7 +85,7 @@ html:not(.dark) .cz-card { background: hsl(0 0% 100% / .72); }
 @property --cz-a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
 @keyframes cz-rot { to { --cz-a: 360deg; } }
 .cz-mod:hover { box-shadow: 0 30px 60px -25px hsl(var(--saffron) / .45); }
-.cz-mod .cz-num { position: absolute; right: 16px; top: 4px; font-family: 'Cinzel', serif; font-size: 90px; font-weight: 900; color: hsl(var(--gold)); opacity: .08; transition: opacity .4s, transform .6s; }
+.cz-mod .cz-num { position: absolute; right: 16px; top: 4px; font-family: var(--font-cinzel), serif; font-size: 90px; font-weight: 900; color: hsl(var(--gold)); opacity: .08; transition: opacity .4s, transform .6s; }
 .cz-mod:hover .cz-num { opacity: .22; transform: scale(1.15) rotate(-8deg); }
 .cz-mod .cz-ic { width: 58px; height: 58px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 18px; color: hsl(var(--gold));
   background: radial-gradient(circle at 30% 30%, hsl(43 95% 76% / .3), hsl(var(--maroon) / .3)); border: 1px solid hsl(var(--gold) / .3); transition: transform .6s; }
@@ -95,24 +96,24 @@ html:not(.dark) .cz-card { background: hsl(0 0% 100% / .72); }
 /* planets */
 .cz-pl { text-align: center; padding: 20px 8px; border-radius: 18px; border: 1px solid hsl(var(--gold) / .28); background: hsl(var(--card) / .5); transition: transform .35s, background .35s; }
 .cz-pl:hover { transform: translateY(-10px); background: hsl(var(--gold) / .12); }
-.cz-orb { width: 52px; height: 52px; margin: 0 auto 10px; border-radius: 50%; display: grid; place-items: center; font-family: 'Cinzel', serif; font-size: 22px; font-weight: 700; color: #1a0f2e; animation: cz-float 4s ease-in-out infinite; }
+.cz-orb { width: 52px; height: 52px; margin: 0 auto 10px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-cinzel), serif; font-size: 22px; font-weight: 700; color: #1a0f2e; animation: cz-float 4s ease-in-out infinite; }
 .cz-pl:nth-child(2n) .cz-orb { animation-delay: -2s; }
 
 /* quick reading */
 .cz-badge { border: 1px solid hsl(var(--gold) / .3); border-radius: 18px; padding: 16px 8px; text-align: center; position: relative; overflow: hidden; background: hsl(var(--background) / .35); animation: cz-flip .8s ease both; }
 .cz-badge::after { content: ""; position: absolute; inset: auto -30% -60% -30%; height: 80%; background: radial-gradient(ellipse, hsl(var(--saffron) / .25), transparent 70%); }
-.cz-badge .n { font-family: 'Cinzel', serif; font-size: 46px; font-weight: 900; line-height: 1; color: hsl(var(--gold)); }
+.cz-badge .n { font-family: var(--font-cinzel), serif; font-size: 46px; font-weight: 900; line-height: 1; color: hsl(var(--gold)); }
 .cz-loshu { display: grid; grid-template-columns: repeat(3, 70px); gap: 7px; padding: 10px; border-radius: 16px; border: 1px solid hsl(var(--gold) / .3); background: hsl(var(--background) / .35); }
-.cz-loshu div { height: 70px; border-radius: 12px; display: grid; place-items: center; border: 1px solid hsl(var(--gold) / .25); font-family: 'Cinzel', serif; font-size: 18px; color: hsl(var(--muted-foreground)); opacity: .45; }
+.cz-loshu div { height: 70px; border-radius: 12px; display: grid; place-items: center; border: 1px solid hsl(var(--gold) / .25); font-family: var(--font-cinzel), serif; font-size: 18px; color: hsl(var(--muted-foreground)); opacity: .45; }
 .cz-loshu div.f { opacity: 1; color: #1a0f2e; font-weight: 700; border-color: hsl(var(--gold)); background: linear-gradient(135deg, hsl(43 95% 76%), hsl(var(--gold))); box-shadow: 0 0 18px hsl(var(--gold) / .55); animation: cz-pop .55s cubic-bezier(.3,1.6,.5,1) both; }
 .cz-tag { font-size: 12px; padding: 5px 13px; border-radius: 9999px; border: 1px solid hsl(var(--gold) / .3); background: hsl(var(--gold) / .1); animation: cz-pop .5s both; }
-.cz-burst { position: absolute; pointer-events: none; font-family: 'Cinzel', serif; color: hsl(var(--gold)); font-weight: 700; animation: cz-burst 1.2s ease-out forwards; }
+.cz-burst { position: absolute; pointer-events: none; font-family: var(--font-cinzel), serif; color: hsl(var(--gold)); font-weight: 700; animation: cz-burst 1.2s ease-out forwards; }
 @keyframes cz-burst { to { transform: translate(var(--x), var(--y)) scale(.4); opacity: 0; } }
 
 /* steps */
 .cz-steps { position: relative; }
 @media (min-width: 820px) { .cz-steps::before { content: ""; position: absolute; top: 44px; left: 16%; right: 16%; height: 1px; background: repeating-linear-gradient(90deg, hsl(var(--gold)) 0 6px, transparent 6px 14px); opacity: .5; } }
-.cz-circ { width: 88px; height: 88px; margin: 0 auto 18px; border-radius: 50%; display: grid; place-items: center; font-family: 'Cinzel', serif; font-size: 30px; font-weight: 900; color: hsl(var(--gold)); position: relative;
+.cz-circ { width: 88px; height: 88px; margin: 0 auto 18px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-cinzel), serif; font-size: 30px; font-weight: 900; color: hsl(var(--gold)); position: relative;
   background: radial-gradient(circle, hsl(var(--maroon) / .45), hsl(var(--background))); border: 1px solid hsl(var(--gold)); }
 .cz-circ::before { content: ""; position: absolute; inset: -8px; border-radius: 50%; border: 1px dashed hsl(var(--gold)); animation: cz-spin 14s linear infinite; }
 
@@ -128,14 +129,14 @@ html:not(.dark) .cz-card { background: hsl(0 0% 100% / .72); }
 .cz-pdfs:hover .cz-page:nth-child(2) { transform: translateZ(60px) translateY(-14px); }
 @media (max-width: 700px) { .cz-page { width: 140px; padding: 10px; } .cz-pdfs .cz-page:nth-child(1) { transform: rotate(-6deg) translateX(30px); } .cz-pdfs .cz-page:nth-child(3) { transform: rotate(6deg) translateX(-30px); } }
 .cz-page.cover { justify-content: center; align-items: center; text-align: center; background: radial-gradient(circle at 50% 35%, #fff8e6, #efd9a8); }
-.cz-page .t { font-family: 'Cinzel', serif; font-size: 14px; color: #8a1f3a; font-weight: 700; margin-bottom: 4px; }
+.cz-page .t { font-family: var(--font-cinzel), serif; font-size: 14px; color: #8a1f3a; font-weight: 700; margin-bottom: 4px; }
 .cz-page .s { font-size: 7px; letter-spacing: .24em; text-transform: uppercase; color: #b07d1c; }
-.cz-page .big { font-family: 'Cinzel', serif; font-size: 60px; font-weight: 900; color: #8a1f3a; margin: 8px 0; }
+.cz-page .big { font-family: var(--font-cinzel), serif; font-size: 60px; font-weight: 900; color: #8a1f3a; margin: 8px 0; }
 .cz-page .ln { height: 4px; border-radius: 2px; background: #e1cfa4; margin: 5px 0; }
 .cz-page .ln.sh { width: 62%; }
 .cz-page .ft { margin-top: auto; font-size: 5.5px; color: #7a7060; text-align: center; border-top: 1px solid #e1cfa4; padding-top: 5px; }
 .cz-page .mini { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; margin: 8px 0; }
-.cz-page .mini i { aspect-ratio: 1; border: 1px solid #e1cfa4; border-radius: 3px; display: grid; place-items: center; font-style: normal; font-size: 9px; color: #8a1f3a; font-family: 'Cinzel', serif; }
+.cz-page .mini i { aspect-ratio: 1; border: 1px solid #e1cfa4; border-radius: 3px; display: grid; place-items: center; font-style: normal; font-size: 9px; color: #8a1f3a; font-family: var(--font-cinzel), serif; }
 .cz-page .mini i.on { background: #efd9a8; }
 
 /* FAQ */
@@ -149,7 +150,7 @@ html:not(.dark) .cz-card { background: hsl(0 0% 100% / .72); }
 /* CTA band */
 .cz-band { padding: 56px 30px; text-align: center; border-radius: 28px; position: relative; overflow: hidden;
   background: linear-gradient(135deg, hsl(var(--maroon) / .55), hsl(var(--violet) / .3)); border: 1px solid hsl(var(--gold) / .3); }
-.cz-band::before { content: "1 2 3 4 5 6 7 8 9 1 2 3 4 5 6 7 8 9 1 2 3 4 5 6 7 8 9"; position: absolute; top: 50%; left: 0; white-space: nowrap; font-family: 'Cinzel', serif; font-size: 140px; font-weight: 900;
+.cz-band::before { content: "1 2 3 4 5 6 7 8 9 1 2 3 4 5 6 7 8 9 1 2 3 4 5 6 7 8 9"; position: absolute; top: 50%; left: 0; white-space: nowrap; font-family: var(--font-cinzel), serif; font-size: 140px; font-weight: 900;
   color: hsl(43 95% 76% / .07); transform: translateY(-50%); animation: cz-marquee 30s linear infinite; pointer-events: none; }
 @keyframes cz-marquee { to { transform: translate(-50%, -50%); } }
 
@@ -177,4 +178,13 @@ html:not(.dark) .cz-card { background: hsl(0 0% 100% / .72); }
 .mk-card:hover { transform: translateY(-4px); border-color: hsl(var(--gold)/0.7); box-shadow: 0 10px 30px hsl(var(--gold)/0.18); }
 @media (prefers-reduced-motion: reduce) {
   .mk-rise, .mk-fade, .mk-drop, .mk-spin, .mk-spin-rev, .mk-pulse, .mk-shine { animation: none !important; opacity: 1 !important; transform: none !important; }
+}
+
+/* Phones: drop the costliest decorations (backdrop blur on many cards, floating digits). */
+@media (max-width: 640px) {
+  .cz-card { backdrop-filter: none; -webkit-backdrop-filter: none; background: hsl(var(--card) / .82); }
+  .cz-floaters { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cz-nebula, .cz-floaters span { animation: none !important; }
 }

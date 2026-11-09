@@ -26,11 +26,15 @@ export async function POST(req: Request) {
     const channel = detectChannel(body.identifier);
     const ident = normaliseIdentifier(channel, body.identifier);
 
-    // Verify the OTP – this also upserts the user (creates if missing, which is fine)
-    const user = await verifyOtp(channel, body.identifier, body.code);
-
-    // Now set the new password
+    // Only existing accounts can reset a password – "Forgot password" must not become a way to sign up
+    // without the details the sign-up form requires.
     const db = getDb();
+    const [existing] = await db.select({ id: users.id }).from(users).where(channel === 'email' ? eq(users.email, ident) : eq(users.phone, ident)).limit(1);
+    if (!existing) throw new AuthError('INVALID_CREDENTIALS', 400);
+
+    const user = await verifyOtp(channel, body.identifier, body.code);
+    if (user.id !== existing.id) throw new AuthError('INVALID_CREDENTIALS', 400);
+
     const passwordHash = await hashPassword(body.newPassword);
     await db.update(users).set({
       passwordHash,

@@ -24,31 +24,46 @@ export function CosmicBackground() {
       const n = Math.min(240, Math.floor((innerWidth * innerHeight) / 6000));
       stars = Array.from({ length: n }, () => ({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.4 + 0.2, t: Math.random() * 6.28, s: Math.random() * 0.02 + 0.005, v: Math.random() * 0.15 }));
     };
-    const draw = () => {
+    let last = 0;
+    const FRAME_MS = 1000 / 30; // a gentle twinkle doesn't need 60–120 fps; halves the CPU/GPU cost on phones
+    const draw = (now = 0) => {
+      if (!reduce) raf = requestAnimationFrame(draw);
+      if (now - last < FRAME_MS && now !== 0) return;
+      last = now;
       cx.clearRect(0, 0, W, H);
       const dark = document.documentElement.classList.contains('dark');
+      cx.fillStyle = dark ? 'rgb(255,240,200)' : 'rgb(176,125,28)';
+      const k = dark ? 1 : 0.55;
       for (const s of stars) {
-        s.t += s.s; s.y -= s.v; if (s.y < 0) s.y = H;
-        const a = 0.35 + Math.sin(s.t) * 0.35;
-        cx.beginPath(); cx.arc(s.x, s.y, s.r * dpr, 0, 6.28);
-        cx.fillStyle = dark ? `rgba(255,240,200,${a})` : `rgba(176,125,28,${a * 0.55})`; cx.fill();
+        s.t += s.s * 2; s.y -= s.v * 2; if (s.y < 0) s.y = H; // ×2: same visual speed at half the frame rate
+        cx.globalAlpha = (0.35 + Math.sin(s.t) * 0.35) * k;
+        cx.beginPath(); cx.arc(s.x, s.y, s.r * dpr, 0, 6.28); cx.fill();
       }
-      if (!shoot && Math.random() < 0.004) shoot = { x: Math.random() * W * 0.7, y: Math.random() * H * 0.3, l: 0 };
+      cx.globalAlpha = 1;
+      if (!shoot && Math.random() < 0.008) shoot = { x: Math.random() * W * 0.7, y: Math.random() * H * 0.3, l: 0 };
       if (shoot) {
-        shoot.l += 14 * dpr;
+        shoot.l += 28 * dpr;
         const x1 = shoot.x + shoot.l, y1 = shoot.y + shoot.l * 0.45;
         const g = cx.createLinearGradient(x1, y1, x1 - 140, y1 - 63);
         g.addColorStop(0, 'rgba(255,227,154,.9)'); g.addColorStop(1, 'rgba(255,227,154,0)');
         cx.strokeStyle = g; cx.lineWidth = 1.6 * dpr; cx.beginPath(); cx.moveTo(x1, y1); cx.lineTo(x1 - 140, y1 - 63); cx.stroke();
         if (shoot.l > W * 0.5) shoot = null;
       }
-      if (!reduce) raf = requestAnimationFrame(draw);
     };
     size(); draw();
-    addEventListener('resize', size);
-    const move = (e: PointerEvent) => { if (glow.current) { glow.current.style.left = e.clientX + 'px'; glow.current.style.top = e.clientY + 'px'; } };
-    if (!reduce) addEventListener('pointermove', move);
-    return () => { cancelAnimationFrame(raf); removeEventListener('resize', size); removeEventListener('pointermove', move); };
+    // Resizing (incl. the mobile URL bar showing/hiding) would rebuild every star on each event – debounce it.
+    let rt = 0;
+    const onResize = () => { clearTimeout(rt); rt = window.setTimeout(size, 150); };
+    addEventListener('resize', onResize, { passive: true });
+    // Cursor glow: one style write per frame at most.
+    let px = 0, py = 0, pending = false;
+    const move = (e: PointerEvent) => {
+      px = e.clientX; py = e.clientY;
+      if (pending) return; pending = true;
+      requestAnimationFrame(() => { pending = false; if (glow.current) glow.current.style.transform = `translate3d(${px}px, ${py}px, 0) translate(-50%, -50%)`; });
+    };
+    if (!reduce && window.matchMedia('(pointer: fine)').matches) addEventListener('pointermove', move, { passive: true });
+    return () => { cancelAnimationFrame(raf); clearTimeout(rt); removeEventListener('resize', onResize); removeEventListener('pointermove', move); };
   }, []);
 
   return (

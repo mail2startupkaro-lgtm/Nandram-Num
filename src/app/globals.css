@@ -55,7 +55,7 @@
   html { -webkit-text-size-adjust: 100%; }
   body { @apply bg-background text-foreground font-sans antialiased; }
   h1, h2, h3 { @apply font-serif tracking-tight; }
-  :lang(hi) body, [lang='hi'] { font-family: 'Noto Sans Devanagari', Poppins, sans-serif; }
+  :lang(hi) body, [lang='hi'] { font-family: var(--font-deva), var(--font-poppins), sans-serif; }
 }
 
 @layer components {

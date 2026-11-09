@@ -26,10 +26,10 @@ export default {
         ring: v('ring'),
       },
       fontFamily: {
-        cinzel: ['"Cinzel"', 'serif'],
-        serif: ['"Playfair Display"', 'Cormorant Garamond', 'Georgia', 'serif'],
-        sans: ['Poppins', '"Noto Sans Devanagari"', 'system-ui', 'sans-serif'],
-        deva: ['"Noto Sans Devanagari"', 'Poppins', 'sans-serif'],
+        cinzel: ['var(--font-cinzel)', 'Georgia', 'serif'],
+        serif: ['var(--font-playfair)', 'var(--font-cormorant)', 'Georgia', 'serif'],
+        sans: ['var(--font-poppins)', 'var(--font-deva)', 'system-ui', 'sans-serif'],
+        deva: ['var(--font-deva)', 'var(--font-poppins)', 'sans-serif'],
       },
       borderRadius: { lg: '0.9rem', md: '0.65rem', sm: '0.45rem' },
       keyframes: {

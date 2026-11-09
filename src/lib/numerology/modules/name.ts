@@ -9,8 +9,15 @@ import { CHALDEAN, compoundCategory, CompoundCategory, PYTHAGOREAN, SCORING, VOW
 
 export type NameSystem = 'chaldean' | 'pythagorean';
 
+/** Letters that Unicode does not decompose into A–Z (NFKD keeps them as single code points). */
+const SPECIAL_LETTERS: Record<string, string> = {
+  'Æ': 'AE', 'æ': 'ae', 'Ø': 'O', 'ø': 'o', 'Œ': 'OE', 'œ': 'oe', 'ß': 'ss', 'Đ': 'D', 'đ': 'd', 'Ð': 'D', 'ð': 'd',
+  'Ł': 'L', 'ł': 'l', 'Þ': 'TH', 'þ': 'th', 'ı': 'i', 'Ħ': 'H', 'ħ': 'h',
+};
+
 export function normalizeName(raw: string): string {
   return raw
+    .replace(/[ÆæØøŒœßĐđÐðŁłÞþıĦħ]/g, (c) => SPECIAL_LETTERS[c] ?? c)
     .normalize('NFKD')
     .replace(/[̀-ͯ]/g, '')
     .toUpperCase()

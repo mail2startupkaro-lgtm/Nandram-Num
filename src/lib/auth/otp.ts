@@ -42,11 +42,15 @@ export async function requestOtp(channel: 'email' | 'sms', raw: string, opts: { 
     if (n >= OTP_MAX_PER_IP_HOUR) throw new AuthError('TOO_MANY_REQUESTS', 429);
   }
   const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
-  // older unused codes for this identifier stop working
+  // older unused codes for this identifier stop working (below)
+  const send = opts.sender ?? defaultSender(channel); // throws in production when no provider is configured
   await db.update(otpCodes).set({ consumedAt: new Date() }).where(and(eq(otpCodes.identifierHash, ih), isNull(otpCodes.consumedAt)));
   await db.insert(otpCodes).values({ channel, identifierHash: ih, codeHash: codeHash(code, ih), expiresAt: new Date(Date.now() + OTP_TTL_MS), ip: opts.ip });
-  await (opts.sender ?? defaultSender(channel))({ channel, to: ident, code, brand: opts.brand ?? process.env.BRAND_NAME ?? 'Numerology' });
-  const exposeForDev = process.env.AUTH_DEV_SHOW_OTP === '1' || (!process.env.RESEND_API_KEY && !process.env.MSG91_AUTH_KEY);
+  await send({ channel, to: ident, code, brand: opts.brand ?? process.env.BRAND_NAME ?? 'Numerology' });
+  // SECURITY: the code is only ever shown on screen on a development machine – never on a live site,
+  // otherwise anyone could reset anyone's password (including the super admin's) from "Forgot password".
+  const providerMissing = channel === 'email' ? !process.env.RESEND_API_KEY : !process.env.MSG91_AUTH_KEY;
+  const exposeForDev = process.env.NODE_ENV !== 'production' && (process.env.AUTH_DEV_SHOW_OTP === '1' || providerMissing);
   return { identifier: ident, ...(exposeForDev ? { devCode: code } : {}) };
 }
 

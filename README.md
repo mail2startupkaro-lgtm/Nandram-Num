@@ -34,15 +34,16 @@ npm test                        # TEST_DATABASE_URL=… also runs the database t
 
 - One credit unlocks a client's report **for good**: regenerated versions of the same report type stay unlocked.
 - The app asks for confirmation before spending a credit.
-- Pro is a prepaid period; buying again extends it. Razorpay recurring Subscriptions can be added later.
+- Pro is a prepaid period; buying again extends it. Recurring subscriptions can be added later.
 
-**Razorpay** (`src/lib/billing`)
-- Orders API → Checkout.js.
-- Payment success is checked with an HMAC signature, and the webhook is checked with the webhook secret.
+**Cashfree Payments** (`src/lib/billing`) – the only payment gateway
+- Orders API (2023-08-01) → `payment_session_id` → Cashfree JS v3 checkout (modal).
+- The server never trusts the browser: it re-fetches the order and its payments from Cashfree (PAID + SUCCESS for the exact amount) before fulfilling. The webhook is checked with base64 HMAC-SHA256(timestamp + body, secret key).
 - Fulfilment is **idempotent**: the browser callback and the webhook can both arrive and the order is still granted once.
 - Coupons can be a percentage or a fixed amount, with an optional usage limit, expiry and plan restriction.
 - Every paid order gets a **GST tax invoice** PDF. Numbers run sequentially per financial year (`INV/2026-27/00001`). The tax is split into CGST + SGST for buyers in your state and IGST for other states, the amount is printed in words, and a business GSTIN is optional.
-- In development without keys, a mock gateway signs exactly like Razorpay ("Simulate successful payment"). It can never run in production.
+- In development without Cashfree keys, a test mode adds a "Simulate payment" button. It can never run in production (a live server without keys refuses orders).
+- Older orders created through Razorpay (if any) stay readable in the admin reports; the database columns keep their original names (`razorpay_order_id`, `razorpay_payment_id`), so no migration of the payments table is needed.
 
 **Admin panel** (`/admin`)
 - Overview: users, experts, active Pro, reports, revenue by month, popular report types, sales by plan.
@@ -70,7 +71,7 @@ npm test                        # TEST_DATABASE_URL=… also runs the database t
 3. **Migrate:** run `DATABASE_URL=… npm run db:migrate` locally, or as a deploy step.
 4. **Vercel:** import the repository, framework *Next.js*, and set every variable from `.env.example` (`APP_URL` = your domain).
 5. **PDF rendering needs Chromium.** On Vercel, add `@sparticuz/chromium`, set `PDF_CHROMIUM_PATH` to its `executablePath()`, and give the PDF routes up to 1 GB of memory. Alternatively, deploy the same app on a small VM, Railway or Render with `npx playwright install chromium`; that is simpler and faster when PDF volume is high.
-6. **Razorpay:** add your live keys. Create the webhook `https://yourdomain/api/billing/webhook` with events payment.captured, order.paid and payment.failed, and put its secret in `RAZORPAY_WEBHOOK_SECRET`.
+6. **Cashfree:** add `CASHFREE_APP_ID` and `CASHFREE_SECRET_KEY` (production keys) to the hosting env, whitelist your domain in the Cashfree dashboard, and create the webhook `https://yourdomain/api/billing/cashfree/webhook` (API version 2023-08-01; events PAYMENT_SUCCESS, PAYMENT_FAILED, PAYMENT_USER_DROPPED).
 7. **Login providers:** verify your sending domain in Resend; register a DLT template with MSG91; create a Google OAuth client with redirect URI `https://yourdomain/api/auth/google/callback`.
 8. Sign in with an email listed in `SUPER_ADMIN_EMAILS`, then fill in Admin → Invoice settings (GSTIN, address, SAC confirmed by your CA) and review the plans.
 9. Optional: `LLM_PROVIDER` / `LLM_MODEL` / API key for the AI writer; `BOOKING_URL`; `BRAND_NAME` / `EXPERT_NAME`.

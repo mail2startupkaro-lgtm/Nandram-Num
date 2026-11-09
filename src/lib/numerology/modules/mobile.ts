@@ -7,6 +7,9 @@ import { combinedRelations } from '../data/relations';
 /** Accepts +91 / 0-prefixed / spaced input; returns the 10-digit Indian mobile number. */
 export function normalizeIndianMobile(raw: string): string {
   let d = raw.replace(/\D/g, '');
+  // International / trunk prefixes: 0091…, 091…, +91 0…, 91…, 0…
+  if (d.length === 14 && d.startsWith('0091')) d = d.slice(4);
+  if (d.length === 13 && (d.startsWith('091') || d.startsWith('910'))) d = d.slice(3);
   if (d.length === 12 && d.startsWith('91')) d = d.slice(2);
   if (d.length === 11 && d.startsWith('0')) d = d.slice(1);
   if (!/^[6-9]\d{9}$/.test(d)) throw new NumerologyInputError('MOBILE_INVALID', 'Enter a valid 10-digit Indian mobile number starting with 6–9.');

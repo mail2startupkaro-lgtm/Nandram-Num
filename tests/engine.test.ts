@@ -63,8 +63,37 @@ describe('Known test cases – DOB', () => {
   it('#8 Personal Year 2026 for 28-08-1990 = 1 (2+8+8+2+0+2+6 = 28)', () => {
     expect(personalYear({ day: 28, month: 8, year: 1990 }, 2026)).toBe(1);
     const r = analyseDob({ dob: '28-08-1990', gender: 'male' }, { asOf });
-    expect(r.personalCycles.current).toEqual({ personalYear: 1, personalMonth: 3, personalDay: 6 });
+    expect(r.personalCycles.current).toMatchObject({ personalYear: 1, personalMonth: 3, personalDay: 6, startYear: 2026, from: '2026-08-28', to: '2027-08-27' });
     expect(r.personalCycles.timeline).toHaveLength(9);
+  });
+  it('#8b Personal Year runs birthday to birthday (owner decision)', () => {
+    const dob = { day: 28, month: 8, year: 1990 };
+    // before the birthday the previous personal year (started 28 Aug 2025) is still running
+    const before = analyseDob({ dob, gender: 'male' }, { asOf: '2026-08-27' }).personalCycles.current;
+    expect(before).toMatchObject({ startYear: 2025, personalYear: personalYear(dob, 2025), from: '2025-08-28', to: '2026-08-27' });
+    const on = analyseDob({ dob, gender: 'male' }, { asOf: '2026-08-28' }).personalCycles.current;
+    expect(on).toMatchObject({ startYear: 2026, personalYear: 1 });
+    // 29 Feb birthdays switch on 1 Mar in non-leap years
+    const leap = { day: 29, month: 2, year: 2000 };
+    expect(analyseDob({ dob: leap, gender: 'female' }, { asOf: '2027-02-28' }).personalCycles.current.startYear).toBe(2026);
+    expect(analyseDob({ dob: leap, gender: 'female' }, { asOf: '2027-03-01' }).personalCycles.current).toMatchObject({ startYear: 2027, from: '2027-03-01', to: '2028-02-28' });
+    // months of the current personal year start at the birthday month
+    const det = analyseDob({ dob, gender: 'male' }, { asOf: '2026-11-09' }).personalCycles.detailed[0];
+    expect(det.months[0]).toMatchObject({ month: 8, year: 2026 });
+    expect(det.months[11]).toMatchObject({ month: 7, year: 2027 });
+  });
+  it('#8c Friendship table matches the Mulank pages', async () => {
+    const { RELATION_TABLE, MULANK_COMPATIBILITY } = await import('../src/lib/numerology/data/relations');
+    const { MULANK } = await import('../src/lib/mulank-data');
+    for (let n = 1; n <= 9; n++) {
+      const page = MULANK.find((m) => m.n === n)!;
+      expect(page.compatible).toEqual(MULANK_COMPATIBILITY[n].compatible);
+      expect(RELATION_TABLE[n].friend).toEqual([...new Set([n, ...page.compatible])].sort((a, b) => a - b));
+      expect(RELATION_TABLE[n].enemy).toEqual([...page.avoid].sort((a, b) => a - b));
+      expect([...RELATION_TABLE[n].friend, ...RELATION_TABLE[n].neutral, ...RELATION_TABLE[n].enemy].sort()).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    }
+    expect(RELATION_TABLE[2].friend).toEqual([1, 2, 4, 6, 7]);
+    expect(RELATION_TABLE[7].enemy).toEqual([8, 9]);
   });
   it('#9 Pinnacles & challenges for 15-05-1985 (LP 7 → first pinnacle ends at 29)', () => {
     const p = lifePeriods({ day: 15, month: 5, year: 1985 }, 7, 41);

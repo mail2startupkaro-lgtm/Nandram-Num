@@ -2,7 +2,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
-import { analyseDob, analyseMobile, analyseNameSystem, bhagyank, kuaNumber, moolank, todayIST } from '@/lib/numerology';
+import { analyseDob, analyseMobile, analyseNameSystem, bhagyank, kuaNumber, moolank, todayIST, toIso } from '@/lib/numerology';
 import { KUA_DIRECTIONS } from '@/lib/numerology/data/tables';
 import { planetOf } from '@/lib/numerology/data/planets';
 import { NUMBER_TRAITS } from '@/lib/i18n/numberMeanings';
@@ -59,7 +59,7 @@ export function Calculator({ kind }: { kind: CalcKind }) {
   return (
     <div className="glass space-y-5 rounded-lg p-5 sm:p-7">
       <div className="grid gap-4 sm:grid-cols-2">
-        {needsDob && <Field label="Date of birth" htmlFor="c-dob"><Input id="c-dob" type="date" max={new Date().toISOString().slice(0, 10)} min="1900-01-01" value={dob} onChange={(e) => setDob(e.target.value)} /></Field>}
+        {needsDob && <Field label="Date of birth" htmlFor="c-dob"><Input id="c-dob" type="date" max={toIso(todayIST())} min="1900-01-01" value={dob} onChange={(e) => setDob(e.target.value)} /></Field>}
         {(kind === 'loshu' || kind === 'kua' || kind === 'mobile') && <Field label="Gender (for Kua)"><ChipGroup options={[{ value: 'male' as const, label: 'Male' }, { value: 'female' as const, label: 'Female' }]} value={[gender]} onChange={(v) => setGender(v[0] ?? 'male')} /></Field>}
         {kind === 'name' && <Field label="Name you use" htmlFor="c-name" className="sm:col-span-2"><Input id="c-name" placeholder="e.g. Rahul Sharma" value={name} onChange={(e) => setName(e.target.value)} /></Field>}
         {kind === 'mobile' && <Field label="Mobile number" htmlFor="c-mob"><Input id="c-mob" type="tel" inputMode="numeric" placeholder="98765 43210" value={mobile} onChange={(e) => setMobile(e.target.value)} /></Field>}

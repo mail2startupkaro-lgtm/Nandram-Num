@@ -26,7 +26,8 @@ function LoginInner() {
   const { t, me, refreshMe } = useApp();
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get('next')?.startsWith('/') ? params.get('next')! : '/dashboard';
+  const rawNext = params.get('next') ?? '';
+  const next = /^\/(?![/\\])/.test(rawNext) ? rawNext : '/dashboard'; // same-site paths only (blocks //evil.com)
   const adminMode = next.startsWith('/admin');
   const [mode, setMode] = React.useState<'signin' | 'signup' | 'forgot'>(params.get('mode') === 'signup' && !adminMode ? 'signup' : 'signin');
   const [identifier, setIdentifier] = React.useState('');

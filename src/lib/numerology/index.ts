@@ -11,7 +11,7 @@ import { analyseName } from './modules/name';
 import { buildRemedies } from './modules/remedies';
 import { ClientInput, ClientInputSchema } from './schemas';
 
-export const ENGINE_VERSION = '1.0.0';
+export const ENGINE_VERSION = '1.1.0'; // 1.1: house friendship table, birthday-to-birthday personal years
 export const RESULT_SCHEMA_VERSION = 1;
 
 export * from './core/reduce';

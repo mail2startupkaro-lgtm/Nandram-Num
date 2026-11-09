@@ -23,7 +23,7 @@ export function YantraWheel({ lang }: { lang: 'en' | 'hi' }) {
         <g className="cz-w-outer" fill="none" stroke="url(#czg)" strokeWidth=".8">
           <circle r="188" /><circle r="170" strokeDasharray="2 6" />
           {Array.from({ length: 72 }, (_, i) => <line key={i} x1={0} y1={-188} x2={0} y2={i % 2 ? -182 : -176} transform={`rotate(${i * 5})`} />)}
-          <g fill="#e3b54f" stroke="none" fontFamily="Cinzel, serif" fontSize="17" fontWeight="700" textAnchor="middle">
+          <g fill="#e3b54f" stroke="none" style={{ fontFamily: 'var(--font-cinzel), serif' }} fontSize="17" fontWeight="700" textAnchor="middle">
             {Array.from({ length: 18 }, (_, j) => <text key={j} x={0} y={-151} transform={`rotate(${j * 20})`}>{(j % 9) + 1}</text>)}
           </g>
         </g>

@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 /** Called after the Cashfree checkout closes (or on return from a UPI app). The server asks Cashfree directly – the browser's word is never trusted. */
 export const POST = withUser(async (req, user) => {
   const { orderId } = z.object({ orderId: z.string().startsWith('cf_').max(45) }).parse(await readJson(req));
-  const [p] = await getDb().select({ userId: payments.userId }).from(payments).where(eq(payments.razorpayOrderId, orderId)).limit(1);
+  const [p] = await getDb().select({ userId: payments.userId }).from(payments).where(eq(payments.gatewayOrderId, orderId)).limit(1);
   if (!p || p.userId !== user.id) return json({ error: 'ORDER_NOT_FOUND' }, 404);
   try {
     return json(await syncCashfreeOrder(orderId));

@@ -2,7 +2,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
-import { analyseDob, analyseNameSystem, todayIST } from '@/lib/numerology';
+import { analyseDob, analyseNameSystem, todayIST, toIso } from '@/lib/numerology';
 import { planetOf } from '@/lib/numerology/data/planets';
 import { NUMBER_TRAITS } from '@/lib/i18n/numberMeanings';
 import type { Lang } from '@/lib/i18n/dictionary';
@@ -63,7 +63,7 @@ export function QuickReading({ lang }: { lang: Lang }) {
         <input id="qr-name" className={field} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
         <div className="grid grid-cols-2 gap-3">
           <div><label className={lab} htmlFor="qr-dob">{t.dob}</label>
-            <input id="qr-dob" type="date" className={field} value={dob} min="1900-01-01" max={new Date().toISOString().slice(0, 10)} onChange={(e) => setDob(e.target.value)} required /></div>
+            <input id="qr-dob" type="date" className={field} value={dob} min="1900-01-01" max={toIso(todayIST())} onChange={(e) => setDob(e.target.value)} required /></div>
           <div><label className={lab} htmlFor="qr-g">{t.gender}</label>
             <select id="qr-g" className={field} value={gender} onChange={(e) => setGender(e.target.value as 'male' | 'female')}>
               <option value="male">{t.male}</option><option value="female">{t.female}</option>

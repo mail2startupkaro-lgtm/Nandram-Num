@@ -83,8 +83,9 @@ export const getCashfreePayments = (cfg: CashfreeConfig, orderId: string, fetchI
 /** Webhook signature check. Replays are harmless: fulfilment re-fetches the order from Cashfree and is idempotent. */
 export function verifyCashfreeWebhook(cfg: CashfreeConfig, rawBody: string, signature: string | null, timestamp: string | null): boolean {
   if (!signature || !timestamp) return false;
-  const expected = createHmac('sha256', cfg.secretKey).update(timestamp + rawBody).digest('base64');
-  return expected.length === signature.length && timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
+  const expected = Buffer.from(createHmac('sha256', cfg.secretKey).update(timestamp + rawBody).digest('base64'));
+  const given = Buffer.from(signature);
+  return expected.length === given.length && timingSafeEqual(expected, given);
 }
 
 /** Indian 10-digit mobile from "+91XXXXXXXXXX" / "0XXXXXXXXXX" / "XXXXXXXXXX", or null. */

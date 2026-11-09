@@ -2,7 +2,7 @@
 import type { KnowledgeSeed } from './knowledge';
 import type { ClientContext, SectionPlan } from './plan';
 
-export const PROMPT_VERSION = 'v1.0';
+export const PROMPT_VERSION = 'v1.1';
 
 export interface Persona {
   expertName: string;

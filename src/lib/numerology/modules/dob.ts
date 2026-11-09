@@ -3,7 +3,8 @@
  * personal cycles, friendly numbers, life cycles / pinnacles / challenges, life-area scores.
  */
 import { clamp, digitsOf, frequency, NUMBERS_1_TO_9, reduce, reduceToSingle, round, sumDigits } from '../core/reduce';
-import { ageOn, DateParts, parseDate, toDigitString, toIso } from '../core/date';
+import { ageOn, compareDates, DateParts, parseDate, toDigitString, toIso } from '../core/date';
+import { NumerologyInputError } from '../core/reduce';
 import { LOSHU_LAYOUT, LOSHU_LINES, VEDIC_LAYOUT } from '../data/grids';
 import { NUMBER_PLANET, planetOf, PlanetId } from '../data/planets';
 import { combinedRelations, CombinedRelations, Relation, relationOf, RELATION_TABLE } from '../data/relations';
@@ -14,7 +15,7 @@ export type KuaBasis = 'male' | 'female';
 
 export interface DobOptions {
   /** Date used for age and personal cycles. Pass explicitly for reproducible reports. */
-  asOf: DateParts;
+  asOf: DateParts | string;
   /** For gender "other", which Kua formula to use (default male, flagged). */
   kuaBasis?: KuaBasis;
   /** 'traditional' adds Moolank to the grid only when the day is 11–31 except 20/30 (default). */
@@ -155,26 +156,63 @@ export function buildVedicGrid(sources: GridSource[]) {
 
 export const universalYear = (year: number) => reduceToSingle(sumDigits(year));
 
+/**
+ * Personal Year number of the personal year that BEGINS on the birthday in `year`
+ * (day + month of birth + that year). Owner decision 2026-11-09: personal years run birthday to birthday.
+ */
 export function personalYear(dob: DateParts, year: number): number {
   return reduceToSingle(sumDigits(dob.day) + sumDigits(dob.month) + sumDigits(year));
 }
 export const personalMonth = (py: number, month: number) => reduceToSingle(py + month);
 export const personalDay = (pm: number, day: number) => reduceToSingle(pm + day);
 
+/** Calendar year in which the personal year running on `date` began (the last birthday on or before `date`). */
+export function personalYearStart(dob: DateParts, date: DateParts): number {
+  const beforeBirthday = date.month < dob.month || (date.month === dob.month && date.day < dob.day);
+  return beforeBirthday ? date.year - 1 : date.year;
+}
+
+const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** Birthday in a given year; 29 Feb falls on 1 Mar in non-leap years. */
+function birthdayIn(dob: DateParts, year: number): DateParts {
+  const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  return dob.month === 2 && dob.day === 29 && !leap ? { year, month: 3, day: 1 } : { year, month: dob.month, day: dob.day };
+}
+function dayBefore(p: DateParts): DateParts {
+  const d = new Date(Date.UTC(p.year, p.month - 1, p.day - 1));
+  return { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1, day: d.getUTCDate() };
+}
+const fmt = (p: DateParts) => `${p.day} ${MONTH_SHORT[p.month - 1]} ${p.year}`;
+
+/** Birthday-to-birthday period of the personal year that starts in `year`. */
+export function personalYearPeriod(dob: DateParts, year: number) {
+  const from = birthdayIn(dob, year), to = dayBefore(birthdayIn(dob, year + 1));
+  return { from: toIso(from), to: toIso(to), label: `${fmt(from)} – ${fmt(to)}` };
+}
+
+/** Personal Year in effect on a given date (birthday-to-birthday). */
+export const personalYearOn = (dob: DateParts, date: DateParts) => personalYear(dob, personalYearStart(dob, date));
+
 export function personalCycles(dob: DateParts, asOf: DateParts, yearsAhead = 9) {
-  const pyNow = personalYear(dob, asOf.year);
+  const start = personalYearStart(dob, asOf);
+  const pyNow = personalYear(dob, start);
   const pmNow = personalMonth(pyNow, asOf.month);
   const timeline = Array.from({ length: yearsAhead }, (_, i) => {
-    const year = asOf.year + i;
-    return { year, universalYear: universalYear(year), personalYear: personalYear(dob, year) };
+    const year = start + i;
+    return { year, ...personalYearPeriod(dob, year), universalYear: universalYear(year), personalYear: personalYear(dob, year) };
   });
+  // Months of each personal year, from the birthday month to the month before the next birthday month.
   const detailed = timeline.slice(0, 4).map((t) => ({
     ...t,
-    months: Array.from({ length: 12 }, (_, i) => ({ month: i + 1, personalMonth: personalMonth(t.personalYear, i + 1) })),
+    months: Array.from({ length: 12 }, (_, i) => {
+      const month = ((dob.month - 1 + i) % 12) + 1;
+      return { month, year: t.year + (dob.month - 1 + i >= 12 ? 1 : 0), personalMonth: personalMonth(t.personalYear, month) };
+    }),
   }));
   return {
     asOf: toIso(asOf),
-    current: { personalYear: pyNow, personalMonth: pmNow, personalDay: personalDay(pmNow, asOf.day) },
+    basis: 'birthday' as const,
+    current: { personalYear: pyNow, personalMonth: pmNow, personalDay: personalDay(pmNow, asOf.day), startYear: start, ...personalYearPeriod(dob, start) },
     timeline,
     detailed,
   };
@@ -232,7 +270,13 @@ export interface DobInput {
 export function analyseDob(input: DobInput, opts: DobOptions) {
   const dob = parseDate(input.dob);
   const asOf = parseDate(opts.asOf);
+  if (compareDates(dob, asOf) > 0) {
+    throw new NumerologyInputError('DATE_IN_FUTURE', `Date of birth ${toIso(dob)} is after the report date ${toIso(asOf)}. Check the year.`);
+  }
   const flags: string[] = [];
+  // Kua uses the calendar year. Feng-shui practitioners who switch the year at Chinese New Year / Lichun
+  // (around 4 February) would use the previous year for births from 1 January to 4 February.
+  if (dob.month === 1 || (dob.month === 2 && dob.day <= 4)) flags.push('KUA_NEAR_CHINESE_NEW_YEAR');
 
   const m = moolank(dob.day);
   const b = bhagyank(dob);

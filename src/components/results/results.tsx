@@ -277,6 +277,7 @@ function DobSection({ r }: { r: R }) {
         <div>
           <p className="text-sm font-semibold">{t.r.pyTimeline}</p>
           <YearBars data={d.personalCycles.timeline} currentYear={d.personalCycles.timeline[0].year} themeOf={(n) => PY_THEMES[lang][n]} />
+          {d.personalCycles.current.label && <p className="text-xs">{t.preview.py} {d.personalCycles.current.personalYear}: <b>{d.personalCycles.current.label}</b></p>}
           <p className="text-xs text-muted-foreground">{d.personalCycles.timeline.slice(0, 4).map((y) => `${y.year}: ${PY_THEMES[lang][y.personalYear]}`).join(' · ')}</p>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { clamp, NUMBERS_1_TO_9, round } from '../core/reduce';
 import { DateParts } from '../core/date';
 import { mutualHarmony, relationOf, relationScore } from '../data/relations';
 import { SCORING } from '../data/tables';
-import { analyseDob, DobResult, Gender, personalYear } from './dob';
+import { analyseDob, DobResult, Gender, personalYear, personalYearStart } from './dob';
 import { analyseNameSystem } from './name';
 
 export interface PartnerInput {
@@ -51,7 +51,9 @@ export function analyseCouple(a: PartnerInput, b: PartnerInput, opts: { asOf: Da
   if (dateNumbers.length === 0) dateNumbers = [...rank].filter((r) => ![4, 8].includes(r.n)).sort((x, y) => y.sum - x.sum || x.n - y.n).slice(0, 3).map((r) => r.n).sort();
   const marriageDates = Array.from({ length: 31 }, (_, i) => i + 1).filter((d) => dateNumbers.includes(((d - 1) % 9) + 1));
 
-  const years = Array.from({ length: opts.yearsAhead ?? 10 }, (_, i) => opts.asOf.year + i).map((year) => {
+  // Personal years run birthday to birthday; "year" = the calendar year in which each partner's personal year begins.
+  const firstYear = Math.min(personalYearStart(da.dob, opts.asOf), personalYearStart(db.dob, opts.asOf));
+  const years = Array.from({ length: opts.yearsAhead ?? 10 }, (_, i) => firstYear + i).map((year) => {
     const pyA = personalYear(da.dob, year), pyB = personalYear(db.dob, year);
     const pts = (py: number) => (SCORING.couple.marriagePersonalYears.includes(py) ? 2 : SCORING.couple.supportivePersonalYears.includes(py) ? 1 : 0);
     return { year, personalYearA: pyA, personalYearB: pyB, score: pts(pyA) + pts(pyB) };

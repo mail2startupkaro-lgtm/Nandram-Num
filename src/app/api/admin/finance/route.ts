@@ -29,7 +29,7 @@ export const GET = withAdmin(async (req) => {
     return csv(toCsv(
       ['Created (IST)', 'Paid (IST)', 'Status', 'Plan', 'Customer', 'Email', 'Mobile', 'Billing name', 'State', 'GSTIN', 'List price', 'Coupon', 'Discount', 'Taxable', 'CGST', 'SGST', 'IGST', 'Amount', 'Invoice', 'Gateway', 'Gateway order id', 'Gateway payment id'],
       list.map((p) => [istDateTime(p.createdAt), istDateTime(p.paidAt), p.status, p.planName ?? p.planCode, p.customer, p.email, p.phone, p.billingName, p.billingState, p.gstin,
-        rupees(p.listPaise), p.couponCode, rupees(p.discountPaise), rupees(p.taxablePaise), rupees(p.cgstPaise), rupees(p.sgstPaise), rupees(p.igstPaise), rupees(p.amountPaise), p.invoiceNumber, p.orderId.startsWith('cf_') ? 'Cashfree' : 'Razorpay', p.orderId, p.paymentId]),
+        rupees(p.listPaise), p.couponCode, rupees(p.discountPaise), rupees(p.taxablePaise), rupees(p.cgstPaise), rupees(p.sgstPaise), rupees(p.igstPaise), rupees(p.amountPaise), p.invoiceNumber, p.orderId.startsWith('cf_') ? 'Cashfree' : p.orderId.startsWith('mock_') ? 'Test mode' : 'Razorpay (old)', p.orderId, p.paymentId]),
     ), `payments_${tag}.csv`);
   }
 

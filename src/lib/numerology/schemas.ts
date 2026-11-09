@@ -2,6 +2,10 @@
 import { z } from 'zod';
 import { isValidDate, parseDate } from './core/date';
 
+const LATIN_MSG = 'Write the name in English letters (A–Z) – numerology values are calculated from the English spelling.';
+const hasLatin = (s: string) => /[A-Za-z\u00C0-\u024F]/.test(s);
+const latinName = (min: number, msg?: string) => z.string().trim().min(min, msg).refine(hasLatin, LATIN_MSG);
+
 const dobString = z
   .string()
   .trim()
@@ -12,15 +16,15 @@ const dobString = z
 export const LIFE_CONCERNS = ['career', 'business', 'money', 'marriage', 'love', 'health', 'children', 'education', 'foreignTravel', 'property', 'legal'] as const;
 
 export const PartnerSchema = z.object({
-  name: z.string().trim().min(2),
+  name: latinName(2),
   gender: z.enum(['male', 'female', 'other']),
   dob: dobString,
   mobile: z.string().optional(),
 });
 
 export const ClientInputBase = z.object({
-  fullName: z.string().trim().min(2, 'Full name is required'),
-  commonName: z.string().trim().optional(),
+  fullName: latinName(2, 'Full name is required'),
+  commonName: z.string().trim().optional().refine((s) => !s || hasLatin(s), LATIN_MSG),
   hindiName: z.string().trim().optional(),
   gender: z.enum(['male', 'female', 'other']),
   kuaBasis: z.enum(['male', 'female']).optional(),

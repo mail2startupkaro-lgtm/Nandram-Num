@@ -212,7 +212,7 @@ export function PaymentReport() {
                           <span>List price: <b>{inr(p.listPaise)}</b></span><span>Discount: <b>{inr(p.discountPaise)}</b></span><span>Taxable: <b>{inr(p.taxablePaise)}</b></span>
                           <span>CGST: <b>{inr(p.cgstPaise)}</b></span><span>SGST: <b>{inr(p.sgstPaise)}</b></span><span>IGST: <b>{inr(p.igstPaise)}</b></span>
                           <span>Billing name: <b>{p.billingName ?? '—'}</b></span><span>State: <b>{p.billingState ?? '—'}</b></span><span>GSTIN: <b>{p.gstin ?? '—'}</b></span>
-                          <span>Created: <b>{istDT(p.createdAt)}</b></span><span>{p.orderId.startsWith('cf_') ? 'Cashfree' : 'Razorpay'} order: <b className="font-mono">{p.orderId}</b></span><span>Payment id: <b className="font-mono">{p.paymentId ?? '—'}</b></span>
+                          <span>Created: <b>{istDT(p.createdAt)}</b></span><span>{p.orderId.startsWith('cf_') ? 'Cashfree' : p.orderId.startsWith('mock_') ? 'Test-mode' : 'Older (Razorpay)'} order: <b className="font-mono">{p.orderId}</b></span><span>Payment id: <b className="font-mono">{p.paymentId ?? '—'}</b></span>
                         </div>
                       </td></tr>
                     )}
@@ -250,7 +250,7 @@ export function PaymentReport() {
       {view === 'audit' && (!audit ? <div className="h-40 animate-pulse rounded-lg bg-muted" /> : (
         <Card title="Reconciliation checks" action={auditCount ? <Badge tone="warn">{auditCount} item(s) to review</Badge> : <Badge tone="good">all clear</Badge>}>
           <div className="space-y-5 text-sm">
-            <AuditBlock ok={!audit.pendingOver30Min.length} title="Pending orders older than 30 minutes" hint="The customer may have paid but the confirmation didn't arrive. For Cashfree orders press Re-check – if Cashfree shows it paid, the order is completed and the invoice issued. Razorpay orders: check the order id in the Razorpay dashboard.">
+            <AuditBlock ok={!audit.pendingOver30Min.length} title="Pending orders older than 30 minutes" hint="The customer may have paid but the confirmation didn't arrive. For Cashfree orders press Re-check – if Cashfree shows it paid, the order is completed and the invoice issued. Older Razorpay orders (if any) must be checked in the Razorpay dashboard.">
               {audit.pendingOver30Min.map((x) => <li key={x.id}><span className="font-mono">{x.orderId}</span> · {inr(x.amount)} · {x.email ?? x.phone} · {istDT(x.createdAt)}
                 {x.orderId.startsWith('cf_') && <> · <button className="text-gold underline" onClick={async () => {
                   try { const r = await api<{ status: string; invoiceNumber?: string }>('/api/admin/finance', { method: 'POST', json: { orderId: x.orderId } }); setRecheck({ ...recheck, [x.orderId]: r.status === 'paid' ? `paid – invoice ${r.invoiceNumber}` : r.status }); }

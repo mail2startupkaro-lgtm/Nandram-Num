@@ -2,7 +2,7 @@
 import { LOSHU_NUMBER_INFO } from '../data/grids';
 import { NUMBER_PLANET, planetOf } from '../data/planets';
 import { SCORING } from '../data/tables';
-import { DobResult, personalYear } from './dob';
+import { DobResult, personalYear, personalYearPeriod } from './dob';
 import { MobileResult } from './mobile';
 import { NameResult } from './name';
 
@@ -22,10 +22,10 @@ export function buildRemedies(dob: DobResult, extras: { name?: NameResult; mobil
   const excessPlanets = dob.loShu.repeated.filter((r) => r.count >= 3).map((r) => planetOf(r.number));
   const daan = uniq([...ruling.daan.slice(0, 2), ...excessPlanets.flatMap((p) => p.daan.slice(0, 2))]);
 
-  const startYear = Number(dob.personalCycles.asOf.slice(0, 4));
+  const startYear = dob.personalCycles.current.startYear; // personal years run birthday to birthday
   const years = Array.from({ length: extras.yearsAhead ?? 10 }, (_, i) => startYear + i);
   const favourableYears = Object.fromEntries(
-    Object.entries(SCORING.eventYears).map(([event, pys]) => [event, years.filter((y) => pys.includes(personalYear(dob.dob, y))).map((y) => ({ year: y, personalYear: personalYear(dob.dob, y) }))]),
+    Object.entries(SCORING.eventYears).map(([event, pys]) => [event, years.filter((y) => pys.includes(personalYear(dob.dob, y))).map((y) => ({ year: y, personalYear: personalYear(dob.dob, y), period: personalYearPeriod(dob.dob, y).label }))]),
   );
 
   return {

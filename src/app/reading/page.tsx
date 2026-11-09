@@ -3,7 +3,13 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useApp } from '@/components/layout/providers';
-import { Results } from '@/components/results/results';
+import dynamic from 'next/dynamic';
+// Results (charts, grids, narrative, PDF button) only appear after "Calculate" – load them on demand so the
+// wizard is interactive sooner.
+const Results = dynamic(() => import('@/components/results/results').then((m) => m.Results), {
+  ssr: false,
+  loading: () => <div className="mx-auto my-10 h-40 max-w-3xl animate-pulse rounded-lg bg-muted/40" aria-busy="true" />,
+});
 import { EMPTY, fromClient, toClientInput, toDraft, type WizardState } from '@/components/wizard/state';
 import { Wizard } from '@/components/wizard/wizard';
 import type { NumerologyResult } from '@/lib/numerology';

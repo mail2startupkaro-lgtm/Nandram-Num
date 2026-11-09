@@ -14,14 +14,14 @@ export function isValidDate({ day, month, year }: DateParts): boolean {
 }
 
 /**
- * Accepts ISO "YYYY-MM-DD", Indian "DD-MM-YYYY" / "DD/MM/YYYY" / "DD.MM.YYYY", or parts.
+ * Accepts ISO "YYYY-MM-DD" (also YYYY/MM/DD, YYYY.MM.DD), Indian "DD-MM-YYYY" / "DD/MM/YYYY" / "DD.MM.YYYY", or parts.
  * Never uses local time zones, so results are identical on every server.
  */
 export function parseDate(input: string | DateParts): DateParts {
   let p: DateParts;
   if (typeof input === 'string') {
     const s = input.trim();
-    const iso = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s);
+    const iso = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.exec(s);
     const ind = /^(\d{1,2})[/\-.](\d{1,2})[/\-.](\d{4})$/.exec(s);
     if (iso) p = { year: +iso[1], month: +iso[2], day: +iso[3] };
     else if (ind) p = { day: +ind[1], month: +ind[2], year: +ind[3] };

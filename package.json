@@ -17,6 +17,8 @@
     "db:migrate": "tsx scripts/migrate.ts"
   },
   "dependencies": {
+    "@fontsource/cinzel": "^5.3.0",
+    "@fontsource/cormorant-garamond": "^5.3.0",
     "@fontsource/noto-sans-devanagari": "^5.1.0",
     "@fontsource/playfair-display": "^5.1.0",
     "@fontsource/poppins": "^5.1.0",
@@ -25,7 +27,7 @@
     "drizzle-orm": "^0.36.4",
     "framer-motion": "^11.11.17",
     "lucide-react": "^0.460.0",
-    "next": "^14.2.15",
+    "next": "^14.2.35",
     "papaparse": "^5.4.1",
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^4.10.38",

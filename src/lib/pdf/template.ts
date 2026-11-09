@@ -19,7 +19,7 @@ const L = {
     ch: { glance: 'Your Numbers at a Glance', core: 'Moolank & Bhagyank', grid: 'Lo Shu Grid Analysis', kua: 'Kua & Directions', timing: 'Timing & Forecast', life: 'Career, Love & Wellbeing', name: 'Name Numerology', numbers: 'Mobile & Aadhaar', couple: 'Couple Compatibility', remedies: 'Remedies & Solutions', closing: 'Closing & Consultation' } as Record<string, string>,
     moolank: 'Moolank', bhagyank: 'Bhagyank', kua: 'Kua', nameNo: 'Name number', py: 'Personal Year', strengths: 'Key Strengths', watch: 'Watch Out For', advice: 'Expert Advice', remedy: 'Your Remedy',
     loShu: 'Lo Shu Grid', vedic: 'Vedic Grid', present: 'Present', repeated: 'Repeated', missing: 'Missing', lifeAreas: 'Life areas', friendly: 'Friendly', neutral: 'Neutral', enemy: 'Challenging',
-    planes: 'Planes, arrows & yogs', plane: 'Plane', status: 'Status', complete: 'Complete', partial: 'Partial', empty: 'Empty', pyTimeline: 'Personal Year energy',
+    planes: 'Planes, arrows & yogs', plane: 'Plane', status: 'Status', complete: 'Complete', partial: 'Partial', empty: 'Empty', pyTimeline: 'Personal Year energy (birthday to birthday; year = when it begins)',
     months: 'Personal months', pinnacles: 'Pinnacles', challenges: 'Challenges', compat: 'Compatibility', corrections: 'Name correction options', spelling: 'Spelling', score: 'Score',
     pairs: 'Digit pairs', ideal: 'Ideal totals for a new number', overall: 'Overall', overlay: 'Combined grid', brings: 'brings what the other lacks',
     lucky: 'Lucky', numbers: 'Numbers', dates: 'Dates', days: 'Days', colours: 'Colours', avoid: 'Use sparingly', directions: 'Directions', gem: 'Gemstone', mantra: 'Mantra', daan: 'Daan', fasting: 'Fasting day',
@@ -35,7 +35,7 @@ const L = {
     ch: { glance: 'आपके अंक एक नज़र में', core: 'मूलांक और भाग्यांक', grid: 'लो शू ग्रिड विश्लेषण', kua: 'कुआ और दिशाएँ', timing: 'समय और भविष्यफल', life: 'करियर, प्रेम और स्वास्थ्य', name: 'नाम अंक ज्योतिष', numbers: 'मोबाइल और आधार', couple: 'दंपति मिलान', remedies: 'उपाय और समाधान', closing: 'समापन और परामर्श' } as Record<string, string>,
     moolank: 'मूलांक', bhagyank: 'भाग्यांक', kua: 'कुआ', nameNo: 'नामांक', py: 'व्यक्तिगत वर्ष', strengths: 'मुख्य शक्तियाँ', watch: 'ध्यान दें', advice: 'विशेषज्ञ सलाह', remedy: 'आपका उपाय',
     loShu: 'लो शू ग्रिड', vedic: 'वैदिक ग्रिड', present: 'उपस्थित', repeated: 'दोहराया', missing: 'अनुपस्थित', lifeAreas: 'जीवन क्षेत्र', friendly: 'मित्र', neutral: 'सम', enemy: 'शत्रु',
-    planes: 'प्लेन, तीर और योग', plane: 'प्लेन', status: 'स्थिति', complete: 'पूर्ण', partial: 'आंशिक', empty: 'रिक्त', pyTimeline: 'व्यक्तिगत वर्ष ऊर्जा',
+    planes: 'प्लेन, तीर और योग', plane: 'प्लेन', status: 'स्थिति', complete: 'पूर्ण', partial: 'आंशिक', empty: 'रिक्त', pyTimeline: 'व्यक्तिगत वर्ष ऊर्जा (जन्मदिन से जन्मदिन तक)',
     months: 'व्यक्तिगत माह', pinnacles: 'शिखर', challenges: 'चुनौतियाँ', compat: 'अनुकूलता', corrections: 'नाम सुधार विकल्प', spelling: 'वर्तनी', score: 'स्कोर',
     pairs: 'अंक जोड़े', ideal: 'नए नंबर के लिए आदर्श योग', overall: 'कुल', overlay: 'संयुक्त ग्रिड', brings: 'दूसरे की कमी पूरी करते हैं',
     lucky: 'शुभ', numbers: 'अंक', dates: 'तिथियाँ', days: 'दिन', colours: 'रंग', avoid: 'कम उपयोग करें', directions: 'दिशाएँ', gem: 'रत्न', mantra: 'मंत्र', daan: 'दान', fasting: 'व्रत',
@@ -222,7 +222,7 @@ function buildChapters(inp: TemplateInput, lab: Labels): { id: string; title: st
     id: 'timing', title: lab.ch.timing, icon: remedyIcon('calendar', t, 40),
     inner: `<figure class="center">${barsSvg(tl.map((y, i) => ({ label: String(y.year), value: y.personalYear, highlight: i === 0 })), t, 640, 190)}<div class="cap">${esc(lab.pyTimeline)}</div></figure>
       ${sec(S.forecast, true)}
-      ${cur ? `<figure><table><thead><tr><th>${esc(lab.months)} ${cur.year}</th>${cur.months.map((m) => `<th style="text-align:center">${['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'][m.month - 1]}</th>`).join('')}</tr></thead><tbody><tr><td>${esc(lab.py)} ${cur.personalYear}</td>${cur.months.map((m) => `<td style="text-align:center" class="serif">${m.personalMonth}</td>`).join('')}</tr></tbody></table></figure>` : ''}
+      ${cur ? `<figure><table><thead><tr><th>${esc(lab.months)} ${esc(cur.label ?? String(cur.year))}</th>${cur.months.map((m) => `<th style="text-align:center">${['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'][m.month - 1]}</th>`).join('')}</tr></thead><tbody><tr><td>${esc(lab.py)} ${cur.personalYear}</td>${cur.months.map((m) => `<td style="text-align:center" class="serif">${m.personalMonth}</td>`).join('')}</tr></tbody></table></figure>` : ''}
       <figure><div class="small muted" style="margin-bottom:1mm">${esc(lab.pinnacles)}</div>${timelineSvg(d.pinnacles, t, 640)}<div class="small muted" style="margin:2mm 0 1mm">${esc(lab.challenges)}</div>${timelineSvg(d.challenges, t, 640)}</figure>
       ${sec(S.lifePeriods)}`,
   });

@@ -20,7 +20,7 @@ export function errorResponse(e: unknown): Response {
   if (e instanceof ZodError) return json({ error: 'VALIDATION', issues: e.issues.map((i) => ({ path: i.path.join('.'), message: i.message })) }, 422);
   if (e instanceof NumerologyInputError) return json({ error: 'VALIDATION', issues: [{ path: e.code, message: e.message }] }, 422);
   if (e instanceof Error && e.message === 'REFUSING_TO_STORE_12_DIGIT_NUMBER') return json({ error: 'PII_REJECTED' }, 422);
-  if (e instanceof Error && /ENCRYPTION_KEY|DATABASE_URL|RAZORPAY_KEY|OTP delivery provider/.test(e.message)) { console.error('config error:', e.message); return json({ error: 'SERVER_NOT_CONFIGURED', issues: [{ path: 'server', message: 'The server is missing required settings (database, encryption, payments or OTP delivery). See .env.example.' }] }, 503); }
+  if (e instanceof Error && /ENCRYPTION_KEY|DATABASE_URL|CASHFREE_|OTP delivery provider/.test(e.message)) { console.error('config error:', e.message); return json({ error: 'SERVER_NOT_CONFIGURED', issues: [{ path: 'server', message: 'The server is missing required settings (database, encryption, payments or OTP delivery). See .env.example.' }] }, 503); }
   console.error('api error:', e instanceof Error ? `${e.name}: ${e.message.slice(0, 160)}` : 'unknown'); // never log request bodies
   return json({ error: 'INTERNAL' }, 500);
 }

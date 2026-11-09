@@ -147,10 +147,11 @@ export function buildPlan(r: NumerologyResult, ctx: ClientContext): SectionPlan[
     id: 'forecast', title: { en: 'Year-by-Year Forecast', hi: 'वार्षिक भविष्यफल' },
     facts: {
       currentYear: ctx.currentYear, currentPersonalYear: py.current.personalYear, currentPersonalMonth: py.current.personalMonth,
-      years: py.timeline.slice(0, 4).map((t) => ({ year: t.year, personalYear: t.personalYear })),
+      personalYearBasis: 'birthday to birthday', currentPeriod: py.current.label,
+      years: py.timeline.slice(0, 4).map((t) => ({ year: t.year, personalYear: t.personalYear, period: t.label })),
     },
     kbKeys: py.timeline.slice(0, 4).map((t) => `PY_${t.personalYear}`),
-    brief: 'Give a specific forecast for the current year and the next three, one short paragraph per year, tied to the client concerns.',
+    brief: 'Give a specific forecast for the current personal year and the next three, one short paragraph per year, tied to the client concerns. Personal years run from birthday to birthday – name each period by its dates (e.g. "from your birthday in 2026"), never as January to December.',
     targetWords: [180, 300],
   });
 
