@@ -4,7 +4,7 @@ export type Lang = 'en' | 'hi';
 const en = {
   brand: 'myNumerologist.com',
   tagline: 'Vedic, Chaldean & Lo Shu numerology by Acharya Nandram (15+ Years Experience)',
-  nav: { reading: 'Get your reading', dashboard: 'My reports', pricing: 'Pricing', calculators: 'Free calculators', mulank: 'Mulank' },
+  nav: { reading: 'Get your reading', dashboard: 'My reports', pricing: 'Pricing', calculators: 'Free calculators', mulank: 'Mulank', blog: 'Blog' },
   home: {
     title: 'Your numbers, read the Indian way',
     sub: 'Moolank, Bhagyank, Lo Shu Grid, name, mobile and marriage compatibility, with practical upay for every finding.',
@@ -96,7 +96,7 @@ type Dict = typeof en;
 const hi: Dict = {
   brand: 'myNumerologist.com',
   tagline: 'आचार्य नंदराम द्वारा वैदिक, कैल्डियन और लो शू अंक ज्योतिष',
-  nav: { reading: 'अपनी रीडिंग पाएं', dashboard: 'मेरी रिपोर्ट', pricing: 'मूल्य', calculators: 'मुफ़्त कैलकुलेटर', mulank: 'मूलांक' },
+  nav: { reading: 'अपनी रीडिंग पाएं', dashboard: 'मेरी रिपोर्ट', pricing: 'मूल्य', calculators: 'मुफ़्त कैलकुलेटर', mulank: 'मूलांक', blog: 'ब्लॉग' },
   home: {
     title: 'आपके अंक, भारतीय पद्धति से',
     sub: 'मूलांक, भाग्यांक, लो शू ग्रिड, नाम, मोबाइल और विवाह मिलान, हर बात के साथ व्यावहारिक उपाय।',

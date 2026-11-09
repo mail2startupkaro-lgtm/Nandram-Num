@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Calculator as CalcIcon } from 'lucide-react';
 import { CALCULATORS } from '@/lib/seo/calculators';
+import { ExpertCard } from '@/components/calculators/expert-card';
 
 export const metadata: Metadata = { title: 'Free Numerology Calculators', description: 'Free Moolank, Bhagyank, Lo Shu Grid, name, mobile number and Kua calculators based on Indian numerology.', alternates: { canonical: '/calculators' } };
 
@@ -16,6 +17,7 @@ export default function Calculators() {
           </Link>
         ))}
       </div>
+      <ExpertCard />
     </div>
   );
 }

@@ -86,6 +86,7 @@ export function Header() {
           <MulankMenu />
           <Link href="/calculators" className="hidden whitespace-nowrap rounded-md px-3 py-2 text-sm hover:bg-muted md:inline-block">{t.nav.calculators}</Link>
           <Link href="/pricing" className="hidden whitespace-nowrap rounded-md px-3 py-2 text-sm hover:bg-muted sm:inline-block">{t.nav.pricing}</Link>
+          <Link href="/blog" className="hidden whitespace-nowrap rounded-md px-3 py-2 text-sm hover:bg-muted md:inline-block">{t.nav.blog}</Link>
           {user?.role === 'super_admin' && <Link href="/admin" className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-2 text-sm text-gold hover:bg-muted sm:px-3"><Shield className="h-4 w-4" />{t.auth.admin}</Link>}
           {user && <Link href="/dashboard" className="whitespace-nowrap rounded-md px-2 py-2 text-sm hover:bg-muted sm:px-3">{t.nav.dashboard}</Link>}
           <div className="flex rounded-md border border-gold/40 p-0.5 text-xs" role="group" aria-label="Language">
@@ -123,7 +124,7 @@ export function Footer() {
     <footer className="mt-16 border-t border-gold/20 py-8 text-center text-xs text-muted-foreground">
       <div className="container space-y-2">
         <p className="mx-auto max-w-2xl">{t.disclaimer}</p>
-        <p className="flex flex-wrap justify-center gap-x-4 gap-y-1"><Link href="/terms" className="hover:text-foreground">Terms of Service</Link><Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link><Link href="/refund" className="hover:text-foreground">Refund Policy</Link><Link href="/mulank" className="hover:text-foreground">{t.nav.mulank}</Link><Link href="/pricing" className="hover:text-foreground">{t.nav.pricing}</Link><Link href="/calculators" className="hover:text-foreground">{t.nav.calculators}</Link></p>
+        <p className="flex flex-wrap justify-center gap-x-4 gap-y-1"><Link href="/terms" className="hover:text-foreground">Terms of Service</Link><Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link><Link href="/refund" className="hover:text-foreground">Refund Policy</Link><Link href="/mulank" className="hover:text-foreground">{t.nav.mulank}</Link><Link href="/blog" className="hover:text-foreground">{t.nav.blog}</Link><Link href="/pricing" className="hover:text-foreground">{t.nav.pricing}</Link><Link href="/calculators" className="hover:text-foreground">{t.nav.calculators}</Link></p>
         <p>© {new Date().getFullYear()} {t.brand}</p>
       </div>
     </footer>

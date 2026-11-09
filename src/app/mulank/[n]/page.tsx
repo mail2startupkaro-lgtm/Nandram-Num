@@ -52,7 +52,7 @@ export default function MulankPage({ params }: { params: { n: string } }) {
           <p className="text-xl italic text-muted-foreground">{m.tagline}</p>
           <p className="text-muted-foreground">{m.intro}</p>
           <div className="flex flex-wrap gap-3 pt-1">
-            <Link href="/reading" className="mk-shine inline-flex h-11 items-center rounded-md bg-gradient-to-r from-[hsl(43_75%_42%)] to-[hsl(43_85%_58%)] px-5 font-semibold text-[hsl(250_45%_10%)]">Get my Mulank {m.n} reading</Link>
+            <Link href="/reading" className="inline-flex h-11 items-center rounded-md bg-gradient-to-r from-[hsl(43_75%_42%)] to-[hsl(43_85%_58%)] px-5 font-semibold text-[hsl(250_45%_10%)]">Get my Mulank {m.n} reading</Link>
             <Link href="/pricing" className="inline-flex h-11 items-center rounded-md border border-gold/50 px-5 hover:bg-gold/10">See plans</Link>
           </div>
         </div>
