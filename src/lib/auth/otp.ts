@@ -50,7 +50,14 @@ export async function requestOtp(channel: 'email' | 'sms', raw: string, opts: { 
   return { identifier: ident, ...(exposeForDev ? { devCode: code } : {}) };
 }
 
-const superAdmins = () => (process.env.SUPER_ADMIN_EMAILS ?? '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+export const superAdmins = () => (process.env.SUPER_ADMIN_EMAILS ?? '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+/** Mobile numbers (any Indian format) that are Super Admin – SUPER_ADMIN_MOBILES, comma-separated. */
+export const superAdminMobiles = () => (process.env.SUPER_ADMIN_MOBILES ?? '').split(',').map((s) => s.trim()).filter(Boolean)
+  .flatMap((m) => { try { return [`+91${normalizeIndianMobile(m)}`]; } catch { return []; } });
+export const isSuperAdmin = (email?: string | null, phone?: string | null) =>
+  (!!email && superAdmins().includes(email.toLowerCase())) || (!!phone && superAdminMobiles().includes(phone));
+/** "a@b.com" → email, anything else → Indian mobile. */
+export const detectChannel = (raw: string): 'email' | 'sms' => (raw.includes('@') ? 'email' : 'sms');
 
 /** Verifies the code and returns the (created if needed) user. */
 export async function verifyOtp(channel: 'email' | 'sms', raw: string, code: string, opts: { name?: string } = {}, db: Db = getDb()): Promise<User> {
