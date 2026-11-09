@@ -3,7 +3,7 @@ export type Lang = 'en' | 'hi';
 
 const en = {
   brand: 'myNumerologist.com',
-  tagline: 'Vedic, Chaldean & Lo Shu numerology by [Expert Name]',
+  tagline: 'Vedic, Chaldean & Lo Shu numerology by Acharya Nandram (15+ Years Experience)',
   nav: { reading: 'Get your reading', dashboard: 'My reports', pricing: 'Pricing', calculators: 'Free calculators', mulank: 'Mulank' },
   home: {
     title: 'Your numbers, read the Indian way',
@@ -47,13 +47,13 @@ const en = {
     remedies: 'Remedies & solutions', lucky: 'Lucky', numbers: 'Numbers', dates: 'Dates', days: 'Days', colours: 'Colours', directions: 'Directions', avoid: 'Avoid',
     gem: 'Gemstone', mantra: 'Mantra', daan: 'Daan (charity)', fasting: 'Fasting day', habits: 'Daily habits', signature: 'Signature', favYears: 'Favourable years',
     friendly: 'Friendly', neutral: 'Neutral', enemy: 'Enemy', relations: 'Number relations', strengths: 'Key strengths', watch: 'Watch out for', advice: 'Expert advice', yourRemedy: 'Your remedy',
-    pdfSoon: 'Premium PDF arrives in Phase 4', narrativeSoon: 'Detailed personalised write-up by [Expert Name] is added in the full report.',
+    pdfSoon: 'Premium PDF arrives in Phase 4', narrativeSoon: 'Detailed personalised write-up by Acharya Nandram is added in the full report.',
     tapHint: 'Tap any number in the grid to see what it means for you.', pinnacle: 'Pinnacle', challenge: 'Challenge', cycle: 'Cycle', career: 'Career', last4: 'Last 4',
     current: 'Now', age: 'Age', years: 'years', from: 'from', to: 'to', onwards: 'onwards',
     events: { marriage: 'Marriage', jobChange: 'Job change', businessStart: 'Business start', propertyPurchase: 'Property purchase' },
   },
   n: {
-    title: 'Your personal report', sub: 'Written for you by [Expert Name]', write: 'Write my report', writing: 'Writing your report…', rewrite: 'Rewrite',
+    title: 'Your personal report', sub: 'Written for you by Acharya Nandram', write: 'Write my report', writing: 'Writing your report…', rewrite: 'Rewrite',
     language: 'Report language', review: 'Expert review', reviewHint: 'Edit any section before the PDF is created. Numbers you change are not re-checked, so edit with care.',
     approve: 'Approve & finalise', approved: 'Final', awaiting: 'Awaiting expert review', edited: 'Edited by expert', empty: 'Your detailed write-up appears here. It is based only on the numbers above.',
     fallbackNote: 'Hindi text needs the expert writer to be configured; this draft is in Hinglish.',
@@ -95,7 +95,7 @@ type Dict = typeof en;
 
 const hi: Dict = {
   brand: 'myNumerologist.com',
-  tagline: '[Expert Name] द्वारा वैदिक, कैल्डियन और लो शू अंक ज्योतिष',
+  tagline: 'आचार्य नंदराम द्वारा वैदिक, कैल्डियन और लो शू अंक ज्योतिष',
   nav: { reading: 'अपनी रीडिंग पाएं', dashboard: 'मेरी रिपोर्ट', pricing: 'मूल्य', calculators: 'मुफ़्त कैलकुलेटर', mulank: 'मूलांक' },
   home: {
     title: 'आपके अंक, भारतीय पद्धति से',
@@ -133,13 +133,13 @@ const hi: Dict = {
     remedies: 'उपाय और समाधान', lucky: 'शुभ', numbers: 'अंक', dates: 'तिथियाँ', days: 'दिन', colours: 'रंग', directions: 'दिशाएँ', avoid: 'बचें',
     gem: 'रत्न', mantra: 'मंत्र', daan: 'दान', fasting: 'व्रत का दिन', habits: 'दैनिक आदतें', signature: 'हस्ताक्षर', favYears: 'शुभ वर्ष',
     friendly: 'मित्र', neutral: 'सम', enemy: 'शत्रु', relations: 'अंक संबंध', strengths: 'मुख्य शक्तियाँ', watch: 'ध्यान दें', advice: 'विशेषज्ञ सलाह', yourRemedy: 'आपका उपाय',
-    pdfSoon: 'प्रीमियम PDF चरण 4 में', narrativeSoon: '[Expert Name] द्वारा विस्तृत व्यक्तिगत विवरण पूरी रिपोर्ट में जोड़ा जाता है।',
+    pdfSoon: 'प्रीमियम PDF चरण 4 में', narrativeSoon: 'आचार्य नंदराम द्वारा विस्तृत व्यक्तिगत विवरण पूरी रिपोर्ट में जोड़ा जाता है।',
     tapHint: 'ग्रिड में किसी भी अंक पर टैप करें और उसका अर्थ देखें।', pinnacle: 'शिखर', challenge: 'चुनौती', cycle: 'चक्र', career: 'करियर', last4: 'अंतिम 4',
     current: 'अभी', age: 'आयु', years: 'वर्ष', from: 'से', to: 'तक', onwards: 'आगे',
     events: { marriage: 'विवाह', jobChange: 'नौकरी बदलना', businessStart: 'व्यवसाय आरंभ', propertyPurchase: 'संपत्ति खरीद' },
   },
   n: {
-    title: 'आपकी व्यक्तिगत रिपोर्ट', sub: '[Expert Name] द्वारा आपके लिए लिखी गई', write: 'मेरी रिपोर्ट लिखें', writing: 'आपकी रिपोर्ट लिखी जा रही है…', rewrite: 'फिर से लिखें',
+    title: 'आपकी व्यक्तिगत रिपोर्ट', sub: 'आचार्य नंदराम द्वारा आपके लिए लिखी गई', write: 'मेरी रिपोर्ट लिखें', writing: 'आपकी रिपोर्ट लिखी जा रही है…', rewrite: 'फिर से लिखें',
     language: 'रिपोर्ट की भाषा', review: 'विशेषज्ञ समीक्षा', reviewHint: 'PDF बनने से पहले किसी भी भाग को संपादित करें। बदले गए अंकों की दोबारा जाँच नहीं होती, ध्यान से बदलें।',
     approve: 'स्वीकृत करें', approved: 'अंतिम', awaiting: 'विशेषज्ञ समीक्षा बाकी', edited: 'विशेषज्ञ द्वारा संपादित', empty: 'आपका विस्तृत विवरण यहाँ दिखेगा। यह केवल ऊपर दिए गए अंकों पर आधारित है।',
     fallbackNote: 'हिंदी पाठ के लिए विशेषज्ञ लेखक सेटअप आवश्यक है; यह ड्राफ़्ट हिंग्लिश में है।',

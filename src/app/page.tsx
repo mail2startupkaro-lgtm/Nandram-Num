@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import Link from 'next/link';
-import { CalendarDays, Heart, IdCard, ScrollText, Smartphone, Sparkles, Type } from 'lucide-react';
+import { Award, CalendarDays, CheckCircle, Heart, IdCard, ScrollText, Smartphone, Sparkles, Type } from 'lucide-react';
 import { useApp } from '@/components/layout/providers';
 import { Reveal } from '@/components/layout/cosmic-bg';
 import { YantraWheel } from '@/components/home/yantra-wheel';
@@ -147,7 +147,21 @@ export default function Home() {
       <section className="relative overflow-hidden">
         <div className="container grid min-h-[calc(100vh-4rem)] items-center gap-8 py-14 lg:grid-cols-[1.05fr_.95fr]">
           <div className="text-center lg:text-left">
-            <Reveal><span className="mb-6 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-4 py-1.5 text-xs uppercase tracking-[0.24em] text-gold cz-track"><i className="cz-eyebrow-dot" />{c.eyebrow}</span></Reveal>
+            <Reveal>
+              <div className="mb-4 inline-flex flex-wrap items-center justify-center gap-2 rounded-full border border-gold/40 bg-gradient-to-r from-gold/15 via-maroon/20 to-gold/15 px-4 py-1.5 shadow-[0_0_20px_rgba(245,158,11,0.2)] backdrop-blur-md lg:justify-start">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-maroon to-gold font-serif text-xs font-bold text-white shadow-sm">
+                  ॐ
+                </span>
+                <span className="font-serif text-sm font-bold text-foreground sm:text-base">
+                  {lang === 'hi' ? 'आचार्य नंदराम' : 'Acharya Nandram'}
+                </span>
+                <span className="h-3 w-px bg-gold/40" />
+                <span className="rounded bg-gold/20 px-2 py-0.5 text-[11px] font-semibold tracking-wide text-gold">
+                  {lang === 'hi' ? 'अनुभव: 15+ वर्ष से अधिक' : 'Experience: 15+ Years +'}
+                </span>
+              </div>
+            </Reveal>
+            <Reveal delay={0.05}><span className="mb-6 inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-4 py-1.5 text-xs uppercase tracking-[0.24em] text-gold cz-track"><i className="cz-eyebrow-dot" />{c.eyebrow}</span></Reveal>
             <Reveal delay={0.1}>
               <h1 className="font-cinzel text-[38px] font-bold leading-[1.15] sm:text-6xl">{c.h1a}<br className="hidden sm:block" /> <span className="cz-shine">{c.h1b}</span></h1>
             </Reveal>
@@ -242,6 +256,57 @@ export default function Home() {
             </Reveal>
           ))}
         </div>
+      </section>
+
+      {/* ABOUT EXPERT: ACHARYA NANDRAM */}
+      <section className="container py-16">
+        <Reveal>
+          <div className="cz-card relative overflow-hidden rounded-2xl border border-gold/40 bg-gradient-to-br from-card/90 via-card/75 to-card/90 p-8 sm:p-12 shadow-[0_0_40px_rgba(245,158,11,0.14)]">
+            <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-gold/10 blur-3xl pointer-events-none" />
+            <div className="grid items-center gap-8 lg:grid-cols-[1fr_auto]">
+              <div>
+                <span className="cz-kicker text-gold">
+                  {lang === 'hi' ? 'अंक ज्योतिष विशेषज्ञ' : 'Lead Numerologist & Guide'}
+                </span>
+                <h2 className="font-cinzel mt-2 text-3xl font-bold sm:text-4xl text-foreground">
+                  {lang === 'hi' ? 'आचार्य नंदराम' : 'Acharya Nandram'}
+                </h2>
+                <div className="mt-3 inline-flex items-center gap-2 rounded-md bg-gold/15 px-3 py-1 text-sm font-semibold text-gold">
+                  <Award className="h-4 w-4" />
+                  <span>{lang === 'hi' ? 'अनुभव: 15+ वर्ष से अधिक' : 'Experience: More than 15+ Years'}</span>
+                </div>
+                <p className="font-cormorant mt-4 max-w-2xl text-lg text-muted-foreground sm:text-xl leading-relaxed">
+                  {lang === 'hi' 
+                    ? 'वैदिक अंक ज्योतिष, कैल्डियन पद्धति और लो शू ग्रिड के गहन अध्ययन के साथ, आचार्य नंदराम ने पिछले 15+ वर्षों में हज़ारों जातकों को उनके करियर, व्यवसाय, विवाह, स्वास्थ्य और नाम सुधार में सटीक और व्यावहारिक मार्गदर्शन प्रदान किया है।' 
+                    : 'With more than 15+ years of dedicated mastery in Vedic, Chaldean, and Lo Shu grid systems, Acharya Nandram has guided thousands of individuals and families toward clarity, success, and prosperity through precise number vibrations and personalized remedies.'}
+                </p>
+                <div className="mt-6 flex flex-wrap gap-3 text-xs sm:text-sm text-foreground/85">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-3 py-1 border border-border">
+                    <CheckCircle className="h-3.5 w-3.5 text-gold" /> {lang === 'hi' ? 'जन्म तिथि व मूलांक-भाग्यांक' : 'Date of Birth & Moolank Analysis'}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-3 py-1 border border-border">
+                    <CheckCircle className="h-3.5 w-3.5 text-gold" /> {lang === 'hi' ? 'नाम व हस्ताक्षर सुधार' : 'Name & Signature Harmony'}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-3 py-1 border border-border">
+                    <CheckCircle className="h-3.5 w-3.5 text-gold" /> {lang === 'hi' ? 'मोबाइल व आधार वाइब्रेशन' : 'Mobile & Aadhaar Vibration'}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-3 py-1 border border-border">
+                    <CheckCircle className="h-3.5 w-3.5 text-gold" /> {lang === 'hi' ? 'विवाह व जोड़ी अनुकूलता' : 'Couple Compatibility'}
+                  </span>
+                </div>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col shrink-0">
+                <Link href="#quick" className="cz-btn cz-btn-primary whitespace-nowrap text-center">
+                  <Sparkles className="h-4 w-4" />
+                  {lang === 'hi' ? 'मुफ़्त अंक विश्लेषण करें' : 'Start Free Reading'}
+                </Link>
+                <Link href="/pricing" className="cz-btn cz-btn-ghost whitespace-nowrap text-center">
+                  {lang === 'hi' ? 'संपूर्ण जीवन रिपोर्ट' : 'Complete Life Report'}
+                </Link>
+              </div>
+            </div>
+          </div>
+        </Reveal>
       </section>
 
       {/* FAQ */}
