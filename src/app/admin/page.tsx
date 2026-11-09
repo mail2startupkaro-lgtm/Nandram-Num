@@ -1,6 +1,8 @@
 'use client';
 import * as React from 'react';
-import { BookOpen, CreditCard, LayoutDashboard, Palette, Receipt, Save, ScrollText, Tag, Users, Wand2 } from 'lucide-react';
+import { BarChart3, BookOpen, Copy, CreditCard, FileText, LayoutDashboard, Palette, Plus, Receipt, Save, ScrollText, Tag, Trash2, Users, Wand2 } from 'lucide-react';
+import { PaymentReport, SalesReport } from '@/components/admin/finance';
+import { ReportStudio } from '@/components/admin/report-studio';
 import { useApp } from '@/components/layout/providers';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/form';
@@ -12,14 +14,21 @@ const inr = (p: number) => `₹${(p / 100).toLocaleString('en-IN', { minimumFrac
 const THEMES = ['royal-gold-maroon', 'cosmic-blue', 'saffron-cream', 'minimal-white'];
 const SECTIONS = ['intro', 'moolank', 'bhagyank', 'combination', 'loshu', 'missing', 'kua', 'forecast', 'lifePeriods', 'career', 'relationships', 'wellbeing', 'name', 'mobile', 'aadhaar', 'couple', 'remedies', 'closing'];
 const TABS = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard }, { id: 'users', label: 'Users', icon: Users }, { id: 'plans', label: 'Plans', icon: CreditCard },
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard }, { id: 'studio', label: 'Report generator', icon: FileText },
+  { id: 'sales', label: 'Sales report', icon: BarChart3 }, { id: 'payments', label: 'Payment report', icon: Receipt },
+  { id: 'users', label: 'Users', icon: Users }, { id: 'plans', label: 'Plan editor', icon: CreditCard },
   { id: 'coupons', label: 'Coupons', icon: Tag }, { id: 'knowledge', label: 'Knowledge base', icon: BookOpen }, { id: 'themes', label: 'PDF themes', icon: Palette },
-  { id: 'prompts', label: 'Writer prompts', icon: Wand2 }, { id: 'seller', label: 'Invoice settings', icon: ScrollText }, { id: 'payments', label: 'Payments', icon: Receipt },
+  { id: 'prompts', label: 'Writer prompts', icon: Wand2 }, { id: 'seller', label: 'Invoice settings', icon: ScrollText },
 ] as const;
+
+const ADMIN_ERRORS: Record<string, string> = {
+  PLAN_CODE_EXISTS: 'A plan with this code already exists.', PLAN_IN_USE: 'This plan has orders or subscribers – deactivate it instead of deleting.', PLAN_NOT_FOUND: 'Plan not found.',
+  FORBIDDEN: 'Admins only.',
+};
 
 function useMsg() {
   const [msg, setMsg] = React.useState<{ ok: boolean; text: string } | null>(null);
-  const wrap = async (fn: () => Promise<unknown>, ok = 'Saved') => { setMsg(null); try { await fn(); setMsg({ ok: true, text: ok }); } catch (e) { setMsg({ ok: false, text: e instanceof ApiError ? e.message : 'Something went wrong' }); } };
+  const wrap = async (fn: () => Promise<unknown>, ok = 'Saved') => { setMsg(null); try { await fn(); setMsg({ ok: true, text: ok }); } catch (e) { setMsg({ ok: false, text: e instanceof ApiError ? (ADMIN_ERRORS[e.body.error ?? ''] ?? e.message) : 'Something went wrong' }); } };
   const node = msg ? <p className={cn('text-sm', msg.ok ? 'text-success' : 'text-danger')} role="status">{msg.text}</p> : null;
   return { wrap, node };
 }
@@ -27,7 +36,9 @@ function useMsg() {
 export default function AdminPage() {
   const { me } = useApp();
   const [tab, setTab] = React.useState<(typeof TABS)[number]['id']>('overview');
-  if (me && me.user?.role !== 'super_admin') return <div className="container py-12"><p className="glass rounded-lg p-6">Admins only.</p></div>;
+  React.useEffect(() => { if (me && !me.user) window.location.replace('/login?next=%2Fadmin'); }, [me]);
+  if (me && !me.user) return null;
+  if (me && me.user?.role !== 'super_admin') return <div className="container py-12"><p className="glass rounded-lg p-6">Admins only. <a href="/login?next=%2Fadmin" className="text-gold underline">Admin login</a></p></div>;
   return (
     <div className="container py-8">
       <h1 className="mb-6 text-3xl font-bold">Admin</h1>
@@ -40,8 +51,8 @@ export default function AdminPage() {
           ))}
         </nav>
         <div className="min-w-0">
-          {tab === 'overview' && <Overview />}{tab === 'users' && <UsersTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
-          {tab === 'knowledge' && <KnowledgeTab />}{tab === 'themes' && <ThemesTab />}{tab === 'prompts' && <PromptsTab />}{tab === 'seller' && <SellerTab />}{tab === 'payments' && <PaymentsTab />}
+          {tab === 'overview' && <Overview />}{tab === 'studio' && <ReportStudio />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
+          {tab === 'knowledge' && <KnowledgeTab />}{tab === 'themes' && <ThemesTab />}{tab === 'prompts' && <PromptsTab />}{tab === 'seller' && <SellerTab />}{tab === 'payments' && <PaymentReport />}
         </div>
       </div>
     </div>
@@ -120,28 +131,75 @@ function UsersTab() {
   );
 }
 
+const EMPTY_PLAN = { code: '', name: '', description: '', pricePaise: 49_900, intervalDays: null as number | null, credits: 1, active: true, sort: 10, features: { fullReports: false, whiteLabel: false, bulk: false, share: false, watermark: true, maxProfiles: 25 as number | null } };
+type PlanRow = typeof EMPTY_PLAN & { usage?: { orders: number; paid: number; revenue: number; activeSubs: number } };
+const FEATURE_LABELS: Record<string, string> = { fullReports: 'Full reports without credits', whiteLabel: 'White-label PDFs', bulk: 'Bulk import/export', share: 'Share links', watermark: 'Watermark on PDFs' };
+
+function PlanForm({ p, onChange, isNew }: { p: PlanRow; onChange: (patch: Partial<PlanRow>) => void; isNew?: boolean }) {
+  const taxable = Math.round(p.pricePaise / 1.18);
+  const perMonth = p.intervalDays ? Math.round((p.pricePaise * 30) / p.intervalDays) : null;
+  return (
+    <div className="grid gap-3 md:grid-cols-6">
+      <Field label="Code" hint={isNew ? 'A–Z, 0–9, _ (cannot change later)' : undefined}><Input value={p.code} disabled={!isNew} onChange={(e) => onChange({ code: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '') })} placeholder="GOLD_PACK" /></Field>
+      <Field label="Name" className="md:col-span-2"><Input value={p.name} onChange={(e) => onChange({ name: e.target.value })} /></Field>
+      <Field label="Price ₹ (incl. GST)"><Input type="number" min={1} step="1" value={p.pricePaise / 100} onChange={(e) => onChange({ pricePaise: Math.round(Number(e.target.value) * 100) })} /></Field>
+      <Field label="Billing">
+        <Select value={p.intervalDays === null ? 'once' : String(p.intervalDays)} onChange={(e) => onChange({ intervalDays: e.target.value === 'once' ? null : Number(e.target.value) })}>
+          <option value="once">One-time</option><option value="30">Monthly (30 days)</option><option value="90">Quarterly (90 days)</option><option value="180">Half-yearly (180 days)</option><option value="365">Yearly (365 days)</option>
+          {p.intervalDays !== null && ![30, 90, 180, 365].includes(p.intervalDays) && <option value={String(p.intervalDays)}>{p.intervalDays} days</option>}
+        </Select>
+      </Field>
+      <Field label="Report credits"><Input type="number" min={0} value={p.credits} onChange={(e) => onChange({ credits: Math.max(0, Number(e.target.value)) })} /></Field>
+      <Field label="Description (shown on pricing page)" className="md:col-span-4"><Input value={p.description} onChange={(e) => onChange({ description: e.target.value })} /></Field>
+      <Field label="Max saved clients" hint="Blank = unlimited"><Input type="number" min={1} value={p.features.maxProfiles ?? ''} onChange={(e) => onChange({ features: { ...p.features, maxProfiles: e.target.value ? Number(e.target.value) : null } })} /></Field>
+      <Field label="Display order"><Input type="number" min={0} value={p.sort} onChange={(e) => onChange({ sort: Number(e.target.value) })} /></Field>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs md:col-span-6">
+        {(['fullReports', 'whiteLabel', 'bulk', 'share', 'watermark'] as const).map((f) => <label key={f} className="flex items-center gap-1"><input type="checkbox" checked={p.features[f]} onChange={(e) => onChange({ features: { ...p.features, [f]: e.target.checked } })} />{FEATURE_LABELS[f]}</label>)}
+        <label className="flex items-center gap-1 font-semibold"><input type="checkbox" checked={p.active} onChange={(e) => onChange({ active: e.target.checked })} />Active (shown on pricing page)</label>
+      </div>
+      <p className="text-xs text-muted-foreground md:col-span-6">Taxable value {inr(taxable)} + GST 18% {inr(p.pricePaise - taxable)} = {inr(p.pricePaise)}{perMonth ? ` · ≈ ${inr(perMonth)} per month` : ''}{p.credits ? ` · ${inr(Math.round(p.pricePaise / p.credits))} per credit` : ''}</p>
+    </div>
+  );
+}
+
 function PlansTab() {
-  type P = { code: string; name: string; description: string; pricePaise: number; intervalDays: number | null; credits: number; active: boolean; sort: number; features: { fullReports: boolean; whiteLabel: boolean; bulk: boolean; share: boolean; watermark: boolean; maxProfiles: number | null } };
-  const [plans, setPlans] = React.useState<P[]>([]);
+  const [plans, setPlans] = React.useState<PlanRow[]>([]);
+  const [draft, setDraft] = React.useState<PlanRow | null>(null);
   const { wrap, node } = useMsg();
-  React.useEffect(() => { api<{ plans: P[] }>('/api/admin/plans').then((r) => setPlans(r.plans)); }, []);
-  const upd = (i: number, patch: Partial<P>) => setPlans(plans.map((p, j) => (j === i ? { ...p, ...patch } : p)));
+  const load = () => api<{ plans: PlanRow[] }>('/api/admin/plans').then((r) => setPlans(r.plans));
+  React.useEffect(() => { load(); }, []);
+  const upd = (i: number, patch: Partial<PlanRow>) => setPlans(plans.map((p, j) => (j === i ? { ...p, ...patch } : p)));
+  const body = ({ usage: _u, ...p }: PlanRow) => p;
   return (
     <Card title="Plans (prices include GST)">
+      <div className="mb-4 flex flex-wrap gap-2">
+        <Button variant="gold" onClick={() => setDraft({ ...EMPTY_PLAN, features: { ...EMPTY_PLAN.features } })}><Plus /> New plan</Button>
+      </div>
       {node}
-      <div className="space-y-4">{plans.map((p, i) => (
-        <div key={p.code} className="grid gap-3 rounded-md border border-border p-3 md:grid-cols-6">
-          <Field label="Code"><Input value={p.code} disabled /></Field>
-          <Field label="Name" className="md:col-span-2"><Input value={p.name} onChange={(e) => upd(i, { name: e.target.value })} /></Field>
-          <Field label="Price ₹"><Input type="number" value={p.pricePaise / 100} onChange={(e) => upd(i, { pricePaise: Math.round(Number(e.target.value) * 100) })} /></Field>
-          <Field label="Days (blank = one-time)"><Input type="number" value={p.intervalDays ?? ''} onChange={(e) => upd(i, { intervalDays: e.target.value ? Number(e.target.value) : null })} /></Field>
-          <Field label="Credits"><Input type="number" value={p.credits} onChange={(e) => upd(i, { credits: Number(e.target.value) })} /></Field>
-          <Field label="Description" className="md:col-span-4"><Input value={p.description} onChange={(e) => upd(i, { description: e.target.value })} /></Field>
-          <div className="flex flex-wrap items-end gap-3 text-xs md:col-span-2">
-            {(['fullReports', 'whiteLabel', 'bulk', 'share'] as const).map((f) => <label key={f} className="flex items-center gap-1"><input type="checkbox" checked={p.features[f]} onChange={(e) => upd(i, { features: { ...p.features, [f]: e.target.checked } })} />{f}</label>)}
-            <label className="flex items-center gap-1"><input type="checkbox" checked={p.active} onChange={(e) => upd(i, { active: e.target.checked })} />active</label>
+      {draft && (
+        <div className="mb-6 rounded-md border border-gold/60 bg-gold/5 p-3">
+          <p className="mb-3 font-semibold">New plan</p>
+          <PlanForm p={draft} isNew onChange={(patch) => setDraft({ ...draft, ...patch })} />
+          <div className="mt-3 flex gap-2">
+            <Button size="sm" variant="gold" disabled={draft.code.length < 2 || draft.name.trim().length < 2} onClick={() => wrap(async () => { await api('/api/admin/plans', { method: 'POST', json: body(draft) }); setDraft(null); await load(); }, 'Plan created')}><Save /> Create plan</Button>
+            <Button size="sm" variant="ghost" onClick={() => setDraft(null)}>Cancel</Button>
           </div>
-          <div className="md:col-span-6"><Button size="sm" onClick={() => wrap(() => api('/api/admin/plans', { method: 'PUT', json: p }))}><Save /> Save {p.code}</Button></div>
+        </div>
+      )}
+      <div className="space-y-4">{plans.map((p, i) => (
+        <div key={p.code} className={cn('rounded-md border border-border p-3', !p.active && 'opacity-70')}>
+          <div className="mb-3 flex flex-wrap items-center gap-2 text-xs">
+            <span className="font-mono text-sm font-semibold">{p.code}</span>{p.active ? <Badge tone="good">active</Badge> : <Badge>hidden</Badge>}
+            {p.usage && <span className="text-muted-foreground">{p.usage.paid} paid orders · {inr(p.usage.revenue)} revenue · {p.usage.activeSubs} active subscribers</span>}
+          </div>
+          <PlanForm p={p} onChange={(patch) => upd(i, patch)} />
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button size="sm" onClick={() => wrap(async () => { await api('/api/admin/plans', { method: 'PUT', json: body(p) }); await load(); })}><Save /> Save</Button>
+            <Button size="sm" variant="outline" onClick={() => { setDraft({ ...body(p), code: `${p.code}_COPY`.slice(0, 30), name: `${p.name} (copy)`, active: false, features: { ...p.features } }); window.scrollTo({ top: 0, behavior: 'smooth' }); }}><Copy /> Duplicate</Button>
+            {p.usage && p.usage.orders + p.usage.activeSubs > 0
+              ? <span className="self-center text-xs text-muted-foreground">Has orders – untick “Active” to retire it (kept for invoices).</span>
+              : <Button size="sm" variant="ghost" className="text-danger" onClick={() => { if (window.confirm(`Delete plan ${p.code}? This cannot be undone.`)) wrap(async () => { await api(`/api/admin/plans?code=${encodeURIComponent(p.code)}`, { method: 'DELETE' }); await load(); }, 'Plan deleted'); }}><Trash2 /> Delete</Button>}
+          </div>
         </div>
       ))}</div>
     </Card>
@@ -287,27 +345,6 @@ function SellerTab() {
       <div className="grid gap-3 md:grid-cols-2">{fields.map(([k, label]) => <Field key={k} label={label}><Input value={v[k] ?? ''} onChange={(e) => setS({ ...s, seller: { ...v, [k]: e.target.value } })} /></Field>)}</div>
       <Button className="mt-4" onClick={() => wrap(() => api('/api/admin/settings', { method: 'PUT', json: { key: 'seller', value: v } }))}><Save /> Save</Button>
       <div className="mt-2">{node}</div>
-    </Card>
-  );
-}
-
-function PaymentsTab() {
-  type P = { id: string; planCode: string; status: string; amountPaise: number; discountPaise: number; couponCode: string | null; invoiceNumber: string | null; createdAt: string; email: string | null; phone: string | null };
-  const [rows, setRows] = React.useState<P[]>([]);
-  React.useEffect(() => { api<{ payments: P[] }>('/api/admin/payments').then((r) => setRows(r.payments)); }, []);
-  return (
-    <Card title="Payments">
-      <div className="overflow-x-auto"><table className="w-full min-w-[700px] text-sm">
-        <thead><tr className="border-b border-border text-left text-muted-foreground"><th className="py-2">Date</th><th>Customer</th><th>Plan</th><th>Amount</th><th>Coupon</th><th>Status</th><th>Invoice</th></tr></thead>
-        <tbody>{rows.map((p) => (
-          <tr key={p.id} className="border-b border-border/50">
-            <td className="py-2">{new Date(p.createdAt).toLocaleDateString('en-IN')}</td><td className="text-xs">{p.email ?? p.phone}</td><td>{p.planCode}</td>
-            <td>{inr(p.amountPaise)}{p.discountPaise ? <span className="text-xs text-muted-foreground"> (-{inr(p.discountPaise)})</span> : null}</td><td className="font-mono text-xs">{p.couponCode ?? ''}</td>
-            <td><Badge tone={p.status === 'paid' ? 'good' : p.status === 'failed' ? 'bad' : 'default'}>{p.status}</Badge></td>
-            <td>{p.invoiceNumber && <a className="text-gold underline" href={`/api/billing/invoices/${p.id}`}>{p.invoiceNumber}</a>}</td>
-          </tr>
-        ))}</tbody>
-      </table></div>
     </Card>
   );
 }
