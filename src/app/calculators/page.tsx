@@ -16,6 +16,9 @@ export default function Calculators() {
             <CalcIcon className="mb-3 h-6 w-6 text-gold" /><h2 className="text-xl font-semibold group-hover:text-gold">{c.h1.replace(/^Free /, '')}</h2><p className="mt-1 text-sm text-muted-foreground">{c.description}</p>
           </Link>
         ))}
+        <Link href="/angel-numbers/calculator" className="glass group rounded-lg p-5 ring-1 ring-gold/40 hover:ring-gold">
+          <CalcIcon className="mb-3 h-6 w-6 text-gold" /><h2 className="text-xl font-semibold group-hover:text-gold">Angel Number Calculator</h2><p className="mt-1 text-sm text-muted-foreground">Find your personal angel numbers from your date of birth and check any angel number&apos;s compatibility with your DOB.</p>
+        </Link>
       </div>
       <ExpertCard />
     </div>

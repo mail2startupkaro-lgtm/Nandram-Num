@@ -1,9 +1,11 @@
 'use client';
 import * as React from 'react';
-import { BarChart3, BookOpen, Copy, CreditCard, FileText, LayoutDashboard, Palette, Plus, Receipt, Save, ScrollText, Tag, Trash2, UserCheck, Users, Wand2 } from 'lucide-react';
+import { BarChart3, BookOpen, Briefcase, Copy, CreditCard, FileText, LayoutDashboard, Palette, PenLine, Plus, Receipt, Save, ScrollText, Tag, Trash2, UserCheck, Users, Wand2 } from 'lucide-react';
 import { ExpertsTab } from '@/components/admin/experts';
 import { PaymentReport, SalesReport } from '@/components/admin/finance';
 import { ReportStudio } from '@/components/admin/report-studio';
+import { SignatureStudio } from '@/components/admin/signature-studio';
+import { BusinessStudio } from '@/components/admin/business-studio';
 import { useApp } from '@/components/layout/providers';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/form';
@@ -16,6 +18,8 @@ const THEMES = ['royal-gold-maroon', 'cosmic-blue', 'saffron-cream', 'minimal-wh
 const SECTIONS = ['intro', 'moolank', 'bhagyank', 'combination', 'loshu', 'missing', 'kua', 'forecast', 'lifePeriods', 'career', 'relationships', 'wellbeing', 'name', 'mobile', 'aadhaar', 'couple', 'remedies', 'closing'];
 const TABS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard }, { id: 'studio', label: 'Report generator', icon: FileText },
+  { id: 'signature', label: 'Signature analysis', icon: PenLine },
+  { id: 'business', label: 'Business compatibility', icon: Briefcase },
   { id: 'sales', label: 'Sales report', icon: BarChart3 }, { id: 'payments', label: 'Payment report', icon: Receipt },
   { id: 'users', label: 'Users', icon: Users }, { id: 'experts', label: 'Experts', icon: UserCheck }, { id: 'plans', label: 'Plan editor', icon: CreditCard },
   { id: 'coupons', label: 'Coupons', icon: Tag }, { id: 'knowledge', label: 'Knowledge base', icon: BookOpen }, { id: 'themes', label: 'PDF themes', icon: Palette },
@@ -52,7 +56,7 @@ export default function AdminPage() {
           ))}
         </nav>
         <div className="min-w-0">
-          {tab === 'overview' && <Overview />}{tab === 'studio' && <ReportStudio />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'experts' && <ExpertsTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
+          {tab === 'overview' && <Overview />}{tab === 'studio' && <ReportStudio />}{tab === 'signature' && <SignatureStudio />}{tab === 'business' && <BusinessStudio />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'experts' && <ExpertsTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
           {tab === 'knowledge' && <KnowledgeTab />}{tab === 'themes' && <ThemesTab />}{tab === 'prompts' && <PromptsTab />}{tab === 'seller' && <SellerTab />}{tab === 'payments' && <PaymentReport />}
         </div>
       </div>
