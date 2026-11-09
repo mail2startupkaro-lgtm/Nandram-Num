@@ -54,6 +54,12 @@ export function ReportStudio() {
   const [confirmed, setConfirmed] = React.useState(false);
   const setCv = (k: keyof typeof c, v: unknown) => { setC({ ...c, [k]: v }); setP(null); setConfirmed(false); };
   const setOv = (k: keyof typeof o, v: unknown) => setO({ ...o, [k]: v });
+  React.useEffect(() => {
+    try { const raw = localStorage.getItem('report-studio-expert'); if (raw) { const v = JSON.parse(raw) as { expertName?: string; expertTitle?: string }; setO((prev) => ({ ...prev, expertName: prev.expertName || v.expertName || '', expertTitle: prev.expertTitle || v.expertTitle || '' })); } } catch { /* storage unavailable */ }
+  }, []);
+  React.useEffect(() => {
+    try { localStorage.setItem('report-studio-expert', JSON.stringify({ expertName: o.expertName, expertTitle: o.expertTitle })); } catch { /* storage unavailable */ }
+  }, [o.expertName, o.expertTitle]);
 
   function payload(action: 'preview' | 'pdf') {
     const input: Record<string, unknown> = {
@@ -107,6 +113,10 @@ export function ReportStudio() {
         <div className="mt-3"><p className="mb-1.5 text-sm font-medium">Focus areas</p><div className="flex flex-wrap gap-2">{CONCERNS.map((x) => (
           <button key={x} type="button" onClick={() => setCv('concerns', toggle(c.concerns, x))} className={cn('rounded-full border px-3 py-1 text-xs', c.concerns.includes(x) ? 'border-gold bg-gold/20' : 'border-border hover:bg-muted')}>{x}</button>
         ))}</div></div>
+        <div className="mt-4 grid gap-3 rounded-md border border-gold/40 bg-gold/5 p-3 md:grid-cols-3">
+          <Field label="Report prepared by (Numerology expert name)" htmlFor="s-exp" hint="Printed on the cover, the signature and the closing page. Remembered for next time."><Input id="s-exp" placeholder="e.g. Acharya Nandram" value={o.expertName} onChange={(e) => setOv('expertName', e.target.value)} /></Field>
+          <Field label="Expert title (optional)" htmlFor="s-expt"><Input id="s-expt" placeholder="e.g. Numerologist & Vedic Consultant" value={o.expertTitle} onChange={(e) => setOv('expertTitle', e.target.value)} /></Field>
+        </div>
         <div className="mt-4 grid gap-3 rounded-md border border-border p-3 md:grid-cols-3">
           <Field label="Partner name (for couple report)" htmlFor="s-pn"><Input id="s-pn" value={c.partnerName} onChange={(e) => setCv('partnerName', e.target.value)} /></Field>
           <Field label="Partner gender" htmlFor="s-pg"><Select id="s-pg" value={c.partnerGender} onChange={(e) => setCv('partnerGender', e.target.value)}><option value="female">Female</option><option value="male">Male</option><option value="other">Other</option></Select></Field>
@@ -145,7 +155,7 @@ export function ReportStudio() {
         <details className="mt-4 rounded-md border border-border p-3">
           <summary className="cursor-pointer text-sm font-medium">Branding for this report (optional – blank uses your saved branding)</summary>
           <div className="mt-3 grid gap-3 md:grid-cols-3">
-            {([['brandName', 'Brand name'], ['expertName', 'Expert name'], ['expertTitle', 'Expert title'], ['contactLine', 'Contact line'], ['bookingUrl', 'Booking link (QR code)']] as const).map(([k, l]) => (
+            {([['brandName', 'Brand name'], ['contactLine', 'Contact line'], ['bookingUrl', 'Booking link (QR code)']] as const).map(([k, l]) => (
               <Field key={k} label={l} htmlFor={`b-${k}`}><Input id={`b-${k}`} value={o[k]} onChange={(e) => setOv(k, e.target.value)} /></Field>
             ))}
           </div>

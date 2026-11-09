@@ -1,6 +1,7 @@
 'use client';
 import * as React from 'react';
-import { BarChart3, BookOpen, Copy, CreditCard, FileText, LayoutDashboard, Palette, Plus, Receipt, Save, ScrollText, Tag, Trash2, Users, Wand2 } from 'lucide-react';
+import { BarChart3, BookOpen, Copy, CreditCard, FileText, LayoutDashboard, Palette, Plus, Receipt, Save, ScrollText, Tag, Trash2, UserCheck, Users, Wand2 } from 'lucide-react';
+import { ExpertsTab } from '@/components/admin/experts';
 import { PaymentReport, SalesReport } from '@/components/admin/finance';
 import { ReportStudio } from '@/components/admin/report-studio';
 import { useApp } from '@/components/layout/providers';
@@ -16,7 +17,7 @@ const SECTIONS = ['intro', 'moolank', 'bhagyank', 'combination', 'loshu', 'missi
 const TABS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard }, { id: 'studio', label: 'Report generator', icon: FileText },
   { id: 'sales', label: 'Sales report', icon: BarChart3 }, { id: 'payments', label: 'Payment report', icon: Receipt },
-  { id: 'users', label: 'Users', icon: Users }, { id: 'plans', label: 'Plan editor', icon: CreditCard },
+  { id: 'users', label: 'Users', icon: Users }, { id: 'experts', label: 'Experts', icon: UserCheck }, { id: 'plans', label: 'Plan editor', icon: CreditCard },
   { id: 'coupons', label: 'Coupons', icon: Tag }, { id: 'knowledge', label: 'Knowledge base', icon: BookOpen }, { id: 'themes', label: 'PDF themes', icon: Palette },
   { id: 'prompts', label: 'Writer prompts', icon: Wand2 }, { id: 'seller', label: 'Invoice settings', icon: ScrollText },
 ] as const;
@@ -51,7 +52,7 @@ export default function AdminPage() {
           ))}
         </nav>
         <div className="min-w-0">
-          {tab === 'overview' && <Overview />}{tab === 'studio' && <ReportStudio />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
+          {tab === 'overview' && <Overview />}{tab === 'studio' && <ReportStudio />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'experts' && <ExpertsTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
           {tab === 'knowledge' && <KnowledgeTab />}{tab === 'themes' && <ThemesTab />}{tab === 'prompts' && <PromptsTab />}{tab === 'seller' && <SellerTab />}{tab === 'payments' && <PaymentReport />}
         </div>
       </div>

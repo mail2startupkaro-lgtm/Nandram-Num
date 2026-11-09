@@ -35,7 +35,7 @@ export default function MulankIndex() {
         <h2 className="mb-4 font-cinzel text-2xl font-bold gold-text">What we offer</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {mulankServices(0).map((s) => (
-            <Link key={s.title} href={s.href} className="mk-card rounded-lg border border-gold/20 p-4"><span className="text-xl text-gold">{s.icon}</span><h3 className="mt-1 font-semibold">{s.title.replace('Mulank 0 ', 'Mulank ')}</h3><p className="mt-1 text-sm text-muted-foreground">{s.desc.replace('Mulank 0', 'your Mulank')}</p></Link>
+            <Link key={s.title} href={s.href} className="mk-card rounded-lg border border-gold/20 p-4"><span className="text-xl text-gold">{s.icon}</span><h3 className="mt-1 font-semibold">{s.title.replace('Mulank 0 ', 'Mulank ')}</h3><p className="mt-1 text-sm text-muted-foreground">{s.desc.replace('a Mulank 0 life', 'a Mulank-aligned life').replace('Mulank 0', 'your Mulank')}</p></Link>
           ))}
         </div>
       </section>

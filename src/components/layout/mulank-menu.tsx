@@ -34,7 +34,9 @@ export function MulankMenu() {
         {t.nav.mulank}<ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <div className="mk-drop glass absolute left-1/2 top-full z-50 mt-1 w-[min(92vw,820px)] -translate-x-1/2 overflow-hidden rounded-xl border border-gold/30 bg-background/95 shadow-2xl backdrop-blur-xl">
+        <div className="fixed inset-x-0 top-[65px] z-50 mx-auto w-[min(92vw,820px)] pt-2">
+         <span aria-hidden className="absolute -top-4 inset-x-0 h-6" />
+         <div className="mk-drop glass overflow-hidden rounded-xl border border-gold/30 bg-background/95 shadow-2xl backdrop-blur-xl">
           <div className="grid grid-cols-[250px_1fr]">
             {/* number grid */}
             <div className="border-r border-gold/20 bg-gradient-to-b from-gold/5 to-transparent p-4">
@@ -93,6 +95,7 @@ export function MulankMenu() {
               </div>
             </div>
           </div>
+         </div>
         </div>
       )}
     </div>

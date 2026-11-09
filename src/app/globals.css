@@ -77,3 +77,8 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-spin-slow, .animate-shimmer { animation: none !important; }
 }
+
+/* Headings: first letter of every word capitalised (utilities such as `uppercase` still win). */
+@layer base {
+  h1, h2, h3, h4, h5, h6 { text-transform: capitalize; }
+}
