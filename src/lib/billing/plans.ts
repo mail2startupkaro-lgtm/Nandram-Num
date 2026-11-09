@@ -17,7 +17,9 @@ export const DEFAULT_PLANS: (typeof plans.$inferInsert)[] = [
 let seeded = false;
 export async function ensurePlans(db: Db = getDb()) {
   if (seeded) return;
-  await db.insert(plans).values(DEFAULT_PLANS).onConflictDoNothing();
+  // Seed only an empty table, so plans the admin deleted are not re-created on the next restart.
+  const [any] = await db.select({ code: plans.code }).from(plans).limit(1);
+  if (!any) await db.insert(plans).values(DEFAULT_PLANS).onConflictDoNothing();
   seeded = true;
 }
 

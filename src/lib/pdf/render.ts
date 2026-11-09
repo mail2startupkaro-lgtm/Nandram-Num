@@ -23,6 +23,8 @@ export interface PdfRequest {
   watermark?: string;        // e.g. Free plan
   reportDate?: string;       // ISO, defaults to result.asOf
   provider?: LlmProvider | null;
+  hiddenChapters?: string[];
+  expertNote?: string;
 }
 
 export interface PdfOutput {
@@ -148,7 +150,7 @@ export async function renderReportPdf(req: PdfRequest): Promise<PdfOutput> {
   const theme = resolveTheme(req.theme, branding);
   const narrative = req.narrative ?? (await generateNarrative(req.result, { language: req.language, provider: req.provider ?? null }));
 
-  const inp: TemplateInput = { result: req.result, narrative, theme, branding, reportDate: req.reportDate ?? req.result.asOf, watermark: req.watermark };
+  const inp: TemplateInput = { result: req.result, narrative, theme, branding, reportDate: req.reportDate ?? req.result.asOf, watermark: req.watermark, hiddenChapters: req.hiddenChapters, expertNote: req.expertNote };
   const qrSvg = await QRCode.toString(branding.bookingUrl || 'https://example.com', { type: 'svg', margin: 0, width: 150, errorCorrectionLevel: 'M', color: { dark: '#111111', light: '#ffffff' } });
   const hf = headerFooter(inp);
   const browser = await getBrowser();

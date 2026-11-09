@@ -22,6 +22,10 @@ export const users = pgTable('users', {
   role: roleEnum('role').notNull().default('customer'),
   expertId: text('expert_id'), // customer accounts created under a consultant
   googleSub: varchar('google_sub', { length: 64 }).unique(),
+  passwordHash: text('password_hash'),
+  passwordUpdatedAt: timestamp('password_updated_at', { withTimezone: true }),
+  failedLogins: integer('failed_logins').notNull().default(0),
+  lockedUntil: timestamp('locked_until', { withTimezone: true }),
   credits: integer('credits').notNull().default(0),
   billingState: varchar('billing_state', { length: 60 }),
   emailVerifiedAt: timestamp('email_verified_at', { withTimezone: true }),

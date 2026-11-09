@@ -58,6 +58,10 @@ export interface TemplateInput {
   branding: Branding;
   reportDate: string; // ISO
   watermark?: string;
+  /** Admin Report Studio: chapter ids to leave out (e.g. ['kua','couple']). */
+  hiddenChapters?: string[];
+  /** Admin Report Studio: a personal note from the expert, printed in the closing chapter. */
+  expertNote?: string;
 }
 
 const fmtDate = (iso: string) => iso.split('-').reverse().join('-');
@@ -343,11 +347,12 @@ export function buildBodyHtml(inp: TemplateInput, pages: Record<string, number> 
   const { theme: t, branding: b, narrative } = inp;
   const lang: Lang = narrative.language === 'hi' ? 'hi' : 'en';
   const lab = labelsFor(narrative.language);
-  const chapters = buildChapters(inp, lab);
+  const chapters = buildChapters(inp, lab).filter((c) => !inp.hiddenChapters?.includes(c.id));
   const S = Object.fromEntries(narrative.sections.map((s) => [s.id, s])) as Record<string, NarrativeSection | undefined>;
 
   const closing = `<section class="chapter" id="ch-closing"><div class="ch-head"><div class="ch-icon">${remedyIcon('signature', t, 40)}</div><div><div class="ch-num">${esc(lab.chapter)} ${String(chapters.length + 1).padStart(2, '0')}</div><h2 class="ch-title">${esc(lab.ch.closing)}<span class="mk">@@C:closing@@</span></h2></div></div><div class="orn">${divider(t, 200)}</div>
     ${sec(S.closing, true)}
+    ${inp.expertNote?.trim() ? `<div class="panel" style="margin-top:6mm;white-space:pre-line">${esc(inp.expertNote.trim())}</div>` : ''}
     <div style="margin-top:10mm" class="row">
       <div><div class="muted small" style="letter-spacing:.2em;text-transform:uppercase">${esc(lab.by)}</div>
         ${b.signatureDataUrl ? `<img src="${esc(b.signatureDataUrl)}" style="height:18mm;margin:3mm 0">` : `<div class="serif" style="font-style:italic;font-size:24pt;color:${t.primary};margin:3mm 0 1mm">${esc(b.expertName)}</div>`}
