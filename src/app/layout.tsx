@@ -8,8 +8,11 @@ import { fontVariables } from './fonts';
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL || 'http://localhost:3000'),
-  title: { default: 'mynumerologist.com – Numerology Reading', template: '%s · mynumerologist.com' },
+  title: { default: 'myNumerologist.com – Numerology Reading', template: '%s · myNumerologist.com' },
   description: 'Moolank, Bhagyank, Lo Shu Grid, name, mobile and marriage compatibility numerology with practical remedies.',
+  verification: {
+    google: 'google0e19ae8949867d4f',
+  },
 };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#140f2b' };
 
