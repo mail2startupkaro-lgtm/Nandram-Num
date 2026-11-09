@@ -40,7 +40,7 @@ export function AcharyaProfile({ city }: { city?: string }) {
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold">About the author · Lead numerologist &amp; guide</p>
           <h2 className="font-cinzel mt-1 text-3xl font-bold">Acharya Nandram</h2>
-          <p className="mt-1 inline-flex items-center gap-2 rounded-md bg-gold/15 px-3 py-1 text-sm font-semibold text-gold"><Award className="h-4 w-4" />Experience: More than 15+ Years</p>
+          <p className="mt-1 inline-flex items-center gap-2 rounded-md bg-gold/15 px-3 py-1 text-sm font-semibold text-gold"><Award className="h-4 w-4" />Experience: 15+ Years</p>
           <p className="mt-3 text-muted-foreground">With more than 15 years of dedicated practice in Vedic, Chaldean and Lo Shu grid numerology, Acharya Nandram has guided thousands of individuals and families toward clarity, success and prosperity through precise number vibrations and personalised remedies.{city ? ` Reports and consultations are delivered online, so people in ${city} and across India can use them from home.` : ''}</p>
         </div>
       </div>

@@ -9,7 +9,10 @@ export function middleware(req: NextRequest) {
     url.search = `?next=${encodeURIComponent(req.nextUrl.pathname + req.nextUrl.search)}`;
     return NextResponse.redirect(url);
   }
-  return NextResponse.next();
+  const res = NextResponse.next();
+  res.headers.set('Cache-Control', 'private, no-store');
+  res.headers.set('X-Robots-Tag', 'noindex, nofollow');
+  return res;
 }
 
 export const config = { matcher: ['/dashboard/:path*', '/admin/:path*', '/account/:path*', '/settings/:path*'] };

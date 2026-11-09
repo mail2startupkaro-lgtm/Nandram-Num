@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { jsonLd as toLd } from '@/lib/seo/site';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Clock, MapPin, UserRound } from 'lucide-react';
@@ -12,14 +13,15 @@ export function generateStaticParams() { return CITIES.map((c) => ({ slug: postS
 
 const PUBLISHED = '2026-11-09';
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const c = cityFromPostSlug(params.slug);
   if (!c) return {};
   const p = buildPost(c);
   return {
-    title: p.title, description: p.description, keywords: p.keywords, authors: [{ name: 'Acharya Nandram' }],
+    title: { absolute: p.title }, description: p.description, keywords: p.keywords, authors: [{ name: 'Acharya Nandram' }],
     alternates: { canonical: `/blog/${p.slug}` },
-    openGraph: { title: p.title, description: p.description, type: 'article', publishedTime: PUBLISHED, authors: ['Acharya Nandram'] },
+    openGraph: { title: p.title, description: p.description, url: `/blog/${p.slug}`, siteName: 'myNumerologist.com', locale: 'en_IN', type: 'article', publishedTime: PUBLISHED, authors: ['Acharya Nandram'] },
     twitter: { card: 'summary_large_image', title: p.title, description: p.description },
   };
 }
@@ -41,7 +43,8 @@ function Blocks({ blocks }: { blocks: Block[] }) {
   );
 }
 
-export default function CityPost({ params }: { params: { slug: string } }) {
+export default async function CityPost(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const c = cityFromPostSlug(params.slug);
   if (!c) notFound();
   const p = buildPost(c);
@@ -55,7 +58,7 @@ export default function CityPost({ params }: { params: { slug: string } }) {
   const toc = [...p.sections.map((s) => ({ id: s.id, title: s.title })), { id: 'expert', title: 'About Acharya Nandram' }];
   return (
     <article className="container max-w-6xl py-8 sm:py-12">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toLd(jsonLd) }} />
       <nav aria-label="Breadcrumb" className="mb-4 text-xs text-muted-foreground"><Link href="/" className="hover:text-foreground">Home</Link> / <Link href="/blog" className="hover:text-foreground">Blog</Link> / <Link href={`/blog?state=${encodeURIComponent(c.state)}`} className="hover:text-foreground">{c.state}</Link> / {c.name}</nav>
 
       <header className="mk-rise relative overflow-hidden rounded-2xl border border-gold/40 bg-gradient-to-br from-maroon/40 via-card/80 to-card/90 p-6 sm:p-10">

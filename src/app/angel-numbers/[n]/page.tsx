@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { jsonLd as toLd } from '@/lib/seo/site';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Clock, Sparkles, TrendingUp } from 'lucide-react';
@@ -14,14 +15,15 @@ export function generateStaticParams() { return TOP_ANGEL.slice(0, 300).map((n) 
 
 const UPDATED = '2026-11-09';
 
-export function generateMetadata({ params }: { params: { n: string } }): Metadata {
+export async function generateMetadata(props: { params: Promise<{ n: string }> }): Promise<Metadata> {
+  const params = await props.params;
   if (!isAngelNumber(params.n)) return {};
   const p = buildAngel(params.n);
   return {
-    title: p.title, description: p.description, keywords: p.keywords, authors: [{ name: 'Acharya Nandram' }],
+    title: { absolute: p.title }, description: p.description, keywords: p.keywords, authors: [{ name: 'Acharya Nandram' }],
     alternates: { canonical: `/angel-numbers/${p.n}` },
     robots: p.indexed ? undefined : { index: false, follow: true },
-    openGraph: { title: p.title, description: p.description, type: 'article', authors: ['Acharya Nandram'] },
+    openGraph: { title: p.title, description: p.description, url: `/angel-numbers/${p.n}`, siteName: 'myNumerologist.com', locale: 'en_IN', type: 'article', authors: ['Acharya Nandram'] },
     twitter: { card: 'summary_large_image', title: p.title, description: p.description },
   };
 }
@@ -48,7 +50,8 @@ function Blocks({ blocks }: { blocks: Block[] }) {
   );
 }
 
-export default function AngelNumberPage({ params }: { params: { n: string } }) {
+export default async function AngelNumberPage(props: { params: Promise<{ n: string }> }) {
+  const params = await props.params;
   if (!isAngelNumber(params.n)) notFound();
   const p = buildAngel(params.n);
   const jsonLd = [
@@ -63,7 +66,7 @@ export default function AngelNumberPage({ params }: { params: { n: string } }) {
   const rows = p.sections;
   return (
     <article className="container max-w-6xl py-8 sm:py-12">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toLd(jsonLd) }} />
       <nav aria-label="Breadcrumb" className="mb-4 text-xs text-muted-foreground"><Link href="/" className="hover:text-foreground">Home</Link> / <Link href="/angel-numbers" className="hover:text-foreground">Angel Numbers</Link> / {p.n}</nav>
 
       <header className="mk-rise relative overflow-hidden rounded-2xl border border-gold/40 bg-gradient-to-br from-maroon/40 via-card/80 to-card/90 p-6 sm:p-10">

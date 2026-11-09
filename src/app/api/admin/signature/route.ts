@@ -25,14 +25,14 @@ const Body = z.object({
   language: z.enum(['en', 'hi', 'hinglish']).default('en'),
   hand: z.enum(['right', 'left']).optional(),
   image: z.string().max(MAX_IMAGE_B64 + 40).regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/, 'Image must be PNG, JPG or WEBP').optional(),
-  observations: z.record(z.string()).default({}),
+  observations: z.record(z.string(), z.string()).default({}),
 });
 
 /** Admin-only AI signature analysis. Nothing is saved: the image goes only to the configured AI provider. */
 export const POST = withAdmin(async (req, user) => {
   const rl = rateLimit(`sig:${user.id}`, 20, 10 * 60_000);
   if (!rl.ok) return tooMany(rl.retryAfter);
-  const b = Body.parse(await readJson(req));
+  const b = Body.parse(await readJson(req, 6_000_000));
   const dob = parseDate(b.dob);
   const observations = Object.fromEntries(Object.entries(b.observations).filter(([f, o]) => FEATURES.some((x) => x.id === f && x.options.some((y) => y.id === o))));
   const prof = PROFESSIONS.find((p) => p.id === b.professionId)!;

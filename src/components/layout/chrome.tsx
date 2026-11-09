@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import Link from 'next/link';
-import { LogOut, Moon, Shield, Sun, UserRound } from 'lucide-react';
+import { LogOut, Menu, Moon, Shield, Sun, UserRound, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useApp } from './providers';
 import { Button } from '@/components/ui/button';
@@ -34,7 +34,7 @@ export function MandalaBackground() {
 /** Brand Logo: "myNumerologist.com" with sacred emblem and glowing gold styling. */
 function BrandLogo() {
   return (
-    <div className="group flex items-center gap-2.5 transition-transform duration-200 hover:scale-[1.02]">
+    <div className="group flex items-center gap-2 sm:gap-2.5 transition-transform duration-200 hover:scale-[1.02]">
       {/* Sacred Emblem Icon */}
       <div className="relative flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/30 via-maroon/40 to-amber-900/40 p-[1.5px] shadow-[0_0_14px_rgba(245,158,11,0.25)] border border-amber-400/40 backdrop-blur-sm group-hover:border-amber-300 group-hover:shadow-[0_0_20px_rgba(245,158,11,0.4)] transition-all duration-300">
         <div className="flex h-full w-full items-center justify-center rounded-[10px] bg-gradient-to-br from-[#2a0e1b] via-[#1a0a14] to-[#24130a]">
@@ -49,13 +49,13 @@ function BrandLogo() {
       {/* Brand Name Typography */}
       <div className="flex flex-col leading-none" aria-label="myNumerologist.com">
         <span className="flex items-baseline tracking-normal">
-          <span className="font-serif italic font-normal text-foreground/85 text-[18px] sm:text-[21px] select-none">
+          <span className="font-serif italic font-normal text-foreground/85 text-[16px] min-[400px]:text-[18px] sm:text-[21px] select-none">
             my
           </span>
-          <span className="font-cinzel font-bold bg-gradient-to-r from-amber-200 via-amber-300 to-amber-500 bg-clip-text text-transparent text-[19px] sm:text-[22px] tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)] select-none">
+          <span className="font-cinzel font-bold bg-gradient-to-r from-amber-200 via-amber-300 to-amber-500 bg-clip-text text-transparent text-[17px] min-[400px]:text-[19px] sm:text-[22px] tracking-tight drop-shadow-[0_1px_2px_rgba(0,0,0,0.35)] select-none">
             Numerologist
           </span>
-          <span className="font-sans font-semibold text-[11px] sm:text-[12px] text-amber-400/90 tracking-wide select-none ml-0.5">
+          <span className="hidden font-sans font-semibold text-[11px] sm:inline sm:text-[12px] text-amber-400/90 tracking-wide select-none ml-0.5">
             .com
           </span>
         </span>
@@ -71,6 +71,7 @@ export function Header() {
   const { t, lang, setLang, theme, setTheme, me, refreshMe } = useApp();
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
+  const [nav, setNav] = React.useState(false);
   const user = me?.user;
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -91,16 +92,18 @@ export function Header() {
           <Link href="/blog" className="hidden whitespace-nowrap rounded-md px-3 py-2 text-sm hover:bg-muted lg:inline-block">{t.nav.blog}</Link>
           {user?.role === 'super_admin' && <Link href="/admin" className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-2 text-sm text-gold hover:bg-muted sm:px-3"><Shield className="h-4 w-4" />{t.auth.admin}</Link>}
           {user && <Link href="/dashboard" className="whitespace-nowrap rounded-md px-2 py-2 text-sm hover:bg-muted sm:px-3">{t.nav.dashboard}</Link>}
-          <div className="flex rounded-md border border-gold/40 p-0.5 text-xs" role="group" aria-label="Language">
+          <button type="button" onClick={() => setLang(lang === 'en' ? 'hi' : 'en')} aria-label={lang === 'en' ? 'हिंदी में देखें' : 'View in English'} className="rounded-md border border-gold/40 px-2 py-1 text-xs sm:hidden">{lang === 'en' ? 'हिं' : 'EN'}</button>
+          <div className="hidden rounded-md border border-gold/40 p-0.5 text-xs sm:flex" role="group" aria-label="Language">
             {(['en', 'hi'] as const).map((l) => (
               <button key={l} onClick={() => setLang(l)} aria-pressed={lang === l}
                 className={`rounded px-2 py-1 ${lang === l ? 'bg-gold/25 font-semibold' : 'text-muted-foreground'}`}>{l === 'en' ? 'EN' : 'हिं'}</button>
             ))}
           </div>
-          <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Toggle dark mode">
+          <Button variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Toggle dark mode">
             {theme === 'dark' ? <Sun /> : <Moon />}
           </Button>
-          {me && !user && <Link href="/login" className="whitespace-nowrap rounded-md border border-gold/50 px-3 py-1.5 text-sm hover:bg-gold/10">{t.auth.signin}</Link>}
+          {me && !user && <Link href="/login" className="whitespace-nowrap rounded-md border border-gold/50 px-2.5 py-1.5 text-sm hover:bg-gold/10 sm:px-3">{t.auth.signin}</Link>}
+          <Button variant="ghost" size="icon" className="md:hidden" aria-label="Menu" aria-expanded={nav} aria-controls="mobile-nav" onClick={() => setNav(!nav)}>{nav ? <X /> : <Menu />}</Button>
           {user && (
             <div className="relative">
               <Button variant="ghost" size="icon" aria-label={t.auth.account} aria-expanded={open} onClick={() => setOpen(!open)}><UserRound /></Button>
@@ -116,6 +119,16 @@ export function Header() {
           )}
         </nav>
       </div>
+      {nav && (
+        <nav id="mobile-nav" aria-label="Main" className="border-t border-gold/20 bg-background/95 backdrop-blur-md md:hidden">
+          <ul className="container grid grid-cols-2 gap-1 py-3 text-sm">
+            {[['/reading', t.nav.reading], ['/angel-numbers', t.nav.angel], ['/mulank', t.nav.mulank], ['/calculators', t.nav.calculators], ['/angel-numbers/calculator', lang === 'hi' ? 'एंजेल नंबर कैलकुलेटर' : 'Angel number calculator'], ['/pricing', t.nav.pricing], ['/blog', t.nav.blog]].map(([href, label]) => (
+              <li key={href}><Link href={href} onClick={() => setNav(false)} className="block rounded-md px-3 py-2.5 hover:bg-muted">{label}</Link></li>
+            ))}
+            <li><button type="button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-left hover:bg-muted">{theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}{lang === 'hi' ? 'थीम बदलें' : 'Switch theme'}</button></li>
+          </ul>
+        </nav>
+      )}
     </header>
   );
 }

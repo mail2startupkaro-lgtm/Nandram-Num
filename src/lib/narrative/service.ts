@@ -71,7 +71,7 @@ export interface NarrativeOptions {
   promptSettings?: { extraStyleRules?: string; sectionBriefs?: Record<string, string> };
 }
 
-const DEFAULT_PERSONA: Persona = { expertName: process.env.EXPERT_NAME || '[Expert Name]', brandName: process.env.BRAND_NAME || 'mynumerologist.com' };
+const DEFAULT_PERSONA: Persona = { expertName: process.env.EXPERT_NAME || 'Acharya Nandram', brandName: process.env.BRAND_NAME || 'mynumerologist.com' };
 
 const stable = (v: unknown): string => JSON.stringify(v, (_, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => a.localeCompare(b))) : x));
 const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');

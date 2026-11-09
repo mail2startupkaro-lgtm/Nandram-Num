@@ -67,11 +67,11 @@ export interface Branding {
 
 export const DEFAULT_BRANDING: Branding = {
   brandName: process.env.BRAND_NAME || 'mynumerologist.com',
-  expertName: process.env.EXPERT_NAME || '[Expert Name]',
+  expertName: process.env.EXPERT_NAME || 'Acharya Nandram',
   expertTitle: 'Numerologist · Vedic, Chaldean & Lo Shu',
-  contactLine: process.env.EXPERT_CONTACT || '[Phone] · [Email] · [City]',
+  contactLine: process.env.EXPERT_CONTACT || (process.env.APP_URL || 'https://www.mynumerologist.com').replace(/^https?:\/\//, ''),
   website: process.env.BRAND_WEBSITE || '',
-  bookingUrl: process.env.BOOKING_URL || 'https://example.com/book',
+  bookingUrl: process.env.BOOKING_URL || `${(process.env.APP_URL || 'https://www.mynumerologist.com').replace(/\/$/, '')}/pricing`,
 };
 
 export function resolveTheme(id: ThemeId | undefined, b?: Branding): PdfTheme {

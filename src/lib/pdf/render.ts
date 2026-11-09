@@ -151,7 +151,7 @@ export async function renderReportPdf(req: PdfRequest): Promise<PdfOutput> {
   const narrative = req.narrative ?? (await generateNarrative(req.result, { language: req.language, provider: req.provider ?? null }));
 
   const inp: TemplateInput = { result: req.result, narrative, theme, branding, reportDate: req.reportDate ?? req.result.asOf, watermark: req.watermark, hiddenChapters: req.hiddenChapters, expertNote: req.expertNote };
-  const qrSvg = await QRCode.toString(branding.bookingUrl || 'https://example.com', { type: 'svg', margin: 0, width: 150, errorCorrectionLevel: 'M', color: { dark: '#111111', light: '#ffffff' } });
+  const qrSvg = await QRCode.toString(branding.bookingUrl || DEFAULT_BRANDING.bookingUrl || 'https://www.mynumerologist.com', { type: 'svg', margin: 0, width: 150, errorCorrectionLevel: 'M', color: { dark: '#111111', light: '#ffffff' } });
   const hf = headerFooter(inp);
   const browser = await getBrowser();
 

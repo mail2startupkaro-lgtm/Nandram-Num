@@ -24,7 +24,7 @@ export function AngelMenu() {
   const { t } = useApp();
   const [open, setOpen] = React.useState(false);
   const [active, setActive] = React.useState(0);
-  const timer = React.useRef<ReturnType<typeof setTimeout>>();
+  const timer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const wrap = React.useRef<HTMLDivElement>(null);
   const a = TOP[active];
   const show = () => { clearTimeout(timer.current); setOpen(true); };

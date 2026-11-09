@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { jsonLd as toLd } from '@/lib/seo/site';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Calculator } from '@/components/calculators/calculator';
@@ -8,13 +9,15 @@ import { CALCULATORS, calcBySlug } from '@/lib/seo/calculators';
 export const dynamicParams = false;
 export function generateStaticParams() { return CALCULATORS.map((c) => ({ slug: c.slug })); }
 
-export function generateMetadata({ params }: { params: { slug: string } }): Metadata {
+export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const c = calcBySlug(params.slug);
   if (!c) return {};
   return { title: c.title, description: c.description, keywords: c.keywords, alternates: { canonical: `/calculators/${c.slug}` }, openGraph: { title: c.title, description: c.description, type: 'website' } };
 }
 
-export default function CalculatorPage({ params }: { params: { slug: string } }) {
+export default async function CalculatorPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   const c = calcBySlug(params.slug);
   if (!c) notFound();
   const jsonLd = [
@@ -23,7 +26,7 @@ export default function CalculatorPage({ params }: { params: { slug: string } })
   ];
   return (
     <div className="container max-w-4xl space-y-8 py-10 sm:py-14">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toLd(jsonLd) }} />
       <nav className="text-xs text-muted-foreground"><Link href="/calculators" className="hover:text-foreground">Free calculators</Link> / {c.h1}</nav>
       <header className="space-y-3"><h1 className="text-4xl font-bold sm:text-5xl"><span className="gold-text">{c.h1}</span></h1>{c.intro.map((p) => <p key={p} className="text-lg text-muted-foreground">{p}</p>)}<p className="text-sm text-gold">✦ Method by Acharya Nandram · 15+ years of Vedic, Chaldean &amp; Lo Shu numerology</p></header>
       <Calculator kind={c.kind} />

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { rateLimit, tooMany } from '@/lib/server/rate-limit';
 import { resolveShareLink } from '@/lib/db/repo/shares';
 import { isReportUnlocked } from '@/lib/billing/entitlements';
 import { pdfStyleFor } from '@/lib/branding';
@@ -7,14 +8,17 @@ import { clientProfiles } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { renderReportPdf } from '@/lib/pdf/render';
 import type { ThemeId } from '@/lib/pdf/themes';
-import { errorResponse, json, pdfResponse, slug } from '@/lib/server/http';
+import { clientIp, errorResponse, json, pdfResponse, slug } from '@/lib/server/http';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
 
 /** Public: POST { password? } → PDF of the shared report (only if its text has been finalised). */
-export async function POST(req: Request, { params }: { params: { token: string } }) {
+export async function POST(req: Request, props: { params: Promise<{ token: string }> }) {
+  const params = await props.params;
+  const rl = rateLimit(`sharepdf:${clientIp(req)}`, 10, 10 * 60_000); // slows password guessing
+  if (!rl.ok) return tooMany(rl.retryAfter);
   try {
     const { password } = z.object({ password: z.string().max(64).optional() }).parse(await req.json().catch(() => ({})));
     const r = await resolveShareLink(params.token, password);

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { jsonLd as toLd } from '@/lib/seo/site';
 import Link from 'next/link';
 import { AcharyaProfile } from '@/components/blog/blog-parts';
 import { AngelCta } from '@/components/angel/angel-parts';
@@ -26,7 +27,7 @@ export default function AngelCalculatorPage() {
   ];
   return (
     <div className="container max-w-5xl space-y-10 py-8 sm:py-12">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toLd(jsonLd) }} />
       <nav aria-label="Breadcrumb" className="text-xs text-muted-foreground"><Link href="/" className="hover:text-foreground">Home</Link> / <Link href="/angel-numbers" className="hover:text-foreground">Angel Numbers</Link> / Calculator</nav>
       <header className="text-center">
         <h1 className="font-cinzel text-4xl font-bold sm:text-5xl"><span className="gold-text">Angel Number Calculator</span></h1>

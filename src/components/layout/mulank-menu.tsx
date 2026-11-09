@@ -11,7 +11,7 @@ export function MulankMenu() {
   const { t } = useApp();
   const [open, setOpen] = React.useState(false);
   const [active, setActive] = React.useState(1);
-  const timer = React.useRef<ReturnType<typeof setTimeout>>();
+  const timer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const wrap = React.useRef<HTMLDivElement>(null);
   const m = MULANK.find((x) => x.n === active)!;
   const services = mulankServices(active).slice(0, 3);

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { rateLimit, tooMany } from '@/lib/server/rate-limit';
 import { CheckoutError, createCheckout } from '@/lib/billing/checkout';
 import { INDIAN_STATES } from '@/components/wizard/state';
 import { json, readJson, withUser } from '@/lib/server/http';
@@ -7,6 +8,8 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export const POST = withUser(async (req, user) => {
+  const rl = rateLimit(`checkout:${user.id}`, 20, 10 * 60_000);
+  if (!rl.ok) return tooMany(rl.retryAfter);
   const body = z.object({
     planCode: z.string().max(30), coupon: z.string().max(40).optional(), billingName: z.string().max(120).optional(),
     billingState: z.string().refine((s) => INDIAN_STATES.includes(s), 'Choose your state'), gstin: z.string().max(15).optional(), phone: z.string().max(20).optional(),

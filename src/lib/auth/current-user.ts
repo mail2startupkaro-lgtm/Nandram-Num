@@ -24,7 +24,7 @@ export async function getOptionalUser(req?: Request): Promise<User | null> {
   if (req) token = readCookie(req);
   else {
     const { cookies } = await import('next/headers');
-    token = cookies().get('nsid')?.value;
+    token = (await cookies()).get('nsid')?.value;
   }
   return userFromSession(token);
 }

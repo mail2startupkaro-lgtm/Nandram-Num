@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { jsonLd as toLd } from '@/lib/seo/site';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { MULANK, getMulank } from '@/lib/mulank-data';
@@ -7,7 +8,8 @@ import { mulankServices } from '@/lib/mulank-services';
 export const dynamicParams = false;
 export function generateStaticParams() { return MULANK.map((m) => ({ n: String(m.n) })); }
 
-export function generateMetadata({ params }: { params: { n: string } }): Metadata {
+export async function generateMetadata(props: { params: Promise<{ n: string }> }): Promise<Metadata> {
+  const params = await props.params;
   const m = getMulank(Number(params.n));
   if (!m) return {};
   return {
@@ -26,7 +28,8 @@ function Block({ title, children, i = 0 }: { title: string; children: React.Reac
 }
 const List = ({ items }: { items: string[] }) => <ul className="space-y-1.5 text-sm text-muted-foreground">{items.map((x) => <li key={x} className="flex gap-2"><span className="text-gold">✦</span>{x}</li>)}</ul>;
 
-export default function MulankPage({ params }: { params: { n: string } }) {
+export default async function MulankPage(props: { params: Promise<{ n: string }> }) {
+  const params = await props.params;
   const m = getMulank(Number(params.n));
   if (!m) notFound();
   const prev = m.n === 1 ? 9 : m.n - 1;
@@ -36,7 +39,7 @@ export default function MulankPage({ params }: { params: { n: string } }) {
   const jsonLd = { '@context': 'https://schema.org', '@type': 'Article', headline: `Mulank ${m.n} – ${m.title}`, description: m.tagline };
   return (
     <div className="container max-w-5xl space-y-8 py-10 sm:py-14">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toLd(jsonLd) }} />
       <nav className="text-xs text-muted-foreground"><Link href="/mulank" className="hover:text-foreground">Mulank</Link> / Mulank {m.n}</nav>
 
       <header className="grid items-center gap-8 md:grid-cols-[220px_1fr]">

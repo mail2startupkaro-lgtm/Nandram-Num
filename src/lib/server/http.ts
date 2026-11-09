@@ -5,6 +5,7 @@ import { AuthError } from '@/lib/auth/otp';
 import type { User } from '@/lib/db/schema';
 import { NotFoundError } from '@/lib/db/repo/profiles';
 import { NumerologyInputError } from '@/lib/numerology';
+import { rateLimit } from './rate-limit';
 
 export const NO_STORE = { 'cache-control': 'no-store, max-age=0' };
 
@@ -28,6 +29,9 @@ export function errorResponse(e: unknown): Response {
 export class PaymentRequiredError extends Error {}
 
 type Ctx<P> = { params: P };
+/** Next 15+ passes route params as a Promise; handlers keep receiving a plain object. */
+type RawCtx<P> = { params: P | Promise<P> };
+const resolveCtx = async <P,>(ctx: RawCtx<P> | undefined): Promise<Ctx<P>> => ({ params: (await ctx?.params) as P });
 
 /** Blocks cross-site state-changing requests (CSRF) – the browser always sends Origin on POST/PUT/PATCH/DELETE. */
 export function assertSameOrigin(req: Request) {
@@ -40,11 +44,12 @@ export function assertSameOrigin(req: Request) {
 
 /** Wraps a handler with the current user and uniform error handling. */
 export function withUser<P = Record<string, string>>(fn: (req: Request, user: User, ctx: Ctx<P>) => Promise<Response>) {
-  return async (req: Request, ctx: Ctx<P>) => {
+  return async (req: Request, ctx: RawCtx<P>) => {
     try {
       assertSameOrigin(req);
+      const limited = mutationLimit(req); if (limited) return limited;
       const user = await getCurrentUser(req);
-      return await fn(req, user, ctx);
+      return await fn(req, user, await resolveCtx(ctx));
     } catch (e) {
       return errorResponse(e);
     }
@@ -53,20 +58,35 @@ export function withUser<P = Record<string, string>>(fn: (req: Request, user: Us
 
 /** Like withUser but the user may be anonymous. */
 export function withOptionalUser<P = Record<string, string>>(fn: (req: Request, user: User | null, ctx: Ctx<P>) => Promise<Response>) {
-  return async (req: Request, ctx: Ctx<P>) => {
+  return async (req: Request, ctx: RawCtx<P>) => {
     try {
       assertSameOrigin(req);
-      return await fn(req, await getOptionalUser(req), ctx);
+      const limited = mutationLimit(req); if (limited) return limited;
+      return await fn(req, await getOptionalUser(req), await resolveCtx(ctx));
     } catch (e) {
       return errorResponse(e);
     }
   };
 }
 
-export const clientIp = (req: Request) => (req.headers.get('x-forwarded-for')?.split(',')[0] ?? req.headers.get('x-real-ip') ?? 'local').trim().slice(0, 64);
+/** Client IP. On Vercel x-real-ip / x-vercel-forwarded-for are set by the platform and cannot be spoofed by the caller. */
+export const clientIp = (req: Request) => (req.headers.get('x-real-ip') ?? req.headers.get('x-vercel-forwarded-for')?.split(',')[0] ?? req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'local').trim().slice(0, 64);
 
-export async function readJson<T = unknown>(req: Request): Promise<T> {
-  try { return (await req.json()) as T; } catch { throw new ZodError([{ code: 'custom', path: [], message: 'Invalid JSON body' }]); }
+/** Flood guard for every state-changing API call: 120 per minute per IP. */
+function mutationLimit(req: Request): Response | null {
+  if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return null;
+  const rl = rateLimit(`mut:${clientIp(req)}`, 120, 60_000);
+  return rl.ok ? null : json({ error: 'RATE_LIMITED' }, 429, { 'retry-after': String(rl.retryAfter) });
+}
+
+/** Parses a JSON body, refusing anything larger than maxBytes (default 2 MB) before it is parsed or validated. */
+export async function readJson<T = unknown>(req: Request, maxBytes = 2_000_000): Promise<T> {
+  const declared = Number(req.headers.get('content-length') ?? 0);
+  if (declared > maxBytes) throw new ZodError([{ code: 'custom', path: [], message: 'Request body is too large' }]);
+  let text: string;
+  try { text = await req.text(); } catch { throw new ZodError([{ code: 'custom', path: [], message: 'Invalid JSON body' }]); }
+  if (text.length > maxBytes) throw new ZodError([{ code: 'custom', path: [], message: 'Request body is too large' }]);
+  try { return JSON.parse(text) as T; } catch { throw new ZodError([{ code: 'custom', path: [], message: 'Invalid JSON body' }]); }
 }
 
 export const pdfResponse = (pdf: Uint8Array, filename: string, extra: Record<string, string> = {}) =>

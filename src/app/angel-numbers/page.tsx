@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { jsonLd as toLd } from '@/lib/seo/site';
 import Link from 'next/link';
 import { ArrowRight, Calculator, Clock, Eye, Heart, Sparkles } from 'lucide-react';
 import { AcharyaProfile } from '@/components/blog/blog-parts';
@@ -33,7 +34,7 @@ export default function AngelHub() {
   ];
   return (
     <div className="container max-w-6xl space-y-12 py-8 sm:py-12">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toLd(jsonLd) }} />
       <header className="mk-rise relative overflow-hidden rounded-2xl border border-gold/40 bg-gradient-to-br from-maroon/40 via-card/80 to-card/90 p-6 sm:p-10">
         <div className="relative grid items-center gap-8 md:grid-cols-[1fr_auto]">
           <div>
