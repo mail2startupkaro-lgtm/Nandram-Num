@@ -65,6 +65,7 @@ export function Header() {
           <Link href="/reading" className="hidden whitespace-nowrap rounded-md px-3 py-2 text-sm hover:bg-muted lg:inline-block">{t.nav.reading}</Link>
           <Link href="/calculators" className="hidden whitespace-nowrap rounded-md px-3 py-2 text-sm hover:bg-muted md:inline-block">{t.nav.calculators}</Link>
           <Link href="/pricing" className="hidden whitespace-nowrap rounded-md px-3 py-2 text-sm hover:bg-muted sm:inline-block">{t.nav.pricing}</Link>
+          {user?.role === 'super_admin' && <Link href="/admin" className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-2 text-sm text-gold hover:bg-muted sm:px-3"><Shield className="h-4 w-4" />{t.auth.admin}</Link>}
           {user && <Link href="/dashboard" className="whitespace-nowrap rounded-md px-2 py-2 text-sm hover:bg-muted sm:px-3">{t.nav.dashboard}</Link>}
           <div className="flex rounded-md border border-gold/40 p-0.5 text-xs" role="group" aria-label="Language">
             {(['en', 'hi'] as const).map((l) => (
