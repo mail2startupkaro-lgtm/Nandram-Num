@@ -9,8 +9,31 @@ import { Field, Input, Select } from '@/components/ui/form';
 import { api, ApiError } from '@/lib/client/api';
 
 interface Plan { code: string; name: string; description: string; pricePaise: number; intervalDays: number | null; credits: number; features: Record<string, boolean | number | null> }
-interface Order { keyId: string; mock: boolean; orderId: string; amountPaise: number; discountPaise: number; plan: { code: string; name: string }; prefill: { name: string; email: string; contact: string } }
-declare global { interface Window { Razorpay?: new (o: Record<string, unknown>) => { open: () => void; on: (e: string, cb: (r: unknown) => void) => void } } }
+interface Order { gateway: 'cashfree' | 'razorpay'; mode: string; paymentSessionId: string; keyId: string; mock: boolean; orderId: string; amountPaise: number; discountPaise: number; plan: { code: string; name: string }; prefill: { name: string; email: string; contact: string } }
+type CashfreeResult = { error?: { message?: string }; redirect?: boolean; paymentDetails?: { paymentMessage?: string } };
+declare global { interface Window {
+  Razorpay?: new (o: Record<string, unknown>) => { open: () => void; on: (e: string, cb: (r: unknown) => void) => void };
+  Cashfree?: (o: { mode: string }) => { checkout: (o: { paymentSessionId: string; redirectTarget?: string }) => Promise<CashfreeResult> };
+} }
+
+function loadCashfreeJs(): Promise<void> {
+  return new Promise((res, rej) => {
+    if (window.Cashfree) return res();
+    const s = Object.assign(document.createElement('script'), { src: 'https://sdk.cashfree.com/js/v3/cashfree.js', async: true });
+    s.onload = () => res(); s.onerror = () => rej(new Error('Could not load Cashfree'));
+    document.body.appendChild(s);
+  });
+}
+
+/** Asks our server (which asks Cashfree) a few times, because UPI confirmations can take a few seconds. */
+async function confirmCashfree(orderId: string, tries = 6): Promise<'paid' | 'pending' | 'failed'> {
+  for (let i = 0; i < tries; i++) {
+    const r = await api<{ status: 'paid' | 'pending' | 'failed' }>('/api/billing/cashfree/verify', { method: 'POST', json: { orderId } });
+    if (r.status !== 'pending') return r.status;
+    await new Promise((ok) => setTimeout(ok, 2500));
+  }
+  return 'pending';
+}
 
 const inr = (p: number) => `₹${(p / 100).toLocaleString('en-IN', { minimumFractionDigits: p % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;
 
@@ -28,6 +51,14 @@ export default function PricingPage() {
   const [plans, setPlans] = React.useState<Plan[]>([]);
   const [chosen, setChosen] = React.useState<Plan | null>(null);
   React.useEffect(() => { api<{ plans: Plan[] }>('/api/billing/plans').then((r) => setPlans(r.plans)).catch(() => setPlans([])); }, []);
+  const [returned, setReturned] = React.useState<'paid' | 'pending' | 'failed' | 'checking' | null>(null);
+  React.useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('cf_order');
+    if (!id || !id.startsWith('cf_') || !me?.user) return;
+    setReturned('checking');
+    confirmCashfree(id).then(async (st) => { setReturned(st); if (st === 'paid') await refreshMe(); }).catch(() => setReturned('pending'))
+      .finally(() => window.history.replaceState(null, '', '/pricing'));
+  }, [me?.user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const featureList = (p: Plan) => p.features.fullReports
     ? [t.pricing.features.fullReports, t.pricing.features.whiteLabel, t.pricing.features.bulk, t.pricing.features.share]
@@ -39,6 +70,12 @@ export default function PricingPage() {
         <h1 className="text-4xl font-bold sm:text-5xl"><span className="gold-text">{t.pricing.title}</span></h1>
         <p className="mt-3 text-muted-foreground">{t.pricing.sub}</p>
       </div>
+      {returned && (
+        <p role="status" className={`mx-auto max-w-xl rounded-md p-3 text-center text-sm ${returned === 'paid' ? 'bg-success/15 text-success' : returned === 'failed' ? 'bg-danger/10 text-danger' : 'bg-muted'}`}>
+          {returned === 'paid' ? t.pricing.success : returned === 'failed' ? t.pricing.failed : t.pricing.pending}
+          {returned === 'paid' && <> <Link href="/dashboard" className="underline">{t.nav.dashboard}</Link></>}
+        </p>
+      )}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <div className="glass flex flex-col rounded-lg p-5">
           <p className="font-serif text-xl font-semibold">{t.pricing.free}</p>
@@ -77,6 +114,8 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
   const [state, setState] = React.useState(me?.user?.billingState ?? '');
   const [billingName, setBillingName] = React.useState(me?.user?.name ?? '');
   const [gstin, setGstin] = React.useState('');
+  const [phone, setPhone] = React.useState((me?.user?.phone ?? '').replace(/^\+91/, ''));
+  const [pending, setPending] = React.useState(false);
   const [coupon, setCoupon] = React.useState('');
   const [discount, setDiscount] = React.useState(0);
   const [couponMsg, setCouponMsg] = React.useState<string | null>(null);
@@ -99,8 +138,22 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
   async function pay() {
     setBusy(true); setError(null);
     try {
-      const o = await api<Order>('/api/billing/checkout', { method: 'POST', json: { planCode: plan.code, billingState: state, billingName, gstin: gstin || undefined, coupon: discount ? coupon : undefined } });
+      const o = await api<Order>('/api/billing/checkout', { method: 'POST', json: { planCode: plan.code, billingState: state, billingName, gstin: gstin || undefined, coupon: discount ? coupon : undefined, phone: phone || undefined } });
       setOrder(o);
+      if (o.gateway === 'cashfree') {
+        await loadCashfreeJs();
+        const cf = window.Cashfree!({ mode: o.mode === 'production' ? 'production' : 'sandbox' });
+        const r = await cf.checkout({ paymentSessionId: o.paymentSessionId, redirectTarget: '_modal' });
+        if (r.redirect) return; // the bank page took over; we check again when the customer returns
+        setPending(true);
+        const st = await confirmCashfree(o.orderId);
+        setPending(false);
+        if (st === 'paid') { setDone('ok'); await onPaid(); }
+        else if (st === 'failed' || r.error) setDone('fail');
+        else setError(t.pricing.pending);
+        setBusy(false);
+        return;
+      }
       if (o.mock) return; // test mode: the dialog shows a "simulate" button
       await loadCheckoutJs();
       const rz = new window.Razorpay!({
@@ -109,7 +162,7 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
       });
       rz.on('payment.failed', () => setDone('fail'));
       rz.open();
-    } catch (e) { setError(e instanceof ApiError ? e.message : t.err.server); setBusy(false); }
+    } catch (e) { setPending(false); setError(e instanceof ApiError ? (t.pricing.errors[e.body.error ?? ''] ?? e.message) : t.err.server); setBusy(false); }
   }
 
   return (
@@ -123,6 +176,7 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
             <Field label={t.pricing.billingName} htmlFor="bn"><Input id="bn" value={billingName} onChange={(e) => setBillingName(e.target.value)} /></Field>
             <Field label={t.pricing.state} htmlFor="st" required><Select id="st" value={state} onChange={(e) => setState(e.target.value)}><option value="">{t.f.select}</option>{INDIAN_STATES.map((s) => <option key={s}>{s}</option>)}</Select></Field>
             <Field label={t.pricing.gstin} htmlFor="gst"><Input id="gst" maxLength={15} value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} /></Field>
+            <Field label={t.pricing.phone} htmlFor="ph" required><Input id="ph" type="tel" inputMode="numeric" autoComplete="tel-national" maxLength={14} placeholder="98765 43210" value={phone} onChange={(e) => setPhone(e.target.value)} /></Field>
             <div className="flex items-end gap-2"><Field label={t.pricing.coupon} htmlFor="cp" className="flex-1"><Input id="cp" value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} /></Field><Button variant="outline" onClick={applyCoupon} disabled={!coupon}>{t.pricing.apply}</Button></div>
             {couponMsg && <p className={`text-xs ${discount ? 'text-success' : 'text-danger'}`}>{couponMsg}</p>}
             <div className="rounded-md bg-muted p-3 text-sm">
@@ -136,7 +190,7 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
                 <Button variant="gold" className="w-full" onClick={async () => { try { await verify(await api('/api/billing/mock-pay', { method: 'POST', json: { orderId: order.orderId } })); } catch { setDone('fail'); } }}>{t.pricing.simulate}</Button>
               </div>
             ) : (
-              <Button variant="gold" className="w-full" disabled={busy || !state} onClick={pay}>{busy ? t.pricing.paying : `${t.pricing.pay} ${inr(plan.pricePaise - discount)}`}</Button>
+              <Button variant="gold" className="w-full" disabled={busy || !state} onClick={pay}>{pending ? t.pricing.pending : busy ? t.pricing.paying : `${t.pricing.pay} ${inr(plan.pricePaise - discount)}`}</Button>
             )}
             {done === 'fail' && <p className="text-sm text-danger">{t.pricing.failed}</p>}
             {error && <p className="text-sm text-danger">{error}</p>}
