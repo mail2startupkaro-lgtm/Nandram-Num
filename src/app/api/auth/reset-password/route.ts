@@ -2,9 +2,10 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { AuthError, detectChannel, normaliseIdentifier, verifyOtp } from '@/lib/auth/otp';
 import { hashPassword } from '@/lib/auth/password';
+import { destroyAllSessions } from '@/lib/auth/session';
 import { getDb } from '@/lib/db/client';
 import { users } from '@/lib/db/schema';
-import { assertSameOrigin, clientIp, errorResponse, json } from '@/lib/server/http';
+import { assertSameOrigin, clientIp, errorResponse, json, readJson } from '@/lib/server/http';
 import { rateLimit, tooMany } from '@/lib/server/rate-limit';
 
 export const runtime = 'nodejs';
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
     assertSameOrigin(req);
     const rl = rateLimit(`reset-pw:${clientIp(req)}`, 10, 10 * 60_000);
     if (!rl.ok) return tooMany(rl.retryAfter);
-    const body = Body.parse(await req.json());
+    const body = Body.parse(await readJson(req, 10_000));
     const channel = detectChannel(body.identifier);
     const ident = normaliseIdentifier(channel, body.identifier);
 
@@ -42,6 +43,9 @@ export async function POST(req: Request) {
       failedLogins: 0,
       lockedUntil: null,
     }).where(eq(users.id, user.id));
+
+    // ID Hack / Account Takeover defense: revoke all existing sessions upon password reset
+    await destroyAllSessions(user.id, db);
 
     return json({ ok: true });
   } catch (e) { return errorResponse(e); }

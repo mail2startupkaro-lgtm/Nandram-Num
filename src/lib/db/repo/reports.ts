@@ -28,9 +28,16 @@ export function summarise(result: NumerologyResult, narrative?: Narrative | null
 const stable = (v: unknown): string => JSON.stringify(v, (_, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => a.localeCompare(b))) : x));
 export const resultHash = (r: NumerologyResult) => sha256Hex(stable({ client: r.client, asOf: r.asOf, engineVersion: r.engineVersion, modules: r.modules }));
 
-/** Guard: nothing that looks like a full Aadhaar may be persisted. */
+/** Guard: nothing that looks like a full Aadhaar (raw or formatted) may be persisted. */
 function assertNoAadhaar(...values: unknown[]) {
-  for (const v of values) if (v && /\b[2-9]\d{11}\b/.test(JSON.stringify(v))) throw new Error('REFUSING_TO_STORE_12_DIGIT_NUMBER');
+  for (const v of values) {
+    if (v) {
+      const s = JSON.stringify(v);
+      if (/\b[2-9]\d{11}\b/.test(s) || /\b[2-9]\d{3}[\s-]\d{4}[\s-]\d{4}\b/.test(s)) {
+        throw new Error('REFUSING_TO_STORE_12_DIGIT_NUMBER');
+      }
+    }
+  }
 }
 
 async function assertProfileOwner(db: Db, ownerId: string, profileId: string) {

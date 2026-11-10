@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ClientInputSchema, generateNumerology, NumerologyInputError, type ReportModule } from '@/lib/numerology';
-import { clientIp } from '@/lib/server/http';
+import { clientIp, readJson } from '@/lib/server/http';
 import { rateLimit, tooMany } from '@/lib/server/rate-limit';
 
 export const runtime = 'nodejs';
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   if (!rl.ok) return tooMany(rl.retryAfter);
   let body: { input?: unknown; asOf?: unknown; modules?: unknown };
   try {
-    body = await req.json();
+    body = await readJson<{ input?: unknown; asOf?: unknown; modules?: unknown }>(req, 100_000);
   } catch {
     return NextResponse.json({ error: 'INVALID_JSON' }, { status: 400, headers: NO_STORE });
   }

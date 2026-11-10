@@ -13,7 +13,10 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
   const cfg = cashfreeConfig();
   if (!cfg) return json({ error: 'NOT_CONFIGURED' }, 503);
+  const declaredLen = Number(req.headers.get('content-length') ?? 0);
+  if (declaredLen > 500_000) return json({ error: 'TOO_LARGE' }, 413);
   const raw = await req.text();
+  if (raw.length > 500_000) return json({ error: 'TOO_LARGE' }, 413);
   if (!verifyCashfreeWebhook(cfg, raw, req.headers.get('x-webhook-signature'), req.headers.get('x-webhook-timestamp'))) return json({ error: 'BAD_SIGNATURE' }, 400);
   let evt: { type?: string; data?: { order?: { order_id?: string } } };
   try { evt = JSON.parse(raw); } catch { return json({ error: 'BAD_JSON' }, 400); }

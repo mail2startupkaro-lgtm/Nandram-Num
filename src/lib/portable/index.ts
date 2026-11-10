@@ -74,7 +74,9 @@ export async function exportProfile(ownerId: string, profileId: string, opts: { 
 }
 
 export async function exportBundle(ownerId: string, profileIds: string[] | 'all', opts: { allVersions?: boolean } = {}, db: Db = getDb()) {
-  const ids = profileIds === 'all' ? (await listProfiles(ownerId, { limit: 200 }, db)).items.map((p) => p.id) : profileIds;
+  const ids = profileIds === 'all'
+    ? (await db.select({ id: clientProfiles.id }).from(clientProfiles).where(eq(clientProfiles.ownerId, ownerId))).map((p) => p.id)
+    : profileIds;
   const profiles: ExportProfile[] = [];
   for (const id of ids) profiles.push(await exportProfileData(ownerId, id, opts, db));
   return { schemaVersion: EXPORT_SCHEMA_VERSION, kind: 'numerology.bundle' as const, exportedAt: new Date().toISOString(), engineVersion: ENGINE_VERSION, profiles };

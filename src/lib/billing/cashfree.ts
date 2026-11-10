@@ -83,6 +83,9 @@ export const getCashfreePayments = (cfg: CashfreeConfig, orderId: string, fetchI
 /** Webhook signature check. Replays are harmless: fulfilment re-fetches the order from Cashfree and is idempotent. */
 export function verifyCashfreeWebhook(cfg: CashfreeConfig, rawBody: string, signature: string | null, timestamp: string | null): boolean {
   if (!signature || !timestamp) return false;
+  const ts = Number(timestamp);
+  // Replay protection: verify timestamp is within +/- 15 minutes (in production/staging)
+  if (process.env.NODE_ENV !== 'test' && ts && Math.abs(Date.now() - (ts > 1e11 ? ts : ts * 1000)) > 15 * 60_000) return false;
   const expected = Buffer.from(createHmac('sha256', cfg.secretKey).update(timestamp + rawBody).digest('base64'));
   const given = Buffer.from(signature);
   return expected.length === given.length && timingSafeEqual(expected, given);

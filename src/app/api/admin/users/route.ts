@@ -10,7 +10,8 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export const GET = withAdmin(async (req) => {
-  const q = new URL(req.url).searchParams.get('q')?.trim();
+  const rawQ = new URL(req.url).searchParams.get('q')?.trim();
+  const q = rawQ?.replace(/[%_\\]/g, '\\$&');
   const db = getDb();
   const where = q ? or(ilike(users.email, `%${q}%`), ilike(users.name, `%${q}%`), ilike(users.phone, `%${q}%`)) : undefined;
   const rows = await db.select({

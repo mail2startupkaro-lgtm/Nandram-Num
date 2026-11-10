@@ -8,7 +8,7 @@ import { clientProfiles } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { renderReportPdf } from '@/lib/pdf/render';
 import type { ThemeId } from '@/lib/pdf/themes';
-import { clientIp, errorResponse, json, pdfResponse, slug } from '@/lib/server/http';
+import { clientIp, errorResponse, json, pdfResponse, readJson, slug } from '@/lib/server/http';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,10 +17,15 @@ export const maxDuration = 120;
 /** Public: POST { password? } → PDF of the shared report (only if its text has been finalised). */
 export async function POST(req: Request, props: { params: Promise<{ token: string }> }) {
   const params = await props.params;
-  const rl = rateLimit(`sharepdf:${clientIp(req)}`, 10, 10 * 60_000); // slows password guessing
+  const ip = clientIp(req);
+  const rl = rateLimit(`sharepdf:${ip}`, 10, 10 * 60_000); // slows password guessing
   if (!rl.ok) return tooMany(rl.retryAfter);
+  const rlToken = rateLimit(`sharetokpdf:${params.token}:${ip}`, 10, 10 * 60_000);
+  if (!rlToken.ok) return tooMany(rlToken.retryAfter);
+
   try {
-    const { password } = z.object({ password: z.string().max(64).optional() }).parse(await req.json().catch(() => ({})));
+    const raw = await readJson<{ password?: unknown }>(req, 10_000).catch(() => ({}));
+    const { password } = z.object({ password: z.string().max(64).optional() }).parse(raw);
     const r = await resolveShareLink(params.token, password);
     if (r.status !== 'ok') return json({ status: r.status }, r.status === 'not_found' ? 404 : r.status === 'password_required' ? 401 : 403);
     const rep = r.report;

@@ -3,7 +3,7 @@ import { generateNumerology, type NumerologyResult } from '@/lib/numerology';
 import { getOptionalUser } from '@/lib/auth/current-user';
 import { getAccount } from '@/lib/billing/entitlements';
 import { pdfStyleFor } from '@/lib/branding';
-import { clientIp } from '@/lib/server/http';
+import { clientIp, readJson } from '@/lib/server/http';
 import { rateLimit, tooMany } from '@/lib/server/rate-limit';
 import type { Narrative } from '@/lib/narrative/service';
 import { configFromEnv, providerFromConfig } from '@/lib/narrative/providers/llm';
@@ -32,10 +32,10 @@ const json = (status: number, body: unknown) => new Response(JSON.stringify(body
  */
 export async function POST(req: Request) {
   let raw: unknown;
-  try { raw = await req.json(); } catch { return json(400, { error: 'INVALID_JSON' }); }
+  try { raw = await readJson(req, 1_000_000); } catch { return json(400, { error: 'INVALID_JSON' }); }
   const parsed = Body.safeParse(raw);
   if (!parsed.success) return json(422, { error: 'VALIDATION' });
-  if (JSON.stringify(parsed.data).match(/\b\d{12}\b/)) return json(422, { error: 'PII_REJECTED' });
+  if (JSON.stringify(parsed.data).match(/\b[2-9]\d{3}[\s-]?\d{4}[\s-]?\d{4}\b|\b\d{12}\b/)) return json(422, { error: 'PII_REJECTED' });
   const narrative = parsed.data.narrative as Narrative | undefined;
   if (narrative?.status === 'awaiting_review') return json(409, { error: 'REVIEW_PENDING' });
 

@@ -4,7 +4,7 @@ import type { NarrativeLanguage } from '@/lib/narrative/plan';
 import { writeNarrative } from '@/lib/server/reports';
 import type { NumerologyResult } from '@/lib/numerology';
 import { getOptionalUser } from '@/lib/auth/current-user';
-import { clientIp } from '@/lib/server/http';
+import { clientIp, readJson } from '@/lib/server/http';
 import { rateLimit, tooMany } from '@/lib/server/rate-limit';
 
 export const runtime = 'nodejs';
@@ -31,12 +31,12 @@ const Body = z.object({
  */
 export async function POST(req: Request) {
   let json: unknown;
-  try { json = await req.json(); } catch { return NextResponse.json({ error: 'INVALID_JSON' }, { status: 400, headers: NO_STORE }); }
+  try { json = await readJson(req, 500_000); } catch { return NextResponse.json({ error: 'INVALID_JSON' }, { status: 400, headers: NO_STORE }); }
   const parsed = Body.safeParse(json);
   if (!parsed.success) return NextResponse.json({ error: 'VALIDATION' }, { status: 422, headers: NO_STORE });
 
   const result = parsed.data.result as unknown as NumerologyResult;
-  if (JSON.stringify(result).match(/\b\d{12}\b/)) return NextResponse.json({ error: 'PII_REJECTED' }, { status: 422, headers: NO_STORE });
+  if (JSON.stringify(result).match(/\b[2-9]\d{3}[\s-]?\d{4}[\s-]?\d{4}\b|\b\d{12}\b/)) return NextResponse.json({ error: 'PII_REJECTED' }, { status: 422, headers: NO_STORE });
 
   try {
     const user = await getOptionalUser(req);

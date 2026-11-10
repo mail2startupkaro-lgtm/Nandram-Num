@@ -84,7 +84,7 @@ export async function upsertVerifiedUser(who: { email?: string; phone?: string; 
   const where = who.googleSub ? eq(users.googleSub, who.googleSub) : who.email ? eq(users.email, who.email) : eq(users.phone, who.phone!);
   let [u] = await db.select().from(users).where(where).limit(1);
   if (!u && who.googleSub && who.email) [u] = await db.select().from(users).where(eq(users.email, who.email)).limit(1); // link Google to existing email account
-  const isAdmin = !!who.email && superAdmins().includes(who.email);
+  const isAdmin = isSuperAdmin(who.email, who.phone);
   if (!u) {
     [u] = await db.insert(users).values({
       email: who.email, phone: who.phone, googleSub: who.googleSub, name: name?.trim().slice(0, 120) || null,

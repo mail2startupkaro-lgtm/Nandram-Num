@@ -63,5 +63,5 @@ export function verifyPassword(pw: string, stored: string): boolean {
   if (alg !== 'scrypt' || !salt || !hash) return false;
   const expected = Buffer.from(hash, 'base64url');
   const got = scryptSync(pw, Buffer.from(salt, 'base64url'), expected.length, { N: 16384, r: 8, p: 1 });
-  return timingSafeEqual(expected, got);
+  return expected.length === got.length && timingSafeEqual(expected, got);
 }

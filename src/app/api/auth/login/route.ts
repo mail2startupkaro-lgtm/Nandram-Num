@@ -2,10 +2,10 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { AuthError, detectChannel, isSuperAdmin, normaliseIdentifier } from '@/lib/auth/otp';
 import { verifyPassword } from '@/lib/auth/password';
-import { createSession, sessionCookie } from '@/lib/auth/session';
+import { createSession, destroySession, readCookie, sessionCookie } from '@/lib/auth/session';
 import { getDb } from '@/lib/db/client';
 import { users } from '@/lib/db/schema';
-import { assertSameOrigin, clientIp, errorResponse, json } from '@/lib/server/http';
+import { assertSameOrigin, clientIp, errorResponse, json, readJson } from '@/lib/server/http';
 import { rateLimit, tooMany } from '@/lib/server/rate-limit';
 
 export const runtime = 'nodejs';
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     assertSameOrigin(req);
     const rl = rateLimit(`login:${clientIp(req)}`, 20, 10 * 60_000);
     if (!rl.ok) return tooMany(rl.retryAfter);
-    const body = Body.parse(await req.json());
+    const body = Body.parse(await readJson(req, 10_000));
     const channel = detectChannel(body.identifier);
     let id: string | null = null;
     try { id = normaliseIdentifier(channel, body.identifier); } catch { /* fall through to generic error */ }
@@ -43,6 +43,10 @@ export async function POST(req: Request) {
       throw new AuthError('INVALID_CREDENTIALS', 401);
     }
     if (u.disabledAt) throw new AuthError('ACCOUNT_DISABLED', 403);
+
+    // Clean up any stale session that may have existed on this client
+    const oldToken = readCookie(req);
+    if (oldToken) await destroySession(oldToken, db);
 
     const role = isSuperAdmin(u.email, u.phone) ? ('super_admin' as const) : u.role;
     await db.update(users).set({ lastLoginAt: new Date(), role, failedLogins: 0, lockedUntil: null }).where(eq(users.id, u.id));

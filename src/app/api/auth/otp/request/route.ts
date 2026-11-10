@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { requestOtp } from '@/lib/auth/otp';
-import { assertSameOrigin, clientIp, errorResponse, json } from '@/lib/server/http';
+import { assertSameOrigin, clientIp, errorResponse, json, readJson } from '@/lib/server/http';
 import { rateLimit, tooMany } from '@/lib/server/rate-limit';
 
 export const runtime = 'nodejs';
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     const body = z.object({
       channel: z.enum(['email', 'sms']),
       identifier: z.string().min(3).max(320),
-    }).parse(await req.json());
+    }).parse(await readJson(req, 10_000));
     const out = await requestOtp(body.channel, body.identifier, { ip });
     return json({ sent: true, ...out });
   } catch (e) {

@@ -2,10 +2,10 @@ import { eq, or } from 'drizzle-orm';
 import { z } from 'zod';
 import { AuthError, isSuperAdmin, normaliseIdentifier } from '@/lib/auth/otp';
 import { hashPassword } from '@/lib/auth/password';
-import { createSession, sessionCookie } from '@/lib/auth/session';
+import { createSession, destroySession, readCookie, sessionCookie } from '@/lib/auth/session';
 import { getDb } from '@/lib/db/client';
 import { users } from '@/lib/db/schema';
-import { assertSameOrigin, clientIp, errorResponse, json } from '@/lib/server/http';
+import { assertSameOrigin, clientIp, errorResponse, json, readJson } from '@/lib/server/http';
 import { rateLimit, tooMany } from '@/lib/server/rate-limit';
 
 export const runtime = 'nodejs';
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
     assertSameOrigin(req);
     const rl = rateLimit(`signup:${clientIp(req)}`, 10, 10 * 60_000);
     if (!rl.ok) return tooMany(rl.retryAfter);
-    const body = Body.parse(await req.json());
+    const body = Body.parse(await readJson(req, 10_000));
     if (body.password.length < 8) throw new AuthError('WEAK_PASSWORD', 400);
     const email = normaliseIdentifier('email', body.email);
     const phone = normaliseIdentifier('sms', body.mobile);
@@ -36,6 +36,9 @@ export async function POST(req: Request) {
     // An existing email/mobile can't be claimed by signing up again (no proof of ownership) – the owner signs in instead.
     if (byEmail) throw new AuthError('EMAIL_TAKEN', 409);
     if (byPhone) throw new AuthError('MOBILE_TAKEN', 409);
+
+    const oldToken = readCookie(req);
+    if (oldToken) await destroySession(oldToken, db);
 
     const now = new Date();
     const passwordHash = await hashPassword(body.password);

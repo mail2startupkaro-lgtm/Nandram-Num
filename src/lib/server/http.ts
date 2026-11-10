@@ -70,7 +70,13 @@ export function withOptionalUser<P = Record<string, string>>(fn: (req: Request, 
 }
 
 /** Client IP. On Vercel x-real-ip / x-vercel-forwarded-for are set by the platform and cannot be spoofed by the caller. */
-export const clientIp = (req: Request) => (req.headers.get('x-real-ip') ?? req.headers.get('x-vercel-forwarded-for')?.split(',')[0] ?? req.headers.get('x-forwarded-for')?.split(',')[0] ?? 'local').trim().slice(0, 64);
+export const clientIp = (req: Request) => (
+  req.headers.get('x-real-ip') ??
+  req.headers.get('cf-connecting-ip') ??
+  req.headers.get('x-vercel-forwarded-for')?.split(',')[0] ??
+  req.headers.get('x-forwarded-for')?.split(',')[0] ??
+  'local'
+).trim().slice(0, 64);
 
 /** Flood guard for every state-changing API call: 120 per minute per IP. */
 function mutationLimit(req: Request): Response | null {

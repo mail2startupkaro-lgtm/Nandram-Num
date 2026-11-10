@@ -10,7 +10,8 @@ export const dynamic = 'force-dynamic';
 
 /** Expert listing: every account with the expert role or a saved expert branding. Logo/photo/signature data is never sent. */
 export const GET = withAdmin(async (req) => {
-  const q = new URL(req.url).searchParams.get('q')?.trim();
+  const rawQ = new URL(req.url).searchParams.get('q')?.trim();
+  const q = rawQ?.replace(/[%_\\]/g, '\\$&');
   const db = getDb();
   const isExpert = or(eq(users.role, 'expert'), sql`${brandings.userId} is not null`);
   const search = q ? or(ilike(users.email, `%${q}%`), ilike(users.name, `%${q}%`), ilike(users.phone, `%${q}%`), ilike(brandings.expertName, `%${q}%`), ilike(brandings.brandName, `%${q}%`)) : undefined;
@@ -41,7 +42,8 @@ export const POST = withAdmin(async (req) => {
   const db = getDb();
   const id = b.identifier;
   const digits = id.replace(/\D/g, '');
-  const where = id.includes('@') ? ilike(users.email, id) : digits.length >= 10 ? ilike(users.phone, `%${digits.slice(-10)}`) : undefined;
+  const escapedId = id.replace(/[%_\\]/g, '\\$&');
+  const where = id.includes('@') ? ilike(users.email, escapedId) : digits.length >= 10 ? ilike(users.phone, `%${digits.slice(-10)}`) : undefined;
   const user = where ? (await db.select().from(users).where(where).limit(1))[0] : undefined;
   if (!user) return json({ error: 'USER_NOT_FOUND' }, 404);
   await db.transaction(async (tx) => {

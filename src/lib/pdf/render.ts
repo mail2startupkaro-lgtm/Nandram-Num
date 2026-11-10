@@ -61,6 +61,12 @@ async function htmlToPdf(browser: Browser, html: string, opts: { margin0?: boole
   const ctx = await browser.newContext();
   try {
     const page = await ctx.newPage();
+    // SSRF guard: only data:, blob:, or about: URLs allowed inside rendered HTML
+    await page.route('**', (route) => {
+      const u = route.request().url();
+      if (u.startsWith('data:') || u.startsWith('blob:') || u.startsWith('about:')) return route.continue();
+      return route.abort();
+    });
     await page.setContent(html, { waitUntil: 'load' });
     await page.evaluate(() => (document as Document & { fonts: FontFaceSet }).fonts.ready.then(() => true));
     const buf = await page.pdf({
