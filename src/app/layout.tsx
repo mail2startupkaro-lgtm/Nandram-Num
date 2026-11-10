@@ -34,11 +34,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en-IN" className={fontVariables} suppressHydrationWarning>
       <head>
+        <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-NPNKXF4B" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());`,
+          }}
+        />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <script dangerouslySetInnerHTML={{ __html: langScript }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(orgLd()) }} />
       </head>
       <body>
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-NPNKXF4B"
+            height="0"
+            width="0"
+            style={{ display: 'none', visibility: 'hidden' }}
+          />
+        </noscript>
         <Providers>
           <CosmicBackground />
           <Header />

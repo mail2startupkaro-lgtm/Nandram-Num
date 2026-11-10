@@ -2,12 +2,12 @@ const isProd = process.env.NODE_ENV === 'production';
 /** Content Security Policy: only our own code plus Cashfree's checkout may run; no framing, no plugins. */
 const CSP = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' https://*.cashfree.com${isProd ? '' : " 'unsafe-eval'"}`,
+  `script-src 'self' 'unsafe-inline' https://*.cashfree.com https://www.googletagmanager.com https://*.googletagmanager.com${isProd ? '' : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self' https://*.cashfree.com${isProd ? '' : ' ws: wss:'}`,
-  "frame-src 'self' https://*.cashfree.com",
+  `connect-src 'self' https://*.cashfree.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com${isProd ? '' : ' ws: wss:'}`,
+  "frame-src 'self' https://*.cashfree.com https://www.googletagmanager.com",
   "worker-src 'self' blob:",
   "media-src 'self' blob: data:",
   "object-src 'none'",
