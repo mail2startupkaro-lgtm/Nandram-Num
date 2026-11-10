@@ -245,3 +245,118 @@ export type User = typeof users.$inferSelect;
 export type ClientProfileRow = typeof clientProfiles.$inferSelect;
 export type ReportRow = typeof reports.$inferSelect;
 export type ShareLinkRow = typeof shareLinks.$inferSelect;
+
+// ---------- Marketing & CRM ----------
+export const marketingChannelEnum = pgEnum('marketing_channel', ['email', 'whatsapp', 'sms', 'push']);
+export const consentStatusEnum = pgEnum('consent_status', ['opted_in', 'opted_out', 'bounced', 'unsubscribed']);
+export const leadLifecycleStageEnum = pgEnum('lead_lifecycle_stage', ['subscriber', 'lead', 'mql', 'sql', 'customer', 'churned']);
+export const campaignStatusEnum = pgEnum('campaign_status', ['draft', 'scheduled', 'running', 'completed', 'paused']);
+
+export const marketingLeads = pgTable('marketing_leads', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()::text`),
+  userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+  fullName: text('full_name').notNull(),
+  email: varchar('email', { length: 320 }),
+  phone: varchar('phone', { length: 20 }),
+  dob: varchar('dob', { length: 10 }), // YYYY-MM-DD
+  gender: varchar('gender', { length: 10 }),
+  city: varchar('city', { length: 100 }),
+  state: varchar('state', { length: 100 }),
+  country: varchar('country', { length: 100 }).default('India'),
+  language: varchar('language', { length: 10 }).default('en'),
+  moolank: integer('moolank'),
+  bhagyank: integer('bhagyank'),
+  kuaNumber: integer('kua_number'),
+  primaryConcern: varchar('primary_concern', { length: 50 }),
+  leadSource: varchar('lead_source', { length: 80 }).notNull().default('website'),
+  leadMagnet: varchar('lead_magnet', { length: 120 }),
+  lifecycleStage: leadLifecycleStageEnum('lifecycle_stage').notNull().default('lead'),
+  utmSource: varchar('utm_source', { length: 100 }),
+  utmMedium: varchar('utm_medium', { length: 100 }),
+  utmCampaign: varchar('utm_campaign', { length: 150 }),
+  utmTerm: varchar('utm_term', { length: 100 }),
+  utmContent: varchar('utm_content', { length: 100 }),
+  referrerUrl: text('referrer_url'),
+  ipAddress: varchar('ip_address', { length: 64 }),
+  userAgent: text('user_agent'),
+  metadata: jsonb('metadata').default({}),
+  createdAt: created(),
+  updatedAt: updated(),
+}, (t) => ({
+  emailIdx: index('marketing_leads_email_idx').on(t.email),
+  phoneIdx: index('marketing_leads_phone_idx').on(t.phone),
+  moolankIdx: index('marketing_leads_moolank_idx').on(t.moolank),
+  concernIdx: index('marketing_leads_concern_idx').on(t.primaryConcern),
+}));
+
+export const marketingConsents = pgTable('marketing_consents', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()::text`),
+  leadId: text('lead_id').notNull().references(() => marketingLeads.id, { onDelete: 'cascade' }),
+  channel: marketingChannelEnum('channel').notNull(),
+  status: consentStatusEnum('status').notNull().default('opted_in'),
+  purpose: varchar('purpose', { length: 100 }).notNull(),
+  consentText: text('consent_text').notNull(),
+  optedInAt: timestamp('opted_in_at', { withTimezone: true }).notNull().defaultNow(),
+  optedOutAt: timestamp('opted_out_at', { withTimezone: true }),
+  optOutReason: text('opt_out_reason'),
+  ipAddress: varchar('ip_address', { length: 64 }),
+  userAgent: text('user_agent'),
+  createdAt: created(),
+}, (t) => ({
+  leadChannel: index('marketing_consents_lead_channel_idx').on(t.leadId, t.channel, t.status),
+}));
+
+export const marketingTags = pgTable('marketing_tags', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()::text`),
+  slug: varchar('slug', { length: 80 }).notNull().unique(),
+  name: varchar('name', { length: 120 }).notNull(),
+  category: varchar('category', { length: 50 }).notNull().default('general'),
+  description: text('description'),
+  createdAt: created(),
+});
+
+export const leadTags = pgTable('lead_tags', {
+  leadId: text('lead_id').notNull().references(() => marketingLeads.id, { onDelete: 'cascade' }),
+  tagId: text('tag_id').notNull().references(() => marketingTags.id, { onDelete: 'cascade' }),
+  taggedAt: timestamp('tagged_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  pk: primaryKey({ columns: [t.leadId, t.tagId] }),
+}));
+
+export const marketingCampaigns = pgTable('marketing_campaigns', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()::text`),
+  name: varchar('name', { length: 180 }).notNull(),
+  channel: marketingChannelEnum('channel').notNull(),
+  status: campaignStatusEnum('status').notNull().default('draft'),
+  targetCriteria: jsonb('target_criteria').notNull().default({}),
+  templateName: varchar('template_name', { length: 120 }),
+  subjectOrTitle: text('subject_or_title'),
+  contentPreview: text('content_preview'),
+  scheduledAt: timestamp('scheduled_at', { withTimezone: true }),
+  sentAt: timestamp('sent_at', { withTimezone: true }),
+  totalTargeted: integer('total_targeted').notNull().default(0),
+  totalSent: integer('total_sent').notNull().default(0),
+  totalDelivered: integer('total_delivered').notNull().default(0),
+  totalOpened: integer('total_opened').notNull().default(0),
+  totalClicked: integer('total_clicked').notNull().default(0),
+  totalConverted: integer('total_converted').notNull().default(0),
+  totalOptOuts: integer('total_opt_outs').notNull().default(0),
+  createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: created(),
+  updatedAt: updated(),
+});
+
+export const marketingEvents = pgTable('marketing_events', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()::text`),
+  leadId: text('lead_id').notNull().references(() => marketingLeads.id, { onDelete: 'cascade' }),
+  eventName: varchar('event_name', { length: 80 }).notNull(),
+  properties: jsonb('properties').notNull().default({}),
+  occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull().defaultNow(),
+}, (t) => ({
+  leadEvent: index('marketing_events_lead_name_idx').on(t.leadId, t.eventName, t.occurredAt),
+}));
+
+export type MarketingLead = typeof marketingLeads.$inferSelect;
+export type MarketingConsent = typeof marketingConsents.$inferSelect;
+export type MarketingCampaign = typeof marketingCampaigns.$inferSelect;
+
