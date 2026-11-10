@@ -15,6 +15,11 @@ call npm install --no-audit --no-fund
 if not exist ".env.local" (
   echo  WARNING: .env.local not found - copy .env.example to .env.local and fill in your keys.
 )
+if exist ".env.local" (
+  echo  Updating the database - adds any new tables...
+  call npm run db:migrate:local
+  if errorlevel 1 echo  WARNING: database update failed - check DATABASE_URL in .env.local. The site will still start.
+)
 start "" cmd /c "timeout /t 12 >nul & start http://localhost:3000"
 call npm run dev
 echo.

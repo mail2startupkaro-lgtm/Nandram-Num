@@ -14,7 +14,8 @@
     "samples:narrative": "tsx scripts/generate-narrative-samples.ts",
     "samples:pdf": "tsx scripts/generate-pdf-samples.ts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx scripts/migrate.ts"
+    "db:migrate": "tsx scripts/migrate.ts",
+    "db:migrate:local": "tsx --env-file=.env.local scripts/migrate.ts"
   },
   "dependencies": {
     "@fontsource/cinzel": "^5.3.0",

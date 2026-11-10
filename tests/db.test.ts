@@ -192,4 +192,22 @@ describe.skipIf(!URL)('database (Postgres)', () => {
     const rep = (await listReports(owner, out.created[0].profileId, db))[0];
     expect(rep.summary.moolank).toBe(1);
   });
+
+  it('stores contact messages encrypted and lists them for the admin', async () => {
+    const { createContactMessage, listContactMessages, updateContactMessage, deleteContactMessage } = await import('@/lib/contact');
+    const row = await createContactMessage({ name: 'Sunita Devi', phone: '98765 12345', email: 'sunita@example.com', topic: 'service', subject: 'consultation', message: 'Please call me. Aadhaar 2345 6789 0123', language: 'hi' }, {}, db);
+    const dump = JSON.stringify((await db.execute(sql`select * from contact_messages`)).rows);
+    expect(dump).not.toContain('Sunita'); expect(dump).not.toContain('9876512345'); expect(dump).not.toContain('sunita@');
+    expect(dump).toContain('"phone_last4":"2345"'); // last 4 of the phone kept for display
+    const list = await listContactMessages({ status: 'new' }, db);
+    const m = list.messages.find((x) => x.id === row.id)!;
+    expect(m).toMatchObject({ name: 'Sunita Devi', phone: '+919876512345', email: 'sunita@example.com', topic: 'service', service: 'consultation', status: 'new', language: 'hi' });
+    expect(m.message).toContain('XXXX-XXXX-0123'); expect(m.message).not.toContain('2345 6789');
+    expect(list.counts.new).toBeGreaterThanOrEqual(1);
+    expect(await updateContactMessage({ id: row.id, status: 'resolved', adminNote: 'Called back' }, db)).toBe(true);
+    const after = (await listContactMessages({ status: 'resolved' }, db)).messages.find((x) => x.id === row.id)!;
+    expect(after.adminNote).toBe('Called back');
+    expect(await deleteContactMessage(row.id, db)).toBe(true);
+    expect(await updateContactMessage({ id: row.id, status: 'new' }, db)).toBe(false);
+  });
 });

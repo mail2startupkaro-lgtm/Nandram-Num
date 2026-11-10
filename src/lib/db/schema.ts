@@ -360,3 +360,20 @@ export type MarketingLead = typeof marketingLeads.$inferSelect;
 export type MarketingConsent = typeof marketingConsents.$inferSelect;
 export type MarketingCampaign = typeof marketingCampaigns.$inferSelect;
 
+// ---------- Contact us / enquiries ----------
+/** Messages from the public Contact Us form. Name, mobile, email and message are stored encrypted (details_enc). */
+export const contactMessages = pgTable('contact_messages', {
+  id: id(),
+  topic: varchar('topic', { length: 30 }).notNull(),          // service | support | other
+  service: varchar('service', { length: 40 }),                 // which service (for service enquiries)
+  detailsEnc: text('details_enc').notNull(),                   // { name, phone, email, message }
+  phoneLast4: varchar('phone_last4', { length: 4 }),
+  language: varchar('language', { length: 10 }).notNull().default('en'),
+  status: varchar('status', { length: 20 }).notNull().default('new'), // new | in_progress | resolved
+  adminNote: text('admin_note'),
+  userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+  page: varchar('page', { length: 200 }),
+  createdAt: created(),
+  updatedAt: updated(),
+}, (t) => ({ statusIdx: index('contact_messages_status_idx').on(t.status, t.createdAt) }));
+export type ContactMessage = typeof contactMessages.$inferSelect;

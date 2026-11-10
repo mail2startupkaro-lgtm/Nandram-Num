@@ -23,6 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base()}/mulank`, lastModified: now, priority: 0.8 },
     ...MULANK.map((m) => ({ url: `${base()}/mulank/${m.n}`, lastModified: c, changeFrequency: 'monthly' as const, priority: 0.7 })),
     { url: `${base()}/bhagyank`, lastModified: now, priority: 0.8 },
+    { url: `${base()}/contact`, lastModified: now, priority: 0.5 },
     ...NUMBER_POSTS.map((p) => ({ url: `${base()}/blog/${p.slug}`, lastModified: c, changeFrequency: 'monthly' as const, priority: 0.7 })),
     ...MULANK.map((m) => ({ url: `${base()}/bhagyank/${m.n}`, lastModified: c, changeFrequency: 'monthly' as const, priority: 0.7 })),
     { url: `${base()}/angel-numbers`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.9 },

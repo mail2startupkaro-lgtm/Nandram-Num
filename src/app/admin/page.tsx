@@ -1,12 +1,13 @@
 'use client';
 import * as React from 'react';
-import { BarChart3, BookOpen, Briefcase, Clover, Copy, CreditCard, FileText, LayoutDashboard, Palette, PenLine, Plus, Receipt, Save, ScrollText, Sparkles, Tag, Trash2, UserCheck, Users, Wand2 } from 'lucide-react';
+import { BarChart3, BookOpen, Inbox, Briefcase, Clover, Copy, CreditCard, FileText, LayoutDashboard, Palette, PenLine, Plus, Receipt, Save, ScrollText, Sparkles, Tag, Trash2, UserCheck, Users, Wand2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { ExpertsTab } from '@/components/admin/experts';
 import { PaymentReport, SalesReport } from '@/components/admin/finance';
 import { ReportStudio } from '@/components/admin/report-studio';
 import { SignatureStudio } from '@/components/admin/signature-studio';
 import { BusinessStudio } from '@/components/admin/business-studio';
+import { MessagesTab } from '@/components/admin/messages';
 // Finders pull in the angel-number content library – load only when the tab is opened.
 const finderLoading = () => <div className="glass h-40 animate-pulse rounded-lg" aria-busy="true" />;
 const AngelFinderTab = dynamic(() => import('@/components/admin/finders').then((m) => m.AngelFinderTab), { ssr: false, loading: finderLoading });
@@ -22,7 +23,7 @@ const inr = (p: number) => `₹${(p / 100).toLocaleString('en-IN', { minimumFrac
 const THEMES = ['royal-gold-maroon', 'cosmic-blue', 'saffron-cream', 'minimal-white'];
 const SECTIONS = ['intro', 'moolank', 'bhagyank', 'combination', 'loshu', 'missing', 'kua', 'forecast', 'lifePeriods', 'career', 'relationships', 'wellbeing', 'name', 'mobile', 'aadhaar', 'couple', 'remedies', 'closing'];
 const TABS = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard }, { id: 'studio', label: 'Report generator', icon: FileText },
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard }, { id: 'messages', label: 'Messages', icon: Inbox }, { id: 'studio', label: 'Report generator', icon: FileText },
   { id: 'signature', label: 'Signature analysis', icon: PenLine },
   { id: 'business', label: 'Business compatibility', icon: Briefcase },
   { id: 'angel', label: 'Angel number finder', icon: Sparkles }, { id: 'lucky', label: 'Lucky number finder', icon: Clover },
@@ -47,6 +48,8 @@ function useMsg() {
 export default function AdminPage() {
   const { me } = useApp();
   const [tab, setTab] = React.useState<(typeof TABS)[number]['id']>('overview');
+  const [newMsgs, setNewMsgs] = React.useState(0);
+  React.useEffect(() => { if (me?.user?.role === 'super_admin') api<{ counts: { new: number } }>('/api/admin/messages?status=new').then((r) => setNewMsgs(r.counts.new)).catch(() => {}); }, [me?.user?.role]);
   React.useEffect(() => { if (me && !me.user) window.location.replace('/login?next=%2Fadmin'); }, [me]);
   if (me && !me.user) return null;
   if (me && me.user?.role !== 'super_admin') return <div className="container py-12"><p className="glass rounded-lg p-6">Admins only. <a href="/login?next=%2Fadmin" className="text-gold underline">Admin login</a></p></div>;
@@ -57,12 +60,12 @@ export default function AdminPage() {
         <nav className="glass flex gap-1 overflow-x-auto rounded-lg p-2 lg:flex-col">
           {TABS.map((x) => (
             <button key={x.id} onClick={() => setTab(x.id)} className={cn('flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-left text-sm', tab === x.id ? 'bg-gold/20 font-semibold' : 'hover:bg-muted')}>
-              <x.icon className="h-4 w-4 text-gold" />{x.label}
+              <x.icon className="h-4 w-4 text-gold" />{x.label}{x.id === 'messages' && newMsgs > 0 && <span className="ml-auto rounded-full bg-gold px-1.5 text-[11px] font-bold text-[hsl(250_45%_10%)]">{newMsgs}</span>}
             </button>
           ))}
         </nav>
         <div className="min-w-0">
-          {tab === 'overview' && <Overview />}{tab === 'studio' && <ReportStudio />}{tab === 'signature' && <SignatureStudio />}{tab === 'business' && <BusinessStudio />}{tab === 'angel' && <AngelFinderTab />}{tab === 'lucky' && <LuckyFinderTab />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'experts' && <ExpertsTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
+          {tab === 'overview' && <Overview />}{tab === 'messages' && <MessagesTab onCounts={setNewMsgs} />}{tab === 'studio' && <ReportStudio />}{tab === 'signature' && <SignatureStudio />}{tab === 'business' && <BusinessStudio />}{tab === 'angel' && <AngelFinderTab />}{tab === 'lucky' && <LuckyFinderTab />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'experts' && <ExpertsTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
           {tab === 'knowledge' && <KnowledgeTab />}{tab === 'themes' && <ThemesTab />}{tab === 'prompts' && <PromptsTab />}{tab === 'seller' && <SellerTab />}{tab === 'payments' && <PaymentReport />}
         </div>
       </div>
