@@ -32,6 +32,7 @@ export const isMockOrder = (orderId: string) => orderId.startsWith(MOCK_ORDER_PR
  */
 export function activeGateway(): 'cashfree' | 'mock' | null {
   if (cashfreeConfig()) return 'cashfree';
+  if (process.env.ALLOW_MOCK_PAYMENTS === '1' || process.env.ALLOW_MOCK_PAYMENTS === 'true') return 'mock';
   return process.env.NODE_ENV === 'production' ? null : 'mock';
 }
 
@@ -54,7 +55,10 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
   };
 
   const gateway = activeGateway();
-  if (!gateway) throw new CheckoutError('GATEWAY_NOT_CONFIGURED');
+  if (!gateway) {
+    console.error('[Billing] Payment gateway not configured. Please ensure CASHFREE_APP_ID and CASHFREE_SECRET_KEY are set in your environment variables.');
+    throw new CheckoutError('GATEWAY_NOT_CONFIGURED');
+  }
   if (gateway === 'cashfree') {
     const cf = cashfreeConfig()!;
     const phone = cashfreePhone(input.phone) ?? cashfreePhone(user.phone);
