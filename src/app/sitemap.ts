@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { CALCULATORS } from '@/lib/seo/calculators';
 import { MULANK } from '@/lib/mulank-data';
+import { NUMBER_POSTS } from '@/lib/blog/numbers';
 import { CITIES, postSlug } from '@/lib/blog/cities';
 import { TOP_ANGEL } from '@/lib/angel/generate';
 
@@ -22,6 +23,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base()}/mulank`, lastModified: now, priority: 0.8 },
     ...MULANK.map((m) => ({ url: `${base()}/mulank/${m.n}`, lastModified: c, changeFrequency: 'monthly' as const, priority: 0.7 })),
     { url: `${base()}/bhagyank`, lastModified: now, priority: 0.8 },
+    ...NUMBER_POSTS.map((p) => ({ url: `${base()}/blog/${p.slug}`, lastModified: c, changeFrequency: 'monthly' as const, priority: 0.7 })),
     ...MULANK.map((m) => ({ url: `${base()}/bhagyank/${m.n}`, lastModified: c, changeFrequency: 'monthly' as const, priority: 0.7 })),
     { url: `${base()}/angel-numbers`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.9 },
     { url: `${base()}/angel-numbers/calculator`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },

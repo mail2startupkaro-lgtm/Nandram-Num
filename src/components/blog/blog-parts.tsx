@@ -5,8 +5,8 @@ import { ForLang } from '@/components/i18n/bi';
 type Lang = 'en' | 'hi';
 
 /** Call-to-action block used inside every blog post. `banner` is compact (mid-article); `big` closes the article. */
-export function BlogCta({ city, cityHi, variant = 'banner' }: { city: string; cityHi?: string; variant?: 'banner' | 'big' }) {
-  return <ForLang>{(l) => <BlogCtaView city={l === 'hi' ? cityHi ?? city : city} lang={l} variant={variant} />}</ForLang>;
+export function BlogCta({ city = '', cityHi, variant = 'banner', topic }: { city?: string; cityHi?: string; variant?: 'banner' | 'big'; topic?: { en: string; hi: string } }) {
+  return <ForLang>{(l) => <BlogCtaView city={l === 'hi' ? cityHi ?? city : city} lang={l} variant={variant} topic={topic?.[l]} />}</ForLang>;
 }
 
 const CTA = {
@@ -14,15 +14,19 @@ const CTA = {
     bigP: (c: string) => `Whether you are in ${c} or anywhere in India, your Moolank, Bhagyank, Lo Shu grid, name and mobile number are read together and explained in simple language, with remedies you can follow.`,
     smallP: (c: string) => `Online for ${c} and all of India. Start with the free calculators, then get your complete life report.`,
     list: ['Date of birth, Moolank & Bhagyank analysis', 'Name and signature harmony', 'Mobile number compatibility score', 'Couple compatibility reading', 'Designed PDF in English, Hindi or Hinglish', 'Personal remedies and lucky details'],
-    get: 'Get My Reading', plans: 'See Plans & Pricing', calc: 'Or try the free calculators →', aria: 'Get your numerology reading' },
+    get: 'Get My Reading', plans: 'See Plans & Pricing', calc: 'Or try the free calculators →', aria: 'Get your numerology reading',
+    topicBig: (x: string) => `${x} is only one part of your chart. Acharya Nandram reads your Moolank, Bhagyank, Lo Shu grid, name and mobile number together and explains them in simple language, with remedies you can follow.`,
+    topicSmall: (x: string) => `Go beyond ${x}: start with the free calculators, then get your complete life report online.` },
   hi: { forCity: (c: string) => `${c} के लिए`, free: 'मुफ़्त शुरुआत', h: 'आचार्य नंदराम से अपनी व्यक्तिगत अंक ज्योतिष रीडिंग पाएँ',
     bigP: (c: string) => `चाहे आप ${c} में हों या भारत में कहीं भी, आपके मूलांक, भाग्यांक, लो शू ग्रिड, नाम और मोबाइल नंबर को एक साथ पढ़ा जाता है और सरल भाषा में समझाया जाता है, साथ में ऐसे उपाय जिन्हें आप आसानी से अपना सकें।`,
     smallP: (c: string) => `${c} और पूरे भारत के लिए ऑनलाइन। मुफ़्त कैलकुलेटर से शुरुआत करें, फिर अपनी संपूर्ण जीवन रिपोर्ट पाएँ।`,
     list: ['जन्म तिथि, मूलांक और भाग्यांक विश्लेषण', 'नाम और हस्ताक्षर का सामंजस्य', 'मोबाइल नंबर अनुकूलता स्कोर', 'जोड़ी मिलान रीडिंग', 'अंग्रेज़ी, हिंदी या हिंग्लिश में डिज़ाइन की हुई PDF', 'व्यक्तिगत उपाय और शुभ विवरण'],
-    get: 'मेरी रीडिंग पाएँ', plans: 'प्लान और मूल्य देखें', calc: 'या मुफ़्त कैलकुलेटर आज़माएँ →', aria: 'अपनी अंक ज्योतिष रीडिंग पाएँ' },
+    get: 'मेरी रीडिंग पाएँ', plans: 'प्लान और मूल्य देखें', calc: 'या मुफ़्त कैलकुलेटर आज़माएँ →', aria: 'अपनी अंक ज्योतिष रीडिंग पाएँ',
+    topicBig: (x: string) => `${x} आपके चार्ट का केवल एक हिस्सा है। आचार्य नंदराम आपके मूलांक, भाग्यांक, लो शू ग्रिड, नाम और मोबाइल नंबर को एक साथ पढ़ते हैं और सरल भाषा में समझाते हैं, साथ में ऐसे उपाय जिन्हें आप आसानी से अपना सकें।`,
+    topicSmall: (x: string) => `${x} से आगे बढ़ें: मुफ़्त कैलकुलेटर से शुरुआत करें, फिर अपनी संपूर्ण जीवन रिपोर्ट ऑनलाइन पाएँ।` },
 };
 
-function BlogCtaView({ city, lang, variant }: { city: string; lang: Lang; variant: 'banner' | 'big' }) {
+function BlogCtaView({ city, lang, variant, topic }: { city: string; lang: Lang; variant: 'banner' | 'big'; topic?: string }) {
   const t = CTA[lang];
   const big = variant === 'big';
   return (
@@ -30,9 +34,9 @@ function BlogCtaView({ city, lang, variant }: { city: string; lang: Lang; varian
       <span className="mk-spin pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full border border-dashed border-gold/40" />
       <div className={`relative grid items-center gap-5 ${big ? 'md:grid-cols-[1fr_auto]' : 'sm:grid-cols-[1fr_auto]'}`}>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold">{big ? t.forCity(city) : t.free}</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold">{topic ? (big ? topic : t.free) : big ? t.forCity(city) : t.free}</p>
           <h3 className={`font-cinzel mt-1 font-bold ${big ? 'text-2xl sm:text-3xl' : 'text-xl'}`}>{t.h}</h3>
-          <p className="mt-2 text-sm text-muted-foreground">{big ? t.bigP(city) : t.smallP(city)}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{topic ? (big ? t.topicBig(topic) : t.topicSmall(topic)) : big ? t.bigP(city) : t.smallP(city)}</p>
           {big && <ul className="mt-4 grid gap-2 text-sm sm:grid-cols-2">{t.list.map((x) => <li key={x} className="flex gap-2"><CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-gold" />{x}</li>)}</ul>}
         </div>
         <div className="flex flex-col gap-2 sm:min-w-[210px]">

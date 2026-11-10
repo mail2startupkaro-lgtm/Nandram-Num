@@ -6,10 +6,13 @@ import { BlogExplorer } from '@/components/blog/blog-explorer';
 import { CITIES, STATES } from '@/lib/blog/cities';
 import { ALIAS_HI, cityHi, stateHi } from '@/lib/blog/cities-hi';
 import { Bi } from '@/components/i18n/bi';
+import { numberPostSlug } from '@/lib/blog/numbers';
+import { mulankFor } from '@/lib/mulank-data';
+import { bhagyankFor } from '@/lib/bhagyank-data';
 
 export const metadata: Metadata = {
-  title: 'Numerology Blog – Best Numerologist in 500+ Indian Cities',
-  description: 'City-wise numerology guides for 500+ Indian cities, from Mumbai and Delhi to Tier 2 and Tier 3 towns. Online Vedic, Chaldean and Lo Shu numerology by Acharya Nandram.',
+  title: 'Numerology Blog – Mulank & Bhagyank 1–9 Guides and City Guides',
+  description: 'Complete Mulank 1–9 and Bhagyank 1–9 guides with career, marriage, lucky colours and remedies, plus numerology guides for 500+ Indian cities, by Acharya Nandram.',
   alternates: { canonical: '/blog' },
 };
 
@@ -33,6 +36,34 @@ export default function BlogHome() {
         <p className="mt-2 max-w-2xl text-muted-foreground"><Bi en="Career, business, name, mobile number and marriage guidance for Mumbai, explained in plain language, with a free reading to start." hi="मुंबई के लिए करियर, व्यवसाय, नाम, मोबाइल नंबर और विवाह का मार्गदर्शन, सरल भाषा में, मुफ़्त रीडिंग के साथ शुरुआत।" /></p>
         <Link href="/blog/best-numerologist-in-mumbai" className="mk-shine mt-4 inline-flex h-11 items-center gap-2 rounded-md border border-gold/60 px-5 font-medium hover:bg-gold/10"><Bi en="Read the Mumbai guide" hi="मुंबई मार्गदर्शिका पढ़ें" /> <ArrowRight className="h-4 w-4" /></Link>
         <div className="mt-5 flex flex-wrap gap-2">{featured.filter((c) => c.slug !== 'mumbai').map((c) => <Link key={c.slug} href={`/blog/best-numerologist-in-${c.slug}`} className="rounded-full border border-gold/40 px-3 py-1 text-sm hover:bg-gold/10"><Bi en={c.name} hi={cityHi(c.name)} /></Link>)}</div>
+      </section>
+
+      <section aria-labelledby="ng-label" className="space-y-6">
+        <div className="text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold"><Bi en="Number guides" hi="अंक मार्गदर्शिकाएँ" /></p>
+          <h2 id="ng-label" className="font-cinzel mt-1 text-2xl font-bold sm:text-3xl"><Bi en="Mulank & Bhagyank 1–9: Complete Guides" hi="मूलांक और भाग्यांक 1–9: संपूर्ण मार्गदर्शिकाएँ" /></h2>
+          <p className="mx-auto mt-2 max-w-2xl text-sm text-muted-foreground"><Bi en="Personality, career, marriage compatibility, money, lucky colours and remedies for every number, with free calculators to find yours." hi="हर अंक का स्वभाव, करियर, विवाह अनुकूलता, धन, शुभ रंग और उपाय, साथ में अपना अंक जानने के लिए मुफ़्त कैलकुलेटर।" /></p>
+        </div>
+        {(['mulank', 'bhagyank'] as const).map((kind) => (
+          <div key={kind}>
+            <h3 className="mb-3 font-serif text-xl font-semibold">{kind === 'mulank' ? <Bi en="Mulank (root number) guides" hi="मूलांक (मूल अंक) मार्गदर्शिकाएँ" /> : <Bi en="Bhagyank (destiny number) guides" hi="भाग्यांक (भाग्य अंक) मार्गदर्शिकाएँ" />}</h3>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
+                const t = (l: 'en' | 'hi') => (kind === 'mulank' ? mulankFor(n, l)! : bhagyankFor(n, l)!);
+                return (
+                  <Link key={n} href={`/blog/${numberPostSlug(kind, n)}`} className="mk-card glass group flex items-center gap-4 rounded-xl border border-gold/25 p-4">
+                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2a0e1b] to-[#24130a] font-cinzel text-2xl font-bold gold-text">{n}</span>
+                    <span className="min-w-0">
+                      <span className="block font-semibold group-hover:text-gold"><Bi en={`${kind === 'mulank' ? 'Mulank' : 'Bhagyank'} ${n}: ${t('en').title}`} hi={`${kind === 'mulank' ? 'मूलांक' : 'भाग्यांक'} ${n}: ${t('hi').title}`} /></span>
+                      <span className="block text-xs text-muted-foreground"><Bi en={`${t('en').planet} · career, marriage, remedies`} hi={`${t('hi').planet} · करियर, विवाह, उपाय`} /></span>
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+        <p className="text-center text-sm"><Link href="/calculators" className="text-gold hover:underline"><Bi en="Find your number with the free calculators →" hi="मुफ़्त कैलकुलेटर से अपना अंक जानें →" /></Link></p>
       </section>
 
       <BlogExplorer cities={lite} />

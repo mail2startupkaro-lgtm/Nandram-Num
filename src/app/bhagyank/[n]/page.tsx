@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { jsonLd as toLd } from '@/lib/seo/site';
 import { BHAGYANK_NUMBERS, bhagyankFor, mulankBhagyankCombo, type BhagyankProfile } from '@/lib/bhagyank-data';
 import { ForLang } from '@/components/i18n/bi';
+import { numberPostSlug } from '@/lib/blog/numbers';
 
 export const dynamicParams = false;
 export function generateStaticParams() { return BHAGYANK_NUMBERS.map((n) => ({ n: String(n) })); }
@@ -151,6 +152,10 @@ function BhagyankView({ b, lang }: { b: BhagyankProfile; lang: 'en' | 'hi' }) {
         </div>
       </section>
 
+      <Link href={`/blog/${numberPostSlug('bhagyank', b.n)}`} className="mk-card glass flex items-center justify-between gap-4 rounded-xl border border-gold/30 p-5">
+        <span><span className="block text-xs font-semibold uppercase tracking-[0.2em] text-gold">{lang === 'hi' ? 'पूरा लेख पढ़ें' : 'Read the full article'}</span><span className="font-serif text-lg font-semibold">{lang === 'hi' ? `भाग्यांक ${b.n}: संपूर्ण मार्गदर्शिका – करियर, विवाह अनुकूलता, शुभ विवरण और उपाय` : `Bhagyank ${b.n}: the complete guide – career, marriage compatibility, lucky details and remedies`}</span></span>
+        <span className="text-gold">→</span>
+      </Link>
       <p className="text-center text-xs text-muted-foreground">{t.disclaimer}</p>
       <div className="flex justify-between text-sm">
         <Link href={`/bhagyank/${prev}`} className="text-gold hover:underline">← {t.root} {prev}</Link>
