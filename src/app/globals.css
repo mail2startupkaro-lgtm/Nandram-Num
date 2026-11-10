@@ -91,3 +91,84 @@ html:not([data-lang='hi']) .lang-hi { display: none !important; }
 @layer base {
   h1, h2, h3, h4, h5, h6 { text-transform: capitalize; }
 }
+
+/* ==========================================================================
+   PRINT / PDF EXPORT STYLESHEET
+   Clean, professional high-contrast A4 print rendering for browser print & Save to PDF.
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 14mm 14mm 14mm;
+  }
+
+  /* Hide interactive, navigation, and web-only UI elements */
+  nav, header, footer, button, .no-print, [role="navigation"], .sticky, [role="status"], form, input, select {
+    display: none !important;
+  }
+
+  /* Reset layout and backgrounds to clean crisp white */
+  html, body, main, .container {
+    background: #ffffff !important;
+    color: #111111 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .glass {
+    background: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Ensure text is high-contrast black/dark grey */
+  h1, h2, h3, h4, h5, p, span, div, td, th {
+    color: #111111 !important;
+    text-shadow: none !important;
+  }
+
+  .text-muted-foreground {
+    color: #4b5563 !important;
+  }
+
+  /* Accents in dark gold for readability */
+  .text-gold, .gold-text {
+    color: #b45309 !important;
+    -webkit-text-fill-color: #b45309 !important;
+    background: none !important;
+    font-weight: 700 !important;
+  }
+
+  /* Borders & Grid lines */
+  .border, .border-border, .border-gold\/20, .border-gold\/25, .border-gold\/40, table, th, td {
+    border-color: #d1d5db !important;
+  }
+
+  /* Clean table borders */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  th, td {
+    border-bottom: 1px solid #e5e7eb !important;
+    padding: 6px 8px !important;
+  }
+
+  /* Avoid orphan headers and keep sections intact across pages */
+  section, .glass, .break-inside-avoid, table, tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  h1, h2, h3 {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+}
+

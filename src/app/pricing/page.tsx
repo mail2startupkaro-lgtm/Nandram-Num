@@ -106,9 +106,9 @@ export default function PricingPage() {
         {x.save && <p className="mt-2 inline-block self-start rounded-md bg-success/15 px-2 py-0.5 text-xs font-medium text-success">{x.save}</p>}
         <p className="mt-3 text-sm text-muted-foreground">{planDesc(p, hi)}</p>
         <ul className="my-5 space-y-2 text-sm">{featureList(p).map((f) => <li key={f} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />{f}</li>)}</ul>
-        {me?.user
-          ? <Button variant={pr || x.hot ? 'gold' : 'outline'} size="lg" className="mt-auto" onClick={() => setChosen(p)}><Sparkles /> {t.pricing.buy}</Button>
-          : <Link href="/login?next=/pricing" className={buttonVariants({ variant: pr || x.hot ? 'gold' : 'outline', size: 'lg', className: 'mt-auto' })}>{t.pricing.loginToBuy}</Link>}
+        <Button variant={pr || x.hot ? 'gold' : 'outline'} size="lg" className="mt-auto" onClick={() => setChosen(p)}>
+          <Sparkles /> {t.pricing.buy}
+        </Button>
       </div>
     );
   }
@@ -228,6 +228,7 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
   const hi = lang === 'hi';
   const [state, setState] = React.useState(me?.user?.billingState ?? '');
   const [billingName, setBillingName] = React.useState(me?.user?.name ?? '');
+  const [email, setEmail] = React.useState(me?.user?.email ?? '');
   const [gstin, setGstin] = React.useState('');
   const [phone, setPhone] = React.useState((me?.user?.phone ?? '').replace(/^\+91/, ''));
   const [pending, setPending] = React.useState(false);
@@ -253,7 +254,18 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
   async function pay() {
     setBusy(true); setError(null);
     try {
-      const o = await api<Order>('/api/billing/checkout', { method: 'POST', json: { planCode: plan.code, billingState: state, billingName, gstin: gstin || undefined, coupon: discount ? coupon : undefined, phone: phone || undefined } });
+      const o = await api<Order>('/api/billing/checkout', {
+        method: 'POST',
+        json: {
+          planCode: plan.code,
+          billingState: state,
+          billingName,
+          email: email.trim() || undefined,
+          gstin: gstin || undefined,
+          coupon: discount ? coupon : undefined,
+          phone: phone || undefined,
+        },
+      });
       setOrder(o);
       if (o.gateway === 'cashfree') {
         await loadCashfreeJs();
@@ -282,6 +294,11 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
         ) : (
           <div className="space-y-3">
             <Field label={t.pricing.billingName} htmlFor="bn"><Input id="bn" value={billingName} onChange={(e) => setBillingName(e.target.value)} /></Field>
+            {!me?.user && (
+              <Field label={hi ? 'ईमेल (रिपोर्ट और इनवॉइस के लिए)' : 'Email (for report & invoice)'} htmlFor="em" required>
+                <Input id="em" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              </Field>
+            )}
             <Field label={t.pricing.state} htmlFor="st" required><Select id="st" value={state} onChange={(e) => setState(e.target.value)}><option value="">{t.f.select}</option>{INDIAN_STATES.map((s) => <option key={s}>{s}</option>)}</Select></Field>
             <Field label={t.pricing.gstin} htmlFor="gst"><Input id="gst" maxLength={15} value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} /></Field>
             <Field label={t.pricing.phone} htmlFor="ph" required><Input id="ph" type="tel" inputMode="numeric" autoComplete="tel-national" maxLength={14} placeholder="98765 43210" value={phone} onChange={(e) => setPhone(e.target.value)} /></Field>
@@ -298,7 +315,7 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
                 <Button variant="gold" className="w-full" onClick={async () => { try { await simulatePayment(order.orderId); } catch { setDone('fail'); } }}>{t.pricing.simulate}</Button>
               </div>
             ) : (
-              <Button variant="gold" className="w-full" disabled={busy || !state} onClick={pay}>{pending ? t.pricing.pending : busy ? t.pricing.paying : `${t.pricing.pay} ${inr(plan.pricePaise - discount)}`}</Button>
+              <Button variant="gold" className="w-full" disabled={busy || !state || (!me?.user && (!email.trim() || !phone.trim()))} onClick={pay}>{pending ? t.pricing.pending : busy ? t.pricing.paying : `${t.pricing.pay} ${inr(plan.pricePaise - discount)}`}</Button>
             )}
             {done === 'fail' && <p className="text-sm text-danger">{t.pricing.failed}</p>}
             {error && <p className="text-sm text-danger">{error}</p>}

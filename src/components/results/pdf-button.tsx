@@ -11,7 +11,8 @@ import { safeStorage } from '@/lib/utils';
 const THEME_IDS = ['royal-gold-maroon', 'cosmic-blue', 'saffron-cream', 'minimal-white'] as const;
 
 export function PdfButton({ result, narrative }: { result: NumerologyResult; narrative: Narrative | null }) {
-  const { t } = useApp();
+  const { t, lang } = useApp();
+  const hi = lang === 'hi';
   const [theme, setTheme] = React.useState<string>('royal-gold-maroon');
   const [busy, setBusy] = React.useState(false);
   const [msg, setMsg] = React.useState<string | null>(null);
@@ -33,7 +34,10 @@ export function PdfButton({ result, narrative }: { result: NumerologyResult; nar
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 2000);
     } catch {
-      setMsg(t.pdf.failed);
+      setMsg(hi ? 'प्रिंट विंडो खुल रही है (प्रिंटर में "Save as PDF" चुनें)...' : 'Opening Print window (select "Save as PDF" to save)...');
+      setTimeout(() => {
+        window.print();
+      }, 300);
     } finally {
       setBusy(false);
     }

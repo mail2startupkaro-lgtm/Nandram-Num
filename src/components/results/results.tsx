@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import { motion } from 'framer-motion';
-import { Check, Compass, Feather, Download, FileJson, Flower2, Gem, Grid3x3, Heart, IdCard, Pencil, RotateCcw, Save, Smartphone, Type } from 'lucide-react';
+import { Check, Compass, Feather, Download, FileJson, Flower2, Gem, Grid3x3, Heart, IdCard, Pencil, Printer, RotateCcw, Save, Smartphone, Type } from 'lucide-react';
 import type { NumerologyResult } from '@/lib/numerology';
 import { planetOf } from '@/lib/numerology/data/planets';
 import { useApp } from '@/components/layout/providers';
@@ -30,6 +30,7 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
   savedNote?: React.ReactNode;
 }) {
   const { t, lang } = useApp();
+  const hi = lang === 'hi';
   const { dob, name, mobile, aadhaar, couple, remedies } = result.results;
   const client = result.client;
   const T = (x: string | null | undefined) => tr(lang, x);
@@ -59,19 +60,20 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
               {dob.dob.iso.split('-').reverse().join('-')} · {t.r.age} {dob.age} · {[client.city, client.state].filter(Boolean).join(', ')}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 print:hidden">
             <PdfButton result={result} narrative={narrative} />
+            <Button variant="outline" onClick={() => window.print()} className="no-print"><Printer /> {hi ? 'प्रिंट / PDF सहेजें' : 'Print / Save PDF'}</Button>
             <Button variant="outline" onClick={onSave}>{saved ? <Check /> : <Save />} {saved ? t.btn.saved : t.btn.save}</Button>
             <Button variant="outline" onClick={() => downloadJson(fileName, narrative ? { ...result, narrative } : result)}><FileJson /> {t.btn.exportJson}</Button>
             <Button variant="ghost" onClick={onEdit}><Pencil /> {t.btn.edit}</Button>
             <Button variant="ghost" onClick={onNew}><RotateCcw /> {t.btn.newReading}</Button>
           </div>
-          {savedNote && <div className="w-full text-right text-sm">{savedNote}</div>}
+          {savedNote && <div className="w-full text-right text-sm print:hidden">{savedNote}</div>}
         </div>
         <CoreNumbers r={result.results} />
       </motion.div>
 
-      <nav className="sticky top-16 z-30 -mx-4 overflow-x-auto bg-background/80 px-4 py-2 backdrop-blur sm:mx-0 sm:rounded-lg sm:px-2">
+      <nav className="sticky top-16 z-30 -mx-4 overflow-x-auto bg-background/80 px-4 py-2 backdrop-blur sm:mx-0 sm:rounded-lg sm:px-2 print:hidden">
         <ul className="flex gap-1">
           {nav.map((n) => (
             <li key={n.id}><a href={`#${n.id}`} className="flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm hover:bg-gold/15"><n.icon className="h-4 w-4 text-gold" />{n.label}</a></li>
@@ -183,6 +185,7 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
 
 function CoreNumbers({ r }: { r: R }) {
   const { t, lang } = useApp();
+  const hi = lang === 'hi';
   const traits = NUMBER_TRAITS[lang];
   const T = (x: string | null | undefined) => tr(lang, x);
   const cards = [
@@ -209,6 +212,7 @@ function CoreNumbers({ r }: { r: R }) {
 
 function DobSection({ r }: { r: R }) {
   const { t, lang } = useApp();
+  const hi = lang === 'hi';
   const d = r.dob;
   const [tab, setTab] = React.useState('loshu');
   const [sel, setSel] = React.useState<number | null>(null);
@@ -312,6 +316,7 @@ function DobSection({ r }: { r: R }) {
 
 function CoupleSection({ c }: { c: NonNullable<R['couple']> }) {
   const { t, lang } = useApp();
+  const hi = lang === 'hi';
   const labels = AREA_LABELS[lang];
   return (
     <Section id="couple" title={t.r.couple} subtitle={`${c.partnerA.name} ♥ ${c.partnerB.name}`} icon={<Heart className="h-5 w-5" />}>
@@ -356,8 +361,8 @@ function CoupleSection({ c }: { c: NonNullable<R['couple']> }) {
 
 function RemediesSection({ rm }: { rm: R['remedies'] }) {
   const { t, lang } = useApp();
-  const T = (x: string | null | undefined) => tr(lang, x);
   const hi = lang === 'hi';
+  const T = (x: string | null | undefined) => tr(lang, x);
   const rows: [string, string][] = [
     [t.r.numbers, rm.lucky.numbers.join(', ')],
     [t.r.dates, rm.lucky.dates.join(', ')],
