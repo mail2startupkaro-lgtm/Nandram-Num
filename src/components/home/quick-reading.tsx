@@ -2,6 +2,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
+import { tr as term } from '@/lib/i18n/hi-terms';
 import { analyseDob, analyseNameSystem, todayIST, toIso } from '@/lib/numerology';
 import { planetOf } from '@/lib/numerology/data/planets';
 import { NUMBER_TRAITS } from '@/lib/i18n/numberMeanings';
@@ -112,8 +113,8 @@ export function QuickReading({ lang }: { lang: Lang }) {
                 </div>
               </div>
               <div className="mt-6 grid grid-cols-3 gap-2 text-center text-xs text-muted-foreground">
-                <div className="rounded-xl border border-dashed border-gold/30 p-3">{t.colour}<b className="mt-0.5 block text-sm text-foreground"><span className="mr-1.5 inline-block h-3 w-3 rounded-full align-[-1px]" style={{ background: SWATCH[m], boxShadow: `0 0 8px ${SWATCH[m]}` }} />{p.colours.slice(0, 2).join(', ')}</b></div>
-                <div className="rounded-xl border border-dashed border-gold/30 p-3">{t.day}<b className="mt-0.5 block text-sm text-foreground">{lang === 'hi' ? p.weekdayHindi : p.weekday}</b></div>
+                <div className="rounded-xl border border-dashed border-gold/30 p-3">{t.colour}<b className="mt-0.5 block text-sm text-foreground"><span className="mr-1.5 inline-block h-3 w-3 rounded-full align-[-1px]" style={{ background: SWATCH[m], boxShadow: `0 0 8px ${SWATCH[m]}` }} />{p.colours.slice(0, 2).map((x) => term(lang, x)).join(', ')}</b></div>
+                <div className="rounded-xl border border-dashed border-gold/30 p-3">{t.day}<b className="mt-0.5 block text-sm text-foreground">{term(lang, p.weekday)}</b></div>
                 <div className="rounded-xl border border-dashed border-gold/30 p-3">{t.planet}<b className="mt-0.5 block text-sm text-foreground">{lang === 'hi' ? p.devanagari : p.name}</b></div>
               </div>
               <div className="mt-6 text-center"><Link href="/reading" className="cz-btn cz-btn-ghost text-sm">{t.full} →</Link></div>

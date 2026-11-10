@@ -1,11 +1,16 @@
 'use client';
 import * as React from 'react';
-import { BarChart3, BookOpen, Briefcase, Copy, CreditCard, FileText, LayoutDashboard, Palette, PenLine, Plus, Receipt, Save, ScrollText, Tag, Trash2, UserCheck, Users, Wand2 } from 'lucide-react';
+import { BarChart3, BookOpen, Briefcase, Clover, Copy, CreditCard, FileText, LayoutDashboard, Palette, PenLine, Plus, Receipt, Save, ScrollText, Sparkles, Tag, Trash2, UserCheck, Users, Wand2 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import { ExpertsTab } from '@/components/admin/experts';
 import { PaymentReport, SalesReport } from '@/components/admin/finance';
 import { ReportStudio } from '@/components/admin/report-studio';
 import { SignatureStudio } from '@/components/admin/signature-studio';
 import { BusinessStudio } from '@/components/admin/business-studio';
+// Finders pull in the angel-number content library – load only when the tab is opened.
+const finderLoading = () => <div className="glass h-40 animate-pulse rounded-lg" aria-busy="true" />;
+const AngelFinderTab = dynamic(() => import('@/components/admin/finders').then((m) => m.AngelFinderTab), { ssr: false, loading: finderLoading });
+const LuckyFinderTab = dynamic(() => import('@/components/admin/finders').then((m) => m.LuckyFinderTab), { ssr: false, loading: finderLoading });
 import { useApp } from '@/components/layout/providers';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/form';
@@ -20,6 +25,7 @@ const TABS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard }, { id: 'studio', label: 'Report generator', icon: FileText },
   { id: 'signature', label: 'Signature analysis', icon: PenLine },
   { id: 'business', label: 'Business compatibility', icon: Briefcase },
+  { id: 'angel', label: 'Angel number finder', icon: Sparkles }, { id: 'lucky', label: 'Lucky number finder', icon: Clover },
   { id: 'sales', label: 'Sales report', icon: BarChart3 }, { id: 'payments', label: 'Payment report', icon: Receipt },
   { id: 'users', label: 'Users', icon: Users }, { id: 'experts', label: 'Experts', icon: UserCheck }, { id: 'plans', label: 'Plan editor', icon: CreditCard },
   { id: 'coupons', label: 'Coupons', icon: Tag }, { id: 'knowledge', label: 'Knowledge base', icon: BookOpen }, { id: 'themes', label: 'PDF themes', icon: Palette },
@@ -56,7 +62,7 @@ export default function AdminPage() {
           ))}
         </nav>
         <div className="min-w-0">
-          {tab === 'overview' && <Overview />}{tab === 'studio' && <ReportStudio />}{tab === 'signature' && <SignatureStudio />}{tab === 'business' && <BusinessStudio />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'experts' && <ExpertsTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
+          {tab === 'overview' && <Overview />}{tab === 'studio' && <ReportStudio />}{tab === 'signature' && <SignatureStudio />}{tab === 'business' && <BusinessStudio />}{tab === 'angel' && <AngelFinderTab />}{tab === 'lucky' && <LuckyFinderTab />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'experts' && <ExpertsTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
           {tab === 'knowledge' && <KnowledgeTab />}{tab === 'themes' && <ThemesTab />}{tab === 'prompts' && <PromptsTab />}{tab === 'seller' && <SellerTab />}{tab === 'payments' && <PaymentReport />}
         </div>
       </div>

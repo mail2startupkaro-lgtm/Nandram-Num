@@ -1,5 +1,6 @@
 /** Mulank (Root / Psychic Number) profiles, 1–9. Mulank = day of birth reduced to a single digit. */
 import { MULANK_COMPATIBILITY } from '@/lib/numerology/data/relations';
+import { MULANK_HI } from './mulank-data-hi';
 
 export type MulankProfile = {
   /** From the engine's friendship table – the same numbers every report and score uses. */
@@ -179,4 +180,11 @@ export const MULANK: MulankProfile[] = MULANK_TEXT.map((m) => ({ ...m, ...MULANK
 
 export function getMulank(n: number): MulankProfile | undefined {
   return MULANK.find((m) => m.n === n);
+}
+
+/** Profile in the requested language (Hindi text from mulank-data-hi.ts; numbers and compatibility are shared). */
+export function mulankFor(n: number, lang: 'en' | 'hi'): MulankProfile | undefined {
+  const m = getMulank(n);
+  if (!m || lang === 'en') return m;
+  return { ...m, ...MULANK_HI[n] };
 }

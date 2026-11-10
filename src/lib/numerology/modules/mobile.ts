@@ -20,6 +20,16 @@ export function verdictFor(score: number): string {
   return SCORING.verdicts.find((v) => score >= v.min)!.label;
 }
 
+/** Mobile totals (single + favourable compounds 19–72) that suit a person – used by mobile analysis and the lucky-number finder. */
+export function mobileIdealTotals(moolank: number, bhagyank: number) {
+  const rel = combinedRelations([moolank, bhagyank]);
+  let idealTotals = rel.friendly.filter((n) => ![4, 8].includes(n) || [moolank, bhagyank].includes(n));
+  if (idealTotals.length === 0) idealTotals = rel.neutral.filter((n) => ![4, 8].includes(n));
+  const idealCompounds: number[] = [];
+  for (let c = 19; c <= 72; c++) if (idealTotals.includes(reduce(c).value) && compoundCategory(c) === 'favourable') idealCompounds.push(c);
+  return { idealTotals, idealCompounds };
+}
+
 export interface MobileContext {
   moolank: number;
   bhagyank: number;
@@ -74,10 +84,7 @@ export function analyseMobile(raw: string, ctx: MobileContext) {
 
   // Suggestions
   const rel = combinedRelations([ctx.moolank, ctx.bhagyank]);
-  let idealTotals = rel.friendly.filter((n) => ![4, 8].includes(n) || [ctx.moolank, ctx.bhagyank].includes(n));
-  if (idealTotals.length === 0) idealTotals = rel.neutral.filter((n) => ![4, 8].includes(n));
-  const idealCompounds: number[] = [];
-  for (let c = 19; c <= 72; c++) if (idealTotals.includes(reduce(c).value) && compoundCategory(c) === 'favourable') idealCompounds.push(c);
+  const { idealTotals, idealCompounds } = mobileIdealTotals(ctx.moolank, ctx.bhagyank);
   const goodDigits = idealTotals;
   const goodPairs: string[] = [];
   for (const a of goodDigits) for (const b of goodDigits) if (relationOf(a, b) === 'friend' && relationOf(b, a) === 'friend') goodPairs.push(`${a}${b}`);

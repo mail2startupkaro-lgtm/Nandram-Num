@@ -11,7 +11,7 @@ export const cinzel = localFont({
     { path: '../../node_modules/@fontsource/cinzel/files/cinzel-latin-700-normal.woff2', weight: '700' },
     { path: '../../node_modules/@fontsource/cinzel/files/cinzel-latin-900-normal.woff2', weight: '900' },
   ],
-  variable: '--font-cinzel', display: 'swap', fallback: ['Georgia', 'serif'],
+  variable: '--font-cinzel', display: 'swap', fallback: [],
 });
 
 export const cormorant = localFont({
@@ -19,7 +19,7 @@ export const cormorant = localFont({
     { path: '../../node_modules/@fontsource/cormorant-garamond/files/cormorant-garamond-latin-500-normal.woff2', weight: '500' },
     { path: '../../node_modules/@fontsource/cormorant-garamond/files/cormorant-garamond-latin-600-normal.woff2', weight: '600' },
   ],
-  variable: '--font-cormorant', display: 'swap', preload: false, fallback: ['Georgia', 'serif'],
+  variable: '--font-cormorant', display: 'swap', preload: false, fallback: [],
 });
 
 export const playfair = localFont({
@@ -28,7 +28,7 @@ export const playfair = localFont({
     { path: '../../node_modules/@fontsource/playfair-display/files/playfair-display-latin-600-normal.woff2', weight: '600' },
     { path: '../../node_modules/@fontsource/playfair-display/files/playfair-display-latin-700-normal.woff2', weight: '700' },
   ],
-  variable: '--font-playfair', display: 'swap', preload: false, fallback: ['Georgia', 'serif'],
+  variable: '--font-playfair', display: 'swap', preload: false, fallback: [],
 });
 
 export const poppins = localFont({
@@ -38,7 +38,7 @@ export const poppins = localFont({
     { path: '../../node_modules/@fontsource/poppins/files/poppins-latin-500-normal.woff2', weight: '500' },
     { path: '../../node_modules/@fontsource/poppins/files/poppins-latin-600-normal.woff2', weight: '600' },
   ],
-  variable: '--font-poppins', display: 'swap', fallback: ['system-ui', 'sans-serif'],
+  variable: '--font-poppins', display: 'swap', fallback: [],
 });
 
 /** Devanagari glyphs only – Latin text in Hindi pages falls through to Poppins. */
@@ -47,8 +47,19 @@ export const notoDevanagari = localFont({
     { path: '../../node_modules/@fontsource/noto-sans-devanagari/files/noto-sans-devanagari-devanagari-400-normal.woff2', weight: '400' },
     { path: '../../node_modules/@fontsource/noto-sans-devanagari/files/noto-sans-devanagari-devanagari-500-normal.woff2', weight: '500' },
     { path: '../../node_modules/@fontsource/noto-sans-devanagari/files/noto-sans-devanagari-devanagari-600-normal.woff2', weight: '600' },
+    { path: '../../node_modules/@fontsource/noto-sans-devanagari/files/noto-sans-devanagari-devanagari-700-normal.woff2', weight: '700' },
   ],
   variable: '--font-deva', display: 'swap', preload: false, fallback: ['sans-serif'], adjustFontFallback: false,
 });
 
-export const fontVariables = [cinzel, cormorant, playfair, poppins, notoDevanagari].map((f) => f.variable).join(' ');
+/** Devanagari serif for Hindi headings (pairs with Cinzel / Playfair). Devanagari glyphs only. */
+export const notoSerifDevanagari = localFont({
+  src: [
+    { path: '../../node_modules/@fontsource/noto-serif-devanagari/files/noto-serif-devanagari-devanagari-500-normal.woff2', weight: '500' },
+    { path: '../../node_modules/@fontsource/noto-serif-devanagari/files/noto-serif-devanagari-devanagari-600-normal.woff2', weight: '600' },
+    { path: '../../node_modules/@fontsource/noto-serif-devanagari/files/noto-serif-devanagari-devanagari-700-normal.woff2', weight: '700' },
+  ],
+  variable: '--font-deva-serif', display: 'swap', preload: false, fallback: ['serif'], adjustFontFallback: false,
+});
+
+export const fontVariables = [cinzel, cormorant, playfair, poppins, notoDevanagari, notoSerifDevanagari].map((f) => f.variable).join(' ');

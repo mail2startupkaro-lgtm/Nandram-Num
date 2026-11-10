@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { LegalPage } from '@/components/legal/legal-page';
-import { LEGAL, legalContact } from '@/lib/seo/site';
+import { LEGAL, legalContact, legalContactHi } from '@/lib/seo/site';
 
 export const metadata: Metadata = { title: 'Privacy Policy', description: 'How myNumerologist.com collects, uses and protects your personal data under the Digital Personal Data Protection Act, 2023.', alternates: { canonical: '/privacy' } };
 
@@ -12,5 +12,12 @@ export default function Privacy() {
     { h: 'Sharing', p: ['We do not sell personal data. Service providers that process data for us: hosting and database (Vercel, Supabase), Cashfree Payments (payments), email/SMS delivery providers, and – when enabled – an AI service. For automatic report text the AI receives calculated numbers and first name only. When you ask our numerologist for a signature, business or detailed consultation, the details needed for that analysis (such as name, date of birth, profession and a signature image) may be processed by the AI service; they are not stored by us after the analysis.'] },
     { h: 'Retention and your rights', p: ['We keep reading data while your account is active or until you delete it. You can delete any client profile at any time from the dashboard; deletion is permanent and includes all reports and share links.', `You may request access, correction, erasure or grievance redressal by writing to our Grievance Officer, ${LEGAL.grievanceOfficer} (${legalContact()}). We respond within the time required by law. You may also approach the Data Protection Board of India.`] },
     { h: 'Children', p: ['Readings for a minor must be requested by a parent or guardian, who gives consent on the child\'s behalf.'] },
-  ]} />;
+  ]} hi={{ title: 'गोपनीयता नीति', updated: LEGAL.updatedHi, sections: [
+    { h: 'हम कौन हैं', p: [`डिजिटल व्यक्तिगत डेटा संरक्षण अधिनियम, 2023 (DPDP अधिनियम) के अंतर्गत mynumerologist.com के माध्यम से संसाधित व्यक्तिगत डेटा के लिए ${LEGAL.name} डेटा फ़िड्यूशियरी है।`] },
+    { h: 'हम क्या एकत्र करते हैं और क्यों', p: ['अकाउंट डेटा: ईमेल या मोबाइल नंबर, नाम – आपको साइन इन कराने और इनवॉइस भेजने के लिए।', 'रीडिंग डेटा: नाम, जन्म तिथि, समय और स्थान, लिंग, वैवाहिक स्थिति, पेशा, शहर, चिंताएँ, मोबाइल नंबर और साथी का विवरण – केवल आपकी अंक ज्योतिष रिपोर्ट की गणना और लेखन के लिए।', 'आधार नंबर (वैकल्पिक): आपकी स्पष्ट सहमति से, केवल मेमोरी में इसके कंपन की गणना के लिए उपयोग होता है। हम पूरा नंबर कभी सेव, लॉग, निर्यात या प्रिंट नहीं करते; केवल अंतिम चार अंक रखे जाते हैं।', 'भुगतान डेटा: कैशफ़्री पेमेंट्स द्वारा संभाला जाता है। हमें ऑर्डर और भुगतान के पहचानकर्ता मिलते हैं, आपके कार्ड या UPI का विवरण नहीं।'] },
+    { h: 'हम इसकी सुरक्षा कैसे करते हैं', p: ['व्यक्तिगत डेटा संग्रहण में (AES-256-GCM) और ट्रांज़िट में (HTTPS) एन्क्रिप्ट रहता है। पहुँच भूमिका के अनुसार सीमित है। शेयर लिंक की समय-सीमा होती है, उन पर पासवर्ड लगाया और उन्हें रद्द किया जा सकता है।'] },
+    { h: 'साझाकरण', p: ['हम व्यक्तिगत डेटा नहीं बेचते। हमारे लिए डेटा संसाधित करने वाले सेवा प्रदाता: होस्टिंग और डेटाबेस (Vercel, Supabase), कैशफ़्री पेमेंट्स (भुगतान), ईमेल/SMS डिलीवरी प्रदाता, और – सक्रिय होने पर – एक AI सेवा। स्वचालित रिपोर्ट टेक्स्ट के लिए AI को केवल गणना किए गए अंक और पहला नाम मिलता है। जब आप हमारे अंक ज्योतिषी से हस्ताक्षर, व्यवसाय या विस्तृत परामर्श माँगते हैं, तो उस विश्लेषण के लिए आवश्यक विवरण (जैसे नाम, जन्म तिथि, पेशा और हस्ताक्षर की छवि) AI सेवा द्वारा संसाधित हो सकते हैं; विश्लेषण के बाद हम उन्हें संग्रहीत नहीं करते।'] },
+    { h: 'डेटा रखने की अवधि और आपके अधिकार', p: ['जब तक आपका अकाउंट सक्रिय है या जब तक आप उसे हटाते नहीं, हम रीडिंग डेटा रखते हैं। आप डैशबोर्ड से किसी भी समय कोई भी क्लाइंट प्रोफ़ाइल हटा सकते हैं; हटाना स्थायी है और इसमें सभी रिपोर्ट और शेयर लिंक शामिल हैं।', `आप हमारे शिकायत अधिकारी, ${LEGAL.grievanceOfficer === 'Acharya Nandram' ? 'आचार्य नंदराम' : LEGAL.grievanceOfficer} (${legalContactHi()}) को लिखकर पहुँच, सुधार, हटाने या शिकायत निवारण का अनुरोध कर सकते हैं। हम क़ानून द्वारा निर्धारित समय में उत्तर देते हैं। आप भारतीय डेटा संरक्षण बोर्ड से भी संपर्क कर सकते हैं।`] },
+    { h: 'बच्चे', p: ['नाबालिग के लिए रीडिंग का अनुरोध माता-पिता या अभिभावक द्वारा किया जाना चाहिए, जो बच्चे की ओर से सहमति देते हैं।'] },
+  ] }} />;
 }

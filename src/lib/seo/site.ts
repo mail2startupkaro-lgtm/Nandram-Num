@@ -35,5 +35,8 @@ export const LEGAL = {
   grievanceOfficer: process.env.GRIEVANCE_OFFICER || process.env.SELLER_LEGAL_NAME || EXPERT.name,
   city: process.env.LEGAL_CITY || process.env.SELLER_STATE || 'India',
   updated: '9 November 2026',
+  updatedHi: '9 नवंबर 2026',
 };
 export const legalContact = () => [LEGAL.email && `Email: ${LEGAL.email}`, LEGAL.phone && `Phone: ${LEGAL.phone}`, LEGAL.address && `Address: ${LEGAL.address}`].filter(Boolean).join(' · ') || 'Use the contact details on your invoice or write to us from your account page.';
+
+export const legalContactHi = () => [LEGAL.email && `ईमेल: ${LEGAL.email}`, LEGAL.phone && `फ़ोन: ${LEGAL.phone}`, LEGAL.address && `पता: ${LEGAL.address}`].filter(Boolean).join(' · ') || 'अपने इनवॉइस पर दिए संपर्क विवरण का उपयोग करें या अपने अकाउंट पेज से हमें लिखें।';

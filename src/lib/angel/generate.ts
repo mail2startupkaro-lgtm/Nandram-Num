@@ -33,7 +33,7 @@ const ASK = ['pause and listen to your inner guidance', 'take the first step wit
 const PLANET_HI = ['—', 'सूर्य', 'चंद्रमा', 'गुरु (बृहस्पति)', 'राहु', 'बुध', 'शुक्र', 'केतु', 'शनि', 'मंगल'];
 const NUM_WORD = ['zero', 'once', 'twice', 'three times', 'four times', 'five times'];
 
-function hash(s: string) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+export function hash(s: string) { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
 const pick = <T,>(arr: T[], seed: number, k = 0) => arr[(seed + k * 7) % arr.length];
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const join = (a: string[]) => (a.length <= 1 ? a.join('') : `${a.slice(0, -1).join(', ')} and ${a[a.length - 1]}`);
@@ -67,7 +67,7 @@ export function analyse(n: string) {
 }
 
 /** Clock form, e.g. 1111 → 11:11, 222 → 2:22. */
-function clockOf(n: string) {
+export function clockOf(n: string) {
   if (n.length === 4) { const h = +n.slice(0, 2), m = +n.slice(2); if (h < 24 && m < 60) return `${n.slice(0, 2)}:${n.slice(2)}`; }
   if (n.length === 3) { const m = +n.slice(1); if (m < 60 && n[0] !== '0') return `${n[0]}:${n.slice(1)}`; }
   return null;
@@ -173,7 +173,7 @@ export function buildAngel(n: string): AngelPage {
     ] },
   ];
 
-  const hindi = F?.hindi ?? `${n} एंजेल नंबर में ${join(a.order.map((d) => `अंक ${d} (${DIGITS[d].hiWord})`))} की ऊर्जा है। ${d0.hiCore} ${a.root ? `इसके अंकों का योग ${a.sum}${a.sum > 9 ? ` → ${a.root}` : ''} है, जिसका स्वामी ग्रह ${PLANET_HI[a.root]} है।` : ''} जब आप बार-बार ${n} देखें, तो रुककर अपने विचारों पर ध्यान दें और इस संदेश के अनुसार छोटा-सा सकारात्मक कदम उठाएँ।`;
+  const hindi = F?.hindi ?? `${n} एंजेल नंबर में ${((xs: string[]) => (xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} और ${xs[xs.length - 1]}`))(a.order.map((d) => `अंक ${d} (${DIGITS[d].hiWord})`))} की ऊर्जा है। ${d0.hiCore} ${a.root ? `इसके अंकों का योग ${a.sum}${a.sum > 9 ? ` → ${a.root}` : ''} है, जिसका स्वामी ग्रह ${PLANET_HI[a.root]} है।` : ''} जब आप बार-बार ${n} देखें, तो रुककर अपने विचारों पर ध्यान दें और इस संदेश के अनुसार छोटा-सा सकारात्मक कदम उठाएँ।`;
   sections.push({ id: 'hindi', title: `${n} Angel Number Meaning in Hindi`, blocks: [{ kind: 'p', text: hindi }] });
   sections.push({ id: 'faq', title: `${n} Angel Number FAQs`, blocks: [] });
 

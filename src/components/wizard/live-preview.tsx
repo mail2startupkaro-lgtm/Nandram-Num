@@ -6,10 +6,11 @@ import { analyseDob, analyseNameSystem, normalizeIndianMobile, reduce, digitsOf,
 import { useApp } from '@/components/layout/providers';
 import { NumberGrid } from '@/components/results/grid';
 import type { WizardState } from './state';
+import { tr } from '@/lib/i18n/hi-terms';
 
 /** Runs the same deterministic engine in the browser for instant feedback. Aadhaar is never used here. */
 export function LivePreview({ s }: { s: WizardState }) {
-  const { t } = useApp();
+  const { t, lang } = useApp();
   const data = React.useMemo(() => {
     let dob: ReturnType<typeof analyseDob> | null = null;
     try { if (s.dob && s.gender) dob = analyseDob({ dob: s.dob, gender: s.gender }, { asOf: todayIST(), kuaBasis: s.kuaBasis || undefined }); } catch { dob = null; }
@@ -50,7 +51,7 @@ export function LivePreview({ s }: { s: WizardState }) {
           <div className="space-y-1 text-xs">
             <p className="font-medium">{t.r.loShu}</p>
             <p className="text-muted-foreground">{t.r.missing}: <span className="text-foreground">{data.dob.loShu.missing.join(', ') || t.r.none}</span></p>
-            <p className="text-muted-foreground">{t.r.yogs}: <span className="text-foreground">{data.dob.loShu.yogs.map((y) => y.name).join(', ') || t.r.none}</span></p>
+            <p className="text-muted-foreground">{t.r.yogs}: <span className="text-foreground">{data.dob.loShu.yogs.map((y) => tr(lang, y.name)).join(', ') || t.r.none}</span></p>
           </div>
         </div>
       )}

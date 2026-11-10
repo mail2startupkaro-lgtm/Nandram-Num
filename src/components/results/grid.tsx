@@ -2,6 +2,10 @@
 import * as React from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useApp } from '@/components/layout/providers';
+import { tr } from '@/lib/i18n/hi-terms';
+
+const STATUS_HI = { missing: 'अनुपस्थित', present: 'उपस्थित', repeated: 'दोहराया गया' } as const;
 
 export interface GridCellData { number: number; row: number; col: number; count: number; status: 'missing' | 'present' | 'repeated'; planetName?: string }
 
@@ -15,6 +19,7 @@ const statusClass = {
 export function NumberGrid({ cells, size = 'md', highlight = [], selected, onSelect, showPlanet = false, label }: {
   cells: GridCellData[]; size?: 'sm' | 'md'; highlight?: number[]; selected?: number | null; onSelect?: (n: number) => void; showPlanet?: boolean; label: string;
 }) {
+  const { lang } = useApp();
   const sorted = [...cells].sort((a, b) => a.row - b.row || a.col - b.col);
   return (
     <div role="grid" aria-label={label} className={cn('grid grid-cols-3 gap-1.5', size === 'sm' ? 'w-[132px]' : 'w-full max-w-[340px]')}>
@@ -24,7 +29,7 @@ export function NumberGrid({ cells, size = 'md', highlight = [], selected, onSel
         return (
           <Comp key={c.number} role="gridcell" type={onSelect ? 'button' : undefined}
             onClick={onSelect ? () => onSelect(c.number) : undefined}
-            aria-label={`${c.number}: ${c.status}${c.count > 1 ? ` ×${c.count}` : ''}`}
+            aria-label={`${c.number}: ${lang === 'hi' ? STATUS_HI[c.status] : c.status}${c.count > 1 ? ` ×${c.count}` : ''}`}
             initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.03 }}
             className={cn(
               'relative grid aspect-square place-items-center rounded-md border-2 transition-shadow',
@@ -37,7 +42,7 @@ export function NumberGrid({ cells, size = 'md', highlight = [], selected, onSel
               {c.count === 0 ? c.number : String(c.number).repeat(Math.min(c.count, 4))}
             </span>
             {size === 'md' && c.count > 1 && <span className="absolute right-1 top-1 rounded bg-maroon px-1 text-[10px] font-bold text-white">×{c.count}</span>}
-            {showPlanet && size === 'md' && c.planetName && <span className="absolute bottom-1 text-[10px] text-muted-foreground">{c.planetName}</span>}
+            {showPlanet && size === 'md' && c.planetName && <span className="absolute bottom-1 text-[10px] text-muted-foreground">{tr(lang, c.planetName)}</span>}
           </Comp>
         );
       })}

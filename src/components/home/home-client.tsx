@@ -7,6 +7,8 @@ import { Reveal } from '@/components/layout/cosmic-bg';
 import { YantraWheel } from '@/components/home/yantra-wheel';
 import { QuickReading } from '@/components/home/quick-reading';
 import { planetOf } from '@/lib/numerology/data/planets';
+import { Bi } from '@/components/i18n/bi';
+import { tr } from '@/lib/i18n/hi-terms';
 
 const ICONS = [CalendarDays, Type, Smartphone, IdCard, Heart, ScrollText];
 const ORB: Record<number, string> = { 1: '#ffb347', 2: '#dfe7ff', 3: '#f6d365', 4: '#8fa3b8', 5: '#7ed6a5', 6: '#ff9ecb', 7: '#c7a6ff', 8: '#7f8cff', 9: '#ff6b5b' };
@@ -50,7 +52,7 @@ const C = {
     sub: 'जानिए आपकी जन्म तिथि, नाम और मोबाइल नंबर क्या बताते हैं आपके',
     words: ['करियर', 'रिश्तों', 'धन', 'स्वास्थ्य', 'जीवन उद्देश्य'],
     cta1: 'मेरे अंक जानें', cta2: 'प्लान और रिपोर्ट',
-    trust: ['सटीक पारंपरिक गणना', 'निजी और एन्क्रिप्टेड', 'English · हिंदी · Hinglish'],
+    trust: ['सटीक पारंपरिक गणना', 'निजी और एन्क्रिप्टेड', 'अंग्रेज़ी · हिंदी · हिंग्लिश'],
     modK: 'छह पवित्र रीडिंग', modH: 'अपना मार्ग चुनें', modP: 'एक रीडिंग से शुरू करें या सभी को एक संपूर्ण जीवन रिपोर्ट में पाएँ।',
     mods: [
       ['जन्म तिथि', 'मूलांक, भाग्यांक, कुआ अंक, लो शू ग्रिड, व्यक्तिगत वर्ष और जीवन चक्र।'],
@@ -71,7 +73,7 @@ const C = {
     faq: [
       ['मूलांक और भाग्यांक में क्या अंतर है?', 'मूलांक जन्म के दिन से निकलता है और स्वभाव बताता है। भाग्यांक पूरी जन्म तिथि से निकलता है और जीवन की दिशा बताता है।'],
       ['क्या मेरा आधार नंबर सुरक्षित है?', 'आधार रीडिंग वैकल्पिक है और सहमति से होती है। पूरा नंबर कभी सेव नहीं होता; केवल अंतिम चार अंक XXXX-XXXX-1234 के रूप में रहते हैं।'],
-      ['क्या रिपोर्ट हिंदी में मिल सकती है?', 'हाँ। रिपोर्ट English, हिंदी और Hinglish में उपलब्ध है।'],
+      ['क्या रिपोर्ट हिंदी में मिल सकती है?', 'हाँ। रिपोर्ट अंग्रेज़ी, हिंदी और हिंग्लिश – तीनों भाषाओं में उपलब्ध है।'],
       ['क्या अंक ज्योतिष के आधार पर नाम बदलना चाहिए?', 'नाम सुझाव केवल मार्गदर्शन हैं। कानूनी नाम परिवर्तन आपका व्यक्तिगत निर्णय है।'],
     ],
     bandH: 'आपके अंक आपका इंतज़ार कर रहे हैं', bandP: 'शुरू करने में एक मिनट से भी कम लगता है।', bandC: 'मुफ़्त रीडिंग शुरू करें',
@@ -233,7 +235,7 @@ export function HomeClient() {
               <Reveal key={n} delay={n * 0.05} className="cz-pl">
                 <div className="cz-orb" style={{ background: `radial-gradient(circle at 30% 30%, #fff, ${ORB[n]})`, boxShadow: `0 0 22px ${ORB[n]}` }}>{n}</div>
                 <b className="font-cinzel block text-sm">{lang === 'hi' ? p.devanagari : p.name}</b>
-                <small className="text-[11px] text-muted-foreground">{lang === 'hi' ? p.weekdayHindi : p.weekday}</small>
+                <small className="text-[11px] text-muted-foreground">{tr(lang, p.weekday)}</small>
               </Reveal>
             );
           })}
@@ -264,13 +266,13 @@ export function HomeClient() {
       <section className="container py-20">
         <Head k={c.repK} h={c.repH} p={c.repP} />
         <Reveal className="cz-pdfs" >
-          <div className="cz-page"><div className="s">Section 02</div><div className="t">Lo Shu Grid</div><div className="ln" /><div className="ln sh" />
+          <div className="cz-page"><div className="s"><Bi en="Section 02" hi="खंड 02" /></div><div className="t"><Bi en="Lo Shu Grid" hi="लो शू ग्रिड" /></div><div className="ln" /><div className="ln sh" />
             <div className="mini">{[4, 9, 2, 3, 5, 7, 8, 1, 6].map((n) => <i key={n} className={[9, 2, 8, 1].includes(n) ? 'on' : ''}>{n}</i>)}</div>
-            <div className="ln" /><div className="ln" /><div className="ln sh" /><div className="ft">Numerology offers guidance based on traditional methods.</div></div>
-          <div className="cz-page cover"><div className="s">Complete Life Report</div><div className="big">1</div><div className="t">Rahul Sharma</div><div className="s mt-1.5">28 · 08 · 1990</div></div>
-          <div className="cz-page"><div className="s">Section 14</div><div className="t">Remedies</div><div className="ln" /><div className="ln sh" />
+            <div className="ln" /><div className="ln" /><div className="ln sh" /><div className="ft"><Bi en="Numerology offers guidance based on traditional methods." hi="अंक ज्योतिष पारंपरिक विधियों पर आधारित मार्गदर्शन देता है।" /></div></div>
+          <div className="cz-page cover"><div className="s"><Bi en="Complete Life Report" hi="संपूर्ण जीवन रिपोर्ट" /></div><div className="big">1</div><div className="t"><Bi en="Rahul Sharma" hi="राहुल शर्मा" /></div><div className="s mt-1.5">28 · 08 · 1990</div></div>
+          <div className="cz-page"><div className="s"><Bi en="Section 14" hi="खंड 14" /></div><div className="t"><Bi en="Remedies" hi="उपाय" /></div><div className="ln" /><div className="ln sh" />
             <div className="my-2 flex gap-1.5">{['#e9a23b', '#c33c54', '#f2d16b'].map((x) => <span key={x} className="h-6 flex-1 rounded" style={{ background: x }} />)}</div>
-            <div className="ln" /><div className="ln" /><div className="ln sh" /><div className="ln" /><div className="ft">Numerology offers guidance based on traditional methods.</div></div>
+            <div className="ln" /><div className="ln" /><div className="ln sh" /><div className="ln" /><div className="ft"><Bi en="Numerology offers guidance based on traditional methods." hi="अंक ज्योतिष पारंपरिक विधियों पर आधारित मार्गदर्शन देता है।" /></div></div>
         </Reveal>
         <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4">
           {c.stats.map(([n, l], i) => (

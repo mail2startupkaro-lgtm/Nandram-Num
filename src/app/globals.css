@@ -55,8 +55,17 @@
   html { -webkit-text-size-adjust: 100%; }
   body { @apply bg-background text-foreground font-sans antialiased; }
   h1, h2, h3 { @apply font-serif tracking-tight; }
-  :lang(hi) body, [lang='hi'] { font-family: var(--font-deva), var(--font-poppins), sans-serif; }
+  /* Devanagari: every font stack ends in a Devanagari face (Noto Sans / Noto Serif Devanagari), so Hindi glyphs
+     always render in a proper Devanagari font while Latin text keeps the brand fonts. */
+  html[data-lang='hi'] body { line-height: 1.7; }
+  html[data-lang='hi'] :is(h1, h2, h3, h4) { line-height: 1.35; letter-spacing: 0; }
+  html[data-lang='hi'] :is(.uppercase, .font-cinzel) { letter-spacing: 0.01em; }
 }
+
+/* Language switch without a page reload: both languages are in the HTML, CSS shows one.
+   html[data-lang] is set before first paint by the inline script in app/layout.tsx. */
+html[data-lang='hi'] .lang-en { display: none !important; }
+html:not([data-lang='hi']) .lang-hi { display: none !important; }
 
 @layer components {
   .glass {

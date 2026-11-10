@@ -22,7 +22,7 @@ export function ExpertCard({ compact = false }: { compact?: boolean }) {
         <div>
           <span className="text-xs font-semibold uppercase tracking-[0.25em] text-gold">{hi ? 'आपके अंक ज्योतिषी' : 'Your numerologist'}</span>
           <h2 className="font-cinzel mt-1 text-2xl font-bold sm:text-3xl">{hi ? 'आचार्य नंदराम' : 'Acharya Nandram'}</h2>
-          <div className="mt-2 inline-flex items-center gap-2 rounded-md bg-gold/15 px-3 py-1 text-sm font-semibold text-gold"><Award className="h-4 w-4" />{hi ? 'अनुभव: 15+ वर्ष से अधिक' : 'Experience: 15+ Years'}</div>
+          <div className="mt-2 inline-flex items-center gap-2 rounded-md bg-gold/15 px-3 py-1 text-sm font-semibold text-gold"><Award className="h-4 w-4" />{hi ? 'अनुभव: 15+ वर्ष' : 'Experience: 15+ Years'}</div>
           {!compact && <p className="mt-3 max-w-2xl text-sm text-muted-foreground sm:text-base">{hi
             ? 'वैदिक अंक ज्योतिष, कैल्डियन पद्धति और लो शू ग्रिड में 15+ वर्षों की साधना के साथ, आचार्य नंदराम ने हज़ारों लोगों और परिवारों को सटीक अंक विश्लेषण और व्यक्तिगत उपायों से स्पष्टता और सफलता की राह दिखाई है।'
             : 'With more than 15 years of dedicated practice in Vedic, Chaldean and Lo Shu grid systems, Acharya Nandram has guided thousands of individuals and families toward clarity and success through precise number analysis and personal remedies. Every calculator here follows his traditional rules.'}</p>}

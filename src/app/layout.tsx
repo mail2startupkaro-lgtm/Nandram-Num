@@ -27,12 +27,15 @@ export const viewport: Viewport = { width: 'device-width', initialScale: 1, them
 
 // Applies the saved theme before first paint (avoids a light/dark flash).
 const themeScript = `try{var t=localStorage.getItem('theme');if(t!=='light'){document.documentElement.classList.add('dark')}}catch(e){document.documentElement.classList.add('dark')}`;
+// Applies the saved language (or ?lang=hi) before first paint: both languages are in the HTML and CSS shows one.
+const langScript = `try{var d=document.documentElement,q=new URLSearchParams(location.search).get('lang'),l=q==='hi'||q==='en'?q:localStorage.getItem('lang');if(q==='hi'||q==='en')localStorage.setItem('lang',q);if(l==='hi'){d.setAttribute('data-lang','hi');d.lang='hi-IN'}else{d.setAttribute('data-lang','en')}}catch(e){}`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-IN" className={fontVariables} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: langScript }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(orgLd()) }} />
       </head>
       <body>

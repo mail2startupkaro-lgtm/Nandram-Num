@@ -17,7 +17,8 @@ const THEMES = ['royal-gold-maroon', 'cosmic-blue', 'saffron-cream', 'minimal-wh
 const fmtDate = (d: string) => (/^\d{4}-\d{2}-\d{2}$/.test(d) ? d.split('-').reverse().join('-') : d);
 
 export default function ProfilePage() {
-  const { t, me, refreshMe } = useApp();
+  const { t, me, refreshMe, lang } = useApp();
+  const MOD_HI: Record<string, string> = { complete: 'संपूर्ण', dob: 'जन्म तिथि', name: 'नाम', mobile: 'मोबाइल', aadhaar: 'आधार', couple: 'दंपति' };
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [data, setData] = React.useState<ProfileData | null>(null);
@@ -95,7 +96,7 @@ export default function ProfilePage() {
               {data.reports.map((r) => (
                 <tr key={r.id} className="border-b border-border/50">
                   <td className="py-2 font-serif text-lg font-semibold">v{r.version}</td>
-                  <td className="py-2 capitalize">{r.module}</td>
+                  <td className="py-2 capitalize">{lang === 'hi' ? MOD_HI[r.module] ?? r.module : r.module}</td>
                   <td className="py-2 text-muted-foreground">{fmtDate(r.asOf)}</td>
                   <td className="py-2"><span className="flex flex-wrap gap-1">
                     <Badge tone="gold">{r.summary.moolank}/{r.summary.bhagyank}</Badge>

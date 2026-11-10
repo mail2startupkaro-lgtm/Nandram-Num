@@ -12,10 +12,15 @@ export function personalAngels(dob: DateParts, today: DateParts) {
   return {
     moolank: m.value, bhagyank: b.value, master: b.master, personalYear: py,
     list: [
-      { key: 'life', label: 'Life Path Angel Number', n: angelOfLifeNumber(b.value, b.master), why: `From your Bhagyank (life path) ${b.master ? `${b.master}/${b.value}` : b.value}. Your main lifelong angel number.` },
-      { key: 'mulank', label: 'Mulank Angel Number', n: String(m.value).repeat(3), why: `From your Mulank ${m.value} (day of birth). Shows your everyday nature.` },
-      { key: 'birthday', label: 'Birthday Angel Number', n: pad2(dob.day).repeat(2), why: `Your birth day ${pad2(dob.day)} mirrored. A personal sign to watch for on clocks, dates, tickets and receipts.` },
-      { key: 'year', label: `Personal Year Angel Number ${today.year}`, n: String(py).repeat(3), why: `From your current personal year ${py}. The theme of this year for you.` },
+      { key: 'life', label: 'Life Path Angel Number', labelHi: 'जीवन-पथ एंजेल नंबर', n: angelOfLifeNumber(b.value, b.master),
+        why: `From your Bhagyank (life path) ${b.master ? `${b.master}/${b.value}` : b.value}. Your main lifelong angel number.`,
+        whyHi: `आपके भाग्यांक (जीवन-पथ अंक) ${b.master ? `${b.master}/${b.value}` : b.value} से। यह जीवन भर का आपका मुख्य एंजेल नंबर है।` },
+      { key: 'mulank', label: 'Mulank Angel Number', labelHi: 'मूलांक एंजेल नंबर', n: String(m.value).repeat(3),
+        why: `From your Mulank ${m.value} (day of birth). Shows your everyday nature.`, whyHi: `आपके मूलांक ${m.value} (जन्म का दिन) से। यह आपका रोज़मर्रा का स्वभाव दिखाता है।` },
+      { key: 'birthday', label: 'Birthday Angel Number', labelHi: 'जन्मदिन एंजेल नंबर', n: pad2(dob.day).repeat(2),
+        why: `Your birth day ${pad2(dob.day)} mirrored. A personal sign to watch for on clocks, dates, tickets and receipts.`, whyHi: `आपकी जन्म तारीख़ ${pad2(dob.day)} दोहराई गई। घड़ी, तारीख़ों, टिकट और रसीदों पर दिखने वाला आपका व्यक्तिगत संकेत।` },
+      { key: 'year', label: `Personal Year Angel Number ${today.year}`, labelHi: 'व्यक्तिगत वर्ष एंजेल नंबर', n: String(py).repeat(3),
+        why: `From your current personal year ${py}. The theme of this year for you.`, whyHi: `आपके वर्तमान व्यक्तिगत वर्ष ${py} से (जन्मदिन से जन्मदिन तक)। इस वर्ष आपके लिए मुख्य विषय।` },
     ],
   };
 }

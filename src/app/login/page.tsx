@@ -11,10 +11,12 @@ import { api, ApiError } from '@/lib/client/api';
 function PasswordInput({ id, value, onChange, autoComplete, show, setShow }: {
   id: string; value: string; onChange: (v: string) => void; autoComplete: string; show: boolean; setShow: (v: boolean) => void;
 }) {
+  const { lang } = useApp();
+  const hi = lang === 'hi';
   return (
     <div className="relative">
       <Input id={id} type={show ? 'text' : 'password'} autoComplete={autoComplete} value={value} onChange={(e) => onChange(e.target.value)} className="pr-10" required />
-      <button type="button" onClick={() => setShow(!show)} aria-label={show ? 'Hide password' : 'Show password'}
+      <button type="button" onClick={() => setShow(!show)} aria-label={show ? (hi ? 'पासवर्ड छिपाएँ' : 'Hide password') : (hi ? 'पासवर्ड दिखाएँ' : 'Show password')}
         className="absolute inset-y-0 right-0 grid w-10 place-items-center text-muted-foreground hover:text-foreground">
         {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
       </button>

@@ -2,19 +2,20 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { ChevronDown, ArrowRight, Sparkles } from 'lucide-react';
-import { MULANK } from '@/lib/mulank-data';
+import { MULANK, mulankFor } from '@/lib/mulank-data';
 import { mulankServices } from '@/lib/mulank-services';
 import { useApp } from './providers';
 
 /** Header "Mulank" mega-menu: number grid + animated preview with traits and our services. */
 export function MulankMenu() {
-  const { t } = useApp();
+  const { t, lang } = useApp();
+  const hi = lang === 'hi';
   const [open, setOpen] = React.useState(false);
   const [active, setActive] = React.useState(1);
   const timer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const wrap = React.useRef<HTMLDivElement>(null);
-  const m = MULANK.find((x) => x.n === active)!;
-  const services = mulankServices(active).slice(0, 3);
+  const m = mulankFor(active, lang)!;
+  const services = mulankServices(active, lang).slice(0, 3);
 
   const show = () => { clearTimeout(timer.current); setOpen(true); };
   const hide = () => { clearTimeout(timer.current); timer.current = setTimeout(() => setOpen(false), 160); };
@@ -40,19 +41,19 @@ export function MulankMenu() {
           <div className="grid grid-cols-[250px_1fr]">
             {/* number grid */}
             <div className="border-r border-gold/20 bg-gradient-to-b from-gold/5 to-transparent p-4">
-              <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.25em] text-gold">Choose your Mulank</p>
+              <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.25em] text-gold">{hi ? 'अपना मूलांक चुनें' : 'Choose your Mulank'}</p>
               <div className="grid grid-cols-3 gap-2">
                 {MULANK.map((x) => (
                   <Link key={x.n} href={`/mulank/${x.n}`} onClick={() => setOpen(false)}
                     onMouseEnter={() => setActive(x.n)} onFocus={() => setActive(x.n)}
                     className={`group flex flex-col items-center rounded-lg border py-2 transition-all ${active === x.n ? 'border-gold bg-gold/15 shadow-[0_0_16px_hsl(var(--gold)/0.3)]' : 'border-gold/20 hover:border-gold/60'}`}>
                     <span className="gold-text font-cinzel text-2xl font-bold leading-none">{x.n}</span>
-                    <span className="mt-1 text-[9px] uppercase tracking-wide text-muted-foreground">{x.planet.split(' ')[0]}</span>
+                    <span className="mt-1 text-[9px] uppercase tracking-wide text-muted-foreground">{mulankFor(x.n, lang)!.planet.split(' ')[0]}</span>
                   </Link>
                 ))}
               </div>
-              <Link href="/mulank" onClick={() => setOpen(false)} className="mt-4 flex items-center gap-1 text-xs text-gold hover:underline">All Mulank numbers <ArrowRight className="h-3 w-3" /></Link>
-              <p className="mt-3 text-[11px] leading-snug text-muted-foreground">Mulank = your day of birth reduced to one digit (e.g. 28 → 2+8 = 10 → 1).</p>
+              <Link href="/mulank" onClick={() => setOpen(false)} className="mt-4 flex items-center gap-1 text-xs text-gold hover:underline">{hi ? 'सभी मूलांक' : 'All Mulank numbers'} <ArrowRight className="h-3 w-3" /></Link>
+              <p className="mt-3 text-[11px] leading-snug text-muted-foreground">{hi ? 'मूलांक = जन्म का दिन, एक अंक तक जोड़कर (जैसे 28 → 2+8 = 10 → 1)।' : 'Mulank = your day of birth reduced to one digit (e.g. 28 → 2+8 = 10 → 1).'}</p>
             </div>
             {/* animated preview */}
             <div key={active} className="mk-fade p-5">
@@ -65,7 +66,7 @@ export function MulankMenu() {
                   </span>
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-cinzel text-xl font-bold gold-text">Mulank {m.n} · {m.title}</h3>
+                  <h3 className="font-cinzel text-xl font-bold gold-text">{hi ? 'मूलांक' : 'Mulank'} {m.n} · {m.title}</h3>
                   <p className="text-sm italic text-muted-foreground">{m.tagline}</p>
                   <div className="mt-2 flex flex-wrap gap-1.5 text-[11px]">
                     <span className="rounded-full border border-gold/40 px-2 py-0.5">{m.planet}</span>
@@ -79,7 +80,7 @@ export function MulankMenu() {
                 {m.traits.slice(0, 4).map((tr) => <span key={tr} className="rounded bg-gold/10 px-2 py-0.5 text-[11px]">{tr}</span>)}
               </div>
               <div className="mt-4 rounded-lg border border-gold/25 bg-gold/5 p-3">
-                <p className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-gold"><Sparkles className="h-3 w-3" />What we offer for Mulank {m.n}</p>
+                <p className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-gold"><Sparkles className="h-3 w-3" />{hi ? `मूलांक ${m.n} के लिए हमारी सेवाएँ` : `What we offer for Mulank ${m.n}`}</p>
                 <ul className="space-y-1.5">
                   {services.map((s) => (
                     <li key={s.title}><Link href={s.href} onClick={() => setOpen(false)} className="group flex items-start gap-2 text-xs hover:text-gold">
@@ -90,8 +91,8 @@ export function MulankMenu() {
                 </ul>
               </div>
               <div className="mt-4 flex gap-2">
-                <Link href={`/mulank/${m.n}`} onClick={() => setOpen(false)} className="mk-shine inline-flex items-center gap-1 rounded-md border border-gold/60 px-3 py-2 text-sm font-medium hover:bg-gold/10">Read about Mulank {m.n} <ArrowRight className="h-3.5 w-3.5" /></Link>
-                <Link href="/reading" onClick={() => setOpen(false)} className="inline-flex items-center rounded-md bg-gradient-to-r from-[hsl(43_75%_42%)] to-[hsl(43_85%_58%)] px-3 py-2 text-sm font-semibold text-[hsl(250_45%_10%)] hover:brightness-105">Get my reading</Link>
+                <Link href={`/mulank/${m.n}`} onClick={() => setOpen(false)} className="mk-shine inline-flex items-center gap-1 rounded-md border border-gold/60 px-3 py-2 text-sm font-medium hover:bg-gold/10">{hi ? `मूलांक ${m.n} के बारे में पढ़ें` : `Read about Mulank ${m.n}`} <ArrowRight className="h-3.5 w-3.5" /></Link>
+                <Link href="/reading" onClick={() => setOpen(false)} className="inline-flex items-center rounded-md bg-gradient-to-r from-[hsl(43_75%_42%)] to-[hsl(43_85%_58%)] px-3 py-2 text-sm font-semibold text-[hsl(250_45%_10%)] hover:brightness-105">{hi ? 'मेरी रीडिंग पाएँ' : 'Get my reading'}</Link>
               </div>
             </div>
           </div>

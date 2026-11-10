@@ -26,8 +26,8 @@ export default {
         ring: v('ring'),
       },
       fontFamily: {
-        cinzel: ['var(--font-cinzel)', 'Georgia', 'serif'],
-        serif: ['var(--font-playfair)', 'var(--font-cormorant)', 'Georgia', 'serif'],
+        cinzel: ['var(--font-cinzel)', 'var(--font-deva-serif)', 'Georgia', 'serif'],
+        serif: ['var(--font-playfair)', 'var(--font-deva-serif)', 'var(--font-cormorant)', 'Georgia', 'serif'],
         sans: ['var(--font-poppins)', 'var(--font-deva)', 'system-ui', 'sans-serif'],
         deva: ['var(--font-deva)', 'var(--font-poppins)', 'sans-serif'],
       },

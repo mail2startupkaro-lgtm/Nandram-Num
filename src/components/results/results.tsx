@@ -8,6 +8,7 @@ import { useApp } from '@/components/layout/providers';
 import { Button } from '@/components/ui/button';
 import { Badge, Callout, Section, Tabs } from '@/components/ui/misc';
 import { NUMBER_TRAITS, PY_THEMES } from '@/lib/i18n/numberMeanings';
+import { tr } from '@/lib/i18n/hi-terms';
 import { cn, downloadJson } from '@/lib/utils';
 import { Gauge, LifeRadar, Ring, YearBars } from './charts';
 import { NarrativePanel } from './narrative';
@@ -31,6 +32,7 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
   const { t, lang } = useApp();
   const { dob, name, mobile, aadhaar, couple, remedies } = result.results;
   const client = result.client;
+  const T = (x: string | null | undefined) => tr(lang, x);
   const rel = (r: string) => (r === 'friend' ? t.r.friendly : r === 'enemy' ? t.r.enemy : t.r.neutral);
   const fileName = `${(client.commonName || client.fullName).replace(/\s+/g, '-').toLowerCase()}-numerology.json`;
 
@@ -98,7 +100,7 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
                 </tbody>
               </table>
               <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                <Badge tone="gold">{name.chaldean.nameNumber.compound}: {name.chaldean.nameNumber.category}</Badge>
+                <Badge tone="gold">{name.chaldean.nameNumber.compound}: {T(name.chaldean.nameNumber.category)}</Badge>
                 <Badge tone={relTone(name.relationWithMoolank)}>{t.preview.moolank} {dob.moolank.value}: {rel(name.relationWithMoolank)}</Badge>
                 <Badge tone={relTone(name.relationWithBhagyank)}>{t.preview.bhagyank} {dob.bhagyank.value}: {rel(name.relationWithBhagyank)}</Badge>
               </div>
@@ -116,7 +118,7 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
               {name.corrections.map((c) => (
                 <div key={c.spelling} className="rounded-md border border-gold/30 bg-gold/5 p-3">
                   <div className="flex items-center justify-between"><p className="font-serif text-lg font-semibold">{c.fullName}</p><Badge tone="good">{c.score}</Badge></div>
-                  <p className="text-xs text-muted-foreground">{c.compound}/{c.single} · {c.changes.join(', ')}</p>
+                  <p className="text-xs text-muted-foreground">{c.compound}/{c.single} · {c.changes.map(T).join(', ')}</p>
                 </div>
               ))}
             </div>
@@ -125,9 +127,9 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
       )}
 
       {mobile && (
-        <Section id="mobile" title={t.r.mobile} subtitle={`${mobile.masked} · ${mobile.verdict}`} icon={<Smartphone className="h-5 w-5" />}>
+        <Section id="mobile" title={t.r.mobile} subtitle={`${mobile.masked} · ${T(mobile.verdict)}`} icon={<Smartphone className="h-5 w-5" />}>
           <div className="grid gap-6 md:grid-cols-[220px_1fr]">
-            <Gauge value={mobile.score} label={mobile.verdict} sub={`${t.preview.mobileTotal} ${mobile.total.compound}/${mobile.total.single}`} />
+            <Gauge value={mobile.score} label={T(mobile.verdict)} sub={`${t.preview.mobileTotal} ${mobile.total.compound}/${mobile.total.single}`} />
             <div className="space-y-4 text-sm">
               <div className="flex flex-wrap gap-2">
                 <Badge tone={relTone(mobile.relationWithMoolank)}>{t.preview.moolank}: {rel(mobile.relationWithMoolank)}</Badge>
@@ -139,7 +141,7 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
                 <p className="mb-1 text-muted-foreground">{t.r.pairs}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {mobile.pairs.map((p) => (
-                    <span key={p.position} title={p.kind} className={cn('num-badge rounded px-2 py-1 text-sm font-semibold',
+                    <span key={p.position} title={T(p.kind)} className={cn('num-badge rounded px-2 py-1 text-sm font-semibold',
                       p.kind === 'malefic' ? 'bg-danger/20 text-danger' : p.kind === 'conflict' ? 'bg-warning/20 text-warning' : p.kind === 'supportive' ? 'bg-success/20 text-success' : 'bg-muted')}>{p.pair}</span>
                   ))}
                 </div>
@@ -157,7 +159,7 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
       {aadhaar && (
         <Section id="aadhaar" title={t.r.aadhaar} subtitle={aadhaar.masked} icon={<IdCard className="h-5 w-5" />}>
           <div className="grid gap-6 md:grid-cols-[220px_1fr]">
-            <Gauge value={aadhaar.score} label={aadhaar.verdict} sub={`${aadhaar.total.compound}/${aadhaar.total.single}`} />
+            <Gauge value={aadhaar.score} label={T(aadhaar.verdict)} sub={`${aadhaar.total.compound}/${aadhaar.total.single}`} />
             <div className="space-y-3 text-sm">
               <p className="num-badge text-2xl tracking-widest">{aadhaar.masked}</p>
               <div className="flex flex-wrap gap-2">
@@ -165,7 +167,7 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
                 <Badge tone={relTone(aadhaar.relationWithBhagyank)}>{t.preview.bhagyank}: {rel(aadhaar.relationWithBhagyank)}</Badge>
               </div>
               {aadhaar.gridEffect.missingNumbersFilled.length > 0 && <p>{t.r.fills}: <b>{aadhaar.gridEffect.missingNumbersFilled.join(', ')}</b></p>}
-              <p className="text-muted-foreground">{aadhaar.note}</p>
+              <p className="text-muted-foreground">{T(aadhaar.note)}</p>
             </div>
           </div>
         </Section>
@@ -182,10 +184,11 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
 function CoreNumbers({ r }: { r: R }) {
   const { t, lang } = useApp();
   const traits = NUMBER_TRAITS[lang];
+  const T = (x: string | null | undefined) => tr(lang, x);
   const cards = [
     { k: t.preview.moolank, n: r.dob.moolank.value, sub: `${r.dob.moolank.compound}` },
-    { k: t.preview.bhagyank, n: r.dob.bhagyank.value, sub: `${r.dob.bhagyank.compound}${r.dob.bhagyank.master ? ` · master ${r.dob.bhagyank.master}` : ''}` },
-    { k: t.preview.kua, n: r.dob.kua.value, sub: `${r.dob.kua.group}` },
+    { k: t.preview.bhagyank, n: r.dob.bhagyank.value, sub: `${r.dob.bhagyank.compound}${r.dob.bhagyank.master ? ` · ${lang === 'hi' ? 'मास्टर' : 'master'} ${r.dob.bhagyank.master}` : ''}` },
+    { k: t.preview.kua, n: r.dob.kua.value, sub: T(r.dob.kua.group) },
     r.name && { k: t.preview.nameNo, n: r.name.chaldean.nameNumber.single, sub: `${r.name.chaldean.nameNumber.compound}` },
     { k: t.preview.py, n: r.dob.personalCycles.current.personalYear, sub: PY_THEMES[lang][r.dob.personalCycles.current.personalYear] },
   ].filter(Boolean) as { k: string; n: number; sub: string }[];
@@ -196,7 +199,7 @@ function CoreNumbers({ r }: { r: R }) {
           className="rounded-lg border border-gold/30 bg-gradient-to-b from-gold/10 to-transparent p-4 text-center">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">{c.k}</p>
           <p className="num-badge gold-text text-5xl font-bold">{c.n}</p>
-          <p className="text-xs font-medium">{planetOf(c.n).name} · {planetOf(c.n).hindiName}</p>
+          <p className="text-xs font-medium">{lang === 'hi' ? T(planetOf(c.n).hindiName) : `${planetOf(c.n).name} · ${planetOf(c.n).hindiName}`}</p>
           <p className="mt-0.5 text-[11px] text-muted-foreground">{traits[c.n].keyword} · {c.sub}</p>
         </motion.div>
       ))}
@@ -216,11 +219,12 @@ function DobSection({ r }: { r: R }) {
   const selCell = sel ? d.loShu.cells.find((c) => c.number === sel) : null;
   const loShuRemedy = sel ? r.remedies.loShuRemedies.find((x) => x.number === sel) : undefined;
   const labels = AREA_LABELS[lang];
-  const strengthsText = [...d.loShu.yogs.map((y) => y.name), ...d.loShu.arrowsOfStrength.map((a) => a.name), d.moolankBhagyankRelation === 'friend' ? `${t.preview.moolank}–${t.preview.bhagyank}: ${t.r.friendly}` : null].filter(Boolean);
-  const watchText = [...d.loShu.arrowsOfWeakness.map((a) => a.name), d.loShu.missing.length ? `${t.r.missing}: ${d.loShu.missing.join(', ')}` : null, ...d.loShu.repeated.filter((x) => x.count >= 3).map((x) => `${x.number} × ${x.count}`)].filter(Boolean);
+  const T = (x: string | null | undefined) => tr(lang, x);
+  const strengthsText = [...d.loShu.yogs.map((y) => T(y.name)), ...d.loShu.arrowsOfStrength.map((a) => T(a.name)), d.moolankBhagyankRelation === 'friend' ? `${t.preview.moolank}–${t.preview.bhagyank}: ${t.r.friendly}` : null].filter(Boolean);
+  const watchText = [...d.loShu.arrowsOfWeakness.map((a) => T(a.name)), d.loShu.missing.length ? `${t.r.missing}: ${d.loShu.missing.join(', ')}` : null, ...d.loShu.repeated.filter((x) => x.count >= 3).map((x) => `${x.number} × ${x.count}`)].filter(Boolean);
 
   return (
-    <Section id="dob" title={`${t.r.loShu} & ${t.r.vedic}`} subtitle={`${t.preview.moolank} ${d.moolank.value} · ${t.preview.bhagyank} ${d.bhagyank.value} · ${t.preview.kua} ${d.kua.value}`} icon={<Grid3x3 className="h-5 w-5" />}>
+    <Section id="dob" title={`${t.r.loShu} ${lang === 'hi' ? 'और' : '&'} ${t.r.vedic}`} subtitle={`${t.preview.moolank} ${d.moolank.value} · ${t.preview.bhagyank} ${d.bhagyank.value} · ${t.preview.kua} ${d.kua.value}`} icon={<Grid3x3 className="h-5 w-5" />}>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,340px)_1fr]">
         <div className="space-y-3">
           <Tabs tabs={[{ value: 'loshu', label: t.r.loShu }, { value: 'vedic', label: t.r.vedic }]} value={tab} onChange={(v) => { setTab(v); setLine(null); }} />
@@ -230,10 +234,10 @@ function DobSection({ r }: { r: R }) {
         <div className="space-y-4">
           {selCell ? (
             <motion.div key={sel} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-md border border-gold/40 bg-gold/5 p-4 text-sm">
-              <p className="font-serif text-xl font-semibold">{selCell.number} · {planetOf(selCell.number).name} ({planetOf(selCell.number).hindiName}) <Badge className="ml-1" tone={selCell.status === 'missing' ? 'warn' : selCell.status === 'repeated' ? 'gold' : 'good'}>{t.r[selCell.status]}{selCell.count > 1 ? ` ×${selCell.count}` : ''}</Badge></p>
+              <p className="font-serif text-xl font-semibold">{selCell.number} · {lang === 'hi' ? T(planetOf(selCell.number).hindiName) : `${planetOf(selCell.number).name} (${planetOf(selCell.number).hindiName})`} <Badge className="ml-1" tone={selCell.status === 'missing' ? 'warn' : selCell.status === 'repeated' ? 'gold' : 'good'}>{t.r[selCell.status]}{selCell.count > 1 ? ` ×${selCell.count}` : ''}</Badge></p>
               <p className="mt-1"><b>{NUMBER_TRAITS[lang][selCell.number].keyword}</b> · {NUMBER_TRAITS[lang][selCell.number].plus}</p>
               <p className="text-muted-foreground">{NUMBER_TRAITS[lang][selCell.number].minus}</p>
-              {loShuRemedy && <p className="mt-2"><b>{t.r.yourRemedy}:</b> {loShuRemedy.placement} · {loShuRemedy.wristband} · {loShuRemedy.colour}</p>}
+              {loShuRemedy && <p className="mt-2"><b>{t.r.yourRemedy}:</b> {T(loShuRemedy.placement)} · {T(loShuRemedy.wristband)} · {T(loShuRemedy.colour)}</p>}
             </motion.div>
           ) : <p className="text-sm text-muted-foreground">{t.r.tapHint}</p>}
           {tab === 'loshu' && (
@@ -243,7 +247,7 @@ function DobSection({ r }: { r: R }) {
                 {lines.map((l) => (
                   <button key={l.id} onClick={() => setLine(line === l.id ? null : l.id)}
                     className={cn('flex items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition-colors', line === l.id ? 'border-gold bg-gold/10' : 'border-border hover:border-gold/50')}>
-                    <span><span className="font-medium">{l.name}</span> <span className="text-muted-foreground">{l.numbers.join('-')}</span>{l.arrow && <span className="block text-xs text-muted-foreground">{l.arrow}{l.yog ? ` · ${l.yog}` : ''}</span>}</span>
+                    <span><span className="font-medium">{T(l.name)}</span> <span className="text-muted-foreground">{l.numbers.join('-')}</span>{l.arrow && <span className="block text-xs text-muted-foreground">{T(l.arrow)}{l.yog ? ` · ${T(l.yog)}` : ''}</span>}</span>
                     <Badge tone={l.status === 'complete' ? 'good' : l.status === 'empty' ? 'bad' : 'default'}>{l.presentCount}/3</Badge>
                   </button>
                 ))}
@@ -277,7 +281,7 @@ function DobSection({ r }: { r: R }) {
         <div>
           <p className="text-sm font-semibold">{t.r.pyTimeline}</p>
           <YearBars data={d.personalCycles.timeline} currentYear={d.personalCycles.timeline[0].year} themeOf={(n) => PY_THEMES[lang][n]} />
-          {d.personalCycles.current.label && <p className="text-xs">{t.preview.py} {d.personalCycles.current.personalYear}: <b>{d.personalCycles.current.label}</b></p>}
+          {d.personalCycles.current.label && <p className="text-xs">{t.preview.py} {d.personalCycles.current.personalYear}: <b>{T(d.personalCycles.current.label)}</b></p>}
           <p className="text-xs text-muted-foreground">{d.personalCycles.timeline.slice(0, 4).map((y) => `${y.year}: ${PY_THEMES[lang][y.personalYear]}`).join(' · ')}</p>
         </div>
       </div>
@@ -341,7 +345,7 @@ function CoupleSection({ c }: { c: NonNullable<R['couple']> }) {
           </tbody>
         </table>
       </div>
-      <p className="mt-1 text-xs text-muted-foreground"><span className="text-success">■</span> = {t.r.bringsA} · {t.r.missing} (both): {c.combinedGrid.bothMissing.join(', ') || t.r.none}</p>
+      <p className="mt-1 text-xs text-muted-foreground"><span className="text-success">■</span> = {t.r.bringsA} · {t.r.missing} ({lang === 'hi' ? 'दोनों में' : 'both'}): {c.combinedGrid.bothMissing.join(', ') || t.r.none}</p>
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <Callout kind="advice" title={t.r.marriageDates}>{c.marriage.favourableDateNumbers.join(', ')} → {c.marriage.favourableDatesOfMonth.join(', ')}</Callout>
         <Callout kind="remedy" title={t.r.auspiciousYears}>{c.marriage.auspiciousYears.length ? c.marriage.auspiciousYears.map((y) => `${y.year} (${y.personalYearA}/${y.personalYearB})`).join(', ') : c.marriage.yearTable.filter((y) => y.score >= 2).map((y) => y.year).join(', ')}</Callout>
@@ -352,16 +356,18 @@ function CoupleSection({ c }: { c: NonNullable<R['couple']> }) {
 
 function RemediesSection({ rm }: { rm: R['remedies'] }) {
   const { t, lang } = useApp();
+  const T = (x: string | null | undefined) => tr(lang, x);
+  const hi = lang === 'hi';
   const rows: [string, string][] = [
     [t.r.numbers, rm.lucky.numbers.join(', ')],
     [t.r.dates, rm.lucky.dates.join(', ')],
-    [t.r.days, rm.lucky.days.join(', ')],
-    [t.r.colours, rm.lucky.colours.join(', ')],
-    [t.r.avoid, rm.lucky.avoidColours.join(', ') || '–'],
-    [t.r.directions, Object.values(rm.lucky.directions).join(', ')],
+    [t.r.days, rm.lucky.days.map(T).join(', ')],
+    [t.r.colours, rm.lucky.colours.map(T).join(', ')],
+    [t.r.avoid, rm.lucky.avoidColours.map(T).join(', ') || '–'],
+    [t.r.directions, Object.values(rm.lucky.directions).map((x) => T(x as string)).join(', ')],
   ];
   return (
-    <Section id="remedies" title={t.r.remedies} subtitle={`${rm.rulingPlanet.name} (${rm.rulingPlanet.hindi}) · ${rm.destinyPlanet.name}`} icon={<Flower2 className="h-5 w-5" />}>
+    <Section id="remedies" title={t.r.remedies} subtitle={hi ? `${T(rm.rulingPlanet.hindi)} · ${T(rm.destinyPlanet.name)}` : `${rm.rulingPlanet.name} (${rm.rulingPlanet.hindi}) · ${rm.destinyPlanet.name}`} icon={<Flower2 className="h-5 w-5" />}>
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="rounded-md border border-gold/30 p-4">
           <p className="mb-2 flex items-center gap-2 font-semibold"><Compass className="h-4 w-4 text-gold" />{t.r.lucky}</p>
@@ -371,26 +377,26 @@ function RemediesSection({ rm }: { rm: R['remedies'] }) {
           <p className="mb-2 flex items-center gap-2 font-semibold"><Gem className="h-4 w-4 text-gold" />{t.r.gem}</p>
           {rm.gemstones.map((g) => (
             <div key={g.for} className="mb-2 text-sm">
-              <p><b>{g.name}</b> ({g.hindi}) · {g.for}</p>
-              <p className="text-xs text-muted-foreground">{g.metal} · {g.finger} · Rudraksha {g.rudraksha} · alt: {g.alternatives.join(', ')}</p>
+              <p><b>{hi ? T(g.hindi) : g.name}</b>{hi ? '' : ` (${g.hindi})`} · {T(g.for)}</p>
+              <p className="text-xs text-muted-foreground">{T(g.metal)} · {T(g.finger)} · {hi ? 'रुद्राक्ष' : 'Rudraksha'} {T(g.rudraksha)} · {hi ? 'विकल्प' : 'alt'}: {g.alternatives.map(T).join(', ')}</p>
             </div>
           ))}
-          <p className="text-xs text-warning">{rm.gemstones[0].caution}</p>
+          <p className="text-xs text-warning">{T(rm.gemstones[0].caution)}</p>
         </div>
         <div className="rounded-md border border-gold/30 p-4 text-sm">
           <p className="mb-2 font-semibold">{t.r.mantra}</p>
-          <p className="font-serif text-base italic">“{rm.mantra.mantra}”</p>
-          <p className="mt-1 text-muted-foreground">{rm.mantra.dailyCount}× · {rm.mantra.day} · {rm.mantra.deity}</p>
-          <p className="mt-3"><b>{t.r.daan}:</b> {rm.daan.join(', ')}</p>
-          <p><b>{t.r.fasting}:</b> {rm.fastingDay}</p>
+          <p className="font-serif text-base italic">“{T(rm.mantra.mantra)}”</p>
+          <p className="mt-1 text-muted-foreground">{rm.mantra.dailyCount}× · {T(rm.mantra.day)} · {T(rm.mantra.deity)}</p>
+          <p className="mt-3"><b>{t.r.daan}:</b> {rm.daan.map(T).join(', ')}</p>
+          <p><b>{t.r.fasting}:</b> {T(rm.fastingDay)}</p>
         </div>
       </div>
 
       {rm.loShuRemedies.length > 0 && (
         <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {rm.loShuRemedies.map((x) => (
-            <Callout key={x.number} kind="remedy" title={`${t.r.missing} ${x.number} · ${x.element} · ${x.direction}`}>
-              <p>{x.placement}</p><p className="text-muted-foreground">{x.wristband} · {x.colour}</p>
+            <Callout key={x.number} kind="remedy" title={`${t.r.missing} ${x.number} · ${T(x.element)} · ${T(x.direction)}`}>
+              <p>{T(x.placement)}</p><p className="text-muted-foreground">{T(x.wristband)} · {T(x.colour)}</p>
             </Callout>
           ))}
         </div>
@@ -399,9 +405,9 @@ function RemediesSection({ rm }: { rm: R['remedies'] }) {
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <div className="text-sm">
           <p className="mb-1 font-semibold">{t.r.habits}</p>
-          <ul className="list-disc space-y-1 pl-5">{rm.dailyHabits.map((h) => <li key={h}>{h}</li>)}</ul>
+          <ul className="list-disc space-y-1 pl-5">{rm.dailyHabits.map((h) => <li key={h}>{T(h)}</li>)}</ul>
           <p className="mb-1 mt-3 font-semibold">{t.r.signature}</p>
-          <ul className="list-disc space-y-1 pl-5">{rm.signature.map((h) => <li key={h}>{h}</li>)}</ul>
+          <ul className="list-disc space-y-1 pl-5">{rm.signature.map((h) => <li key={h}>{T(h)}</li>)}</ul>
         </div>
         <div className="text-sm">
           <p className="mb-1 font-semibold">{t.r.favYears}</p>
@@ -415,10 +421,10 @@ function RemediesSection({ rm }: { rm: R['remedies'] }) {
               ))}
             </tbody>
           </table>
-          <p className="mt-3"><b>{t.r.career}:</b> {rm.career.suitableFields.join(', ')}</p>
+          <p className="mt-3"><b>{t.r.career}:</b> {rm.career.suitableFields.map(T).join(', ')}</p>
         </div>
       </div>
-      <p className="mt-4 text-xs text-muted-foreground">{rm.disclaimer}</p>
+      <p className="mt-4 text-xs text-muted-foreground">{T(rm.disclaimer)}</p>
     </Section>
   );
 }

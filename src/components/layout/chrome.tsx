@@ -7,6 +7,7 @@ import { useApp } from './providers';
 import { Button } from '@/components/ui/button';
 import { MulankMenu } from './mulank-menu';
 import { AngelMenu } from './angel-menu';
+import { Bi } from '@/components/i18n/bi';
 
 /** Slowly rotating sacred-geometry mandala behind every page. */
 export function MandalaBackground() {
@@ -60,7 +61,7 @@ function BrandLogo() {
           </span>
         </span>
         <span className="mt-0.5 hidden text-[8.5px] uppercase tracking-[0.28em] font-medium text-gold/80 sm:block">
-          Numbers · Destiny · Remedies
+          <Bi en="Numbers · Destiny · Remedies" hi="अंक · भाग्य · उपाय" />
         </span>
       </div>
     </div>
@@ -93,17 +94,17 @@ export function Header() {
           {user?.role === 'super_admin' && <Link href="/admin" className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-2 text-sm text-gold hover:bg-muted sm:px-3"><Shield className="h-4 w-4" />{t.auth.admin}</Link>}
           {user && <Link href="/dashboard" className="whitespace-nowrap rounded-md px-2 py-2 text-sm hover:bg-muted sm:px-3">{t.nav.dashboard}</Link>}
           <button type="button" onClick={() => setLang(lang === 'en' ? 'hi' : 'en')} aria-label={lang === 'en' ? 'हिंदी में देखें' : 'View in English'} className="rounded-md border border-gold/40 px-2 py-1 text-xs sm:hidden">{lang === 'en' ? 'हिं' : 'EN'}</button>
-          <div className="hidden rounded-md border border-gold/40 p-0.5 text-xs sm:flex" role="group" aria-label="Language">
+          <div className="hidden rounded-md border border-gold/40 p-0.5 text-xs sm:flex" role="group" aria-label={lang === 'hi' ? 'भाषा' : 'Language'}>
             {(['en', 'hi'] as const).map((l) => (
               <button key={l} onClick={() => setLang(l)} aria-pressed={lang === l}
                 className={`rounded px-2 py-1 ${lang === l ? 'bg-gold/25 font-semibold' : 'text-muted-foreground'}`}>{l === 'en' ? 'EN' : 'हिं'}</button>
             ))}
           </div>
-          <Button variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label="Toggle dark mode">
+          <Button variant="ghost" size="icon" className="hidden sm:inline-flex" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={lang === 'hi' ? 'डार्क मोड बदलें' : 'Toggle dark mode'}>
             {theme === 'dark' ? <Sun /> : <Moon />}
           </Button>
           {me && !user && <Link href="/login" className="whitespace-nowrap rounded-md border border-gold/50 px-2.5 py-1.5 text-sm hover:bg-gold/10 sm:px-3">{t.auth.signin}</Link>}
-          <Button variant="ghost" size="icon" className="md:hidden" aria-label="Menu" aria-expanded={nav} aria-controls="mobile-nav" onClick={() => setNav(!nav)}>{nav ? <X /> : <Menu />}</Button>
+          <Button variant="ghost" size="icon" className="md:hidden" aria-label={lang === 'hi' ? 'मेन्यू' : 'Menu'} aria-expanded={nav} aria-controls="mobile-nav" onClick={() => setNav(!nav)}>{nav ? <X /> : <Menu />}</Button>
           {user && (
             <div className="relative">
               <Button variant="ghost" size="icon" aria-label={t.auth.account} aria-expanded={open} onClick={() => setOpen(!open)}><UserRound /></Button>
@@ -120,7 +121,7 @@ export function Header() {
         </nav>
       </div>
       {nav && (
-        <nav id="mobile-nav" aria-label="Main" className="border-t border-gold/20 bg-background/95 backdrop-blur-md md:hidden">
+        <nav id="mobile-nav" aria-label={lang === 'hi' ? 'मुख्य मेन्यू' : 'Main'} className="border-t border-gold/20 bg-background/95 backdrop-blur-md md:hidden">
           <ul className="container grid grid-cols-2 gap-1 py-3 text-sm">
             {[['/reading', t.nav.reading], ['/angel-numbers', t.nav.angel], ['/mulank', t.nav.mulank], ['/calculators', t.nav.calculators], ['/angel-numbers/calculator', lang === 'hi' ? 'एंजेल नंबर कैलकुलेटर' : 'Angel number calculator'], ['/pricing', t.nav.pricing], ['/blog', t.nav.blog]].map(([href, label]) => (
               <li key={href}><Link href={href} onClick={() => setNav(false)} className="block rounded-md px-3 py-2.5 hover:bg-muted">{label}</Link></li>
@@ -139,7 +140,7 @@ export function Footer() {
     <footer className="mt-16 border-t border-gold/20 py-8 text-center text-xs text-muted-foreground">
       <div className="container space-y-2">
         <p className="mx-auto max-w-2xl">{t.disclaimer}</p>
-        <p className="flex flex-wrap justify-center gap-x-4 gap-y-1"><Link href="/terms" className="hover:text-foreground">Terms of Service</Link><Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link><Link href="/refund" className="hover:text-foreground">Refund Policy</Link><Link href="/mulank" className="hover:text-foreground">{t.nav.mulank}</Link><Link href="/angel-numbers" className="hover:text-foreground">{t.nav.angel}</Link><Link href="/angel-numbers/calculator" className="hover:text-foreground">Angel Number Calculator</Link><Link href="/blog" className="hover:text-foreground">{t.nav.blog}</Link><Link href="/pricing" className="hover:text-foreground">{t.nav.pricing}</Link><Link href="/calculators" className="hover:text-foreground">{t.nav.calculators}</Link></p>
+        <p className="flex flex-wrap justify-center gap-x-4 gap-y-1"><Link href="/terms" className="hover:text-foreground"><Bi en="Terms of Service" hi="सेवा की शर्तें" /></Link><Link href="/privacy" className="hover:text-foreground"><Bi en="Privacy Policy" hi="गोपनीयता नीति" /></Link><Link href="/refund" className="hover:text-foreground"><Bi en="Refund Policy" hi="रिफ़ंड नीति" /></Link><Link href="/mulank" className="hover:text-foreground">{t.nav.mulank}</Link><Link href="/angel-numbers" className="hover:text-foreground">{t.nav.angel}</Link><Link href="/angel-numbers/calculator" className="hover:text-foreground"><Bi en="Angel Number Calculator" hi="एंजेल नंबर कैलकुलेटर" /></Link><Link href="/blog" className="hover:text-foreground">{t.nav.blog}</Link><Link href="/pricing" className="hover:text-foreground">{t.nav.pricing}</Link><Link href="/calculators" className="hover:text-foreground">{t.nav.calculators}</Link></p>
         <p>© {new Date().getFullYear()} {t.brand}</p>
       </div>
     </footer>

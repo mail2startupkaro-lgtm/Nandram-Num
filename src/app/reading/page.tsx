@@ -23,7 +23,7 @@ const DRAFT_KEY = 'wizardDraft.v1';
 interface Ctx { profileId?: string; reportId?: string; version?: number }
 
 function ReadingInner() {
-  const { t } = useApp();
+  const { t, lang } = useApp();
   const params = useSearchParams();
   const router = useRouter();
   const [form, setForm] = React.useState<WizardState>(EMPTY);
@@ -94,7 +94,7 @@ function ReadingInner() {
         update(fromClient(data));
       } else throw new Error('shape');
     } catch {
-      setError('This file is not a valid numerology export.');
+      setError(lang === 'hi' ? 'यह फ़ाइल मान्य अंक ज्योतिष एक्सपोर्ट नहीं है।' : 'This file is not a valid numerology export.');
     }
   }
 

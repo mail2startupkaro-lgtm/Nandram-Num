@@ -18,7 +18,7 @@ type State =
   | { kind: 'ok'; result: NumerologyResult; narrative: Narrative | null; expiresAt: string };
 
 export default function SharedReport() {
-  const { t } = useApp();
+  const { t, lang } = useApp();
   const { token } = useParams<{ token: string }>();
   const [state, setState] = React.useState<State>({ kind: 'loading' });
   const [pw, setPw] = React.useState('');
@@ -64,7 +64,7 @@ export default function SharedReport() {
         <p className="text-sm text-muted-foreground">{d.dob.iso.split('-').reverse().join('-')} · {t.share.validUntil} {new Date(state.expiresAt).toLocaleDateString('en-IN')}</p>
         <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {core.map(([k, n]) => (
-            <div key={k} className="rounded-lg border border-gold/30 p-3 text-center"><p className="text-xs uppercase text-muted-foreground">{k}</p><p className="num-badge gold-text text-4xl font-bold">{n}</p><p className="text-xs">{planetOf(n).name}</p></div>
+            <div key={k} className="rounded-lg border border-gold/30 p-3 text-center"><p className="text-xs uppercase text-muted-foreground">{k}</p><p className="num-badge gold-text text-4xl font-bold">{n}</p><p className="text-xs">{lang === 'hi' ? planetOf(n).devanagari : planetOf(n).name}</p></div>
           ))}
         </div>
         <div className="mt-5 flex flex-wrap items-center gap-6">

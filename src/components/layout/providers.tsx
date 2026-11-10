@@ -24,7 +24,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     const s = safeStorage();
-    const l = s.get('lang');
+    const q = new URLSearchParams(window.location.search).get('lang');
+    const l = q === 'en' || q === 'hi' ? q : s.get('lang');
     if (l === 'en' || l === 'hi') setLangState(l);
     const th = s.get('theme');
     if (th === 'light' || th === 'dark') setThemeState(th);
@@ -32,7 +33,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark');
-    document.documentElement.lang = lang;
+    document.documentElement.lang = lang === 'hi' ? 'hi-IN' : 'en-IN';
+    document.documentElement.setAttribute('data-lang', lang);
   }, [theme, lang]);
 
   const value = React.useMemo<Ctx>(() => ({
