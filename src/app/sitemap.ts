@@ -21,6 +21,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...CALCULATORS.map((x) => ({ url: `${base()}/calculators/${x.slug}`, lastModified: c, changeFrequency: 'monthly' as const, priority: 0.7 })),
     { url: `${base()}/mulank`, lastModified: now, priority: 0.8 },
     ...MULANK.map((m) => ({ url: `${base()}/mulank/${m.n}`, lastModified: c, changeFrequency: 'monthly' as const, priority: 0.7 })),
+    { url: `${base()}/bhagyank`, lastModified: now, priority: 0.8 },
+    ...MULANK.map((m) => ({ url: `${base()}/bhagyank/${m.n}`, lastModified: c, changeFrequency: 'monthly' as const, priority: 0.7 })),
     { url: `${base()}/angel-numbers`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.9 },
     { url: `${base()}/angel-numbers/calculator`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },
     ...TOP_ANGEL.map((n, i) => ({ url: `${base()}/angel-numbers/${n}`, lastModified: c, changeFrequency: 'monthly' as const, priority: i < 50 ? 0.8 : i < 300 ? 0.6 : 0.4 })),

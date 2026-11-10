@@ -43,7 +43,7 @@ export function AngelMenu() {
   return (
     <div ref={wrap} className="relative hidden md:block" onMouseEnter={show} onMouseLeave={hide}>
       <button type="button" aria-haspopup="true" aria-expanded={open} onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-3 py-2 text-sm hover:bg-muted">
+        className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-2 text-sm hover:bg-muted lg:px-2.5">
         {t.nav.angel}<ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
