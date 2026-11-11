@@ -8,7 +8,7 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { PDFDocument, rgb, degrees } from 'pdf-lib';
 import QRCode from 'qrcode';
-import type { Browser } from 'playwright-core';
+import type { Browser, Page } from 'playwright-core';
 import type { NumerologyResult } from '@/lib/numerology';
 import { generateNarrative, type Narrative } from '@/lib/narrative/service';
 import type { LlmProvider } from '@/lib/narrative/providers/llm';
@@ -93,7 +93,7 @@ async function getBrowser(): Promise<Browser> {
           executablePath = await chromiumMin.executablePath(packUrl);
           console.log(`[pdf] executablePath resolved in ${Date.now() - t0}ms: ${executablePath}`);
           if (chromiumMin.args && chromiumMin.args.length > 0) {
-            args = chromiumMin.args;
+            args = chromiumMin.args.filter((a: string) => a !== '--single-process');
           }
           if (executablePath) {
             const dir = path.dirname(executablePath);
@@ -122,7 +122,10 @@ async function getBrowser(): Promise<Browser> {
         headless: true,
       });
       console.log(`[pdf] chromium launched successfully in ${Date.now() - tLaunch}ms (total: ${Date.now() - t0}ms)`);
-      b.on('disconnected', () => { browserPromise = null; });
+      b.on('disconnected', () => {
+        console.log('[pdf] browser disconnected');
+        browserPromise = null;
+      });
       return b;
     })().catch((e) => { browserPromise = null; throw e; });
   }
@@ -135,6 +138,24 @@ export async function closeBrowser() {
   await b?.close();
 }
 
+async function printPageToPdf(page: Page, html: string, opts: { margin0?: boolean; header?: string; footer?: string }): Promise<Uint8Array> {
+  await page.setContent(html, { waitUntil: 'load' });
+  await Promise.race([
+    page.evaluate(() => (document as Document & { fonts: FontFaceSet }).fonts.ready.then(() => true)),
+    new Promise((r) => setTimeout(r, 2000)),
+  ]);
+  const buf = await page.pdf({
+    format: 'A4',
+    printBackground: true,
+    preferCSSPageSize: true,
+    displayHeaderFooter: !!(opts.header || opts.footer),
+    headerTemplate: opts.header ?? '<span></span>',
+    footerTemplate: opts.footer ?? '<span></span>',
+    margin: opts.margin0 ? { top: '0', right: '0', bottom: '0', left: '0' } : undefined,
+  });
+  return new Uint8Array(buf);
+}
+
 async function htmlToPdf(browser: Browser, html: string, opts: { margin0?: boolean; header?: string; footer?: string }): Promise<Uint8Array> {
   const ctx = await browser.newContext();
   try {
@@ -145,21 +166,10 @@ async function htmlToPdf(browser: Browser, html: string, opts: { margin0?: boole
       if (u.startsWith('data:') || u.startsWith('blob:') || u.startsWith('about:')) return route.continue();
       return route.abort();
     });
-    await page.setContent(html, { waitUntil: 'load' });
-    await Promise.race([
-      page.evaluate(() => (document as Document & { fonts: FontFaceSet }).fonts.ready.then(() => true)),
-      new Promise((r) => setTimeout(r, 2000)),
-    ]);
-    const buf = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      preferCSSPageSize: true,
-      displayHeaderFooter: !!(opts.header || opts.footer),
-      headerTemplate: opts.header ?? '<span></span>',
-      footerTemplate: opts.footer ?? '<span></span>',
-      margin: opts.margin0 ? { top: '0', right: '0', bottom: '0', left: '0' } : undefined,
-    });
-    return new Uint8Array(buf);
+    return await printPageToPdf(page, html, opts);
+  } catch (err) {
+    browserPromise = null;
+    throw err;
   } finally {
     await ctx.close().catch(() => {});
   }
@@ -242,25 +252,45 @@ export async function renderReportPdf(req: PdfRequest): Promise<PdfOutput> {
   const hf = headerFooter(inp);
   const browser = await getBrowser();
 
-  console.log('[pdf] rendering cover...');
-  const tCover = Date.now();
-  const cover = await htmlToPdf(browser, buildCoverHtml(inp), { margin0: true });
-  console.log(`[pdf] cover rendered in ${Date.now() - tCover}ms`);
+  const ctx = await browser.newContext();
+  let cover: Uint8Array;
+  let pass1: Uint8Array;
+  let tocPages: Record<string, number>;
+  let body: Uint8Array;
 
-  console.log('[pdf] rendering pass1...');
-  const tPass1 = Date.now();
-  const pass1 = await htmlToPdf(browser, buildBodyHtml(inp, null, qrSvg).html, hf);
-  console.log(`[pdf] pass1 rendered in ${Date.now() - tPass1}ms`);
+  try {
+    const page = await ctx.newPage();
+    await page.route('**', (route) => {
+      const u = route.request().url();
+      if (u.startsWith('data:') || u.startsWith('blob:') || u.startsWith('about:')) return route.continue();
+      return route.abort();
+    });
 
-  console.log('[pdf] finding chapter pages...');
-  const tToc = Date.now();
-  const tocPages = await findChapterPages(pass1);
-  console.log(`[pdf] TOC pages found in ${Date.now() - tToc}ms`);
+    console.log('[pdf] rendering cover...');
+    const tCover = Date.now();
+    cover = await printPageToPdf(page, buildCoverHtml(inp), { margin0: true });
+    console.log(`[pdf] cover rendered in ${Date.now() - tCover}ms`);
 
-  console.log('[pdf] rendering body with TOC...');
-  const tBody = Date.now();
-  const body = await htmlToPdf(browser, buildBodyHtml(inp, tocPages, qrSvg).html, hf);
-  console.log(`[pdf] body rendered in ${Date.now() - tBody}ms`);
+    console.log('[pdf] rendering pass1...');
+    const tPass1 = Date.now();
+    pass1 = await printPageToPdf(page, buildBodyHtml(inp, null, qrSvg).html, hf);
+    console.log(`[pdf] pass1 rendered in ${Date.now() - tPass1}ms`);
+
+    console.log('[pdf] finding chapter pages...');
+    const tToc = Date.now();
+    tocPages = await findChapterPages(pass1);
+    console.log(`[pdf] TOC pages found in ${Date.now() - tToc}ms`);
+
+    console.log('[pdf] rendering body with TOC...');
+    const tBody = Date.now();
+    body = await printPageToPdf(page, buildBodyHtml(inp, tocPages, qrSvg).html, hf);
+    console.log(`[pdf] body rendered in ${Date.now() - tBody}ms`);
+  } catch (err) {
+    browserPromise = null;
+    throw err;
+  } finally {
+    await ctx.close().catch(() => {});
+  }
 
   // ---------- compose ----------
   const out = await PDFDocument.create();
