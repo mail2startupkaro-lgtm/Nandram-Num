@@ -4,6 +4,7 @@
  *   → pdf-lib composition: themed paper under every body page, decorative frame on top,
  *     metadata rewritten to the brand (no Chromium/Skia/AI traces).
  */
+import { existsSync } from 'node:fs';
 import { PDFDocument, rgb, degrees } from 'pdf-lib';
 import QRCode from 'qrcode';
 import type { Browser } from 'playwright-core';
@@ -34,15 +35,66 @@ export interface PdfOutput {
   ms: number;
 }
 
+const SYSTEM_CHROME_PATHS = [
+  'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+  'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+  'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+  'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+  '/usr/bin/google-chrome',
+  '/usr/bin/google-chrome-stable',
+  '/usr/bin/chromium',
+  '/usr/bin/chromium-browser',
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+];
+
+function resolveLocalChrome(): string | undefined {
+  if (process.env.LOCAL_CHROME_PATH && existsSync(process.env.LOCAL_CHROME_PATH)) {
+    return process.env.LOCAL_CHROME_PATH;
+  }
+  for (const p of SYSTEM_CHROME_PATHS) {
+    try {
+      if (existsSync(p)) return p;
+    } catch { /* ignore */ }
+  }
+  return undefined;
+}
+
 // ---------- browser pool (one shared browser per server instance) ----------
 let browserPromise: Promise<Browser> | null = null;
 async function getBrowser(): Promise<Browser> {
   if (!browserPromise) {
     browserPromise = (async () => {
       const { chromium } = await import('playwright-core');
+      let executablePath = process.env.PDF_CHROMIUM_PATH;
+      let args = ['--font-render-hinting=none', '--disable-dev-shm-usage', '--no-sandbox'];
+
+      const isServerless = !!(process.env.VERCEL || process.env.AWS_EXECUTION_ENV || (process.env.NODE_ENV === 'production' && process.platform === 'linux'));
+
+      if (!executablePath && isServerless) {
+        try {
+          const chromiumMin = (await import('@sparticuz/chromium-min')).default;
+          chromiumMin.setGraphicsMode = false;
+          const packUrl = process.env.CHROMIUM_PACK_URL ||
+            (process.arch === 'arm64'
+              ? 'https://github.com/Sparticuz/chromium/releases/download/v153.0.0/chromium-v153.0.0-pack.arm64.tar'
+              : 'https://github.com/Sparticuz/chromium/releases/download/v153.0.0/chromium-v153.0.0-pack.x64.tar');
+          executablePath = await chromiumMin.executablePath(packUrl);
+          if (chromiumMin.args && chromiumMin.args.length > 0) {
+            args = chromiumMin.args;
+          }
+        } catch (e) {
+          console.error('Failed to load @sparticuz/chromium-min:', e);
+        }
+      }
+
+      if (!executablePath && !isServerless) {
+        executablePath = resolveLocalChrome();
+      }
+
       const b = await chromium.launch({
-        executablePath: process.env.PDF_CHROMIUM_PATH || undefined,
-        args: ['--font-render-hinting=none', '--disable-dev-shm-usage', '--no-sandbox'],
+        executablePath: executablePath || undefined,
+        args,
+        headless: true,
       });
       b.on('disconnected', () => { browserPromise = null; });
       return b;
@@ -68,7 +120,10 @@ async function htmlToPdf(browser: Browser, html: string, opts: { margin0?: boole
       return route.abort();
     });
     await page.setContent(html, { waitUntil: 'load' });
-    await page.evaluate(() => (document as Document & { fonts: FontFaceSet }).fonts.ready.then(() => true));
+    await Promise.race([
+      page.evaluate(() => (document as Document & { fonts: FontFaceSet }).fonts.ready.then(() => true)),
+      new Promise((r) => setTimeout(r, 2000)),
+    ]);
     const buf = await page.pdf({
       format: 'A4',
       printBackground: true,
