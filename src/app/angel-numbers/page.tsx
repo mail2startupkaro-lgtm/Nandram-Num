@@ -13,8 +13,8 @@ import { buildAngelHi } from '@/lib/angel/generate-hi';
 import { Bi } from '@/components/i18n/bi';
 
 export const metadata: Metadata = {
-  title: 'Angel Numbers – Meanings of 1,400+ Angel Numbers (Love, Twin Flame, Career)',
-  description: 'Meanings of every angel number, from 222, 777, 444 and 1111 to rare sequences, with love, twin flame, career, Hindi meaning and a free date-of-birth compatibility calculator by Acharya Nandram.',
+  title: { absolute: 'Angel Numbers: Meanings of 1,400+ Numbers | myNumerologist' },
+  description: 'Angel number meanings from 111, 222, 444, 777 and 1111 to rare sequences: love, twin flame, career, Hindi meaning and a free date-of-birth calculator.',
   keywords: ['angel numbers', 'angel number meanings', 'all angel numbers', 'angel numbers list', 'angel number calculator', 'find my angel number', 'angel number meaning in hindi', 'twin flame numbers'],
   alternates: { canonical: '/angel-numbers' },
 };

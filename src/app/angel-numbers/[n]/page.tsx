@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { jsonLd as toLd } from '@/lib/seo/site';
+import { clipDescription, jsonLd as toLd } from '@/lib/seo/site';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Clock, Sparkles, TrendingUp } from 'lucide-react';
@@ -23,7 +23,7 @@ export async function generateMetadata(props: { params: Promise<{ n: string }> }
   if (!isAngelNumber(params.n)) return {};
   const p = buildAngel(params.n);
   return {
-    title: { absolute: p.title }, description: p.description, keywords: p.keywords, authors: [{ name: 'Acharya Nandram' }],
+    title: { absolute: p.title }, description: clipDescription(p.description), keywords: p.keywords, authors: [{ name: 'Acharya Nandram' }],
     alternates: { canonical: `/angel-numbers/${p.n}` },
     robots: p.indexed ? undefined : { index: false, follow: true },
     openGraph: { title: p.title, description: p.description, url: `/angel-numbers/${p.n}`, siteName: 'myNumerologist.com', locale: 'en_IN', type: 'article', authors: ['Acharya Nandram'] },

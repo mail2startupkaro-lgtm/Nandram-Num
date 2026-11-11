@@ -5,7 +5,7 @@ import { CALCULATORS } from '@/lib/seo/calculators';
 import { ExpertCard } from '@/components/calculators/expert-card';
 import { Bi } from '@/components/i18n/bi';
 
-export const metadata: Metadata = { title: 'Free Numerology Calculators', description: 'Free Moolank, Bhagyank, Lo Shu Grid, name, mobile number and Kua calculators based on Indian numerology.', alternates: { canonical: '/calculators' } };
+export const metadata: Metadata = { title: 'Free Numerology Calculators', description: 'Free numerology calculators: Moolank, Bhagyank, Lo Shu grid, name, mobile number, Kua, personal year, vehicle number and house number, based on Indian numerology.', alternates: { canonical: '/calculators' } };
 
 export default function Calculators() {
   return (

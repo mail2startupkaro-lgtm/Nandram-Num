@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { jsonLd as toLd } from '@/lib/seo/site';
+import { clipDescription, jsonLd as toLd, pageTitle } from '@/lib/seo/site';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Calculator } from '@/components/calculators/calculator';
@@ -14,7 +14,7 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
   const params = await props.params;
   const c = calcBySlug(params.slug);
   if (!c) return {};
-  return { title: c.title, description: c.description, keywords: c.keywords, alternates: { canonical: `/calculators/${c.slug}` }, openGraph: { title: c.title, description: c.description, type: 'website' } };
+  return { title: pageTitle(c.title), description: clipDescription(c.description), keywords: c.keywords, alternates: { canonical: `/calculators/${c.slug}` }, openGraph: { title: c.title, description: c.description, type: 'website', url: `/calculators/${c.slug}`, images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: c.h1 }] } };
 }
 
 export default async function CalculatorPage(props: { params: Promise<{ slug: string }> }) {

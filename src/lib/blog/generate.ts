@@ -137,7 +137,7 @@ export function buildPost(c: City): Post {
   const ch = analyseNameSystem(c.name, 'chaldean'), py = analyseNameSystem(c.name, 'pythagorean');
   const cn = ch.nameNumber.single, pl = planetOf(cn), tr = NUMBER_TRAITS.en[cn];
 
-  const title = `Best Numerologist in ${c.name}${c.alias ? ` (${c.alias})` : ''} – Online Numerology by ${SITE}`;
+  const title = `Best Numerologist in ${c.name}${c.alias ? ` (${c.alias})` : ''} – ${SITE}`;
   const full = `Looking for the best numerologist in ${c.name}, ${c.state}? ${SITE} (15+ years) offers online Vedic, Chaldean & Lo Shu numerology reports. Try free calculators.`;
   const description = full.length <= 160 ? full : `Best numerologist in ${c.name}, ${c.state}: ${SITE} (15+ years) offers online Vedic, Chaldean & Lo Shu numerology reports and free calculators.`;
   const sections: Section[] = [];

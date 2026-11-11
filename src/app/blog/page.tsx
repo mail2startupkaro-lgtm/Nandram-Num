@@ -11,7 +11,7 @@ import { mulankFor } from '@/lib/mulank-data';
 import { bhagyankFor } from '@/lib/bhagyank-data';
 
 export const metadata: Metadata = {
-  title: 'Numerology Blog – Mulank & Bhagyank 1–9 Guides and City Guides',
+  title: 'Numerology Blog: Mulank, Bhagyank & City Guides',
   description: 'Complete Mulank 1–9 and Bhagyank 1–9 guides with career, marriage, lucky colours and remedies, plus numerology guides for 500+ Indian cities, by Acharya Nandram.',
   alternates: { canonical: '/blog' },
 };

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { jsonLd as toLd } from '@/lib/seo/site';
+import { clipDescription, jsonLd as toLd } from '@/lib/seo/site';
 import { BHAGYANK_NUMBERS, bhagyankFor, mulankBhagyankCombo, type BhagyankProfile } from '@/lib/bhagyank-data';
 import { ForLang } from '@/components/i18n/bi';
 import { numberPostSlug } from '@/lib/blog/numbers';
@@ -14,8 +14,8 @@ export async function generateMetadata(props: { params: Promise<{ n: string }> }
   const b = bhagyankFor(Number(n), 'en');
   if (!b) return {};
   return {
-    title: `Bhagyank ${b.n} (${b.title}) – Destiny Number Meaning, Career & Remedies`,
-    description: `Bhagyank ${b.n} is ruled by ${b.planet}. Read the life purpose, lessons, career, money, relationships, lucky colours, Mulank combinations and remedies for destiny number ${b.n}.`,
+    title: { absolute: `Bhagyank ${b.n} Destiny Number: ${b.title}` },
+    description: clipDescription(`Bhagyank ${b.n} is ruled by ${b.planet}. Life purpose, lessons, career, money, marriage, lucky colours, Mulank combinations and remedies for destiny number ${b.n}.`),
     alternates: { canonical: `/bhagyank/${b.n}` },
   };
 }

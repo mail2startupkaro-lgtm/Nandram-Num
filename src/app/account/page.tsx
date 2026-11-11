@@ -6,9 +6,10 @@ import { useApp } from '@/components/layout/providers';
 import { buttonVariants, Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/misc';
 import { api, download } from '@/lib/client/api';
+import { SecurityPanel } from '@/components/account/security-panel';
 
 interface Data {
-  user: { name: string | null; email: string | null; phone: string | null; role: string };
+  user: { name: string | null; email: string | null; phone: string | null; role: string; hasPassword?: boolean };
   account: { planCode?: string | null; planName: string | null; proUntil: string | null; credits: number; features: { whiteLabel: boolean } };
   payments: { id: string; planCode: string; amountPaise: number; status: string; invoiceNumber: string | null; createdAt: string }[];
   ledger: { id: string; delta: number; reason: string; createdAt: string }[];
@@ -61,6 +62,7 @@ export default function AccountPage() {
           <ul className="space-y-1 text-sm">{d.ledger.map((l) => <li key={l.id} className="flex justify-between border-b border-border/40 py-1"><span>{new Date(l.createdAt).toLocaleDateString('en-IN')} · {W(l.reason)}</span><span className={l.delta > 0 ? 'text-success' : 'text-muted-foreground'}>{l.delta > 0 ? '+' : ''}{l.delta}</span></li>)}</ul>
         </section>
       )}
+      <SecurityPanel hasPassword={d.user.hasPassword !== false} isAdmin={d.user.role === 'super_admin'} />
     </div>
   );
 }

@@ -2,11 +2,12 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
-import { analyseDob, analyseMobile, analyseNameSystem, bhagyank, kuaNumber, moolank, todayIST, toIso } from '@/lib/numerology';
+import { analyseDob, analyseIdentifier, analyseMobile, analyseNameSystem, bhagyank, kuaNumber, moolank, todayIST, toIso } from '@/lib/numerology';
+import { IDENTIFIER_MEANINGS } from '@/lib/numerology/data/identifier-meanings';
 import { KUA_DIRECTIONS } from '@/lib/numerology/data/tables';
 import { planetOf } from '@/lib/numerology/data/planets';
 import { RELATION_TABLE } from '@/lib/numerology/data/relations';
-import { NUMBER_TRAITS } from '@/lib/i18n/numberMeanings';
+import { NUMBER_TRAITS, PY_THEMES } from '@/lib/i18n/numberMeanings';
 import { mulankFor } from '@/lib/mulank-data';
 import { useApp } from '@/components/layout/providers';
 import { tr } from '@/lib/i18n/hi-terms';
@@ -54,6 +55,7 @@ export function Calculator({ kind }: { kind: CalcKind }) {
   const [gender, setGender] = React.useState<'male' | 'female'>('male');
   const [name, setName] = React.useState('');
   const [mobile, setMobile] = React.useState('');
+  const [ident, setIdent] = React.useState('');
   const { lang } = useApp();
   const hi = lang === 'hi';
   const L = (en: string, h: string) => (hi ? h : en);
@@ -206,6 +208,57 @@ export function Calculator({ kind }: { kind: CalcKind }) {
         </div>
       );
     }
+
+    if (kind === 'personalYear' && d) {
+      const r = analyseDob({ dob, gender }, { asOf: todayIST() });
+      const pc = r.personalCycles; const c = pc.current; const p = planetOf(c.personalYear);
+      const MONTHS = hi ? ['जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर'] : ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const relTone = (n: number) => { const rel = RELATION_TABLE[r.moolank.value]; return rel.friend.includes(n) ? 'good' as const : rel.enemy.includes(n) ? 'bad' as const : undefined; };
+      out = (
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Big label={L('Personal year', 'व्यक्तिगत वर्ष')} n={c.personalYear} sub={PY_THEMES[lang][c.personalYear]} />
+            <Big label={L('Personal month', 'व्यक्तिगत माह')} n={c.personalMonth} sub={PY_THEMES[lang][c.personalMonth]} />
+            <Big label={L('Personal day (today)', 'व्यक्तिगत दिन (आज)')} n={c.personalDay} sub={PY_THEMES[lang][c.personalDay]} />
+          </div>
+          <Panel title={L('Your current personal year', 'आपका वर्तमान व्यक्तिगत वर्ष')}>
+            <p>{hi ? <>आपका व्यक्तिगत वर्ष <b>{c.personalYear}</b> ({PY_THEMES.hi[c.personalYear]}) <b>{T(c.label)}</b> तक चलता है – जन्मदिन से जन्मदिन तक। इसके स्वामी {p.devanagari} हैं और यह आपके मूलांक {r.moolank.value} के लिए <b>{REL_HI[RELATION_TABLE[r.moolank.value].friend.includes(c.personalYear) ? 'friend' : RELATION_TABLE[r.moolank.value].enemy.includes(c.personalYear) ? 'enemy' : 'neutral']}</b> है।</> : <>Your personal year <b>{c.personalYear}</b> ({PY_THEMES.en[c.personalYear]}) runs <b>{c.label}</b> – from birthday to birthday. It is ruled by {p.name} and is <b>{REL_TEXT[RELATION_TABLE[r.moolank.value].friend.includes(c.personalYear) ? 'friend' : RELATION_TABLE[r.moolank.value].enemy.includes(c.personalYear) ? 'enemy' : 'neutral']}</b> to your Moolank {r.moolank.value}.</>}</p>
+            <p className="text-muted-foreground">{L('How it is calculated: day + month of birth + the year of your last birthday, reduced to one digit. Personal month = personal year + calendar month; personal day = personal month + date.', 'गणना: जन्म का दिन + महीना + पिछले जन्मदिन का वर्ष, एक अंक तक जोड़कर। व्यक्तिगत माह = व्यक्तिगत वर्ष + कैलेंडर माह; व्यक्तिगत दिन = व्यक्तिगत माह + तारीख़।')}</p>
+          </Panel>
+          <Panel title={L('Your next 9 personal years', 'आपके अगले 9 व्यक्तिगत वर्ष')}>
+            <div className="overflow-x-auto"><table className="w-full min-w-[420px]"><tbody>{pc.timeline.map((y) => <tr key={y.year} className="border-t border-border/50 first:border-0"><td className="py-1.5 pr-2 text-muted-foreground">{T(y.label)}</td><td className="py-1.5"><Badge tone={relTone(y.personalYear)}>{y.personalYear}</Badge></td><td className="py-1.5">{PY_THEMES[lang][y.personalYear]}</td></tr>)}</tbody></table></div>
+            <p className="text-xs text-muted-foreground">{L('Green: friendly to your Moolank · Red: needs care · Plain: neutral.', 'हरा: आपके मूलांक का मित्र · लाल: सावधानी · सादा: सम।')}</p>
+          </Panel>
+          <Panel title={L('Months of this personal year', 'इस व्यक्तिगत वर्ष के महीने')}>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{pc.detailed[0].months.map((m) => <div key={`${m.year}-${m.month}`} className="rounded-md border border-border/60 p-2 text-center"><p className="text-xs text-muted-foreground">{MONTHS[m.month - 1]} {m.year}</p><p className="num-badge text-xl font-bold text-gold">{m.personalMonth}</p><p className="text-[11px]">{PY_THEMES[lang][m.personalMonth]}</p></div>)}</div>
+          </Panel>
+        </div>
+      );
+    }
+    if ((kind === 'vehicle' || kind === 'house') && d && /\d/.test(ident)) {
+      const r = analyseDob({ dob, gender }, { asOf: todayIST() });
+      const v = analyseIdentifier(ident, { moolank: r.moolank.value, bhagyank: r.bhagyank.value }, kind);
+      const p = planetOf(v.total.single); const mean = IDENTIFIER_MEANINGS[lang][v.total.single][kind];
+      const LABEL: Record<string, string> = hi ? { base: 'आरंभिक स्कोर', bhagyankRelation: 'योग बनाम आपका भाग्यांक', moolankRelation: 'योग बनाम आपका मूलांक', compound: 'संयुक्त अंक की गुणवत्ता', heavy48: 'भारी 4/8 योग' } : { base: 'Starting score', bhagyankRelation: 'Total vs your Bhagyank', moolankRelation: 'Total vs your Moolank', compound: 'Quality of the compound number', heavy48: 'Heavy 4/8 total' };
+      out = (
+        <div className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-[220px_1fr]"><Big label={kind === 'vehicle' ? L('Vehicle number total', 'वाहन नंबर का योग') : L('House number total', 'मकान नंबर का योग')} n={v.total.single} sub={hi ? p.devanagari : p.name} />
+            <div className="space-y-2 text-sm"><Meter label={L('Compatibility with your date of birth', 'आपकी जन्म तिथि से अनुकूलता')} value={v.score} text={`${v.score}/100 · ${T(v.verdict)}`} />
+              <p>{kind === 'vehicle'
+                ? (hi ? <>पंजीकरण संख्या <b>{v.registration}</b> → {v.digits.join(' + ')} = <b>{v.total.compound}{v.total.compound > 9 ? ` → ${v.total.single}` : ''}</b> ({T(v.total.category)})।</> : <>Registration number <b>{v.registration}</b> → {v.digits.join(' + ')} = <b>{v.total.compound}{v.total.compound > 9 ? ` → ${v.total.single}` : ''}</b> ({v.total.category}).</>)
+                : (hi ? <><b>{v.normalized}</b> → योग <b>{v.total.compound}{v.total.compound > 9 ? ` → ${v.total.single}` : ''}</b> ({T(v.total.category)}){v.letters.length > 0 && <> · अक्षर: {v.letters.map((x) => `${x.letter}=${x.value}`).join(', ')}</>}।</> : <><b>{v.normalized}</b> → total <b>{v.total.compound}{v.total.compound > 9 ? ` → ${v.total.single}` : ''}</b> ({v.total.category}){v.letters.length > 0 && <> · letters: {v.letters.map((x) => `${x.letter}=${x.value}`).join(', ')}</>}.</>)}</p>
+              <p>{hi ? <>यह आपके भाग्यांक {r.bhagyank.value} के लिए <b>{REL_HI[v.relationWithBhagyank]}</b> और आपके मूलांक {r.moolank.value} के लिए <b>{REL_HI[v.relationWithMoolank]}</b> है।</> : <>It is <b>{REL_TEXT[v.relationWithBhagyank]}</b> to your Bhagyank {r.bhagyank.value} and <b>{REL_TEXT[v.relationWithMoolank]}</b> to your Moolank {r.moolank.value}.</>}</p>
+              {kind === 'vehicle' && v.letters.length > 0 && <p className="text-muted-foreground">{hi ? <>पूरी नंबर प्लेट ({v.normalized}) अक्षरों सहित: {v.fullTotal.compound} → {v.fullTotal.single}।</> : <>Whole plate ({v.normalized}) with letters: {v.fullTotal.compound} → {v.fullTotal.single}.</>}</p>}
+            </div></div>
+          <Grid2>
+            <Panel title={kind === 'vehicle' ? L(`What a number ${v.total.single} vehicle means`, `अंक ${v.total.single} वाले वाहन का अर्थ`) : L(`What a number ${v.total.single} home means`, `अंक ${v.total.single} वाले घर का अर्थ`)}><p>{mean}</p><p className="text-muted-foreground">{PLANET_TIPS(v.total.single, lang)}</p></Panel>
+            <Panel title={L('How the score is built', 'स्कोर कैसे बनता है')}><table className="w-full"><tbody>{Object.entries(v.scoreBreakdown).filter(([, x]) => x !== 0).map(([k, x]) => <tr key={k} className="border-t border-border/50 first:border-0"><td className="py-1">{LABEL[k]}</td><td className={cn('text-right tabular-nums', x > 0 ? 'text-success' : 'text-danger')}>{x > 0 ? '+' : ''}{x}</td></tr>)}</tbody></table></Panel>
+          </Grid2>
+          <Panel title={L('Numbers that suit you best', 'आपके लिए सबसे अनुकूल अंक')}><p>{hi ? <>आपके मूलांक {r.moolank.value} और भाग्यांक {r.bhagyank.value} के लिए ऐसा नंबर चुनें जिसका योग इनमें से हो: <b>{v.suggestion.idealTotals.join(', ') || '—'}</b>।</> : <>For your Moolank {r.moolank.value} and Bhagyank {r.bhagyank.value}, choose a number whose total is one of: <b>{v.suggestion.idealTotals.join(', ') || '—'}</b>.</>}</p>
+            <p className="text-muted-foreground">{kind === 'vehicle' ? L('Method: the last group of digits on the plate is added and reduced; letters are shown separately using Chaldean values.', 'विधि: प्लेट के अंतिम अंक-समूह को जोड़कर एक अंक तक लाया जाता है; अक्षर कैल्डियन मानों से अलग दिखाए जाते हैं।') : L('Method: every digit, plus any letter by its Chaldean value, is added and reduced (12A → 1 + 2 + 1 = 4).', 'विधि: हर अंक और अक्षर (कैल्डियन मान से) को जोड़कर एक अंक तक लाया जाता है (12A → 1 + 2 + 1 = 4)।')}</p></Panel>
+        </div>
+      );
+    }
   } catch { out = <p className="text-sm text-danger">{L('Please check the details you entered.', 'कृपया दर्ज किए गए विवरण जाँचें।')}</p>; }
 
   const needsDob = kind !== 'name';
@@ -215,6 +268,8 @@ export function Calculator({ kind }: { kind: CalcKind }) {
         {needsDob && <Field label={L('Date of birth', 'जन्म तिथि')} htmlFor="c-dob"><Input id="c-dob" type="date" max={toIso(todayIST())} min="1900-01-01" value={dob} onChange={(e) => setDob(e.target.value)} /></Field>}
         {(kind === 'loshu' || kind === 'kua' || kind === 'mobile' || kind === 'bhagyank') && <Field label={kind === 'bhagyank' ? L('Gender (optional)', 'लिंग (वैकल्पिक)') : L('Gender (for Kua)', 'लिंग (कुआ के लिए)')}><ChipGroup options={[{ value: 'male' as const, label: L('Male', 'पुरुष') }, { value: 'female' as const, label: L('Female', 'महिला') }]} value={[gender]} onChange={(v) => setGender(v[0] ?? 'male')} /></Field>}
         {kind === 'name' && <Field label={L('Name you use (English letters)', 'आपका प्रचलित नाम (अंग्रेज़ी अक्षरों में)')} htmlFor="c-name" className="sm:col-span-2"><Input id="c-name" placeholder={L('e.g. Rahul Sharma', 'जैसे Rahul Sharma')} value={name} onChange={(e) => setName(e.target.value)} /></Field>}
+        {kind === 'vehicle' && <Field label={L('Vehicle number', 'वाहन नंबर')} htmlFor="c-id" hint={L('As on the number plate, e.g. MP09 AB 1234', 'जैसा नंबर प्लेट पर है, जैसे MP09 AB 1234')}><Input id="c-id" placeholder="MP09 AB 1234" maxLength={20} autoCapitalize="characters" value={ident} onChange={(e) => setIdent(e.target.value)} /></Field>}
+        {kind === 'house' && <Field label={L('House / flat number', 'मकान / फ़्लैट नंबर')} htmlFor="c-id" hint={L('Only the number of your own door, e.g. 12A or B-702', 'केवल आपके अपने दरवाज़े का नंबर, जैसे 12A या B-702')}><Input id="c-id" placeholder="B-702" maxLength={20} value={ident} onChange={(e) => setIdent(e.target.value)} /></Field>}
         {kind === 'mobile' && <Field label={L('Mobile number', 'मोबाइल नंबर')} htmlFor="c-mob"><Input id="c-mob" type="tel" inputMode="numeric" placeholder="98765 43210" value={mobile} onChange={(e) => setMobile(e.target.value)} /></Field>}
       </div>
       <div aria-live="polite">{out}</div>

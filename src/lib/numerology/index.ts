@@ -23,6 +23,7 @@ export * from './modules/mobile';
 export * from './modules/aadhaar';
 export * from './modules/couple';
 export * from './modules/remedies';
+export * from './modules/identifier';
 export * from './schemas';
 
 export type ReportModule = 'dob' | 'name' | 'mobile' | 'aadhaar' | 'couple' | 'complete';

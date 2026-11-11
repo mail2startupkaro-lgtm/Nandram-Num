@@ -1,5 +1,5 @@
 /** SEO landing pages for the free calculators (lead magnets). */
-export type CalcKind = 'moolank' | 'bhagyank' | 'loshu' | 'name' | 'mobile' | 'kua';
+export type CalcKind = 'moolank' | 'bhagyank' | 'loshu' | 'name' | 'mobile' | 'kua' | 'personalYear' | 'vehicle' | 'house';
 
 export interface CalcPage {
   slug: string; kind: CalcKind; title: string; h1: string; description: string; keywords: string[];
@@ -105,6 +105,60 @@ export const CALCULATORS: CalcPage[] = [
       faq: [
         { q: 'कुआ अंक के लिए लिंग क्यों मायने रखता है?', a: 'पारंपरिक कुआ सूत्र पुरुषों और महिलाओं के लिए अलग है, इसलिए एक ही जन्म वर्ष से अलग-अलग अंक आ सकते हैं।' },
         { q: 'यदि मेरा जन्म जनवरी या फ़रवरी की शुरुआत में हुआ हो तो?', a: 'कुछ विशेषज्ञ सौर नववर्ष (लगभग 4 फ़रवरी) का उपयोग करते हैं। यह कैलकुलेटर कैलेंडर वर्ष का उपयोग करता है; यदि आपका जन्म 4 फ़रवरी से पहले हुआ है तो आपके अंक ज्योतिषी सलाह दे सकते हैं।' },
+      ] },
+  },
+  {
+    slug: 'personal-year-calculator', kind: 'personalYear', title: 'Personal Year Calculator – Year, Month & Day Number', h1: 'Free Personal Year Calculator',
+    description: 'Find your personal year, personal month and personal day number from your date of birth, with your next 9 years and what each one is good for.',
+    keywords: ['personal year calculator', 'personal year number', 'personal month number', 'numerology year forecast', 'personal year 2026', 'personal year 2027'],
+    intro: ['Your personal year shows the theme of the twelve months from one birthday to the next: when to begin, when to build, when to wait and when to finish. This calculator also gives your personal month and personal day.'],
+    faq: [
+      { q: 'How is the personal year calculated?', a: 'Add your day of birth, your month of birth and the year of your last birthday, then reduce to one digit. Born on 15 August, after your birthday in 2026: 1+5+8+2+0+2+6 = 24 → 6.' },
+      { q: 'Does the personal year change on 1 January?', a: 'On this site it changes on your birthday, which is the traditional birthday-to-birthday method. Some numerologists use the calendar year; ask your numerologist which they follow.' },
+      { q: 'Which personal year is best for marriage or a new business?', a: 'Years 1, 3, 5 and 6 are usually seen as supportive for new beginnings, growth and relationships, but the answer depends on your Moolank and Bhagyank too.' },
+    ],
+    hi: { h1: 'मुफ़्त व्यक्तिगत वर्ष कैलकुलेटर', description: 'अपनी जन्म तिथि से अपना व्यक्तिगत वर्ष, व्यक्तिगत माह और व्यक्तिगत दिन का अंक जानें, साथ में अगले 9 वर्ष और हर वर्ष किस काम के लिए अच्छा है।',
+      intro: ['आपका व्यक्तिगत वर्ष एक जन्मदिन से अगले जन्मदिन तक के बारह महीनों का विषय बताता है: कब शुरुआत करें, कब निर्माण करें, कब प्रतीक्षा करें और कब समापन करें। यह कैलकुलेटर आपका व्यक्तिगत माह और व्यक्तिगत दिन भी बताता है।'],
+      faq: [
+        { q: 'व्यक्तिगत वर्ष कैसे निकाला जाता है?', a: 'अपने जन्म का दिन, जन्म का महीना और पिछले जन्मदिन का वर्ष जोड़ें, फिर एक अंक तक लाएँ। 15 अगस्त को जन्म, 2026 के जन्मदिन के बाद: 1+5+8+2+0+2+6 = 24 → 6।' },
+        { q: 'क्या व्यक्तिगत वर्ष 1 जनवरी को बदलता है?', a: 'इस साइट पर यह आपके जन्मदिन पर बदलता है, जो पारंपरिक जन्मदिन-से-जन्मदिन विधि है। कुछ अंक ज्योतिषी कैलेंडर वर्ष का उपयोग करते हैं; अपने अंक ज्योतिषी से पूछें कि वे कौन-सी विधि मानते हैं।' },
+        { q: 'विवाह या नए व्यवसाय के लिए कौन-सा व्यक्तिगत वर्ष सबसे अच्छा है?', a: 'वर्ष 1, 3, 5 और 6 सामान्यतः नई शुरुआत, विकास और रिश्तों के लिए सहायक माने जाते हैं, पर उत्तर आपके मूलांक और भाग्यांक पर भी निर्भर करता है।' },
+      ] },
+  },
+  {
+    slug: 'vehicle-number-numerology', kind: 'vehicle', title: 'Vehicle Number Numerology – Is Your Car or Bike Number Lucky?', h1: 'Free Vehicle Number Numerology Calculator',
+    description: 'Check whether your car or bike number is lucky for you. The registration number total is compared with your Moolank and Bhagyank, with the best totals to choose.',
+    keywords: ['vehicle number numerology', 'lucky car number', 'lucky bike number', 'car number numerology calculator', 'lucky vehicle number by date of birth'],
+    intro: ['The number on your vehicle travels with you every day. In Indian numerology its total should be friendly with your Moolank and Bhagyank. Enter your date of birth and number plate to see the score and the totals that suit you.'],
+    faq: [
+      { q: 'How is a vehicle number calculated in numerology?', a: 'Add the digits of the registration number, the last group of digits on the plate, and reduce to one digit. MP09 AB 1234 → 1+2+3+4 = 10 → 1.' },
+      { q: 'Which vehicle number is lucky for me?', a: 'A number whose total is friendly with both your Moolank and Bhagyank. The calculator lists your best totals after you enter your date of birth.' },
+      { q: 'Are totals 4 and 8 unlucky for vehicles?', a: 'They are heavier numbers linked with delays and repairs unless 4 or 8 is your own Moolank or Bhagyank. Careful maintenance and patient driving matter more than any number.' },
+    ],
+    hi: { h1: 'मुफ़्त वाहन नंबर अंक ज्योतिष कैलकुलेटर', description: 'जाँचें कि आपकी कार या बाइक का नंबर आपके लिए शुभ है या नहीं। पंजीकरण संख्या के योग की आपके मूलांक और भाग्यांक से तुलना, साथ में चुनने योग्य सर्वोत्तम योग।',
+      intro: ['आपके वाहन का नंबर हर दिन आपके साथ चलता है। भारतीय अंक ज्योतिष में इसका योग आपके मूलांक और भाग्यांक का मित्र होना चाहिए। स्कोर और अपने लिए अनुकूल योग देखने के लिए अपनी जन्म तिथि और नंबर प्लेट दर्ज करें।'],
+      faq: [
+        { q: 'अंक ज्योतिष में वाहन नंबर कैसे निकाला जाता है?', a: 'पंजीकरण संख्या, यानी प्लेट के अंतिम अंक-समूह, के अंकों को जोड़ें और एक अंक तक लाएँ। MP09 AB 1234 → 1+2+3+4 = 10 → 1।' },
+        { q: 'मेरे लिए कौन-सा वाहन नंबर शुभ है?', a: 'ऐसा नंबर जिसका योग आपके मूलांक और भाग्यांक दोनों का मित्र हो। जन्म तिथि दर्ज करने पर कैलकुलेटर आपके सर्वोत्तम योग बताता है।' },
+        { q: 'क्या वाहनों के लिए योग 4 और 8 अशुभ हैं?', a: 'ये भारी अंक हैं जो देरी और मरम्मत से जुड़े हैं, जब तक कि 4 या 8 आपका अपना मूलांक या भाग्यांक न हो। किसी भी अंक से अधिक महत्व सावधानी से रखरखाव और धैर्य से वाहन चलाने का है।' },
+      ] },
+  },
+  {
+    slug: 'house-number-numerology', kind: 'house', title: 'House Number Numerology – Is Your Home Number Lucky?', h1: 'Free House Number Numerology Calculator',
+    description: 'Find the numerology of your house or flat number and see whether it suits your Moolank and Bhagyank, with the meaning of the home and the best numbers for you.',
+    keywords: ['house number numerology', 'lucky house number', 'flat number numerology', 'house number calculator', 'lucky house number by date of birth'],
+    intro: ['Every home carries the vibration of its number. Enter your date of birth and your house or flat number to see what kind of home it is, how well it suits you and which numbers would support you most.'],
+    faq: [
+      { q: 'How do I calculate my house number?', a: 'Add every digit of your door number and reduce to one digit. A letter is added by its Chaldean value, so 12A is 1 + 2 + 1 = 4. Use your own flat number, not the building number.' },
+      { q: 'Which house number is lucky?', a: 'The one whose total is friendly with your Moolank and Bhagyank. The same house can suit one person and not another, which is why the calculator asks for your date of birth.' },
+      { q: 'What if my house number does not suit me?', a: 'You do not need to move. Simple remedies such as adding a letter or number plate inside the door, colours and placements can balance the vibration; a numerologist can advise for your chart.' },
+    ],
+    hi: { h1: 'मुफ़्त मकान नंबर अंक ज्योतिष कैलकुलेटर', description: 'अपने मकान या फ़्लैट नंबर का अंक ज्योतिष जानें और देखें कि वह आपके मूलांक और भाग्यांक के अनुकूल है या नहीं, साथ में घर का अर्थ और आपके लिए सर्वोत्तम अंक।',
+      intro: ['हर घर में उसके नंबर का कंपन होता है। यह जानने के लिए कि आपका घर किस प्रकार का है, वह आपके लिए कितना अनुकूल है और कौन-से अंक आपका सबसे अधिक साथ देंगे, अपनी जन्म तिथि और मकान या फ़्लैट नंबर दर्ज करें।'],
+      faq: [
+        { q: 'मैं अपना मकान नंबर कैसे निकालूँ?', a: 'अपने दरवाज़े के नंबर के सभी अंकों को जोड़ें और एक अंक तक लाएँ। अक्षर उसके कैल्डियन मान से जोड़ा जाता है, इसलिए 12A = 1 + 2 + 1 = 4। इमारत का नहीं, अपने फ़्लैट का नंबर लें।' },
+        { q: 'कौन-सा मकान नंबर शुभ है?', a: 'वह जिसका योग आपके मूलांक और भाग्यांक का मित्र हो। एक ही घर एक व्यक्ति के लिए अनुकूल और दूसरे के लिए नहीं हो सकता, इसीलिए कैलकुलेटर आपकी जन्म तिथि पूछता है।' },
+        { q: 'यदि मेरा मकान नंबर मेरे अनुकूल न हो तो?', a: 'घर बदलने की ज़रूरत नहीं है। दरवाज़े के भीतर अक्षर या अंक-पट्टिका जोड़ना, रंग और वस्तुओं की सही जगह जैसे सरल उपाय कंपन को संतुलित कर सकते हैं; अंक ज्योतिषी आपके चार्ट के अनुसार सलाह दे सकते हैं।' },
       ] },
   },
 ];

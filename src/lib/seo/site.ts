@@ -7,8 +7,13 @@ export const EXPERT = {
   description: 'Indian numerologist with more than 15 years of experience in Vedic, Chaldean and Lo Shu grid numerology.',
   knowsAbout: ['Numerology', 'Vedic numerology', 'Chaldean numerology', 'Lo Shu grid', 'Name numerology', 'Mobile number numerology', 'Angel numbers', 'Signature analysis'],
 };
-export const DEFAULT_TITLE = 'Online Numerology Reading by Acharya Nandram – Best Numerologist in India';
-export const DEFAULT_DESCRIPTION = 'Free numerology reading by date of birth and name. Moolank, Bhagyank, Lo Shu grid, name, mobile number, angel numbers and marriage compatibility with practical remedies by Acharya Nandram (15+ years).';
+export const DEFAULT_TITLE = 'Online Numerology Reading by Acharya Nandram | myNumerologist';
+export const DEFAULT_DESCRIPTION = 'Free numerology reading by date of birth and name: Moolank, Bhagyank, Lo Shu grid, mobile number and marriage compatibility with remedies by Acharya Nandram.';
+
+/** Meta descriptions: keep within what Google shows (about 160 characters), cutting at a word boundary. */
+export const clipDescription = (s: string, max = 158) => (s.length <= max ? s : `${s.slice(0, s.lastIndexOf(' ', max - 1)).replace(/[\s,;:–-]+$/, '')}…`);
+/** Adds the brand suffix only when the result still fits in a search-result title. */
+export const pageTitle = (t: string) => (t.length + 17 <= 62 ? t : { absolute: t });
 
 export const abs = (path = '/') => `${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`;
 

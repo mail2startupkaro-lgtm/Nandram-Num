@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { jsonLd as toLd } from '@/lib/seo/site';
+import { clipDescription, jsonLd as toLd } from '@/lib/seo/site';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { MULANK, getMulank, mulankFor, type MulankProfile } from '@/lib/mulank-data';
@@ -15,8 +15,8 @@ export async function generateMetadata(props: { params: Promise<{ n: string }> }
   const m = getMulank(Number(params.n));
   if (!m) return {};
   return {
-    title: `Mulank ${m.n} (${m.title}) – Personality, Career, Lucky Colour & Remedies`,
-    description: `Mulank ${m.n} is ruled by ${m.planet}. Read traits, strengths, career, relationships, health, lucky numbers, colours and remedies for people born on ${m.famousDates.replace('Born on ', '')}.`,
+    title: { absolute: `Mulank ${m.n} (${m.title}): Personality, Career & Remedies` },
+    description: clipDescription(`Mulank ${m.n} is ruled by ${m.planet}. Traits, career, relationships, health, lucky numbers, colours and remedies for people born on ${m.famousDates.replace('Born on ', '')}.`),
     alternates: { canonical: `/mulank/${m.n}` },
   };
 }

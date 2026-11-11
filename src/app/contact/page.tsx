@@ -4,8 +4,8 @@ import { Bi } from '@/components/i18n/bi';
 import { LEGAL, jsonLd as toLd, abs } from '@/lib/seo/site';
 
 export const metadata: Metadata = {
-  title: 'Contact Us – Numerology Service Enquiry & Support | Acharya Nandram',
-  description: 'Contact Acharya Nandram for a numerology report, personal consultation, name correction, lucky mobile number or marriage compatibility, or get help with payments and reports.',
+  title: 'Contact Us – Numerology Enquiry & Support',
+  description: 'Contact Acharya Nandram for a numerology report, consultation, name correction or lucky mobile number, or get help with payments, reports and your account.',
   alternates: { canonical: '/contact' },
 };
 

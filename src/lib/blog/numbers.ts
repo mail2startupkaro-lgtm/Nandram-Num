@@ -127,7 +127,7 @@ function buildMulank(n: number, lang: Lang): NumberPost {
   const dates = DAYS_OF(n);
   const trait = NUMBER_TRAITS[lang][n];
   const slug = numberPostSlug('mulank', n);
-  const title = hi ? `मूलांक ${n}: स्वभाव, करियर, विवाह, शुभ रंग और उपाय – संपूर्ण मार्गदर्शिका` : `Mulank ${n} Meaning: Personality, Career, Marriage, Lucky Colour & Remedies`;
+  const title = hi ? `मूलांक ${n}: स्वभाव, करियर, विवाह, शुभ रंग और उपाय – संपूर्ण मार्गदर्शिका` : `Mulank ${n} Meaning: Personality, Career, Marriage & Remedies`;
   const h1 = hi ? `मूलांक ${n} (${m.title}): संपूर्ण मार्गदर्शिका` : `Mulank ${n} (${en.title}): The Complete Guide`;
   const description = clip(`Mulank ${n} (born on ${dates.join(', ')}): ${p.name}-ruled personality, career, marriage match, lucky colours & remedies by Acharya Nandram. Free calculator.`);
   const keywords = [`mulank ${n}`, `moolank ${n}`, `mulank ${n} personality`, `mulank ${n} career`, `mulank ${n} marriage compatibility`, `mulank ${n} lucky colour`, `mulank ${n} remedies`, `numerology number ${n}`, `मूलांक ${n}`];

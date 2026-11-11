@@ -5,7 +5,7 @@ import { ForLang } from '@/components/i18n/bi';
 import { mulankServices } from '@/lib/mulank-services';
 
 export const metadata: Metadata = {
-  title: 'Mulank 1 to 9 – Root Number Meaning, Planet, Lucky Colour & Remedies',
+  title: { absolute: 'Mulank 1 to 9: Meaning, Planet, Lucky Colour & Remedies' },
   description: 'Find your Mulank (root number) from your day of birth. Read the personality, career, relationships, lucky colours and remedies for Mulank 1 to 9.',
   alternates: { canonical: '/mulank' },
 };

@@ -4,8 +4,8 @@ import { BHAGYANK_NUMBERS, bhagyankFor } from '@/lib/bhagyank-data';
 import { ForLang } from '@/components/i18n/bi';
 
 export const metadata: Metadata = {
-  title: 'Bhagyank 1 to 9 – Destiny Number Meaning, Career, Money & Remedies',
-  description: 'Find your Bhagyank (destiny / life path number) from your full date of birth. Read the life purpose, career, money, relationships, lucky colours and remedies for Bhagyank 1 to 9.',
+  title: { absolute: 'Bhagyank 1 to 9: Destiny Number Meaning, Career & Remedies' },
+  description: 'Find your Bhagyank (destiny number) from your full date of birth. Life purpose, career, money, relationships, lucky colours and remedies for Bhagyank 1 to 9.',
   alternates: { canonical: '/bhagyank' },
 };
 

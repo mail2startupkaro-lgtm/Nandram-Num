@@ -8,8 +8,8 @@ import { TOP_ANGEL } from '@/lib/angel/generate';
 import { Bi } from '@/components/i18n/bi';
 
 export const metadata: Metadata = {
-  title: 'Angel Number Calculator – Find Your Angel Number by Date of Birth',
-  description: 'Free angel number calculator: find your life path, Mulank, birthday and personal year angel numbers from your date of birth, check any angel number\'s compatibility with your DOB, and get your couple angel number.',
+  title: 'Angel Number Calculator by Date of Birth',
+  description: 'Free angel number calculator: find your life path, Mulank, birthday and personal year angel numbers from your date of birth, plus your couple angel number.',
   keywords: ['angel number calculator', 'find my angel number', 'birthday angel number', 'my angel number', 'angel number by date of birth', 'angel number compatibility', 'couple angel number'],
   alternates: { canonical: '/angel-numbers/calculator' },
 };

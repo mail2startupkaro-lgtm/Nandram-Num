@@ -210,4 +210,39 @@ describe.skipIf(!URL)('database (Postgres)', () => {
     expect(await deleteContactMessage(row.id, db)).toBe(true);
     expect(await updateContactMessage({ id: row.id, status: 'new' }, db)).toBe(false);
   });
+
+  it('account security: change password, sign out other devices, erase data', async () => {
+    const { changePassword, signOutOtherSessions, eraseAccount } = await import('@/lib/auth/account-security');
+    const { hashPassword: hp, verifyPassword: vp } = await import('@/lib/auth/password');
+    const { createSession, userFromSession } = await import('@/lib/auth/session');
+    const [u] = await db.insert(schema.users).values({ name: 'Erase Me', email: 'erase@test.local', phone: '+919811100000', passwordHash: await hp('oldpass123') }).returning();
+    const t1 = await createSession(u.id, 'a', db), t2 = await createSession(u.id, 'b', db);
+    await expect(changePassword(u, 'wrong', 'newpass123', t1, db)).rejects.toThrow();
+    await expect(changePassword(u, 'oldpass123', 'short', t1, db)).rejects.toThrow();
+    expect(await changePassword(u, 'oldpass123', 'newpass123', t1, db)).toBe(1);
+    expect(await userFromSession(t1, db)).not.toBeNull(); expect(await userFromSession(t2, db)).toBeNull();
+    const fresh = (await db.select().from(schema.users).where(sql`id = ${u.id}`))[0];
+    expect(await vp('newpass123', fresh.passwordHash)).toBe(true);
+    await createSession(u.id, 'c', db); expect(await signOutOtherSessions(u.id, t1, db)).toBe(1);
+    // no paid orders → removed completely, with the saved readings
+    const p = await createProfile(u.id, input, db);
+    await expect(eraseAccount(fresh, 'bad', db)).rejects.toThrow();
+    expect(await eraseAccount(fresh, 'newpass123', db)).toBe('deleted');
+    expect((await db.execute(sql`select 1 from users where id = ${u.id}`)).rows.length).toBe(0);
+    expect((await db.execute(sql`select 1 from client_profiles where id = ${p.id}`)).rows.length).toBe(0);
+    // with a paid order → anonymised, invoice row kept
+    const [v] = await db.insert(schema.users).values({ name: 'Paid User', email: 'paid@test.local', phone: '+919811100001', passwordHash: await hp('oldpass123') }).returning();
+    await createProfile(v.id, input, db);
+    await (await import('@/lib/billing/plans')).ensurePlans(db);
+    await db.execute(sql`insert into payments (user_id, plan_code, amount_paise, list_price_paise, taxable_paise, status, razorpay_order_id) select ${v.id}, code, price_paise, price_paise, price_paise, 'paid', 'cf_test_erase' from plans limit 1`);
+    const hadPlan = (await db.execute(sql`select 1 from payments where user_id = ${v.id}`)).rows.length;
+    expect(hadPlan).toBe(1);
+    {
+      expect(await eraseAccount(v, 'oldpass123', db)).toBe('anonymised');
+      const row = (await db.execute(sql`select name, email, phone, password_hash, disabled_at from users where id = ${v.id}`)).rows[0] as Record<string, unknown>;
+      expect(row.name).toBeNull(); expect(row.email).toBeNull(); expect(row.phone).toBeNull(); expect(row.password_hash).toBeNull(); expect(row.disabled_at).not.toBeNull();
+      expect((await db.execute(sql`select 1 from client_profiles where owner_id = ${v.id}`)).rows.length).toBe(0);
+      expect((await db.execute(sql`select 1 from payments where user_id = ${v.id}`)).rows.length).toBe(1);
+    }
+  });
 });
