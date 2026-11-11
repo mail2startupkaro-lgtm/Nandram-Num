@@ -5,6 +5,7 @@
  *     metadata rewritten to the brand (no Chromium/Skia/AI traces).
  */
 import { existsSync } from 'node:fs';
+import path from 'node:path';
 import { PDFDocument, rgb, degrees } from 'pdf-lib';
 import QRCode from 'qrcode';
 import type { Browser } from 'playwright-core';
@@ -62,6 +63,13 @@ function resolveLocalChrome(): string | undefined {
 // ---------- browser pool (one shared browser per server instance) ----------
 let browserPromise: Promise<Browser> | null = null;
 async function getBrowser(): Promise<Browser> {
+  if (browserPromise) {
+    const existing = await browserPromise.catch(() => null);
+    if (!existing || !existing.isConnected()) {
+      browserPromise = null;
+    }
+  }
+
   if (!browserPromise) {
     browserPromise = (async () => {
       const { chromium } = await import('playwright-core');
@@ -81,6 +89,16 @@ async function getBrowser(): Promise<Browser> {
           executablePath = await chromiumMin.executablePath(packUrl);
           if (chromiumMin.args && chromiumMin.args.length > 0) {
             args = chromiumMin.args;
+          }
+          if (executablePath) {
+            const dir = path.dirname(executablePath);
+            const al2023Lib = path.join(dir, 'al2023', 'lib');
+            const libDirs = [dir, al2023Lib, '/tmp/al2023/lib'].filter((d) => {
+              try { return existsSync(d); } catch { return false; }
+            });
+            if (libDirs.length > 0) {
+              process.env.LD_LIBRARY_PATH = `${libDirs.join(':')}:${process.env.LD_LIBRARY_PATH || ''}`;
+            }
           }
         } catch (e) {
           console.error('Failed to load @sparticuz/chromium-min:', e);
@@ -135,7 +153,7 @@ async function htmlToPdf(browser: Browser, html: string, opts: { margin0?: boole
     });
     return new Uint8Array(buf);
   } finally {
-    await ctx.close();
+    await ctx.close().catch(() => {});
   }
 }
 
@@ -216,10 +234,8 @@ export async function renderReportPdf(req: PdfRequest): Promise<PdfOutput> {
   const hf = headerFooter(inp);
   const browser = await getBrowser();
 
-  const [cover, pass1] = await Promise.all([
-    htmlToPdf(browser, buildCoverHtml(inp), { margin0: true }),
-    htmlToPdf(browser, buildBodyHtml(inp, null, qrSvg).html, hf),
-  ]);
+  const cover = await htmlToPdf(browser, buildCoverHtml(inp), { margin0: true });
+  const pass1 = await htmlToPdf(browser, buildBodyHtml(inp, null, qrSvg).html, hf);
   const tocPages = await findChapterPages(pass1);
   const body = await htmlToPdf(browser, buildBodyHtml(inp, tocPages, qrSvg).html, hf);
 

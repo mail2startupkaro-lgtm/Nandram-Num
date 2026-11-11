@@ -1,21 +1,3 @@
 {
-  "framework": "nextjs",
-  "functions": {
-    "src/app/api/pdf/route.ts": {
-      "memory": 2048,
-      "maxDuration": 60
-    },
-    "src/app/api/admin/report-studio/route.ts": {
-      "memory": 2048,
-      "maxDuration": 120
-    },
-    "src/app/api/reports/[id]/pdf/route.ts": {
-      "memory": 2048,
-      "maxDuration": 120
-    },
-    "src/app/api/share/[token]/pdf/route.ts": {
-      "memory": 2048,
-      "maxDuration": 120
-    }
-  }
+  "framework": "nextjs"
 }

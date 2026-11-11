@@ -66,7 +66,7 @@ export async function POST(req: Request) {
       },
     });
   } catch (e) {
-    console.error('pdf failed:', e instanceof Error ? e.message.slice(0, 120) : 'unknown');
-    return json(500, { error: 'INTERNAL' });
+    console.error('pdf failed error:', e instanceof Error ? (e.stack || e.message) : e);
+    return json(500, { error: 'INTERNAL', message: e instanceof Error ? e.message : 'PDF rendering error' });
   }
 }
