@@ -77,16 +77,21 @@ async function getBrowser(): Promise<Browser> {
       let args = ['--font-render-hinting=none', '--disable-dev-shm-usage', '--no-sandbox'];
 
       const isServerless = !!(process.env.VERCEL || process.env.AWS_EXECUTION_ENV || (process.env.NODE_ENV === 'production' && process.platform === 'linux'));
+      console.log(`[pdf] getBrowser start (isServerless=${isServerless}, arch=${process.arch})`);
+      const t0 = Date.now();
 
       if (!executablePath && isServerless) {
         try {
+          console.log('[pdf] importing @sparticuz/chromium-min...');
           const chromiumMin = (await import('@sparticuz/chromium-min')).default;
           chromiumMin.setGraphicsMode = false;
           const packUrl = process.env.CHROMIUM_PACK_URL ||
             (process.arch === 'arm64'
               ? 'https://github.com/Sparticuz/chromium/releases/download/v153.0.0/chromium-v153.0.0-pack.arm64.tar'
               : 'https://github.com/Sparticuz/chromium/releases/download/v153.0.0/chromium-v153.0.0-pack.x64.tar');
+          console.log(`[pdf] resolving executablePath from ${packUrl}...`);
           executablePath = await chromiumMin.executablePath(packUrl);
+          console.log(`[pdf] executablePath resolved in ${Date.now() - t0}ms: ${executablePath}`);
           if (chromiumMin.args && chromiumMin.args.length > 0) {
             args = chromiumMin.args;
           }
@@ -101,7 +106,7 @@ async function getBrowser(): Promise<Browser> {
             }
           }
         } catch (e) {
-          console.error('Failed to load @sparticuz/chromium-min:', e);
+          console.error('[pdf] Failed to load @sparticuz/chromium-min:', e);
         }
       }
 
@@ -109,11 +114,14 @@ async function getBrowser(): Promise<Browser> {
         executablePath = resolveLocalChrome();
       }
 
+      console.log(`[pdf] launching chromium at ${executablePath} (elapsed: ${Date.now() - t0}ms)...`);
+      const tLaunch = Date.now();
       const b = await chromium.launch({
         executablePath: executablePath || undefined,
         args,
         headless: true,
       });
+      console.log(`[pdf] chromium launched successfully in ${Date.now() - tLaunch}ms (total: ${Date.now() - t0}ms)`);
       b.on('disconnected', () => { browserPromise = null; });
       return b;
     })().catch((e) => { browserPromise = null; throw e; });
@@ -234,10 +242,25 @@ export async function renderReportPdf(req: PdfRequest): Promise<PdfOutput> {
   const hf = headerFooter(inp);
   const browser = await getBrowser();
 
+  console.log('[pdf] rendering cover...');
+  const tCover = Date.now();
   const cover = await htmlToPdf(browser, buildCoverHtml(inp), { margin0: true });
+  console.log(`[pdf] cover rendered in ${Date.now() - tCover}ms`);
+
+  console.log('[pdf] rendering pass1...');
+  const tPass1 = Date.now();
   const pass1 = await htmlToPdf(browser, buildBodyHtml(inp, null, qrSvg).html, hf);
+  console.log(`[pdf] pass1 rendered in ${Date.now() - tPass1}ms`);
+
+  console.log('[pdf] finding chapter pages...');
+  const tToc = Date.now();
   const tocPages = await findChapterPages(pass1);
+  console.log(`[pdf] TOC pages found in ${Date.now() - tToc}ms`);
+
+  console.log('[pdf] rendering body with TOC...');
+  const tBody = Date.now();
   const body = await htmlToPdf(browser, buildBodyHtml(inp, tocPages, qrSvg).html, hf);
+  console.log(`[pdf] body rendered in ${Date.now() - tBody}ms`);
 
   // ---------- compose ----------
   const out = await PDFDocument.create();

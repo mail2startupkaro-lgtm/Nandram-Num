@@ -12,7 +12,7 @@ import { THEMES, type ThemeId } from '@/lib/pdf/themes';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const Body = z.object({
   result: z.object({ schemaVersion: z.number(), asOf: z.string(), client: z.object({ fullName: z.string() }).passthrough(), results: z.object({ dob: z.object({}).passthrough() }).passthrough() }).passthrough(),
