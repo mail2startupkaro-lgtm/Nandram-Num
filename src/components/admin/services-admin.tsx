@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { Mail, MessageCircle, Phone, Plus, RefreshCw, Save, Trash2 } from 'lucide-react';
+import { Mail, MessageCircle, Phone, Plus, RefreshCw, Save, Sparkles, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/form';
 import { Badge } from '@/components/ui/misc';
@@ -20,20 +20,20 @@ const rupees = (p: number | null | undefined) => (p == null ? '' : String(p / 10
 const toPaise = (s: string) => Math.round(Number(s || 0) * 100);
 
 /** Admin → Services: edit services & fees, and work through paid service orders. */
-export function ServicesAdmin() {
+export function ServicesAdmin({ onGenerateReport }: { onGenerateReport?: (order: Order) => void } = {}) {
   const [view, setView] = React.useState<'orders' | 'catalogue'>('orders');
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-2xl font-semibold">Services</h2>
         <div className="flex gap-1 rounded-md border border-border p-1 text-sm">{(['orders', 'catalogue'] as const).map((v) => <button key={v} onClick={() => setView(v)} className={cn('rounded px-3 py-1', view === v ? 'bg-gold/20 font-semibold' : 'hover:bg-muted')}>{v === 'orders' ? 'Orders' : 'Services & fees'}</button>)}</div></div>
-      {view === 'orders' ? <Orders /> : <Catalogue />}
+      {view === 'orders' ? <Orders onGenerateReport={onGenerateReport} /> : <Catalogue />}
     </div>
   );
 }
 
-interface Order { id: string; serviceCode: string; status: string; adminNote: string | null; createdAt: string; deliveredAt: string | null; details: Record<string, string>; payment: { amountPaise: number; invoiceNumber: string | null; billingName: string | null; paidAt: string | null }; userId: string | null }
+export interface Order { id: string; serviceCode: string; status: string; adminNote: string | null; createdAt: string; deliveredAt: string | null; details: Record<string, string>; payment: { amountPaise: number; invoiceNumber: string | null; billingName: string | null; paidAt: string | null }; userId: string | null }
 
-function Orders() {
+function Orders({ onGenerateReport }: { onGenerateReport?: (order: Order) => void }) {
   const [status, setStatus] = React.useState('all');
   const [orders, setOrders] = React.useState<Order[] | null>(null);
   const [names, setNames] = React.useState<Record<string, string>>({});
@@ -46,12 +46,12 @@ function Orders() {
         <Button size="sm" variant="outline" onClick={load}><RefreshCw className="h-4 w-4" /> Refresh</Button>
       </div>
       <p className="text-xs text-muted-foreground">Only paid orders appear here. Client details are stored encrypted. Payments and GST invoices are also in the Payment report.</p>
-      {!orders ? <div className="glass h-32 animate-pulse rounded-lg" /> : orders.length === 0 ? <p className="glass rounded-lg p-6 text-center text-muted-foreground">No service orders yet.</p> : orders.map((o) => <OrderCard key={o.id} o={o} name={names[o.serviceCode] ?? o.serviceCode} onChanged={load} />)}
+      {!orders ? <div className="glass h-32 animate-pulse rounded-lg" /> : orders.length === 0 ? <p className="glass rounded-lg p-6 text-center text-muted-foreground">No service orders yet.</p> : orders.map((o) => <OrderCard key={o.id} o={o} name={names[o.serviceCode] ?? o.serviceCode} onChanged={load} onGenerateReport={onGenerateReport} />)}
     </div>
   );
 }
 
-function OrderCard({ o, name, onChanged }: { o: Order; name: string; onChanged: () => void }) {
+function OrderCard({ o, name, onChanged, onGenerateReport }: { o: Order; name: string; onChanged: () => void; onGenerateReport?: (order: Order) => void }) {
   const [note, setNote] = React.useState(o.adminNote ?? '');
   const [msg, setMsg] = React.useState<string | null>(null);
   const patch = async (b: Record<string, unknown>, ok: string) => { setMsg(null); try { await api('/api/admin/service-orders', { method: 'PATCH', json: { id: o.id, ...b } }); setMsg(ok); onChanged(); } catch { setMsg('Could not save'); } };
@@ -62,7 +62,14 @@ function OrderCard({ o, name, onChanged }: { o: Order; name: string; onChanged: 
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div><p className="font-semibold">{name} <Badge tone={o.status === 'delivered' ? 'good' : o.status === 'cancelled' ? 'bad' : o.status === 'paid' ? 'warn' : 'gold'} className="ml-1">{STATUS_LABEL[o.status]}</Badge></p>
           <p className="text-xs text-muted-foreground">{o.payment.paidAt ? `Paid ${new Date(o.payment.paidAt).toLocaleString('en-IN')}` : new Date(o.createdAt).toLocaleString('en-IN')} · {inr(o.payment.amountPaise)}{o.payment.invoiceNumber ? ` · ${o.payment.invoiceNumber}` : ''} · billed to {o.payment.billingName ?? '—'}</p></div>
-        <Select value={o.status} onChange={(e) => patch({ status: e.target.value }, 'Status updated')} className="h-8 w-40 text-sm" aria-label="Status">{STATUS.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}</Select>
+        <div className="flex flex-wrap items-center gap-2">
+          {onGenerateReport && (
+            <Button size="sm" variant="gold" onClick={() => onGenerateReport(o)} title="Generate tailored service report in Report Studio">
+              <Sparkles className="h-4 w-4" /> Generate Report
+            </Button>
+          )}
+          <Select value={o.status} onChange={(e) => patch({ status: e.target.value }, 'Status updated')} className="h-8 w-40 text-sm" aria-label="Status">{STATUS.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}</Select>
+        </div>
       </div>
       <dl className="mt-3 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">{rows.map(([k, v]) => <div key={k} className={k === 'Questions / notes' ? 'sm:col-span-2' : ''}><dt className="inline text-muted-foreground">{k}: </dt><dd className="inline whitespace-pre-wrap">{v}</dd></div>)}</dl>
       {wa.length >= 10 && <div className="mt-2 flex gap-3 text-sm"><a href={`tel:${d.mobile}`} className="inline-flex items-center gap-1 hover:text-gold"><Phone className="h-4 w-4 text-gold" />{d.mobile}</a><a href={`https://wa.me/${wa.length === 10 ? `91${wa}` : wa}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-success"><MessageCircle className="h-4 w-4" />WhatsApp</a></div>}

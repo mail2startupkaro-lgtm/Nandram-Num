@@ -27,6 +27,7 @@ export interface PdfRequest {
   provider?: LlmProvider | null;
   hiddenChapters?: string[];
   expertNote?: string;
+  reportTitle?: string;
 }
 
 export interface PdfOutput {
@@ -254,7 +255,7 @@ export async function renderReportPdf(req: PdfRequest): Promise<PdfOutput> {
   const theme = resolveTheme(req.theme, branding);
   const narrative = req.narrative ?? (await generateNarrative(req.result, { language: req.language, provider: req.provider ?? null }));
 
-  const inp: TemplateInput = { result: req.result, narrative, theme, branding, reportDate: req.reportDate ?? req.result.asOf, watermark: req.watermark, hiddenChapters: req.hiddenChapters, expertNote: req.expertNote };
+  const inp: TemplateInput = { result: req.result, narrative, theme, branding, reportDate: req.reportDate ?? req.result.asOf, watermark: req.watermark, hiddenChapters: req.hiddenChapters, expertNote: req.expertNote, reportTitle: req.reportTitle };
   const qrSvg = await QRCode.toString(branding.bookingUrl || DEFAULT_BRANDING.bookingUrl || 'https://www.mynumerologist.com', { type: 'svg', margin: 0, width: 150, errorCorrectionLevel: 'M', color: { dark: '#111111', light: '#ffffff' } });
   const hf = headerFooter(inp);
   const browser = await getBrowser();
@@ -309,8 +310,8 @@ export async function renderReportPdf(req: PdfRequest): Promise<PdfOutput> {
 
   const lab = labelsFor(narrative.language);
   const client = req.result.client.commonName || req.result.client.fullName;
-  out.setTitle(`${client} – Numerology Report`, { showInWindowTitleBar: true });
-  brandMetadata(out, branding, lab.reportTypes[(req.result.modules ?? ['complete']).length > 1 ? 'complete' : (req.result.modules?.[0] ?? 'complete')] ?? 'Numerology Report', inp.reportDate, narrative.language);
+  out.setTitle(`${client} – ${req.reportTitle || 'Numerology Report'}`, { showInWindowTitleBar: true });
+  brandMetadata(out, branding, req.reportTitle || (lab.reportTypes[(req.result.modules ?? ['complete']).length > 1 ? 'complete' : (req.result.modules?.[0] ?? 'complete')] ?? 'Numerology Report'), inp.reportDate, narrative.language);
 
   const pdf = await out.save({ useObjectStreams: true });
   return { pdf, pageCount: out.getPageCount(), tocPages, ms: Date.now() - t0 };

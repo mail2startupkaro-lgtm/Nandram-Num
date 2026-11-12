@@ -33,6 +33,8 @@ const Body = z.object({
   expertNote: z.string().max(3000).optional(),
   watermark: z.string().max(40).optional(),
   sectionEdits: z.record(z.string(), z.string().max(20000)).default({}),
+  reportTitle: z.string().max(120).optional(),
+  serviceCode: z.string().max(40).optional(),
   branding: z.object({
     brandName: z.string().max(80), expertName: z.string().max(80), expertTitle: z.string().max(120),
     contactLine: z.string().max(200), website: z.string().max(200), bookingUrl: z.string().max(300),
@@ -71,6 +73,8 @@ export const POST = withAdmin(async (req, user) => {
     result, narrative: final, language: b.language, theme: style.theme,
     branding: { ...(style.branding ?? {}), ...overrides },
     watermark: b.watermark?.trim() || undefined, reportDate: b.reportDate, hiddenChapters: b.hiddenChapters, expertNote: b.expertNote,
+    reportTitle: b.reportTitle?.trim() || undefined,
   });
-  return pdfResponse(out.pdf, `${slug(result.client.commonName || result.client.fullName)}-numerology-report.pdf`, { 'x-page-count': String(out.pageCount) });
+  const filePrefix = b.reportTitle ? slug(b.reportTitle) : 'numerology-report';
+  return pdfResponse(out.pdf, `${slug(result.client.commonName || result.client.fullName)}-${filePrefix}.pdf`, { 'x-page-count': String(out.pageCount) });
 });

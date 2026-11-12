@@ -63,6 +63,8 @@ export interface TemplateInput {
   hiddenChapters?: string[];
   /** Admin Report Studio: a personal note from the expert, printed in the closing chapter. */
   expertNote?: string;
+  /** Custom report title / service name to print on the cover and header. */
+  reportTitle?: string;
 }
 
 const fmtDate = (iso: string) => iso.split('-').reverse().join('-');
@@ -332,7 +334,7 @@ export function buildCoverHtml(inp: TemplateInput): string {
     <div class="md">${mandala(560, t.coverAccent, 0.38, 32)}</div>
     <div style="position:relative">${logo}<div class="brand">${esc(b.brandName)}</div></div>
     <div style="position:relative;margin-top:62mm">
-      <div class="type">${esc(reportType(result, lab))}</div>
+      <div class="type">${esc(inp.reportTitle || reportType(result, lab))}</div>
       <div style="font-size:9pt;letter-spacing:.3em;text-transform:uppercase;opacity:.8">${esc(lab.preparedFor)}</div>
       <h1>${esc(titleCase(c.commonName || c.fullName))}</h1>
       ${c.hindiName ? `<div style="font-family:'Noto Sans Devanagari';font-size:15pt;margin-top:1mm">${esc(c.hindiName)}</div>` : ''}
@@ -396,7 +398,7 @@ export function headerFooter(inp: TemplateInput) {
   const client = titleCase(result.client.commonName || result.client.fullName);
   const font = "font-family:Georgia,'Times New Roman',serif;";
   return {
-    header: `<div style="${font}width:100%;font-size:7.5px;color:${t.muted};padding:0 18mm;margin-top:9mm;display:flex;justify-content:space-between;letter-spacing:.12em;text-transform:uppercase"><span style="color:${t.primary}">${esc(b.brandName)}</span><span>${esc(client)} · ${esc(reportType(result, lab))}</span></div>`,
+    header: `<div style="${font}width:100%;font-size:7.5px;color:${t.muted};padding:0 18mm;margin-top:9mm;display:flex;justify-content:space-between;letter-spacing:.12em;text-transform:uppercase"><span style="color:${t.primary}">${esc(b.brandName)}</span><span>${esc(client)} · ${esc(inp.reportTitle || reportType(result, lab))}</span></div>`,
     footer: `<div style="${font}width:100%;font-size:7.4px;color:${t.muted};padding:0 18mm;margin-bottom:10mm;display:flex;justify-content:space-between;align-items:flex-end;gap:10mm"><span style="max-width:150mm;line-height:1.35">${esc(lab.disclaimer)}</span><span style="font-size:9px;color:${t.primary};white-space:nowrap"><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>`,
   };
 }

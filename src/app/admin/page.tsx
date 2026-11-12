@@ -8,7 +8,7 @@ import { ReportStudio } from '@/components/admin/report-studio';
 import { SignatureStudio } from '@/components/admin/signature-studio';
 import { BusinessStudio } from '@/components/admin/business-studio';
 import { MessagesTab } from '@/components/admin/messages';
-import { ServicesAdmin } from '@/components/admin/services-admin';
+import { ServicesAdmin, type Order } from '@/components/admin/services-admin';
 import { ReportQueueAdmin } from '@/components/admin/report-queue-admin';
 import { AnalyticsAdmin } from '@/components/admin/analytics-admin';
 // Finders pull in the angel-number content library – load only when the tab is opened.
@@ -51,6 +51,7 @@ function useMsg() {
 export default function AdminPage() {
   const { me } = useApp();
   const [tab, setTab] = React.useState<(typeof TABS)[number]['id']>('overview');
+  const [preloadedOrder, setPreloadedOrder] = React.useState<Order | null>(null);
   const [newMsgs, setNewMsgs] = React.useState(0);
   React.useEffect(() => { if (me?.user?.role === 'super_admin') api<{ counts: { new: number } }>('/api/admin/messages?status=new').then((r) => setNewMsgs(r.counts.new)).catch(() => {}); }, [me?.user?.role]);
   React.useEffect(() => { if (me && !me.user) window.location.replace('/login?next=%2Fadmin'); }, [me]);
@@ -68,7 +69,7 @@ export default function AdminPage() {
           ))}
         </nav>
         <div className="min-w-0">
-          {tab === 'overview' && <Overview />}{tab === 'analytics' && <AnalyticsAdmin />}{tab === 'messages' && <MessagesTab onCounts={setNewMsgs} />}{tab === 'services' && <ServicesAdmin />}{tab === 'queue' && <ReportQueueAdmin />}{tab === 'studio' && <ReportStudio />}{tab === 'signature' && <SignatureStudio />}{tab === 'business' && <BusinessStudio />}{tab === 'angel' && <AngelFinderTab />}{tab === 'lucky' && <LuckyFinderTab />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'experts' && <ExpertsTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
+          {tab === 'overview' && <Overview />}{tab === 'analytics' && <AnalyticsAdmin />}{tab === 'messages' && <MessagesTab onCounts={setNewMsgs} />}{tab === 'services' && <ServicesAdmin onGenerateReport={(ord) => { setPreloadedOrder(ord); setTab('studio'); }} />}{tab === 'queue' && <ReportQueueAdmin />}{tab === 'studio' && <ReportStudio preloadedOrder={preloadedOrder} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'signature' && <SignatureStudio />}{tab === 'business' && <BusinessStudio />}{tab === 'angel' && <AngelFinderTab />}{tab === 'lucky' && <LuckyFinderTab />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'experts' && <ExpertsTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
           {tab === 'knowledge' && <KnowledgeTab />}{tab === 'themes' && <ThemesTab />}{tab === 'prompts' && <PromptsTab />}{tab === 'seller' && <SellerTab />}{tab === 'payments' && <PaymentReport />}
         </div>
       </div>
