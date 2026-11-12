@@ -16,6 +16,7 @@ import { PdfButton } from './pdf-button';
 import { ReportRequestPanel, useQueued } from './report-queue';
 import type { Narrative } from '@/lib/narrative/service';
 import { GridLegend, NumberGrid } from './grid';
+import { DisclaimerNote } from '@/components/legal/disclaimer-note';
 
 type R = NumerologyResult['results'];
 
@@ -183,6 +184,7 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
 
       <RemediesSection rm={remedies} />
 
+      <DisclaimerNote className="print:border-0" />
     </div>
   );
 }

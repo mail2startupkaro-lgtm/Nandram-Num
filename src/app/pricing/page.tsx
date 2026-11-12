@@ -7,6 +7,7 @@ import { INDIAN_STATES } from '@/components/wizard/state';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/form';
 import { api, ApiError } from '@/lib/client/api';
+import { DisclaimerNote } from '@/components/legal/disclaimer-note';
 
 interface Plan { code: string; name: string; description: string; pricePaise: number; intervalDays: number | null; credits: number; features: Record<string, boolean | number | null> }
 interface Order { gateway: 'cashfree' | 'mock'; mode: string; paymentSessionId: string; mock: boolean; orderId: string; amountPaise: number; discountPaise: number; plan: { code: string; name: string }; prefill: { name: string; email: string; contact: string } }
@@ -317,6 +318,7 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
             ) : (
               <Button variant="gold" className="w-full" disabled={busy || !state || (!me?.user && (!email.trim() || !phone.trim()))} onClick={pay}>{pending ? t.pricing.pending : busy ? t.pricing.paying : `${t.pricing.pay} ${inr(plan.pricePaise - discount)}`}</Button>
             )}
+            <DisclaimerNote agree />
             {done === 'fail' && <p className="text-sm text-danger">{t.pricing.failed}</p>}
             {error && <p className="text-sm text-danger">{error}</p>}
           </div>

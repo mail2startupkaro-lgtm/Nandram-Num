@@ -10,6 +10,7 @@ import { api, ApiError } from '@/lib/client/api';
 import { confirmCashfreeOrder, loadCashfree } from '@/lib/client/cashfree';
 import { todayIST, toIso } from '@/lib/numerology';
 import type { ServiceIntakeField, ServiceText } from '@/lib/db/schema';
+import { DisclaimerNote } from '@/components/legal/disclaimer-note';
 
 export interface PublicService { code: string; en: ServiceText; hi: ServiceText; intake: ServiceIntakeField[]; payable: boolean; pricePaise: number | null; mrpPaise: number | null }
 interface Order { gateway: 'cashfree' | 'mock'; mode: string; paymentSessionId: string; mock: boolean; orderId: string; amountPaise: number }
@@ -114,6 +115,7 @@ function BookDialog({ svc, onClose }: { svc: PublicService; onClose: () => void 
             </fieldset>
             <div className="flex items-center justify-between rounded-md bg-muted p-3 text-sm font-semibold"><span>{t.total}</span><span>{inr(svc.pricePaise ?? 0)}</span></div>
             <p className="text-xs text-muted-foreground">{t.privacy}</p>
+            <DisclaimerNote agree />
             {order?.mock ? (
               <div className="space-y-2 rounded-md border border-warning/40 bg-warning/10 p-3"><p className="text-xs">{t.mock}</p>
                 <Button variant="gold" className="w-full" onClick={async () => { try { await api('/api/billing/mock-pay', { method: 'POST', json: { orderId: order.orderId } }); setStage('ok'); } catch { setStage('fail'); } }}>{t.simulate}</Button></div>

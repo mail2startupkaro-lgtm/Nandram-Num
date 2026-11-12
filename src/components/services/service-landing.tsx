@@ -10,6 +10,7 @@ import { formatInr as inr } from '@/lib/billing/plans';
 import type { Service } from '@/lib/db/schema';
 import { SERVICE_PAGES, servicePageBySlug } from '@/lib/service-pages';
 import { abs, EXPERT, jsonLd as toLd } from '@/lib/seo/site';
+import { DisclaimerNote } from '@/components/legal/disclaimer-note';
 
 export function serviceMetadata(slug: string): Metadata {
   const p = servicePageBySlug(slug)!;
@@ -97,7 +98,7 @@ export async function ServiceLanding({ slug }: { slug: string }) {
         <h3 className="pt-2 font-serif text-lg font-semibold"><Bi en="Other services" hi="अन्य सेवाएँ" /></h3>
         <div className="flex flex-wrap gap-2">{others.map((o) => <Link key={o.slug} href={`/${o.slug}`} className="rounded-full border border-gold/25 px-3 py-1 text-sm hover:bg-gold/10"><Bi en={o.menu.en} hi={o.menu.hi} /></Link>)}<Link href="/services" className="px-3 py-1 text-sm text-gold hover:underline"><Bi en="All services & fees →" hi="सभी सेवाएँ और शुल्क →" /></Link></div>
       </section>
-      <p className="text-xs text-muted-foreground"><Bi en="Numerology offers guidance based on traditional methods. It is not a substitute for professional medical, legal or financial advice." hi="अंक ज्योतिष पारंपरिक विधियों पर आधारित मार्गदर्शन देता है। यह चिकित्सा, कानूनी या वित्तीय पेशेवर सलाह का विकल्प नहीं है।" /></p>
+      <DisclaimerNote />
     </div>
   );
 }

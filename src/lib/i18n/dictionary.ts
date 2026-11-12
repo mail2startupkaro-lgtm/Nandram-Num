@@ -88,7 +88,7 @@ const en = {
     unlockAsk: 'Use 1 report credit to unlock this full report? You have', unlockNone: 'This full report needs a credit or a Pro plan.', preview: 'Free preview (Date of Birth chapters, watermarked).', unlockFull: 'Get the full report',
     bookConsultation: 'Book a consultation',
   },
-  disclaimer: 'Numerology offers guidance based on traditional methods. Decisions about health, finance and legal matters should be taken with qualified professionals.',
+  disclaimer: 'Numerology is traditional guidance, not a guaranteed prediction or a proven science. It is not a substitute for medical, legal, financial or other professional advice.',
 };
 
 type Dict = typeof en;
@@ -174,7 +174,7 @@ const hi: Dict = {
     unlockAsk: 'इस पूर्ण रिपोर्ट के लिए 1 क्रेडिट उपयोग करें? आपके पास हैं', unlockNone: 'इस पूर्ण रिपोर्ट के लिए क्रेडिट या प्रो प्लान आवश्यक है।', preview: 'मुफ़्त झलक (जन्म तिथि अध्याय, वॉटरमार्क सहित)।', unlockFull: 'पूर्ण रिपोर्ट पाएं',
     bookConsultation: 'परामर्श बुक करें',
   },
-  disclaimer: 'अंक ज्योतिष पारंपरिक पद्धतियों पर आधारित मार्गदर्शन देता है। स्वास्थ्य, वित्त और कानूनी निर्णय योग्य विशेषज्ञों से परामर्श करके लें।',
+  disclaimer: 'अंक ज्योतिष पारंपरिक मार्गदर्शन है, यह न तो निश्चित भविष्यवाणी है और न ही प्रमाणित विज्ञान। यह चिकित्सा, कानूनी, वित्तीय या अन्य पेशेवर सलाह का विकल्प नहीं है।',
 };
 
 export const DICT: Record<Lang, Dict> = { en, hi };

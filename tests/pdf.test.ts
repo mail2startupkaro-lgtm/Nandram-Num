@@ -64,7 +64,7 @@ describe('PDF report', () => {
   });
 
   it('prints the disclaimer on every body page', () => {
-    for (const t of texts.slice(1)) expect(t).toContain('Numerology offers guidance based on traditional methods');
+    for (const t of texts.slice(1)) expect(t).toContain('Numerology is traditional guidance');
   });
 
   it('renders every theme', async () => {

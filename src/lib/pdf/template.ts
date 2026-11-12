@@ -8,6 +8,7 @@ import type { Narrative, NarrativeSection } from '@/lib/narrative/service';
 import { fontFaceCss } from './fonts';
 import { barsSvg, compassSvg, divider, esc, gaugeSvg, gridSvg, mandala, monogram, numberMedallion, planetIcon, portraitPlaceholder, radarSvg, remedyIcon, ringSvg, swatches, timelineSvg, type RemedyIcon } from './svg';
 import type { Branding, PdfTheme } from './themes';
+import { DISCLAIMER } from '@/lib/disclaimer';
 
 type R = NumerologyResult['results'];
 type Lang = 'en' | 'hi';
@@ -24,7 +25,7 @@ const L = {
     pairs: 'Digit pairs', ideal: 'Ideal totals for a new number', overall: 'Overall', overlay: 'Combined grid', brings: 'brings what the other lacks',
     lucky: 'Lucky', numbers: 'Numbers', dates: 'Dates', days: 'Days', colours: 'Colours', avoid: 'Use sparingly', directions: 'Directions', gem: 'Gemstone', mantra: 'Mantra', daan: 'Daan', fasting: 'Fasting day',
     habits: 'Daily habits', signature: 'Signature', favYears: 'Favourable years', events: { marriage: 'Marriage', jobChange: 'Job change', businessStart: 'Business start', propertyPurchase: 'Property purchase' } as Record<string, string>,
-    book: 'Book a personal consultation', scan: 'Scan to book', disclaimer: 'Numerology offers guidance based on traditional methods. Decisions about health, finance and legal matters should be taken with qualified professionals.',
+    book: 'Book a personal consultation', scan: 'Scan to book', disclaimer: `${DISCLAIMER.en.short} mynumerologist.com/disclaimer`,
     gemNote: 'Consult a qualified expert before wearing any gemstone.', element: 'Element', direction: 'Direction', placement: 'Placement', wear: 'Wear',
     jobYears: 'Best years for a job change', bizYears: 'Best years to start a business', marriageYears: 'Favourable years for marriage', planet: 'Ruling planet', day: 'Day',
     areas: { career: 'Career', money: 'Money', love: 'Love', health: 'Health', family: 'Family', spirituality: 'Spirituality', communication: 'Communication', finance: 'Finance', stability: 'Stability' } as Record<string, string>,
@@ -40,7 +41,7 @@ const L = {
     pairs: 'अंक जोड़े', ideal: 'नए नंबर के लिए आदर्श योग', overall: 'कुल', overlay: 'संयुक्त ग्रिड', brings: 'दूसरे की कमी पूरी करते हैं',
     lucky: 'शुभ', numbers: 'अंक', dates: 'तिथियाँ', days: 'दिन', colours: 'रंग', avoid: 'कम उपयोग करें', directions: 'दिशाएँ', gem: 'रत्न', mantra: 'मंत्र', daan: 'दान', fasting: 'व्रत',
     habits: 'दैनिक आदतें', signature: 'हस्ताक्षर', favYears: 'शुभ वर्ष', events: { marriage: 'विवाह', jobChange: 'नौकरी बदलना', businessStart: 'व्यवसाय आरंभ', propertyPurchase: 'संपत्ति खरीद' } as Record<string, string>,
-    book: 'व्यक्तिगत परामर्श बुक करें', scan: 'बुक करने के लिए स्कैन करें', disclaimer: 'अंक ज्योतिष पारंपरिक पद्धतियों पर आधारित मार्गदर्शन देता है। स्वास्थ्य, वित्त और कानूनी निर्णय योग्य विशेषज्ञों से परामर्श करके लें।',
+    book: 'व्यक्तिगत परामर्श बुक करें', scan: 'बुक करने के लिए स्कैन करें', disclaimer: `${DISCLAIMER.hi.short} mynumerologist.com/disclaimer`,
     gemNote: 'कोई भी रत्न पहनने से पहले योग्य विशेषज्ञ से सलाह लें।', element: 'तत्व', direction: 'दिशा', placement: 'स्थान', wear: 'पहनें',
     jobYears: 'नौकरी बदलने के शुभ वर्ष', bizYears: 'व्यवसाय आरंभ के शुभ वर्ष', marriageYears: 'विवाह के शुभ वर्ष', planet: 'स्वामी ग्रह', day: 'दिन',
     areas: { career: 'करियर', money: 'धन', love: 'प्रेम', health: 'स्वास्थ्य', family: 'परिवार', spirituality: 'आध्यात्म', communication: 'संवाद', finance: 'वित्त', stability: 'स्थिरता' } as Record<string, string>,
@@ -342,6 +343,17 @@ export function buildCoverHtml(inp: TemplateInput): string {
   </div></body></html>`;
 }
 
+/** Full numerology disclaimer printed at the end of every report (closing chapter). */
+function disclaimerPanel(lang: Lang, t: PdfTheme) {
+  const d = DISCLAIMER[lang];
+  return `<div class="panel small" style="margin-top:10mm;border:1px solid ${t.accent}55">
+    <div class="serif" style="font-size:12pt;color:${t.primary};margin-bottom:2mm">${esc(d.heading)}</div>
+    <p style="margin:0 0 2.5mm"><b>${esc(d.short)}</b></p>
+    ${d.points.map((x) => `<p style="margin:0 0 1.6mm;line-height:1.45"><b>${esc(x.h)}${lang === 'hi' ? ':' : '.'}</b> ${esc(x.p)}</p>`).join('')}
+    <p class="muted" style="margin:2mm 0 0">mynumerologist.com/disclaimer</p>
+  </div>`;
+}
+
 // ---------- Body (TOC + chapters + closing) ----------
 export function buildBodyHtml(inp: TemplateInput, pages: Record<string, number> | null, qrSvg: string): { html: string; chapterIds: string[] } {
   const { theme: t, branding: b, narrative } = inp;
@@ -360,7 +372,7 @@ export function buildBodyHtml(inp: TemplateInput, pages: Record<string, number> 
         <div class="small" style="margin-top:4mm">${esc(b.brandName)}<br>${esc(b.contactLine ?? '')}${b.website ? `<br>${esc(b.website)}` : ''}</div></div>
       <div class="panel center" style="flex:0 0 62mm;text-align:center"><div class="serif" style="font-size:12pt;margin-bottom:2mm">${esc(lab.book)}</div><div style="background:#fff;padding:2mm;border-radius:2mm;line-height:0">${qrSvg}</div><div class="small muted" style="margin-top:1.5mm">${esc(lab.scan)}</div></div>
     </div>
-    <div class="panel small" style="margin-top:12mm;text-align:center">${esc(lab.disclaimer)}</div>
+    ${disclaimerPanel(lang, t)}
   </section>`;
 
   const ids = [...chapters.map((c) => c.id), 'closing'];

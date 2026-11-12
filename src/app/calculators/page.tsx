@@ -4,6 +4,7 @@ import { Calculator as CalcIcon } from 'lucide-react';
 import { CALCULATORS } from '@/lib/seo/calculators';
 import { ExpertCard } from '@/components/calculators/expert-card';
 import { Bi } from '@/components/i18n/bi';
+import { DisclaimerNote } from '@/components/legal/disclaimer-note';
 
 export const metadata: Metadata = { title: 'Free Numerology Calculators', description: 'Free numerology calculators: Moolank, Bhagyank, Lo Shu grid, name, mobile number, Kua, personal year, vehicle number and house number, based on Indian numerology.', alternates: { canonical: '/calculators' } };
 
@@ -22,6 +23,7 @@ export default function Calculators() {
         </Link>
       </div>
       <ExpertCard />
+      <DisclaimerNote />
     </div>
   );
 }

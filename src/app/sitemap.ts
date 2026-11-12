@@ -35,6 +35,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...TOP_ANGEL.map((n, i) => ({ url: `${base()}/angel-numbers/${n}`, lastModified: c, changeFrequency: 'monthly' as const, priority: i < 50 ? 0.8 : i < 300 ? 0.6 : 0.4 })),
     { url: `${base()}/blog`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8 },
     ...CITIES.map((x) => ({ url: `${base()}/blog/${postSlug(x)}`, lastModified: c, changeFrequency: 'monthly' as const, priority: x.tier === 1 ? 0.8 : x.tier === 2 ? 0.6 : 0.5 })),
-    ...['terms', 'privacy', 'refund'].map((p) => ({ url: `${base()}/${p}`, lastModified: now, priority: 0.2 })),
+    ...['terms', 'privacy', 'refund', 'disclaimer'].map((p) => ({ url: `${base()}/${p}`, lastModified: now, priority: 0.2 })),
   ];
 }
