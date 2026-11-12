@@ -178,6 +178,7 @@ async function htmlToPdf(browser: Browser, html: string, opts: { margin0?: boole
 /** Finds `@@C:<id>@@` markers (invisible text placed in chapter titles) and returns id → page number. */
 async function findChapterPages(pdf: Uint8Array): Promise<Record<string, number>> {
   try {
+    // @ts-expect-error worker bundle has no declaration file
     await import('pdfjs-dist/legacy/build/pdf.worker.mjs');
     const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
     const doc = await pdfjs.getDocument({ data: pdf.slice(), isEvalSupported: false, disableFontFace: true, useSystemFonts: false, verbosity: 0 }).promise;
