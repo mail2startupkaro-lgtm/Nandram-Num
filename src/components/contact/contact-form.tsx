@@ -8,6 +8,8 @@ import { Field, Input, Select } from '@/components/ui/form';
 import { api, ApiError } from '@/lib/client/api';
 import { CONTACT_SUBJECTS, type ContactTopic } from '@/lib/contact-options';
 import { cn } from '@/lib/utils';
+import { useDisplayCurrency, useTimeZone } from '@/lib/client/currency';
+import { istHourIn, isIST } from '@/lib/client/working-hours';
 
 const T = {
   en: {
@@ -38,6 +40,8 @@ const T = {
 const ICON = { service: Sparkles, support: Wrench, other: HelpCircle } as const;
 
 export function ContactForm({ whatsapp, email, phone }: { whatsapp: string | null; email: string | null; phone: string | null }) {
+  const abroad = useDisplayCurrency() === 'USD';
+  const tz = useTimeZone();
   const { lang, me } = useApp();
   const t = T[lang];
   const [topic, setTopic] = React.useState<ContactTopic>('service');
@@ -121,7 +125,7 @@ export function ContactForm({ whatsapp, email, phone }: { whatsapp: string | nul
             </fieldset>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label={t.name} htmlFor="c-name" required error={errors.name}><Input id="c-name" autoComplete="name" value={f.name} onChange={set('name')} maxLength={120} /></Field>
-              <Field label={t.phone} htmlFor="c-phone" required hint={t.phoneHint} error={errors.phone}><Input id="c-phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="98765 43210" value={f.phone} onChange={set('phone')} maxLength={20} /></Field>
+              <Field label={t.phone} htmlFor="c-phone" required hint={t.phoneHint} error={errors.phone}><Input id="c-phone" type="tel" inputMode="tel" autoComplete="tel" placeholder={abroad ? '+1 415 555 0123' : '98765 43210'} value={f.phone} onChange={set('phone')} maxLength={20} /></Field>
               <Field label={t.email} htmlFor="c-email" hint={t.emailHint} error={errors.email}><Input id="c-email" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={f.email} onChange={set('email')} maxLength={320} /></Field>
               <Field label={t.subject[topic]} htmlFor="c-subject" required error={errors.subject}>
                 <Select id="c-subject" value={subject} onChange={(e) => { setSubject(e.target.value); setErrors((x) => ({ ...x, subject: '' })); }}>
@@ -151,7 +155,7 @@ export function ContactForm({ whatsapp, email, phone }: { whatsapp: string | nul
             {whatsapp && <li><a href={`https://wa.me/${whatsapp}?text=${waText}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-lg border border-success/40 bg-success/10 p-3 hover:brightness-110"><MessageCircle className="h-5 w-5 text-success" /><span><b>{t.wa}</b><span className="block text-xs text-muted-foreground">{t.waSub}</span></span></a></li>}
             {email && <li className="flex items-center gap-3"><Mail className="h-4 w-4 text-gold" /><span><span className="block text-xs text-muted-foreground">{t.mail}</span><a href={`mailto:${email}`} className="hover:text-gold">{email}</a></span></li>}
             {phone && <li className="flex items-center gap-3"><Phone className="h-4 w-4 text-gold" /><span><span className="block text-xs text-muted-foreground">{t.call}</span><a href={`tel:${phone.replace(/[^\d+]/g, '')}`} className="hover:text-gold">{phone}</a></span></li>}
-            <li className="flex items-center gap-3"><Clock className="h-4 w-4 text-gold" /><span><span className="block text-xs text-muted-foreground">{t.hours}</span>{t.hoursText}</span></li>
+            <li className="flex items-center gap-3"><Clock className="h-4 w-4 text-gold" /><span><span className="block text-xs text-muted-foreground">{t.hours}</span>{t.hoursText}{!isIST(tz) && <span className="block text-xs text-muted-foreground">{lang === 'hi' ? `आपके समय में: ${istHourIn(tz, 10, 'hi')} – ${istHourIn(tz, 19, 'hi')}` : `Your time: ${istHourIn(tz, 10)} – ${istHourIn(tz, 19)}`}</span>}</span></li>
           </ul>
         </div>
         <div className="glass rounded-2xl border border-gold/25 p-5">

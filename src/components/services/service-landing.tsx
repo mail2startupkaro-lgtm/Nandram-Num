@@ -11,6 +11,7 @@ import type { Service } from '@/lib/db/schema';
 import { SERVICE_PAGES, servicePageBySlug } from '@/lib/service-pages';
 import { abs, EXPERT, jsonLd as toLd } from '@/lib/seo/site';
 import { DisclaimerNote } from '@/components/legal/disclaimer-note';
+import { ServicePrice } from '@/components/services/service-price';
 
 export function serviceMetadata(slug: string): Metadata {
   const p = servicePageBySlug(slug)!;
@@ -23,9 +24,9 @@ export function serviceMetadata(slug: string): Metadata {
 
 async function loadService(code: string): Promise<PublicService | null> {
   let s: Service | undefined;
-  try { s = await getService(code); } catch { const d = DEFAULT_SERVICES.find((x) => x.code === code); s = d ? ({ ...d, mrpPaise: null, priceConfirmed: false, active: true, featured: !!d.featured, sort: d.sort ?? 0, updatedAt: new Date() } as Service) : undefined; }
+  try { s = await getService(code); } catch { const d = DEFAULT_SERVICES.find((x) => x.code === code); s = d ? ({ ...d, mrpPaise: null, usdCents: null, usdMrpCents: null, priceConfirmed: false, active: true, featured: !!d.featured, sort: d.sort ?? 0, updatedAt: new Date() } as Service) : undefined; }
   if (!s || !s.active) return null;
-  return { code: s.code, en: s.en, hi: s.hi, intake: s.intake, payable: isPayable(s), pricePaise: isPayable(s) ? s.pricePaise : null, mrpPaise: isPayable(s) ? s.mrpPaise : null };
+  return { code: s.code, en: s.en, hi: s.hi, intake: s.intake, payable: isPayable(s), pricePaise: isPayable(s) ? s.pricePaise : null, mrpPaise: isPayable(s) ? s.mrpPaise : null, usdCents: isPayable(s) ? s.usdCents : null, usdMrpCents: isPayable(s) ? s.usdMrpCents : null };
 }
 
 const STEPS = [
@@ -52,24 +53,7 @@ export async function ServiceLanding({ slug }: { slug: string }) {
       <div className="mt-5 flex flex-wrap items-end justify-between gap-3 border-t border-border/50 pt-4">
         <div>
           {svc.pricePaise ? (
-            (() => {
-              const real = svc.mrpPaise && svc.mrpPaise > svc.pricePaise ? svc.mrpPaise : svc.pricePaise * 2;
-              const pct = Math.round(((real - svc.pricePaise) / real) * 100);
-              return (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1.5 text-xs">
-                    <span className="text-muted-foreground font-medium">1 · <Bi en="Real Price" hi="वास्तविक मूल्य" />:</span>
-                    <span className="line-through text-muted-foreground decoration-danger decoration-[1.5px]">{inr(real)}</span>
-                    <span className="rounded bg-danger/15 px-1.5 py-0.2 text-[10px] font-bold text-danger">{pct}% <Bi en="OFF" hi="छूट" /></span>
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-xs font-bold uppercase tracking-wider text-gold">2 · <Bi en="Offer Price" hi="ऑफ़र मूल्य" />:</span>
-                    <span className="font-serif text-3xl font-bold"><span className="gold-text">{inr(svc.pricePaise)}</span></span>
-                  </div>
-                  <p className="text-xs text-muted-foreground"><Bi en="incl. 18% GST · secure payment by Cashfree" hi="18% GST सहित · Cashfree द्वारा सुरक्षित भुगतान" /></p>
-                </div>
-              );
-            })()
+            <ServicePrice s={svc} note={{ en: 'incl. 18% GST · secure payment by Cashfree', hi: '18% GST सहित · Cashfree द्वारा सुरक्षित भुगतान' }} />
           ) : (
             <div>
               <p className="font-serif text-xl font-semibold text-gold"><Bi en="Price on request" hi="मूल्य पूछताछ पर" /></p>

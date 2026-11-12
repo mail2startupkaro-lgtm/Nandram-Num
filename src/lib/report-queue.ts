@@ -12,8 +12,8 @@ import { getDb, type Db } from '@/lib/db/client';
 import { clientProfiles, reports, users } from '@/lib/db/schema';
 import type { Account } from '@/lib/billing/entitlements';
 
-export const WORK_START_H = 8;   // 08:00 IST
-export const WORK_END_H = 22;    // 22:00 IST
+import { WORK_END_H, WORK_START_H } from './report-queue-hours';
+export { WORK_END_H, WORK_START_H };
 export const REPORT_TURNAROUND_MIN = 115;
 /** Minutes of working time at which each stage starts. */
 export const STAGE_STARTS = [0, 25, 55, REPORT_TURNAROUND_MIN] as const;

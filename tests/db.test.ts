@@ -276,6 +276,43 @@ describe.skipIf(!URL)('database (Postgres)', () => {
     expect(await svcLib.deleteService('SVC_NAME_CORRECTION', db)).toBe('in_use');
   });
 
+  it('international pricing: USD plan price, USD order, ₹ coupon refused, finance kept separate', async () => {
+    const { createCheckout, fulfilPayment } = await import('@/lib/billing/checkout');
+    const { salesReport, parseRange } = await import('@/lib/admin/finance');
+    const { buildInvoiceHtml } = await import('@/lib/billing/invoice');
+    await db.update(schema.plans).set({ features: sql`features || '{"usdCents": 999, "usdMrpCents": 1999}'::jsonb` }).where(sql`code = 'SINGLE'`);
+    await db.insert(schema.coupons).values([{ code: 'FLAT100', amountOffPaise: 10_000 }, { code: 'TEN', percentOff: 10 }]);
+    const [buyer] = await db.insert(schema.users).values({ name: 'Intl Buyer', email: 'intl@test.local', phone: '+14155550123' }).returning();
+    // Phone with country code is accepted for clients abroad (mock gateway in tests).
+    const usd = await createCheckout(buyer, { planCode: 'SINGLE', billingState: 'Outside India', phone: '+1 415 555 0123', currency: 'USD', gstin: '07AAAAA0000A1Z5' }, {}, db);
+    expect(usd).toMatchObject({ currency: 'USD', amountPaise: 999 });
+    await expect(createCheckout(buyer, { planCode: 'SINGLE', billingState: 'Outside India', currency: 'USD', coupon: 'FLAT100' }, {}, db)).rejects.toThrow('COUPON_NOT_FOR_CURRENCY');
+    const pct = await createCheckout(buyer, { planCode: 'SINGLE', billingState: 'Outside India', currency: 'USD', coupon: 'TEN' }, {}, db);
+    expect(pct.amountPaise).toBe(899);
+    // A plan without a USD price stays in ₹ even for a visitor abroad.
+    const inr = await createCheckout(buyer, { planCode: 'PACK5', billingState: 'Outside India', currency: 'USD' }, {}, db);
+    expect(inr.currency).toBe('INR');
+    const { payment } = await fulfilPayment(usd.orderId, 'pay_usd_1', db);
+    expect(payment).toMatchObject({ currency: 'USD', amountPaise: 999, gstin: null, billingState: 'Outside India' });
+    expect(payment.taxablePaise + payment.igstPaise).toBe(999);
+    const html = buildInvoiceHtml(payment, buyer, 'Single Report', { legalName: 'X', address: '', state: 'Rajasthan', stateCode: '08', gstin: '', email: '', sac: '999799', invoicePrefix: 'MN' } as never, { brandName: 'B' } as never);
+    expect(html).toContain('$9.99'); expect(html).toContain('Nine US Dollars and Ninety Nine Cents Only'); expect(html).not.toContain('₹');
+    const range = (c: string) => parseRange(new URLSearchParams({ from: '2000-01-01', to: '2999-12-31', currency: c }));
+    const [inrRep, usdRep] = [await salesReport(range('INR'), db), await salesReport(range('USD'), db)];
+    expect(usdRep.totals).toMatchObject({ orders: 1, gross: 999 });
+    expect(inrRep.byPlan.some((x) => x.gross === 999)).toBe(false);
+    // Services: $ fee only when the admin set one.
+    const svcLib = await import('@/lib/billing/services');
+    const loshu = (await svcLib.listServices({}, db)).find((x) => x.code === 'SVC_LOSHU')!;
+    await svcLib.saveService({ ...loshu, priceConfirmed: true, usdCents: 2900, usdMrpCents: 100 }, db);
+    const saved = await svcLib.getService('SVC_LOSHU', db);
+    expect(saved).toMatchObject({ usdCents: 2900, usdMrpCents: null }); // a "was" price below the fee is dropped
+    const svcUsd = await createCheckout(buyer, { planCode: 'SVC_LOSHU', billingState: 'Outside India', currency: 'USD', intake: { clientName: 'John Smith', dob: '1990-05-17', gender: 'male' } }, {}, db);
+    expect(svcUsd).toMatchObject({ currency: 'USD', amountPaise: 2900 });
+    const svcInr = await createCheckout(buyer, { planCode: 'SVC_LOSHU', billingState: 'Delhi', currency: 'INR', intake: { clientName: 'John Smith', dob: '1990-05-17', gender: 'male' } }, {}, db);
+    expect(svcInr).toMatchObject({ currency: 'INR', amountPaise: loshu.pricePaise });
+  });
+
   it('services seeding: a service the owner deleted is not re-created on restart', async () => {
     const svcLib = await import('@/lib/billing/services');
     expect(await svcLib.deleteService('SVC_BABY_NAME', db)).toBe('deleted');

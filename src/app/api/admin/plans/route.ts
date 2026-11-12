@@ -18,14 +18,17 @@ export const GET = withAdmin(async () => {
     select p.code,
       (select count(*)::int from payments x where x.plan_code = p.code) orders,
       (select count(*)::int from payments x where x.plan_code = p.code and x.status = 'paid') paid,
-      (select coalesce(sum(amount_paise),0)::bigint from payments x where x.plan_code = p.code and x.status = 'paid') revenue,
+      (select coalesce(sum(amount_paise),0)::bigint from payments x where x.plan_code = p.code and x.status = 'paid' and x.currency = 'INR') revenue,
+      (select coalesce(sum(amount_paise),0)::bigint from payments x where x.plan_code = p.code and x.status = 'paid' and x.currency = 'USD') "revenueUsd",
       (select count(*)::int from subscriptions s where s.plan_code = p.code and s.current_period_end > now()) "activeSubs"
-    from plans p`)).rows as { code: string; orders: number; paid: number; revenue: string | number; activeSubs: number }[];
-  const by = Object.fromEntries(usage.map((u) => [u.code, { orders: u.orders, paid: u.paid, revenue: Number(u.revenue), activeSubs: u.activeSubs }]));
+    from plans p`)).rows as { code: string; orders: number; paid: number; revenue: string | number; revenueUsd: string | number; activeSubs: number }[];
+  const by = Object.fromEntries(usage.map((u) => [u.code, { orders: u.orders, paid: u.paid, revenue: Number(u.revenue), revenueUsd: Number(u.revenueUsd), activeSubs: u.activeSubs }]));
   return json({ plans: list.map((p) => ({ ...p, usage: by[p.code] ?? { orders: 0, paid: 0, revenue: 0, activeSubs: 0 } })) });
 });
 
-const Features = z.object({ fullReports: z.boolean(), whiteLabel: z.boolean(), bulk: z.boolean(), share: z.boolean(), watermark: z.boolean(), maxProfiles: z.number().int().positive().max(100000).nullable() });
+const minor = z.number().int().min(100).max(10_000_000).nullable().optional(); // ₹1 / $1 minimum
+const Features = z.object({ fullReports: z.boolean(), whiteLabel: z.boolean(), bulk: z.boolean(), share: z.boolean(), watermark: z.boolean(), maxProfiles: z.number().int().positive().max(100000).nullable(),
+  mrpPaise: minor, usdCents: minor, usdMrpCents: minor });
 const Body = z.object({
   code: z.string().trim().toUpperCase().pipe(z.string().regex(/^[A-Z0-9_]{2,30}$/, 'Code: 2–30 letters, digits or _')),
   name: z.string().trim().min(2).max(60), description: z.string().max(300).default(''),

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/form';
 import { Tabs } from '@/components/ui/misc';
 import { api, ApiError } from '@/lib/client/api';
+import { useDisplayCurrency } from '@/lib/client/currency';
 
 function PasswordInput({ id, value, onChange, autoComplete, show, setShow }: {
   id: string; value: string; onChange: (v: string) => void; autoComplete: string; show: boolean; setShow: (v: boolean) => void;
@@ -36,6 +37,7 @@ function LoginInner() {
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [mobile, setMobile] = React.useState('');
+  const abroad = useDisplayCurrency() === 'USD';
   const [password, setPassword] = React.useState('');
   const [confirm, setConfirm] = React.useState('');
   const [show, setShow] = React.useState(false);
@@ -176,14 +178,14 @@ function LoginInner() {
               <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); signup(); }}>
                 <Field label={t.auth.fullName} htmlFor="nm" required><Input id="nm" autoFocus autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} required /></Field>
                 <Field label={t.auth.emailLabel} htmlFor="em" required><Input id="em" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required /></Field>
-                <Field label={t.auth.mobileLabel} htmlFor="mb" required><Input id="mb" type="tel" inputMode="numeric" autoComplete="tel-national" placeholder="98765 43210" value={mobile} onChange={(e) => setMobile(e.target.value)} required /></Field>
+                <Field label={t.auth.mobileLabel} htmlFor="mb" required><Input id="mb" type="tel" inputMode="tel" autoComplete="tel" placeholder={abroad ? '+1 415 555 0123' : '98765 43210'} value={mobile} onChange={(e) => setMobile(e.target.value)} required /></Field>
                 <Field label={t.auth.password} htmlFor="pw1" hint={t.auth.passwordHint} required>
                   <PasswordInput id="pw1" value={password} onChange={setPassword} autoComplete="new-password" show={show} setShow={setShow} />
                 </Field>
                 <Field label={t.auth.confirmPassword} htmlFor="pw2" required>
                   <PasswordInput id="pw2" value={confirm} onChange={setConfirm} autoComplete="new-password" show={show} setShow={setShow} />
                 </Field>
-                <Button type="submit" variant="gold" className="w-full" disabled={busy || name.trim().length < 2 || !email || mobile.length < 10 || !password}><UserPlus /> {t.auth.createAccount}</Button>
+                <Button type="submit" variant="gold" className="w-full" disabled={busy || name.trim().length < 2 || !email || mobile.replace(/\D/g, '').length < 8 || !password}><UserPlus /> {t.auth.createAccount}</Button>
               </form>
             )}
           </>

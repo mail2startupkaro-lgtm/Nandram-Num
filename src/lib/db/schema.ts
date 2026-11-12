@@ -120,6 +120,9 @@ export interface PlanFeatures {
   share: boolean;           // share links for any report
   watermark: boolean;       // free tier watermark
   maxProfiles: number | null;
+  mrpPaise?: number | null;    // real (struck-through) ₹ price
+  usdCents?: number | null;    // $ price for visitors outside India (null = ₹ only)
+  usdMrpCents?: number | null; // real (struck-through) $ price
 }
 
 export const plans = pgTable('plans', {
@@ -155,6 +158,7 @@ export const payments = pgTable('payments', {
   status: paymentStatusEnum('status').notNull().default('created'),
   listPricePaise: integer('list_price_paise').notNull(),
   discountPaise: integer('discount_paise').notNull().default(0),
+  currency: varchar('currency', { length: 3 }).notNull().default('INR'), // INR or USD; every *_paise column is in this currency's minor unit
   amountPaise: integer('amount_paise').notNull(),      // charged, GST inclusive
   taxablePaise: integer('taxable_paise').notNull(),
   cgstPaise: integer('cgst_paise').notNull().default(0),
@@ -393,6 +397,8 @@ export const services = pgTable('services', {
   hi: jsonb('hi').$type<ServiceText>().notNull(),
   pricePaise: integer('price_paise').notNull(),           // GST-inclusive
   mrpPaise: integer('mrp_paise'),                          // optional "was" price shown struck through
+  usdCents: integer('usd_cents'),                          // $ fee for clients outside India (null = ₹ only)
+  usdMrpCents: integer('usd_mrp_cents'),                   // optional $ "was" price
   priceConfirmed: boolean('price_confirmed').notNull().default(false), // online payment only after the owner confirms the price
   intake: jsonb('intake').$type<ServiceIntakeField[]>().notNull(),
   active: boolean('active').notNull().default(true),

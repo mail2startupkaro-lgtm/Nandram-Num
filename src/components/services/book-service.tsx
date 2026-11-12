@@ -11,8 +11,10 @@ import { confirmCashfreeOrder, loadCashfree } from '@/lib/client/cashfree';
 import { todayIST, toIso } from '@/lib/numerology';
 import type { ServiceIntakeField, ServiceText } from '@/lib/db/schema';
 import { DisclaimerNote } from '@/components/legal/disclaimer-note';
+import { formatMoney, OUTSIDE_INDIA } from '@/lib/billing/currency';
+import { useDisplayCurrency } from '@/lib/client/currency';
 
-export interface PublicService { code: string; en: ServiceText; hi: ServiceText; intake: ServiceIntakeField[]; payable: boolean; pricePaise: number | null; mrpPaise: number | null }
+export interface PublicService { code: string; en: ServiceText; hi: ServiceText; intake: ServiceIntakeField[]; payable: boolean; pricePaise: number | null; mrpPaise: number | null; usdCents?: number | null; usdMrpCents?: number | null }
 interface Order { gateway: 'cashfree' | 'mock'; mode: string; paymentSessionId: string; mock: boolean; orderId: string; amountPaise: number }
 
 export const inr = (p: number) => `₹${(p / 100).toLocaleString('en-IN', { minimumFractionDigits: p % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;
@@ -46,8 +48,12 @@ function BookDialog({ svc, onClose }: { svc: PublicService; onClose: () => void 
   const { lang, me, t: dict, refreshMe } = useApp();
   const t = T[lang]; const text = svc[lang];
   const u = me?.user;
+  const usd = useDisplayCurrency() === 'USD' && !!svc.usdCents;
+  const fee = usd ? formatMoney(svc.usdCents!, 'USD') : inr(svc.pricePaise ?? 0);
   const [d, setD] = React.useState<Record<string, string>>({ clientName: u?.name ?? '', gender: 'male' });
   const [bill, setBill] = React.useState({ name: u?.name ?? '', email: u?.email ?? '', phone: (u?.phone ?? '').replace(/^\+91/, ''), state: u?.billingState ?? '', gstin: '' });
+  React.useEffect(() => { if (usd && !bill.state) setBill((b) => ({ ...b, state: OUTSIDE_INDIA })); }, [usd]); // eslint-disable-line react-hooks/exhaustive-deps
+  const abroad = usd || bill.state === OUTSIDE_INDIA;
   const [busy, setBusy] = React.useState(false);
   const [stage, setStage] = React.useState<'form' | 'confirming' | 'ok' | 'fail'>('form');
   const [order, setOrder] = React.useState<Order | null>(null);
@@ -62,7 +68,7 @@ function BookDialog({ svc, onClose }: { svc: PublicService; onClose: () => void 
     setBusy(true); setError(null);
     try {
       const intake = Object.fromEntries(svc.intake.map((k) => [k, (d[k] ?? '').trim()]).filter(([, v]) => v));
-      const o = await api<Order>('/api/billing/checkout', { method: 'POST', json: { planCode: svc.code, intake, billingState: bill.state, billingName: bill.name || undefined, email: u ? undefined : bill.email.trim(), phone: bill.phone || undefined, gstin: bill.gstin || undefined } });
+      const o = await api<Order>('/api/billing/checkout', { method: 'POST', json: { planCode: svc.code, intake, billingState: bill.state, billingName: bill.name || undefined, email: u ? undefined : bill.email.trim(), phone: bill.phone || undefined, gstin: abroad ? undefined : bill.gstin || undefined } });
       setOrder(o);
       if (!u) await refreshMe(); // a new account was created for the guest
       if (o.gateway === 'cashfree') {
@@ -108,19 +114,19 @@ function BookDialog({ svc, onClose }: { svc: PublicService; onClose: () => void 
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label={t.billName} htmlFor="bk-bn"><Input id="bk-bn" value={bill.name} onChange={(e) => setBill({ ...bill, name: e.target.value })} maxLength={120} /></Field>
                 {!u && <Field label={t.email} htmlFor="bk-em" required><Input id="bk-em" type="email" value={bill.email} onChange={(e) => setBill({ ...bill, email: e.target.value })} /></Field>}
-                {(!u || !u.phone) && <Field label={t.phone} htmlFor="bk-ph" required><Input id="bk-ph" type="tel" inputMode="numeric" placeholder="98765 43210" value={bill.phone} onChange={(e) => setBill({ ...bill, phone: e.target.value })} maxLength={14} /></Field>}
-                <Field label={t.state} htmlFor="bk-st" required><Select id="bk-st" value={bill.state} onChange={(e) => setBill({ ...bill, state: e.target.value })}><option value="">{t.select}</option>{INDIAN_STATES.map((s) => <option key={s}>{s}</option>)}</Select></Field>
-                <Field label={t.gstin} htmlFor="bk-gst"><Input id="bk-gst" maxLength={15} value={bill.gstin} onChange={(e) => setBill({ ...bill, gstin: e.target.value.toUpperCase() })} /></Field>
+                {(!u || !u.phone) && <Field label={t.phone} htmlFor="bk-ph" required><Input id="bk-ph" type="tel" inputMode="tel" autoComplete="tel" placeholder={abroad ? '+1 555 123 4567' : '98765 43210'} value={bill.phone} onChange={(e) => setBill({ ...bill, phone: e.target.value })} maxLength={18} /></Field>}
+                <Field label={t.state} htmlFor="bk-st" required><Select id="bk-st" value={bill.state} onChange={(e) => setBill({ ...bill, state: e.target.value })}><option value="">{t.select}</option><option value={OUTSIDE_INDIA}>{lang === 'hi' ? 'भारत के बाहर' : 'Outside India'}</option>{INDIAN_STATES.map((s) => <option key={s}>{s}</option>)}</Select></Field>
+                {!abroad && <Field label={t.gstin} htmlFor="bk-gst"><Input id="bk-gst" maxLength={15} value={bill.gstin} onChange={(e) => setBill({ ...bill, gstin: e.target.value.toUpperCase() })} /></Field>}
               </div>
             </fieldset>
-            <div className="flex items-center justify-between rounded-md bg-muted p-3 text-sm font-semibold"><span>{t.total}</span><span>{inr(svc.pricePaise ?? 0)}</span></div>
+            <div className="flex items-center justify-between rounded-md bg-muted p-3 text-sm font-semibold"><span>{usd ? (lang === 'hi' ? 'कुल (कर सहित)' : 'Total (incl. taxes)') : t.total}</span><span>{fee}</span></div>
             <p className="text-xs text-muted-foreground">{t.privacy}</p>
             <DisclaimerNote agree />
             {order?.mock ? (
               <div className="space-y-2 rounded-md border border-warning/40 bg-warning/10 p-3"><p className="text-xs">{t.mock}</p>
                 <Button variant="gold" className="w-full" onClick={async () => { try { await api('/api/billing/mock-pay', { method: 'POST', json: { orderId: order.orderId } }); setStage('ok'); } catch { setStage('fail'); } }}>{t.simulate}</Button></div>
             ) : (
-              <Button variant="gold" size="lg" className="w-full" disabled={busy || !!missing} onClick={pay}>{busy ? t.paying : t.pay(inr(svc.pricePaise ?? 0))}</Button>
+              <Button variant="gold" size="lg" className="w-full" disabled={busy || !!missing} onClick={pay}>{busy ? t.paying : t.pay(fee)}</Button>
             )}
             {stage === 'fail' && <p className="text-sm text-danger" role="alert">{t.failed}</p>}
             {error && <p className="text-sm text-danger" role="alert">{error}</p>}

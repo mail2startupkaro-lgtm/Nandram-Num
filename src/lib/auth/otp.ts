@@ -4,6 +4,7 @@ import { and, desc, eq, gte, isNull, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { normalizeIndianMobile } from '@/lib/numerology';
 import { sha256Hex } from '@/lib/security/crypto';
+import { intlPhone } from '@/lib/billing/currency';
 import { getDb, type Db } from '@/lib/db/client';
 import { otpCodes, users, type User } from '@/lib/db/schema';
 import { defaultSender, type Sender } from './senders';
@@ -22,7 +23,11 @@ export function normaliseIdentifier(channel: 'email' | 'sms', raw: string): stri
     if (!z.string().email().max(320).safeParse(e).success) throw new AuthError('INVALID_EMAIL');
     return e;
   }
-  try { return `+91${normalizeIndianMobile(raw)}`; } catch { throw new AuthError('INVALID_MOBILE'); }
+  try { return `+91${normalizeIndianMobile(raw)}`; } catch { /* not an Indian number */ }
+  // Clients abroad: any number written with its country code, e.g. +1 415 555 0123 or 0044 20 7946 0958.
+  const intl = intlPhone(raw);
+  if (intl && !intl.startsWith('+91')) return intl;
+  throw new AuthError('INVALID_MOBILE');
 }
 
 const pepper = () => process.env.OTP_PEPPER || process.env.ENCRYPTION_KEY || 'dev-pepper';

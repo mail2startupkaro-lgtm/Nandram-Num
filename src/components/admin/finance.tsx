@@ -7,6 +7,7 @@ import { Field, Input, Select } from '@/components/ui/form';
 import { Badge } from '@/components/ui/misc';
 import { api } from '@/lib/client/api';
 import { cn } from '@/lib/utils';
+import { formatMoney, type Currency } from '@/lib/billing/currency';
 
 export const inr = (p: number) => `₹${(p / 100).toLocaleString('en-IN', { minimumFractionDigits: p % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;
 const ist = (d: Date) => new Date(d.getTime() + 5.5 * 3600_000).toISOString().slice(0, 10);
@@ -33,18 +34,21 @@ function presets() {
   ];
 }
 
-function RangePicker({ v, onChange }: { v: { from: string; to: string }; onChange: (v: { from: string; to: string }) => void }) {
+type RangeV = { from: string; to: string; currency: Currency };
+function RangePicker({ v, onChange }: { v: RangeV; onChange: (v: RangeV) => void }) {
   const ps = React.useMemo(presets, []);
   return (
     <div className="flex flex-wrap items-end gap-2">
-      <Field label="Period"><Select value={ps.find((p) => p.from === v.from && p.to === v.to)?.id ?? 'custom'} onChange={(e) => { const p = ps.find((x) => x.id === e.target.value); if (p) onChange({ from: p.from, to: p.to }); }} className="w-40">
+      <Field label="Period"><Select value={ps.find((p) => p.from === v.from && p.to === v.to)?.id ?? 'custom'} onChange={(e) => { const p = ps.find((x) => x.id === e.target.value); if (p) onChange({ ...v, from: p.from, to: p.to }); }} className="w-40">
         {ps.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}<option value="custom">Custom</option></Select></Field>
       <Field label="From"><Input type="date" value={v.from} onChange={(e) => onChange({ ...v, from: e.target.value })} className="w-40" /></Field>
       <Field label="To"><Input type="date" value={v.to} onChange={(e) => onChange({ ...v, to: e.target.value })} className="w-40" /></Field>
+      <Field label="Currency" hint="₹ and $ sales are reported separately"><Select value={v.currency} onChange={(e) => onChange({ ...v, currency: e.target.value as Currency })} className="w-36">
+        <option value="INR">₹ INR (India)</option><option value="USD">$ USD (international)</option></Select></Field>
     </div>
   );
 }
-const useRange = () => React.useState(() => { const p = presets().find((x) => x.id === 'month')!; return { from: p.from, to: p.to }; });
+const useRange = () => React.useState<RangeV>(() => { const p = presets().find((x) => x.id === 'month')!; return { from: p.from, to: p.to, currency: 'INR' }; });
 
 const Card = ({ title, children, className, action }: { title?: string; children: React.ReactNode; className?: string; action?: React.ReactNode }) => (
   <section className={cn('glass rounded-lg p-5', className)}>{title && <div className="mb-4 flex flex-wrap items-center justify-between gap-2"><h2 className="text-xl font-semibold">{title}</h2>{action}</div>}{children}</section>
@@ -81,9 +85,10 @@ type Sales = {
 
 export function SalesReport() {
   const [range, setRange] = useRange();
+  const inr = (p: number) => formatMoney(p, range.currency);
   const [s, setS] = React.useState<Sales | null>(null);
   const [loading, setLoading] = React.useState(false);
-  const load = React.useCallback(() => { setLoading(true); api<Sales>(`/api/admin/finance?report=sales&from=${range.from}&to=${range.to}`).then(setS).finally(() => setLoading(false)); }, [range]);
+  const load = React.useCallback(() => { setLoading(true); api<Sales>(`/api/admin/finance?report=sales&from=${range.from}&to=${range.to}&currency=${range.currency}`).then(setS).finally(() => setLoading(false)); }, [range]);
   React.useEffect(() => { load(); }, [load]);
   const max = Math.max(1, ...(s?.series.map((x) => x.gross) ?? [1]));
   return (
@@ -140,6 +145,7 @@ type Audit = { paidWithoutInvoice: { id: string; orderId: string }[]; amountMism
 
 export function PaymentReport() {
   const [range, setRange] = useRange();
+  const inr = (p: number) => formatMoney(p, range.currency);
   const [view, setView] = React.useState<'register' | 'gst' | 'audit'>('register');
   const [f, setF] = React.useState({ status: '', plan: '', q: '' });
   const [list, setList] = React.useState<Pay[] | null>(null);
@@ -156,7 +162,7 @@ export function PaymentReport() {
     const h = setTimeout(() => { setList(null); api<{ payments: Pay[] }>(`/api/admin/finance?${new URLSearchParams(params)}`).then((r) => setList(r.payments)); }, 250);
     return () => clearTimeout(h);
   }, [view, range, f]); // eslint-disable-line react-hooks/exhaustive-deps
-  React.useEffect(() => { if (view === 'gst') { setGst(null); api<Gst>(`/api/admin/finance?report=gst&from=${range.from}&to=${range.to}`).then(setGst); } }, [view, range]);
+  React.useEffect(() => { if (view === 'gst') { setGst(null); api<Gst>(`/api/admin/finance?report=gst&from=${range.from}&to=${range.to}&currency=${range.currency}`).then(setGst); } }, [view, range]);
   React.useEffect(() => { if (view === 'audit') { setAudit(null); api<Audit>('/api/admin/finance?report=audit').then(setAudit); } }, [view]);
 
   const sum = (k: keyof Pay) => (list ?? []).filter((p) => p.status === 'paid').reduce((a, p) => a + (p[k] as number), 0);

@@ -7,11 +7,12 @@ import { buttonVariants, Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/misc';
 import { api, download } from '@/lib/client/api';
 import { SecurityPanel } from '@/components/account/security-panel';
+import { formatMoney } from '@/lib/billing/currency';
 
 interface Data {
   user: { name: string | null; email: string | null; phone: string | null; role: string; hasPassword?: boolean };
   account: { planCode?: string | null; planName: string | null; proUntil: string | null; credits: number; features: { whiteLabel: boolean } };
-  payments: { id: string; planCode: string; amountPaise: number; status: string; invoiceNumber: string | null; createdAt: string }[];
+  payments: { id: string; planCode: string; amountPaise: number; currency?: 'INR' | 'USD'; status: string; invoiceNumber: string | null; createdAt: string }[];
   ledger: { id: string; delta: number; reason: string; createdAt: string }[];
   serviceOrders?: { id: string; serviceCode: string; status: string; createdAt: string; deliveredAt: string | null; invoiceNumber: string | null }[];
 }
@@ -50,7 +51,7 @@ export default function AccountPage() {
           <div className="overflow-x-auto"><table className="w-full min-w-[520px] text-sm"><tbody>
             {d.payments.map((p) => (
               <tr key={p.id} className="border-b border-border/50">
-                <td className="py-2">{new Date(p.createdAt).toLocaleDateString('en-IN')}</td><td>{hi ? W(p.planCode) : p.planCode}</td><td>{inr(p.amountPaise)}</td>
+                <td className="py-2">{new Date(p.createdAt).toLocaleDateString('en-IN')}</td><td>{hi ? W(p.planCode) : p.planCode}</td><td>{formatMoney(p.amountPaise, p.currency ?? 'INR')}</td>
                 <td><Badge tone={p.status === 'paid' ? 'good' : p.status === 'failed' ? 'bad' : 'default'}>{W(p.status)}</Badge></td>
                 <td className="text-right">{p.invoiceNumber && <Button size="sm" variant="ghost" onClick={() => download(`/api/billing/invoices/${p.id}`)}><Download /> {p.invoiceNumber}</Button>}</td>
               </tr>

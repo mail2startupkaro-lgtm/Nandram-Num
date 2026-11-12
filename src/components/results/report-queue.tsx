@@ -7,6 +7,8 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { api, ApiError, download } from '@/lib/client/api';
 import type { QueueState } from '@/lib/report-queue';
 import { cn } from '@/lib/utils';
+import { useTimeZone } from '@/lib/client/currency';
+import { isIST, workingHoursLabel } from '@/lib/client/working-hours';
 
 /** Is this visitor served by the delivery queue (general client) rather than instant PDFs (Pro / admin)? */
 export function useQueued() {
@@ -18,7 +20,7 @@ const T = {
   en: {
     stages: [['Received', 'Your details have been received.'], ['In the queue', 'Your report is in the queue.'], ['Being prepared', 'Your report is being prepared.'], ['Ready', 'Your report is ready to download.']] as [string, string][],
     expected: (t: string) => `Expected by ${t}`, paused: (t: string) => `Paused for the night – resumes at ${t}`, hold: 'On hold – we will update you shortly.',
-    hours: 'Reports are prepared between 8:00 am and 10:00 pm IST and are usually ready about 2 hours after you submit them.',
+    hours: (h: string) => `Reports are prepared between ${h} and are usually ready about 2 hours after you submit them.`,
     download: 'Download report (PDF)', snapshot: 'One-page summary', submit: 'Submit for report', submitting: 'Submitting…', uses: 'Uses 1 report credit.', credits: (n: number) => `Credits left: ${n}`,
     noCredit: 'Choose a plan to get your complete report.', plans: 'See plans', signIn: 'Sign in to get your report', saveFirst: 'Save this reading first, then submit it for your complete report.', save: 'Save reading',
     title: 'Your complete report', error: 'Something went wrong. Please try again.',
@@ -26,19 +28,21 @@ const T = {
   hi: {
     stages: [['प्राप्त', 'आपका विवरण प्राप्त हो गया है।'], ['क्रम में', 'आपकी रिपोर्ट क्रम में है।'], ['तैयार हो रही है', 'आपकी रिपोर्ट तैयार की जा रही है।'], ['तैयार', 'आपकी रिपोर्ट डाउनलोड के लिए तैयार है।']] as [string, string][],
     expected: (t: string) => `अपेक्षित समय: ${t}`, paused: (t: string) => `रात के लिए रुका – ${t} पर फिर शुरू`, hold: 'अस्थायी रूप से रुका – हम जल्द ही अपडेट देंगे।',
-    hours: 'रिपोर्ट सुबह 8:00 से रात 10:00 बजे (IST) के बीच तैयार की जाती हैं और जमा करने के लगभग 2 घंटे बाद तैयार हो जाती हैं।',
+    hours: (h: string) => `रिपोर्ट ${h} के बीच तैयार की जाती हैं और जमा करने के लगभग 2 घंटे बाद तैयार हो जाती हैं।`,
     download: 'रिपोर्ट डाउनलोड करें (PDF)', snapshot: 'एक-पृष्ठ सारांश', submit: 'रिपोर्ट के लिए जमा करें', submitting: 'जमा हो रहा है…', uses: '1 रिपोर्ट क्रेडिट उपयोग होगा।', credits: (n: number) => `शेष क्रेडिट: ${n}`,
     noCredit: 'अपनी संपूर्ण रिपोर्ट पाने के लिए प्लान चुनें।', plans: 'प्लान देखें', signIn: 'रिपोर्ट पाने के लिए साइन इन करें', saveFirst: 'पहले यह रीडिंग सहेजें, फिर अपनी संपूर्ण रिपोर्ट के लिए जमा करें।', save: 'रीडिंग सहेजें',
     title: 'आपकी संपूर्ण रिपोर्ट', error: 'कुछ गड़बड़ हुई। कृपया फिर प्रयास करें।',
   },
 };
 
-const when = (iso: string, lang: 'en' | 'hi') => new Date(iso).toLocaleString(lang === 'hi' ? 'hi-IN' : 'en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+/** Date/time in the visitor's own time zone (with its short name when outside India, e.g. "12 Nov, 9:55 am EST"). */
+const when = (iso: string, lang: 'en' | 'hi', tz = 'Asia/Kolkata') => new Date(iso).toLocaleString(lang === 'hi' ? 'hi-IN' : isIST(tz) ? 'en-IN' : 'en-US', { timeZone: tz, day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', ...(isIST(tz) ? {} : { timeZoneName: 'short' as const }) });
 
 /** Four-step status bar shown to general clients. */
 export function QueueTracker({ queue, compact = false }: { queue: QueueState; compact?: boolean }) {
   const { lang } = useApp();
   const t = T[lang];
+  const tz = useTimeZone();
   if (queue.state === 'not_requested') return null;
   const stage = queue.stage;
   return (
@@ -56,8 +60,8 @@ export function QueueTracker({ queue, compact = false }: { queue: QueueState; co
       </ol>
       {queue.state === 'queued' && (
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-          {queue.onHold ? <span className="text-warning">{t.hold}</span> : queue.paused && queue.resumesAt ? <span className="inline-flex items-center gap-1"><Moon className="h-3.5 w-3.5 text-gold" />{t.paused(when(queue.resumesAt, lang))}</span> : null}
-          {!queue.onHold && <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-gold" />{t.expected(when(queue.deliverAt, lang))}</span>}
+          {queue.onHold ? <span className="text-warning">{t.hold}</span> : queue.paused && queue.resumesAt ? <span className="inline-flex items-center gap-1"><Moon className="h-3.5 w-3.5 text-gold" />{t.paused(when(queue.resumesAt, lang, tz))}</span> : null}
+          {!queue.onHold && <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-gold" />{t.expected(when(queue.deliverAt, lang, tz))}</span>}
         </p>
       )}
     </div>
@@ -71,6 +75,7 @@ export function QueueTracker({ queue, compact = false }: { queue: QueueState; co
 export function ReportRequestPanel({ reportId, saved, onSave, theme = 'royal-gold-maroon' }: { reportId?: string; saved: boolean; onSave: () => void | Promise<void>; theme?: string }) {
   const { lang, me, refreshMe } = useApp();
   const t = T[lang];
+  const tz = useTimeZone();
   const [queue, setQueue] = React.useState<QueueState | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
@@ -114,7 +119,7 @@ export function ReportRequestPanel({ reportId, saved, onSave, theme = 'royal-gol
       <h2 id="rq-title" className="font-serif text-xl font-semibold">{t.title}</h2>
       {body}
       {err && <p className="text-sm text-danger" role="alert">{err}</p>}
-      <p className="text-xs text-muted-foreground">{t.hours}</p>
+      <p className="text-xs text-muted-foreground">{t.hours(workingHoursLabel(tz, lang === 'hi'))}</p>
     </section>
   );
 }

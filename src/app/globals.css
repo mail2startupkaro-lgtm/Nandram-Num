@@ -172,3 +172,7 @@ html:not([data-lang='hi']) .lang-hi { display: none !important; }
   }
 }
 
+
+/* Currency / region: html[data-cur] is set before first paint (layout.tsx). .cur-inr = India only, .cur-usd = visitors outside India. */
+html:not([data-cur="USD"]) .cur-usd { display: none !important; }
+html[data-cur="USD"] .cur-inr { display: none !important; }

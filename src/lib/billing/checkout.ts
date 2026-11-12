@@ -5,34 +5,39 @@ import { coupons, creditLedger, invoiceCounters, payments, subscriptions, users,
 import { getSetting } from '@/lib/admin/settings';
 import { financialYear, GSTIN_RE, splitGstInclusive } from './gst';
 import { getPlan } from './plans';
+import { intlPhone, OUTSIDE_INDIA, planPrice, type Currency } from './currency';
 import { createServiceOrder, getService, isPayable, isServiceCode, markServiceOrderPaid, parseIntake } from './services';
 import { CASHFREE_ORDER_PREFIX, cashfreeConfig, cashfreePhone, createCashfreeOrder, getCashfreeOrder, getCashfreePayments, isCashfreeOrder, newCashfreeOrderId, toPaise } from './cashfree';
 
 export class CheckoutError extends Error { constructor(public code: string) { super(code); } }
 
-export async function validateCoupon(code: string, plan: Pick<Plan, 'code' | 'pricePaise'>, db: Db = getDb()): Promise<{ coupon: Coupon; discountPaise: number }> {
+/** `plan.pricePaise` is the price in the checkout currency's minor unit; fixed-amount (₹) coupons only apply to INR orders. */
+export async function validateCoupon(code: string, plan: Pick<Plan, 'code' | 'pricePaise'>, db: Db = getDb(), currency: Currency = 'INR'): Promise<{ coupon: Coupon; discountPaise: number }> {
   const [c] = await db.select().from(coupons).where(eq(coupons.code, code.trim().toUpperCase())).limit(1);
   if (!c || !c.active) throw new CheckoutError('COUPON_INVALID');
   if (c.expiresAt && c.expiresAt.getTime() < Date.now()) throw new CheckoutError('COUPON_EXPIRED');
   if (c.maxUses !== null && c.used >= c.maxUses) throw new CheckoutError('COUPON_USED_UP');
   if (c.planCodes?.length && !c.planCodes.includes(plan.code)) throw new CheckoutError('COUPON_NOT_FOR_PLAN');
+  if (currency !== 'INR' && !c.percentOff) throw new CheckoutError('COUPON_NOT_FOR_CURRENCY');
   let discountPaise = c.percentOff ? Math.round((plan.pricePaise * Math.min(c.percentOff, 100)) / 100) : (c.amountOffPaise ?? 0);
-  discountPaise = Math.min(discountPaise, plan.pricePaise - 100); // gateway minimum charge ₹1
+  discountPaise = Math.min(discountPaise, plan.pricePaise - 100); // gateway minimum charge ₹1 / $1
   return { coupon: c, discountPaise: Math.max(0, discountPaise) };
 }
 
-export interface CheckoutInput { planCode: string; coupon?: string; billingName?: string; billingState: string; gstin?: string; phone?: string; intake?: unknown }
+export interface CheckoutInput { planCode: string; coupon?: string; billingName?: string; billingState: string; gstin?: string; phone?: string; intake?: unknown; currency?: Currency }
 
 /** What is being bought: a report plan (credits / Pro) or an expert service (SVC_…). */
-export async function getPurchasable(code: string, db: Db = getDb()) {
+export async function getPurchasable(code: string, db: Db = getDb(), want: Currency = 'INR') {
   if (isServiceCode(code)) {
     const s = await getService(code, db);
     if (!s || !isPayable(s)) return null;
-    return { kind: 'service' as const, code: s.code, name: s.en.name, pricePaise: s.pricePaise, service: s };
+    const usd = want === 'USD' && s.usdCents && s.usdCents >= 100 ? s.usdCents : null; // $ only when the admin set a $ fee
+    return { kind: 'service' as const, code: s.code, name: s.en.name, pricePaise: usd ?? s.pricePaise, currency: (usd ? 'USD' : 'INR') as Currency, service: s };
   }
   const plan = await getPlan(code, db);
   if (!plan || !plan.active || plan.pricePaise <= 0) return null;
-  return { kind: 'plan' as const, code: plan.code, name: plan.name, pricePaise: plan.pricePaise, plan };
+  const price = planPrice(plan, want); // USD only when the admin set a USD price for this plan
+  return { kind: 'plan' as const, code: plan.code, name: plan.name, pricePaise: price.price, currency: price.currency, plan };
 }
 
 /** Orders created without gateway keys in development (never in production). */
@@ -52,20 +57,23 @@ export function activeGateway(): 'cashfree' | 'mock' | null {
 const httpsAppUrl = () => { const u = process.env.APP_URL?.trim().replace(/\/$/, ''); return u && u.startsWith('https://') ? u : null; };
 
 export async function createCheckout(user: User, input: CheckoutInput, opts: { fetchImpl?: typeof fetch } = {}, db: Db = getDb()) {
-  const plan = await getPurchasable(input.planCode, db);
+  const plan = await getPurchasable(input.planCode, db, input.currency ?? 'INR');
   if (!plan) throw new CheckoutError('PLAN_UNAVAILABLE');
+  const currency = plan.currency;
+  if (currency === 'USD') input = { ...input, gstin: undefined }; // GSTIN is for Indian business invoices only
   // Services need the client's details (name, date of birth…) before payment, validated per service.
   const intake = plan.kind === 'service' ? (() => { try { return parseIntake(plan.service, input.intake); } catch { throw new CheckoutError('DETAILS_INVALID'); } })() : null;
   const returnPath = plan.kind === 'service' ? '/services' : '/pricing';
   const gstin = input.gstin?.trim().toUpperCase() || undefined;
   if (gstin && !GSTIN_RE.test(gstin)) throw new CheckoutError('GSTIN_INVALID');
-  const { discountPaise, coupon } = input.coupon ? await validateCoupon(input.coupon, plan, db) : { discountPaise: 0, coupon: null };
+  if (input.billingState === OUTSIDE_INDIA && gstin) throw new CheckoutError('GSTIN_INVALID');
+  const { discountPaise, coupon } = input.coupon ? await validateCoupon(input.coupon, plan, db, currency) : { discountPaise: 0, coupon: null };
   const amountPaise = plan.pricePaise - discountPaise;
   const seller = await getSetting('seller', db);
   const gst = splitGstInclusive(amountPaise, input.billingState, seller.state);
   const billingName = input.billingName?.trim().slice(0, 120) || user.name;
   const row = {
-    userId: user.id, planCode: plan.code, listPricePaise: plan.pricePaise, discountPaise, amountPaise,
+    userId: user.id, planCode: plan.code, currency, listPricePaise: plan.pricePaise, discountPaise, amountPaise,
     taxablePaise: gst.taxablePaise, cgstPaise: gst.cgstPaise, sgstPaise: gst.sgstPaise, igstPaise: gst.igstPaise,
     couponCode: coupon?.code ?? null, billingName, billingState: input.billingState, gstin,
   };
@@ -77,7 +85,7 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
   }
   if (gateway === 'cashfree') {
     const cf = cashfreeConfig()!;
-    const phone = cashfreePhone(input.phone) ?? cashfreePhone(user.phone);
+    const phone = cashfreePhone(input.phone) ?? cashfreePhone(user.phone) ?? intlPhone(input.phone) ?? intlPhone(user.phone);
     if (!phone) throw new CheckoutError('PHONE_REQUIRED');
     const orderId = newCashfreeOrderId();
     const base = httpsAppUrl();
@@ -87,7 +95,7 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
     let order;
     try {
       order = await createCashfreeOrder(cf, {
-        orderId, amountPaise, customer: { id: user.id, phone, email: user.email, name: billingName },
+        orderId, amountPaise, currency, customer: { id: user.id, phone, email: user.email, name: billingName },
         returnUrl: base ? `${base}${returnPath}?cf_order={order_id}` : undefined,
         notifyUrl: base ? `${base}/api/billing/cashfree/webhook` : undefined,
         note: plan.name, tags: { plan: plan.code },
@@ -99,7 +107,7 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
     if (user.billingState !== input.billingState) await db.update(users).set({ billingState: input.billingState }).where(eq(users.id, user.id));
     return {
       gateway: 'cashfree' as const, mode: cf.mode, paymentSessionId: order.payment_session_id, mock: false,
-      orderId, amountPaise, currency: 'INR' as const, discountPaise, plan: { code: plan.code, name: plan.name },
+      orderId, amountPaise, currency, discountPaise, plan: { code: plan.code, name: plan.name },
       prefill: { name: billingName ?? '', email: user.email ?? '', contact: phone },
     };
   }
@@ -111,7 +119,7 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
   if (user.billingState !== input.billingState) await db.update(users).set({ billingState: input.billingState }).where(eq(users.id, user.id));
   return {
     gateway: 'mock' as const, mode: 'mock', paymentSessionId: '', mock: true,
-    orderId, amountPaise, currency: 'INR' as const, discountPaise, plan: { code: plan.code, name: plan.name },
+    orderId, amountPaise, currency, discountPaise, plan: { code: plan.code, name: plan.name },
     prefill: { name: billingName ?? '', email: user.email ?? '', contact: user.phone ?? '' },
   };
 }

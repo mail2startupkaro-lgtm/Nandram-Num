@@ -49,7 +49,7 @@ export interface CashfreePayment { cf_payment_id: string | number; order_id: str
 export const toPaise = (rupees: number) => Math.round(Number(rupees) * 100);
 
 export async function createCashfreeOrder(cfg: CashfreeConfig, o: {
-  orderId: string; amountPaise: number; customer: { id: string; phone: string; email?: string | null; name?: string | null };
+  orderId: string; amountPaise: number; currency?: 'INR' | 'USD'; customer: { id: string; phone: string; email?: string | null; name?: string | null };
   returnUrl?: string; notifyUrl?: string; note?: string; tags?: Record<string, string>;
 }, fetchImpl?: typeof fetch): Promise<CashfreeOrder> {
   const order = await call<CashfreeOrder>(cfg, '/orders', {
@@ -57,7 +57,7 @@ export async function createCashfreeOrder(cfg: CashfreeConfig, o: {
     body: {
       order_id: o.orderId,
       order_amount: Number((o.amountPaise / 100).toFixed(2)),
-      order_currency: 'INR',
+      order_currency: o.currency ?? 'INR',
       customer_details: {
         customer_id: o.customer.id.replace(/[^A-Za-z0-9_-]/g, '').slice(0, 50) || 'customer',
         customer_phone: o.customer.phone,

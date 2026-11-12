@@ -8,10 +8,12 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/form';
 import { api, ApiError } from '@/lib/client/api';
 import { DisclaimerNote } from '@/components/legal/disclaimer-note';
-import { getPlanPrices } from '@/lib/billing/plans';
+import { chooseCurrency, useTimeZone } from '@/lib/client/currency';
+import { workingHoursLabel } from '@/lib/client/working-hours';
+import { formatMoney, OUTSIDE_INDIA, type Currency, type PriceView } from '@/lib/billing/currency';
 
-interface Plan { code: string; name: string; description: string; pricePaise: number; intervalDays: number | null; credits: number; features: Record<string, boolean | number | null | undefined>; mrpPaise?: number | null }
-interface Order { gateway: 'cashfree' | 'mock'; mode: string; paymentSessionId: string; mock: boolean; orderId: string; amountPaise: number; discountPaise: number; plan: { code: string; name: string }; prefill: { name: string; email: string; contact: string } }
+interface Plan { code: string; name: string; description: string; pricePaise: number; intervalDays: number | null; credits: number; features: Record<string, boolean | number | null | undefined>; price: PriceView }
+interface Order { gateway: 'cashfree' | 'mock'; mode: string; paymentSessionId: string; mock: boolean; orderId: string; amountPaise: number; currency: Currency; discountPaise: number; plan: { code: string; name: string }; prefill: { name: string; email: string; contact: string } }
 type CashfreeResult = { error?: { message?: string }; redirect?: boolean; paymentDetails?: { paymentMessage?: string } };
 declare global { interface Window {
   Cashfree?: (o: { mode: string }) => { checkout: (o: { paymentSessionId: string; redirectTarget?: string }) => Promise<CashfreeResult> };
@@ -46,15 +48,21 @@ const PLAN_HI: Record<string, { name: string; en: string; description: string }>
 function planName(p: { code: string; name: string }, hi: boolean) { const h = PLAN_HI[p.code]; return hi && h && h.en === p.name ? h.name : p.name; }
 function planDesc(p: { code: string; name: string; description: string }, hi: boolean) { const h = PLAN_HI[p.code]; return hi && h && h.en === p.name ? h.description : p.description; }
 
-const inr = (p: number) => `₹${(p / 100).toLocaleString('en-IN', { minimumFractionDigits: p % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;
 
 export default function PricingPage() {
   const { t, me, refreshMe, lang } = useApp();
   const hi = lang === 'hi';
   const L = (en: string, h: string) => (hi ? h : en);
   const [plans, setPlans] = React.useState<Plan[]>([]);
+  const [currency, setCurrency] = React.useState<Currency>('INR');
+  const [usdAvailable, setUsdAvailable] = React.useState(false);
   const [chosen, setChosen] = React.useState<Plan | null>(null);
-  React.useEffect(() => { api<{ plans: Plan[] }>('/api/billing/plans').then((r) => setPlans(r.plans)).catch(() => setPlans([])); }, []);
+  const loadPlans = React.useCallback(() => api<{ plans: Plan[]; currency: Currency; usdAvailable: boolean }>('/api/billing/plans')
+    .then((r) => { setPlans(r.plans); setCurrency(r.currency); setUsdAvailable(r.usdAvailable); }).catch(() => setPlans([])), []);
+  React.useEffect(() => { loadPlans(); }, [loadPlans]);
+  const switchCurrency = (c: Currency) => { chooseCurrency(c); setCurrency(c); loadPlans(); };
+  const usd = currency === 'USD';
+  const tz = useTimeZone();
   const [returned, setReturned] = React.useState<'paid' | 'pending' | 'failed' | 'checking' | null>(null);
   React.useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('cf_order');
@@ -67,22 +75,24 @@ export default function PricingPage() {
   const isPro = (p: Plan) => !!p.features.fullReports;
   const credit = plans.filter((p) => !isPro(p));
   const pro = plans.filter(isPro);
-  const single = credit.filter((p) => p.credits === 1).sort((x, y) => x.pricePaise - y.pricePaise)[0];
+  const single = credit.filter((p) => p.credits === 1).sort((x, y) => x.price.price - y.price.price)[0];
   const monthly = pro.find((p) => p.intervalDays && p.intervalDays <= 31);
-  const perReport = (p: Plan) => (p.credits > 0 ? Math.round(p.pricePaise / p.credits) : 0);
+  const perReport = (p: Plan) => (p.credits > 0 ? Math.round(p.price.price / p.credits) : 0);
+  const same = (a?: Plan, b?: Plan) => !!a && !!b && a.price.currency === b.price.currency;
 
   /** Badge, price-per-unit line and saving, all derived from the live plan data (nothing hard-coded). */
   function extras(p: Plan): { badge?: string; hot?: boolean; sub?: string; save?: string } {
+    const inr = (m: number) => formatMoney(m, p.price.currency);
     if (isPro(p)) {
       const yearly = !!p.intervalDays && p.intervalDays > 31;
       if (yearly) {
-        const sav = monthly ? monthly.pricePaise * 12 - p.pricePaise : 0;
-        return { badge: sav > 0 ? L('Best value', 'सर्वश्रेष्ठ मूल्य') : undefined, sub: L(`≈ ${inr(Math.round(p.pricePaise / 12))} / month`, `≈ ${inr(Math.round(p.pricePaise / 12))} / माह`), save: sav > 0 ? L(`Save ${inr(sav)} a year vs monthly`, `मासिक की तुलना में ${inr(sav)} प्रति वर्ष की बचत`) : undefined };
+        const sav = monthly && same(monthly, p) ? monthly.price.price * 12 - p.price.price : 0;
+        return { badge: sav > 0 ? L('Best value', 'सर्वश्रेष्ठ मूल्य') : undefined, sub: L(`≈ ${inr(Math.round(p.price.price / 12))} / month`, `≈ ${inr(Math.round(p.price.price / 12))} / माह`), save: sav > 0 ? L(`Save ${inr(sav)} a year vs monthly`, `मासिक की तुलना में ${inr(sav)} प्रति वर्ष की बचत`) : undefined };
       }
       return { badge: L('Most popular', 'सबसे लोकप्रिय'), hot: true, sub: L('Billed monthly', 'मासिक बिलिंग') };
     }
     if (p.credits > 1) {
-      const pct = single && single.credits === 1 ? Math.round((1 - perReport(p) / single.pricePaise) * 100) : 0;
+      const pct = single && single.credits === 1 && same(single, p) ? Math.round((1 - perReport(p) / single.price.price) * 100) : 0;
       return { badge: pct > 0 ? L('Best for families', 'परिवारों के लिए सर्वश्रेष्ठ') : undefined, sub: L(`${inr(perReport(p))} per report`, `${inr(perReport(p))} प्रति रिपोर्ट`), save: pct > 0 ? L(`Save ${pct}% per report`, `प्रति रिपोर्ट ${pct}% की बचत`) : undefined };
     }
     return { sub: p.credits === 1 ? L('Try one full report', 'एक पूर्ण रिपोर्ट आज़माएँ') : undefined };
@@ -95,7 +105,8 @@ export default function PricingPage() {
   function renderCard(p: Plan, i: number) {
     const x = extras(p);
     const pr = isPro(p);
-    const prices = getPlanPrices(p);
+    const pv = p.price;
+    const money = (m: number) => formatMoney(m, pv.currency);
     return (
       <div key={p.code} style={{ animationDelay: `${i * 90}ms` }} className={`mk-rise mk-card glass relative flex flex-col rounded-2xl p-6 ${x.hot ? 'border-2 border-gold shadow-[0_0_34px_hsl(var(--gold)/0.28)]' : ''}`}>
         {x.badge && <span className={`absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wider ${x.hot ? 'bg-gradient-to-r from-[hsl(43_75%_42%)] to-[hsl(43_85%_58%)] text-[hsl(250_45%_10%)]' : 'border border-gold/60 bg-background text-gold'}`}>{x.badge}</span>}
@@ -113,10 +124,10 @@ export default function PricingPage() {
             </span>
             <div className="flex items-center gap-1.5">
               <span className="text-sm font-medium text-muted-foreground line-through decoration-danger decoration-[1.5px]">
-                {inr(prices.realPricePaise)}
+                {money(pv.real)}
               </span>
               <span className="rounded bg-danger/15 px-1.5 py-0.5 text-[10px] font-bold text-danger">
-                {prices.discountPercent}% {L('OFF', 'छूट')}
+                {pv.percent}% {L('OFF', 'छूट')}
               </span>
             </div>
           </div>
@@ -128,11 +139,11 @@ export default function PricingPage() {
                 {L('2 · Offer Price', '2 · ऑफ़र मूल्य')}
               </span>
               <span className="text-[11px] font-semibold text-success">
-                {L(`Save ${inr(prices.discountPaise)}`, `${inr(prices.discountPaise)} की बचत`)}
+                {L(`Save ${money(pv.discount)}`, `${money(pv.discount)} की बचत`)}
               </span>
             </div>
             <p className="mt-1 font-serif text-4xl font-extrabold leading-none">
-              <span className="gold-text">{inr(p.pricePaise)}</span>{' '}
+              <span className="gold-text">{money(pv.price)}</span>{' '}
               <span className="font-sans text-xs font-normal text-muted-foreground">
                 {p.intervalDays ? (p.intervalDays > 31 ? t.pricing.perYear : t.pricing.perMonth) : t.pricing.oneTime}
               </span>
@@ -140,7 +151,7 @@ export default function PricingPage() {
           </div>
 
           <p className="text-[11px] text-muted-foreground">
-            {L('incl. 18% GST', '18% GST सहित')}
+            {pv.currency === 'USD' ? L('incl. all taxes', 'सभी कर सहित') : L('incl. 18% GST', '18% GST सहित')}
             {x.sub ? ` · ${x.sub}` : ''}
           </p>
         </div>
@@ -157,7 +168,7 @@ export default function PricingPage() {
   const freeCard = (
     <div className="mk-rise mk-card glass flex flex-col rounded-2xl p-6">
       <div className="flex items-center justify-between"><p className="font-serif text-xl font-semibold">{t.pricing.free}</p><Sparkles className="h-5 w-5 text-gold/70" /></div>
-      <p className="mt-4 font-serif text-4xl font-bold"><span className="gold-text">₹0</span></p>
+      <p className="mt-4 font-serif text-4xl font-bold"><span className="gold-text">{usd ? '$0' : '₹0'}</span></p>
       <p className="text-xs text-muted-foreground">{L('Free forever', 'हमेशा मुफ़्त')}</p>
       <p className="mt-3 text-sm text-muted-foreground">{t.pricing.freeDesc}</p>
       <ul className="my-5 space-y-2 text-sm">{(hi ? ['मुफ़्त अंक ज्योतिष कैलकुलेटर', 'स्क्रीन पर रीडिंग (तुरंत)', '3 सहेजी गई रीडिंग तक'] : ['Free numerology calculators', 'On-screen reading (instant)', 'Up to 3 saved readings']).map((f) => <li key={f} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />{f}</li>)}</ul>
@@ -182,22 +193,26 @@ export default function PricingPage() {
   ];
   const cellView = (v: React.ReactNode) => v === 'yes' ? <Check className="mx-auto h-4 w-4 text-success" aria-label={L('Included', 'शामिल')} /> : v === 'no' ? <Minus className="mx-auto h-4 w-4 text-muted-foreground/50" aria-label={L('Not included', 'शामिल नहीं')} /> : <span className="font-medium">{v}</span>;
 
+  const hours = workingHoursLabel(tz, hi);
   const trust = [
-    { icon: ShieldCheck, title: L('Secure payment', 'सुरक्षित भुगतान'), text: L('UPI, cards and net banking through Cashfree Payments.', 'Cashfree Payments द्वारा UPI, कार्ड और नेट बैंकिंग।') },
-    { icon: Receipt, title: L('GST invoice', 'GST इनवॉइस'), text: L('A proper GST invoice for every paid order.', 'हर सशुल्क ऑर्डर के लिए विधिवत GST इनवॉइस।') },
+    { icon: ShieldCheck, title: L('Secure payment', 'सुरक्षित भुगतान'), text: usd ? L('International debit and credit cards, charged in US dollars through Cashfree Payments.', 'Cashfree Payments द्वारा अंतरराष्ट्रीय डेबिट और क्रेडिट कार्ड, अमेरिकी डॉलर में भुगतान।') : L('UPI, cards and net banking through Cashfree Payments.', 'Cashfree Payments द्वारा UPI, कार्ड और नेट बैंकिंग।') },
+    { icon: Receipt, title: usd ? L('Invoice in USD', 'USD में इनवॉइस') : L('GST invoice', 'GST इनवॉइस'), text: usd ? L('A proper tax invoice in US dollars for every paid order.', 'हर सशुल्क ऑर्डर के लिए अमेरिकी डॉलर में विधिवत इनवॉइस।') : L('A proper GST invoice for every paid order.', 'हर सशुल्क ऑर्डर के लिए विधिवत GST इनवॉइस।') },
     { icon: Languages, title: L('Hindi, English & Hinglish', 'हिंदी, अंग्रेज़ी और हिंग्लिश'), text: L('Choose the language of your report.', 'अपनी रिपोर्ट की भाषा स्वयं चुनें।') },
-    { icon: Zap, title: L('Report in about 2 hours', 'लगभग 2 घंटे में रिपोर्ट'), text: L('Prepared between 8 am and 10 pm IST and ready about 2 hours after you submit.', 'सुबह 8 से रात 10 बजे (IST) के बीच तैयार, जमा करने के लगभग 2 घंटे बाद।') },
+    { icon: Zap, title: L('Report in about 2 hours', 'लगभग 2 घंटे में रिपोर्ट'), text: L(`Prepared between ${hours} and ready about 2 hours after you submit.`, `${hours} के बीच तैयार, जमा करने के लगभग 2 घंटे बाद।`) },
   ];
+  const payFaq: [string, string] = usd
+    ? [L('Which payment methods can I use from outside India?', 'भारत के बाहर से मैं किन भुगतान तरीक़ों का उपयोग कर सकता हूँ?'), L('International Visa, Mastercard and other debit or credit cards, charged in US dollars and processed securely by Cashfree Payments. Your bank may show the charge from India.', 'अंतरराष्ट्रीय Visa, Mastercard और अन्य डेबिट या क्रेडिट कार्ड, अमेरिकी डॉलर में, Cashfree Payments द्वारा सुरक्षित रूप से संसाधित। आपके बैंक में भुगतान भारत से दिख सकता है।')]
+    : [L('Which payment methods can I use?', 'मैं किन भुगतान तरीक़ों का उपयोग कर सकता हूँ?'), L('UPI, debit and credit cards and net banking, processed securely by Cashfree Payments. All prices include 18% GST.', 'UPI, डेबिट और क्रेडिट कार्ड तथा नेट बैंकिंग — सभी Cashfree Payments द्वारा सुरक्षित रूप से संसाधित। सभी मूल्यों में 18% GST शामिल है।')];
   const faq = hi ? [
     ['रिपोर्ट क्रेडिट क्या है?', 'एक क्रेडिट से किसी भी क्लाइंट की एक पूर्ण संपूर्ण जीवन रिपोर्ट PDF खुलती है। एकल रिपोर्ट में 1 क्रेडिट और 5-क्रेडिट पैक में 5 क्रेडिट मिलते हैं।'],
     ['मेरे लिए कौन-सा प्लान सही है?', 'अपने लिए या परिवार के एक सदस्य के लिए एकल रिपोर्ट चुनें, परिवार या कुछ परामर्शों के लिए 5-क्रेडिट पैक, और यदि आप नियमित रूप से रिपोर्ट बनाने वाले परामर्शदाता हैं और व्हाइट-लेबल PDF चाहते हैं तो प्रो चुनें।'],
-    ['मैं किन भुगतान तरीक़ों का उपयोग कर सकता हूँ?', 'UPI, डेबिट और क्रेडिट कार्ड तथा नेट बैंकिंग — सभी Cashfree Payments द्वारा सुरक्षित रूप से संसाधित। सभी मूल्यों में 18% GST शामिल है।'],
-    ['क्या मुझे GST इनवॉइस मिलेगा?', 'हाँ। चेकआउट पर अपना बिलिंग राज्य (और व्यावसायिक इनवॉइस के लिए GSTIN) दर्ज करें, भुगतान के साथ इनवॉइस बन जाएगा।'],
+    payFaq,
+    usd ? ['क्या मुझे इनवॉइस मिलेगा?', 'हाँ। चेकआउट पर "भारत के बाहर" चुनें, भुगतान के साथ अमेरिकी डॉलर में इनवॉइस बन जाएगा।'] : ['क्या मुझे GST इनवॉइस मिलेगा?', 'हाँ। चेकआउट पर अपना बिलिंग राज्य (और व्यावसायिक इनवॉइस के लिए GSTIN) दर्ज करें, भुगतान के साथ इनवॉइस बन जाएगा।'],
   ] : [
     ['What is a report credit?', 'One credit unlocks one full Complete Life Report PDF for any client. Single Report gives 1 credit and the 5-credit pack gives 5.'],
     ['Which plan is right for me?', 'Choose Single Report for yourself or one family member, the 5-credit pack for a family or a few consultations, and Pro if you are a consultant who creates reports regularly and wants white-label PDFs.'],
-    ['Which payment methods can I use?', 'UPI, debit and credit cards and net banking, processed securely by Cashfree Payments. All prices include 18% GST.'],
-    ['Do I get a GST invoice?', 'Yes. Enter your billing state (and GSTIN for a business invoice) at checkout and the invoice is generated with your payment.'],
+    payFaq,
+    usd ? ['Do I get an invoice?', 'Yes. Choose "Outside India" at checkout and an invoice in US dollars is generated with your payment.'] : ['Do I get a GST invoice?', 'Yes. Enter your billing state (and GSTIN for a business invoice) at checkout and the invoice is generated with your payment.'],
   ];
 
   return (
@@ -205,7 +220,18 @@ export default function PricingPage() {
       <div className="mk-rise mx-auto max-w-2xl text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold">{L('Simple · Transparent · GST included', 'सरल · पारदर्शी · GST सहित')}</p>
         <h1 className="mt-2 text-4xl font-bold sm:text-5xl"><span className="gold-text">{t.pricing.title}</span></h1>
-        <p className="mt-3 text-muted-foreground">{t.pricing.sub}</p>
+        <p className="mt-3 text-muted-foreground">{usd ? L('All prices in US dollars (USD) and include 18% GST. Pay securely by international debit or credit card via Cashfree Payments.', 'सभी मूल्य अमेरिकी डॉलर (USD) में और 18% GST सहित। Cashfree Payments द्वारा अंतरराष्ट्रीय डेबिट या क्रेडिट कार्ड से सुरक्षित भुगतान करें।') : t.pricing.sub}</p>
+        {usdAvailable && (
+          <div className="mt-5 inline-flex items-center gap-1 rounded-full border border-gold/40 p-1 text-sm" role="group" aria-label={L('Currency', 'मुद्रा')}>
+            {(['INR', 'USD'] as const).map((c) => (
+              <button key={c} type="button" aria-pressed={currency === c} onClick={() => switchCurrency(c)}
+                className={`rounded-full px-4 py-1.5 font-medium transition ${currency === c ? 'bg-gold text-[hsl(250_45%_10%)]' : 'text-muted-foreground hover:text-foreground'}`}>
+                {c === 'INR' ? '₹ INR' : '$ USD'}
+              </button>
+            ))}
+          </div>
+        )}
+        {usdAvailable && <p className="mt-2 text-xs text-muted-foreground">{L('₹ for India · $ for clients outside India', '₹ भारत के लिए · $ भारत के बाहर के क्लाइंट के लिए')}</p>}
       </div>
       {returned && (
         <p role="status" className={`mx-auto max-w-xl rounded-md p-3 text-center text-sm ${returned === 'paid' ? 'bg-success/15 text-success' : returned === 'failed' ? 'bg-danger/10 text-danger' : 'bg-muted'}`}>
@@ -267,11 +293,14 @@ export default function PricingPage() {
 function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => void; onPaid: () => Promise<void> }) {
   const { t, me, lang } = useApp();
   const hi = lang === 'hi';
-  const [state, setState] = React.useState(me?.user?.billingState ?? '');
+  const pv = plan.price;
+  const intl = pv.currency === 'USD';
+  const inr = (m: number) => formatMoney(m, pv.currency);
+  const [state, setState] = React.useState(me?.user?.billingState ?? (intl ? OUTSIDE_INDIA : ''));
   const [billingName, setBillingName] = React.useState(me?.user?.name ?? '');
   const [email, setEmail] = React.useState(me?.user?.email ?? '');
   const [gstin, setGstin] = React.useState('');
-  const [phone, setPhone] = React.useState((me?.user?.phone ?? '').replace(/^\+91/, ''));
+  const [phone, setPhone] = React.useState(intl ? (me?.user?.phone ?? '') : (me?.user?.phone ?? '').replace(/^\+91/, ''));
   const [pending, setPending] = React.useState(false);
   const [coupon, setCoupon] = React.useState('');
   const [discount, setDiscount] = React.useState(0);
@@ -284,7 +313,7 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
   async function applyCoupon() {
     setCouponMsg(null);
     try { const r = await api<{ discountPaise: number }>('/api/billing/coupon', { method: 'POST', json: { planCode: plan.code, code: coupon } }); setDiscount(r.discountPaise); setCouponMsg(`-${inr(r.discountPaise)}`); }
-    catch (e) { setDiscount(0); setCouponMsg(e instanceof ApiError ? (e.body as { error?: string }).error ?? (hi ? 'अमान्य कूपन' : 'Invalid') : (hi ? 'अमान्य कूपन' : 'Invalid')); }
+    catch (e) { setDiscount(0); setCouponMsg(e instanceof ApiError ? (t.pricing.errors[(e.body as { error?: string }).error ?? ''] ?? (e.body as { error?: string }).error) ?? (hi ? 'अमान्य कूपन' : 'Invalid') : (hi ? 'अमान्य कूपन' : 'Invalid')); }
   }
 
   async function simulatePayment(orderId: string) {
@@ -302,7 +331,7 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
           billingState: state,
           billingName,
           email: email.trim() || undefined,
-          gstin: gstin || undefined,
+          gstin: !intl && state !== OUTSIDE_INDIA ? gstin || undefined : undefined,
           coupon: discount ? coupon : undefined,
           phone: phone || undefined,
         },
@@ -326,7 +355,6 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
     } catch (e) { setPending(false); setError(e instanceof ApiError ? (t.pricing.errors[e.body.error ?? ''] ?? e.message) : t.err.server); setBusy(false); }
   }
 
-  const prices = getPlanPrices(plan);
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" role="dialog" aria-modal="true" onClick={onClose}>
@@ -342,24 +370,24 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
                 <Input id="em" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </Field>
             )}
-            <Field label={t.pricing.state} htmlFor="st" required><Select id="st" value={state} onChange={(e) => setState(e.target.value)}><option value="">{t.f.select}</option>{INDIAN_STATES.map((s) => <option key={s}>{s}</option>)}</Select></Field>
-            <Field label={t.pricing.gstin} htmlFor="gst"><Input id="gst" maxLength={15} value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} /></Field>
-            <Field label={t.pricing.phone} htmlFor="ph" required><Input id="ph" type="tel" inputMode="numeric" autoComplete="tel-national" maxLength={14} placeholder="98765 43210" value={phone} onChange={(e) => setPhone(e.target.value)} /></Field>
+            <Field label={t.pricing.state} htmlFor="st" required><Select id="st" value={state} onChange={(e) => setState(e.target.value)}><option value="">{t.f.select}</option><option value={OUTSIDE_INDIA}>{hi ? 'भारत के बाहर' : 'Outside India'}</option>{INDIAN_STATES.map((s) => <option key={s}>{s}</option>)}</Select></Field>
+            {!intl && state !== OUTSIDE_INDIA && <Field label={t.pricing.gstin} htmlFor="gst"><Input id="gst" maxLength={15} value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} /></Field>}
+            <Field label={t.pricing.phone} htmlFor="ph" required><Input id="ph" type="tel" inputMode="tel" autoComplete={intl || state === OUTSIDE_INDIA ? 'tel' : 'tel-national'} maxLength={18} placeholder={intl || state === OUTSIDE_INDIA ? '+1 555 123 4567' : '98765 43210'} value={phone} onChange={(e) => setPhone(e.target.value)} /></Field>
             <div className="flex items-end gap-2"><Field label={t.pricing.coupon} htmlFor="cp" className="flex-1"><Input id="cp" value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} /></Field><Button variant="outline" onClick={applyCoupon} disabled={!coupon}>{t.pricing.apply}</Button></div>
             {couponMsg && <p className={`text-xs ${discount ? 'text-success' : 'text-danger'}`}>{couponMsg}</p>}
             <div className="rounded-md bg-muted/80 border border-border/60 p-3.5 text-sm space-y-1.5">
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>1 · {hi ? 'वास्तविक मूल्य (Real Price)' : 'Real Price (MRP)'}</span>
-                <span className="line-through">{inr(prices.realPricePaise)}</span>
+                <span className="line-through">{inr(pv.real)}</span>
               </div>
               <div className="flex justify-between items-baseline">
                 <span className="text-xs font-bold uppercase tracking-wider text-gold">2 · {hi ? 'ऑफ़र मूल्य (Offer Price)' : 'Offer Price'}</span>
-                <span className="font-semibold text-foreground">{inr(plan.pricePaise)}</span>
+                <span className="font-semibold text-foreground">{inr(pv.price)}</span>
               </div>
-              {prices.discountPaise > 0 && (
+              {pv.discount > 0 && (
                 <div className="flex justify-between text-xs font-medium text-emerald-400">
-                  <span>{hi ? `तुरंत बचत (${prices.discountPercent}% छूट)` : `Instant Savings (${prices.discountPercent}% OFF)`}</span>
-                  <span>-{inr(prices.discountPaise)}</span>
+                  <span>{hi ? `तुरंत बचत (${pv.percent}% छूट)` : `Instant Savings (${pv.percent}% OFF)`}</span>
+                  <span>-{inr(pv.discount)}</span>
                 </div>
               )}
               {discount > 0 && (
@@ -370,7 +398,7 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
               )}
               <div className="mt-2 flex justify-between border-t border-border/80 pt-2 font-bold text-base">
                 <span>{t.pricing.total} ({hi ? 'GST सहित' : 'incl. GST'})</span>
-                <span className="text-gold">{inr(plan.pricePaise - discount)}</span>
+                <span className="text-gold">{inr(pv.price - discount)}</span>
               </div>
             </div>
             {order?.mock ? (
@@ -379,7 +407,7 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
                 <Button variant="gold" className="w-full" onClick={async () => { try { await simulatePayment(order.orderId); } catch { setDone('fail'); } }}>{t.pricing.simulate}</Button>
               </div>
             ) : (
-              <Button variant="gold" className="w-full" disabled={busy || !state || (!me?.user && (!email.trim() || !phone.trim()))} onClick={pay}>{pending ? t.pricing.pending : busy ? t.pricing.paying : `${t.pricing.pay} ${inr(plan.pricePaise - discount)}`}</Button>
+              <Button variant="gold" className="w-full" disabled={busy || !state || (!me?.user && (!email.trim() || !phone.trim()))} onClick={pay}>{pending ? t.pricing.pending : busy ? t.pricing.paying : `${t.pricing.pay} ${inr(pv.price - discount)}`}</Button>
             )}
             <DisclaimerNote agree />
             {done === 'fail' && <p className="text-sm text-danger">{t.pricing.failed}</p>}

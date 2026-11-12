@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/misc';
 import { api, ApiError } from '@/lib/client/api';
 import type { Service, ServiceIntakeField } from '@/lib/db/schema';
 import { cn } from '@/lib/utils';
+import { formatMoney } from '@/lib/billing/currency';
 
 const INTAKE: { k: ServiceIntakeField; label: string }[] = [
   { k: 'clientName', label: 'Full name' }, { k: 'currentName', label: 'Current name spelling' }, { k: 'dob', label: 'Date of birth' }, { k: 'gender', label: 'Gender' },
@@ -31,7 +32,7 @@ export function ServicesAdmin({ onGenerateReport }: { onGenerateReport?: (order:
   );
 }
 
-export interface Order { id: string; serviceCode: string; status: string; adminNote: string | null; createdAt: string; deliveredAt: string | null; details: Record<string, string>; payment: { amountPaise: number; invoiceNumber: string | null; billingName: string | null; paidAt: string | null }; userId: string | null }
+export interface Order { id: string; serviceCode: string; status: string; adminNote: string | null; createdAt: string; deliveredAt: string | null; details: Record<string, string>; payment: { amountPaise: number; currency?: string; invoiceNumber: string | null; billingName: string | null; paidAt: string | null }; userId: string | null }
 
 function Orders({ onGenerateReport }: { onGenerateReport?: (order: Order) => void }) {
   const [status, setStatus] = React.useState('all');
@@ -61,7 +62,7 @@ function OrderCard({ o, name, onChanged, onGenerateReport }: { o: Order; name: s
     <article className={cn('glass rounded-xl border p-4', o.status === 'paid' ? 'border-gold/60' : 'border-border')}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div><p className="font-semibold">{name} <Badge tone={o.status === 'delivered' ? 'good' : o.status === 'cancelled' ? 'bad' : o.status === 'paid' ? 'warn' : 'gold'} className="ml-1">{STATUS_LABEL[o.status]}</Badge></p>
-          <p className="text-xs text-muted-foreground">{o.payment.paidAt ? `Paid ${new Date(o.payment.paidAt).toLocaleString('en-IN')}` : new Date(o.createdAt).toLocaleString('en-IN')} · {inr(o.payment.amountPaise)}{o.payment.invoiceNumber ? ` · ${o.payment.invoiceNumber}` : ''} · billed to {o.payment.billingName ?? '—'}</p></div>
+          <p className="text-xs text-muted-foreground">{o.payment.paidAt ? `Paid ${new Date(o.payment.paidAt).toLocaleString('en-IN')}` : new Date(o.createdAt).toLocaleString('en-IN')} · {formatMoney(o.payment.amountPaise, o.payment.currency === 'USD' ? 'USD' : 'INR')}{o.payment.invoiceNumber ? ` · ${o.payment.invoiceNumber}` : ''} · billed to {o.payment.billingName ?? '—'}</p></div>
         <div className="flex flex-wrap items-center gap-2">
           {onGenerateReport && (
             <Button size="sm" variant="gold" onClick={() => onGenerateReport(o)} title="Generate tailored service report in Report Studio">
@@ -81,7 +82,7 @@ function OrderCard({ o, name, onChanged, onGenerateReport }: { o: Order; name: s
   );
 }
 
-const blank = (): Service => ({ code: 'SVC_', en: { name: '', short: '', includes: [], delivery: '' }, hi: { name: '', short: '', includes: [], delivery: '' }, pricePaise: 100_000, mrpPaise: null, priceConfirmed: false, intake: ['clientName', 'dob', 'gender', 'questions'], active: true, featured: false, sort: 10, updatedAt: new Date() });
+const blank = (): Service => ({ code: 'SVC_', en: { name: '', short: '', includes: [], delivery: '' }, hi: { name: '', short: '', includes: [], delivery: '' }, pricePaise: 100_000, mrpPaise: null, usdCents: null, usdMrpCents: null, priceConfirmed: false, intake: ['clientName', 'dob', 'gender', 'questions'], active: true, featured: false, sort: 10, updatedAt: new Date() });
 
 function Catalogue() {
   const [list, setList] = React.useState<Service[] | null>(null);
@@ -114,6 +115,8 @@ function Catalogue() {
             <Field label="Code" htmlFor="sv-code"><Input id="sv-code" value={sel.code} onChange={(e) => setSel({ ...sel, code: e.target.value.toUpperCase() })} disabled={!!list?.some((s) => s.code === sel.code)} /></Field>
             <Field label="Fee ₹ (incl. GST)" htmlFor="sv-price"><Input id="sv-price" type="number" min={1} step="1" value={rupees(sel.pricePaise)} onChange={(e) => setSel({ ...sel, pricePaise: toPaise(e.target.value), priceConfirmed: false })} /></Field>
             <Field label="Was ₹ (optional)" htmlFor="sv-mrp"><Input id="sv-mrp" type="number" min={0} value={rupees(sel.mrpPaise)} onChange={(e) => setSel({ ...sel, mrpPaise: e.target.value ? toPaise(e.target.value) : null })} /></Field>
+            <Field label="Fee $ (outside India)" htmlFor="sv-usd" hint="Blank = ₹ only"><Input id="sv-usd" type="number" min={1} step="0.01" value={rupees(sel.usdCents)} placeholder="e.g. 29" onChange={(e) => setSel({ ...sel, usdCents: e.target.value ? toPaise(e.target.value) : null })} /></Field>
+            <Field label="Was $ (optional)" htmlFor="sv-usdmrp"><Input id="sv-usdmrp" type="number" min={0} step="0.01" value={rupees(sel.usdMrpCents)} onChange={(e) => setSel({ ...sel, usdMrpCents: e.target.value ? toPaise(e.target.value) : null })} /></Field>
             <Field label="Order on page" htmlFor="sv-sort"><Input id="sv-sort" type="number" min={0} value={sel.sort} onChange={(e) => setSel({ ...sel, sort: Number(e.target.value) })} /></Field>
           </div>
           <div className="flex flex-wrap gap-4 text-sm">

@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 export const GET = withUser(async (_req, user) => {
   const db = getDb();
-  const pays = await db.select({ id: payments.id, planCode: payments.planCode, amountPaise: payments.amountPaise, status: payments.status, invoiceNumber: payments.invoiceNumber, createdAt: payments.createdAt, paidAt: payments.paidAt })
+  const pays = await db.select({ id: payments.id, planCode: payments.planCode, amountPaise: payments.amountPaise, currency: payments.currency, status: payments.status, invoiceNumber: payments.invoiceNumber, createdAt: payments.createdAt, paidAt: payments.paidAt })
     .from(payments).where(eq(payments.userId, user.id)).orderBy(desc(payments.createdAt)).limit(50);
   const ledger = await db.select().from(creditLedger).where(eq(creditLedger.userId, user.id)).orderBy(desc(creditLedger.createdAt)).limit(50);
   return json({ user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, billingState: user.billingState, hasPassword: !!user.passwordHash }, account: await getAccount(user.id), payments: pays, ledger,

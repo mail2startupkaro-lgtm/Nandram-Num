@@ -19,13 +19,13 @@ export const GET = withAdmin(async (req) => {
   const report = sp.get('report') ?? 'sales';
   const asCsv = sp.get('format') === 'csv';
   const r = parseRange(sp);
-  const tag = `${r.from}_to_${r.to}`;
+  const tag = `${r.from}_to_${r.to}${r.currency === 'USD' ? '_USD' : ''}`;
 
   if (report === 'audit') return json(await auditChecks());
 
   if (report === 'payments') {
     const list = await paymentRegister(r, { status: sp.get('status') ?? undefined, plan: sp.get('plan') ?? undefined, q: sp.get('q') ?? undefined });
-    if (!asCsv) return json({ range: { from: r.from, to: r.to }, payments: list });
+    if (!asCsv) return json({ range: { from: r.from, to: r.to, currency: r.currency }, payments: list });
     return csv(toCsv(
       ['Created (IST)', 'Paid (IST)', 'Status', 'Plan', 'Customer', 'Email', 'Mobile', 'Billing name', 'State', 'GSTIN', 'List price', 'Coupon', 'Discount', 'Taxable', 'CGST', 'SGST', 'IGST', 'Amount', 'Invoice', 'Gateway', 'Gateway order id', 'Gateway payment id'],
       list.map((p) => [istDateTime(p.createdAt), istDateTime(p.paidAt), p.status, p.planName ?? p.planCode, p.customer, p.email, p.phone, p.billingName, p.billingState, p.gstin,

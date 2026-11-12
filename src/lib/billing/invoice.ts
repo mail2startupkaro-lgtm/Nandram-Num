@@ -5,7 +5,7 @@ import { esc } from '@/lib/pdf/svg';
 import { baseCss } from '@/lib/pdf/template';
 import { DEFAULT_BRANDING, THEMES, type Branding } from '@/lib/pdf/themes';
 import { renderSheetPdf } from '@/lib/pdf/render';
-import { formatInr } from './plans';
+import { formatMoney, type Currency } from './currency';
 
 const ONES = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
 const TENS = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
@@ -28,7 +28,19 @@ export function rupeesInWords(paise: number): string {
   return `${parts.join(' ') || 'Zero'} Rupees${p ? ` and ${two(p)} Paise` : ''} Only`;
 }
 
+/** Western numbering for USD invoices: 1,234.50 → "One Thousand Two Hundred Thirty Four US Dollars and Fifty Cents Only". */
+export function dollarsInWords(cents: number): string {
+  let n = Math.floor(cents / 100);
+  const c = cents % 100;
+  const parts: string[] = [];
+  for (const [v, w] of [[1e9, 'Billion'], [1e6, 'Million'], [1e3, 'Thousand']] as const) { const q = Math.floor(n / v); if (q) { parts.push(`${three(q)} ${w}`); n %= v; } }
+  if (n) parts.push(three(n));
+  return `${parts.join(' ') || 'Zero'} US Dollars${c ? ` and ${two(c)} Cents` : ''} Only`;
+}
+
 export function buildInvoiceHtml(p: Payment, user: Pick<User, 'name' | 'email' | 'phone'>, planName: string, seller: SellerSettings, brand: Branding) {
+  const cur: Currency = p.currency === 'USD' ? 'USD' : 'INR';
+  const formatInr = (m: number) => formatMoney(m, cur);
   const t = THEMES['minimal-white'];
   const date = (p.paidAt ?? p.createdAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' });
   const taxRows = p.igstPaise
@@ -38,7 +50,7 @@ export function buildInvoiceHtml(p: Payment, user: Pick<User, 'name' | 'email' |
     .h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm}.h h1{font-size:22pt}.box2{border:1px solid ${t.border};border-radius:2mm;padding:3mm 4mm;font-size:9pt;line-height:1.5}
     td,th{font-size:9.5pt}</style></head><body>
     <div class="h"><div><h1>Tax Invoice</h1><div class="small muted">${esc(brand.brandName)}</div></div>
-      <div style="text-align:right;font-size:9.5pt"><b>${esc(p.invoiceNumber ?? 'DRAFT')}</b><br>Date: ${esc(date)}<br>Order: ${esc(p.gatewayOrderId)}<br>Payment: ${esc(p.gatewayPaymentId ?? '—')}</div></div>
+      <div style="text-align:right;font-size:9.5pt"><b>${esc(p.invoiceNumber ?? 'DRAFT')}</b><br>Date: ${esc(date)}<br>Currency: ${cur}<br>Order: ${esc(p.gatewayOrderId)}<br>Payment: ${esc(p.gatewayPaymentId ?? '—')}</div></div>
     <div class="row" style="margin-bottom:6mm">
       <div class="box2"><b>Supplier</b><br>${esc(seller.legalName)}<br>${esc(seller.address)}<br>${esc(seller.state)} (State code ${esc(seller.stateCode)})${seller.gstin ? `<br>GSTIN: <b>${esc(seller.gstin)}</b>` : ''}${seller.email ? `<br>${esc(seller.email)}` : ''}</div>
       <div class="box2"><b>Bill to</b><br>${esc(p.billingName || user.name || '—')}<br>${esc(user.email ?? user.phone ?? '')}<br>Place of supply: ${esc(p.billingState ?? '—')}${p.gstin ? `<br>GSTIN: <b>${esc(p.gstin)}</b>` : ''}</div>
@@ -49,7 +61,7 @@ export function buildInvoiceHtml(p: Payment, user: Pick<User, 'name' | 'email' |
       ${taxRows}
       <tr><td colspan="3" style="text-align:right"><b>Total (incl. GST)</b></td><td style="text-align:right"><b>${formatInr(p.amountPaise)}</b></td></tr>
     </tbody></table>
-    <p style="margin-top:4mm;text-align:left"><b>Amount in words:</b> ${esc(rupeesInWords(p.amountPaise))}</p>
+    <p style="margin-top:4mm;text-align:left"><b>Amount in words:</b> ${esc(cur === 'USD' ? dollarsInWords(p.amountPaise) : rupeesInWords(p.amountPaise))}</p>${cur === 'USD' ? '<p class="small muted" style="text-align:left">Invoice currency: US Dollar (USD). Client located outside India.</p>' : ''}
     <p class="small muted" style="text-align:left;margin-top:10mm">This is a computer-generated invoice and does not require a signature. Paid online via Cashfree Payments.${seller.gstin ? '' : ' Supplier GSTIN to be added in Admin → Settings before going live.'}</p>
   </body></html>`;
 }

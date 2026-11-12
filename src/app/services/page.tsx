@@ -9,6 +9,7 @@ import { DEFAULT_SERVICES, isPayable, listServices } from '@/lib/billing/service
 import { servicePageByCode } from '@/lib/service-pages';
 import type { Service } from '@/lib/db/schema';
 import { abs, EXPERT, jsonLd as toLd } from '@/lib/seo/site';
+import { ServicePrice } from '@/components/services/service-price';
 
 export const metadata: Metadata = {
   title: 'Numerology Services & Fees – Acharya Nandram',
@@ -20,19 +21,19 @@ export const revalidate = 300; // prices edited in Admin appear within 5 minutes
 
 async function load(): Promise<PublicService[]> {
   let rows: Service[];
-  try { rows = await listServices(); } catch { rows = DEFAULT_SERVICES.map((s) => ({ ...s, mrpPaise: null, priceConfirmed: false, active: true, featured: !!s.featured, sort: s.sort ?? 0, updatedAt: new Date() }) as Service); }
-  return rows.map((s) => ({ code: s.code, en: s.en, hi: s.hi, intake: s.intake, payable: isPayable(s), pricePaise: isPayable(s) ? s.pricePaise : null, mrpPaise: isPayable(s) ? s.mrpPaise : null }));
+  try { rows = await listServices(); } catch { rows = DEFAULT_SERVICES.map((s) => ({ ...s, mrpPaise: null, usdCents: null, usdMrpCents: null, priceConfirmed: false, active: true, featured: !!s.featured, sort: s.sort ?? 0, updatedAt: new Date() }) as Service); }
+  return rows.map((s) => ({ code: s.code, en: s.en, hi: s.hi, intake: s.intake, payable: isPayable(s), pricePaise: isPayable(s) ? s.pricePaise : null, mrpPaise: isPayable(s) ? s.mrpPaise : null, usdCents: isPayable(s) ? s.usdCents : null, usdMrpCents: isPayable(s) ? s.usdMrpCents : null }));
 }
 
 const STEPS = [
   { icon: FileText, en: ['Choose a service', 'Pick the service you need and click Book & pay.'], hi: ['सेवा चुनें', 'अपनी ज़रूरत की सेवा चुनें और "बुक करें और भुगतान करें" दबाएँ।'] },
-  { icon: LockKeyhole, en: ['Share details & pay', 'Enter the date of birth and names, then pay securely by UPI, card or net banking.'], hi: ['विवरण दें और भुगतान करें', 'जन्म तिथि और नाम दर्ज करें, फिर UPI, कार्ड या नेट बैंकिंग से सुरक्षित भुगतान करें।'] },
+  { icon: LockKeyhole, en: ['Share details & pay', 'Enter the date of birth and names, then pay securely by UPI, card or net banking – or by international card from outside India.'], hi: ['विवरण दें और भुगतान करें', 'जन्म तिथि और नाम दर्ज करें, फिर UPI, कार्ड या नेट बैंकिंग से सुरक्षित भुगतान करें। भारत के बाहर से अंतरराष्ट्रीय कार्ड द्वारा भी भुगतान कर सकते हैं।'] },
   { icon: Clock, en: ['Personal analysis', 'Acharya Nandram studies your numbers himself – no generic copy-paste text.'], hi: ['व्यक्तिगत विश्लेषण', 'आचार्य नंदराम स्वयं आपके अंकों का अध्ययन करते हैं – कोई सामान्य कॉपी-पेस्ट पाठ नहीं।'] },
   { icon: Send, en: ['Delivered to you', 'Your result arrives on email and WhatsApp within the delivery time shown.'], hi: ['आप तक डिलीवरी', 'आपका परिणाम बताए गए समय में ईमेल और WhatsApp पर पहुँचता है।'] },
 ];
 
 const FAQ: { en: [string, string]; hi: [string, string] }[] = [
-  { en: ['How do I pay?', 'Online through Cashfree Payments by UPI, debit or credit card or net banking. Every fee includes 18% GST and you get a GST invoice.'], hi: ['भुगतान कैसे करें?', 'Cashfree Payments के माध्यम से UPI, डेबिट या क्रेडिट कार्ड अथवा नेट बैंकिंग द्वारा ऑनलाइन। हर शुल्क में 18% GST शामिल है और आपको GST इनवॉइस मिलता है।'] },
+  { en: ['How do I pay?', 'Online through Cashfree Payments by UPI, debit or credit card or net banking. Every fee includes 18% GST and you get a GST invoice. Clients outside India can pay by international card, in US dollars where a $ fee is shown.'], hi: ['भुगतान कैसे करें?', 'Cashfree Payments के माध्यम से UPI, डेबिट या क्रेडिट कार्ड अथवा नेट बैंकिंग द्वारा ऑनलाइन। हर शुल्क में 18% GST शामिल है और आपको GST इनवॉइस मिलता है। भारत के बाहर के क्लाइंट अंतरराष्ट्रीय कार्ड से भुगतान कर सकते हैं (जहाँ $ शुल्क दिखाया गया है, वहाँ अमेरिकी डॉलर में)।'] },
   { en: ['How will I receive my analysis?', 'On the email and WhatsApp number you give while booking, within the delivery time shown for the service. You can also see the status under My account.'], hi: ['मुझे विश्लेषण कैसे मिलेगा?', 'बुकिंग के समय दिए गए ईमेल और WhatsApp नंबर पर, सेवा के लिए बताए गए समय में। स्थिति "मेरा खाता" में भी देख सकते हैं।'] },
   { en: ['In which language?', 'English, Hindi or Hinglish – mention your choice in the notes.'], hi: ['किस भाषा में?', 'अंग्रेज़ी, हिंदी या हिंग्लिश – अपनी पसंद टिप्पणी में लिखें।'] },
   { en: ['How is this different from the Complete Life Report plans?', 'The Complete Life Report follows a standard format and is ready about 2 hours after you submit it. These services are prepared personally by Acharya Nandram and answer your own questions.'], hi: ['संपूर्ण जीवन रिपोर्ट प्लान से क्या अंतर है?', 'संपूर्ण जीवन रिपोर्ट एक मानक प्रारूप में होती है और जमा करने के लगभग 2 घंटे बाद तैयार होती है। ये सेवाएँ आचार्य नंदराम स्वयं तैयार करते हैं और आपके अपने प्रश्नों के उत्तर देती हैं।'] },
@@ -85,24 +86,7 @@ export default async function ServicesPage() {
               <div className="mt-5 flex flex-wrap items-end justify-between gap-3 border-t border-border/50 pt-4">
                 <div>
                   {s.pricePaise ? (
-                    (() => {
-                      const real = s.mrpPaise && s.mrpPaise > s.pricePaise ? s.mrpPaise : s.pricePaise * 2;
-                      const pct = Math.round(((real - s.pricePaise) / real) * 100);
-                      return (
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1.5 text-xs">
-                            <span className="text-muted-foreground font-medium">1 · <Bi en="Real Price" hi="वास्तविक मूल्य" />:</span>
-                            <span className="line-through text-muted-foreground decoration-danger decoration-[1.5px]">{inr(real)}</span>
-                            <span className="rounded bg-danger/15 px-1.5 py-0.2 text-[10px] font-bold text-danger">{pct}% <Bi en="OFF" hi="छूट" /></span>
-                          </div>
-                          <div className="flex items-baseline gap-2">
-                            <span className="text-xs font-bold uppercase tracking-wider text-gold">2 · <Bi en="Offer Price" hi="ऑफ़र मूल्य" />:</span>
-                            <span className="font-serif text-3xl font-bold"><span className="gold-text">{inr(s.pricePaise)}</span></span>
-                          </div>
-                          <p className="text-[11px] text-muted-foreground"><Bi en="incl. 18% GST · one-time" hi="18% GST सहित · एक बार" /></p>
-                        </div>
-                      );
-                    })()
+                    <ServicePrice s={s} />
                   ) : (
                     <div>
                       <p className="font-serif text-xl font-semibold text-gold"><Bi en="Price on request" hi="मूल्य पूछताछ पर" /></p>

@@ -47,6 +47,7 @@ export function ServicesMenu() {
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/50 px-2 pt-3 text-sm">
               <Link href="/services" onClick={() => setOpen(false)} className="inline-flex items-center gap-1 font-medium text-gold hover:underline">{hi ? 'सभी सेवाएँ और शुल्क' : 'All services & fees'} <ArrowRight className="h-3.5 w-3.5" /></Link>
               <Link href="/pricing" onClick={() => setOpen(false)} className="text-xs text-muted-foreground hover:text-foreground">{hi ? 'संपूर्ण जीवन रिपोर्ट प्लान →' : 'Complete Life Report plans →'}</Link>
+              <Link href="/international-numerology" onClick={() => setOpen(false)} className="text-xs text-muted-foreground hover:text-foreground">{hi ? 'भारत के बाहर से? अंतरराष्ट्रीय क्लाइंट →' : 'Outside India? International clients →'}</Link>
             </div>
           </div>
         </div>

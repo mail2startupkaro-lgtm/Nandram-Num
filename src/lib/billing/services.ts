@@ -118,11 +118,13 @@ export const ServiceSchema = z.object({
   code: z.string().trim().toUpperCase().regex(/^SVC_[A-Z0-9_]{2,26}$/, 'Code must start with SVC_ and use A–Z, 0–9 or _'),
   en: Text, hi: Text,
   pricePaise: z.number().int().min(100).max(10_000_000), mrpPaise: z.number().int().min(100).max(10_000_000).nullable().optional(),
+  usdCents: z.number().int().min(100).max(10_000_000).nullable().optional(), usdMrpCents: z.number().int().min(100).max(10_000_000).nullable().optional(),
   priceConfirmed: z.boolean(), intake: z.array(z.enum(INTAKE_FIELDS as [ServiceIntakeField, ...ServiceIntakeField[]])).min(1),
   active: z.boolean(), featured: z.boolean(), sort: z.number().int().min(0).max(999),
 });
 export async function saveService(input: z.infer<typeof ServiceSchema>, db: Db = getDb()) {
-  const row = { ...input, mrpPaise: input.mrpPaise && input.mrpPaise > input.pricePaise ? input.mrpPaise : null, updatedAt: new Date() };
+  const usdCents = input.usdCents ?? null;
+  const row = { ...input, mrpPaise: input.mrpPaise && input.mrpPaise > input.pricePaise ? input.mrpPaise : null, usdCents, usdMrpCents: usdCents && input.usdMrpCents && input.usdMrpCents > usdCents ? input.usdMrpCents : null, updatedAt: new Date() };
   await db.insert(services).values(row).onConflictDoUpdate({ target: services.code, set: row });
 }
 export async function deleteService(code: string, db: Db = getDb()) {
@@ -161,7 +163,7 @@ export async function markServiceOrderPaid(paymentId: string, db: Db) {
 }
 
 export async function listServiceOrders(filter: { status?: string; userId?: string } = {}, db: Db = getDb()) {
-  const rows = await db.select({ o: serviceOrders, p: { amountPaise: payments.amountPaise, status: payments.status, invoiceNumber: payments.invoiceNumber, billingName: payments.billingName, paidAt: payments.paidAt } })
+  const rows = await db.select({ o: serviceOrders, p: { amountPaise: payments.amountPaise, currency: payments.currency, status: payments.status, invoiceNumber: payments.invoiceNumber, billingName: payments.billingName, paidAt: payments.paidAt } })
     .from(serviceOrders).innerJoin(payments, eq(payments.id, serviceOrders.paymentId))
     .where(and(filter.userId ? eq(serviceOrders.userId, filter.userId) : undefined,
       filter.status && filter.status !== 'all' ? eq(serviceOrders.status, filter.status) : filter.userId ? undefined : inArray(serviceOrders.status, ['paid', 'in_progress', 'delivered', 'cancelled'])))

@@ -341,7 +341,7 @@ export function ReportStudio({
                 const date = new Date(ord.createdAt).toLocaleDateString('en-IN');
                 return (
                   <option key={ord.id} value={ord.id}>
-                    {name} · {service} · ₹{(ord.payment.amountPaise / 100).toLocaleString('en-IN')} ({date})
+                    {name} · {service} · {(ord.payment as { currency?: string }).currency === 'USD' ? `$${(ord.payment.amountPaise / 100).toFixed(2)}` : `₹${(ord.payment.amountPaise / 100).toLocaleString('en-IN')}`} ({date})
                   </option>
                 );
               })}

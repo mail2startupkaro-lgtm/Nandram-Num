@@ -46,7 +46,7 @@ export function getPlanPrices(p: {
   pricePaise: number;
   intervalDays?: number | null;
   credits?: number;
-  features?: Record<string, unknown> | null;
+  features?: object | null;
   mrpPaise?: number | null;
 }): PlanPrices {
   let realPrice = 0;
