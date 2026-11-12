@@ -4,6 +4,7 @@ import type { NarrativeLanguage } from '@/lib/narrative/plan';
 import { writeNarrative } from '@/lib/server/reports';
 import type { NumerologyResult } from '@/lib/numerology';
 import { getOptionalUser } from '@/lib/auth/current-user';
+import { getAccount } from '@/lib/billing/entitlements';
 import { clientIp, readJson } from '@/lib/server/http';
 import { rateLimit, tooMany } from '@/lib/server/rate-limit';
 
@@ -40,6 +41,8 @@ export async function POST(req: Request) {
 
   try {
     const user = await getOptionalUser(req);
+    // The written report is part of the delivered report for general clients; only Pro consultants and admins write it instantly.
+    if (!user || !(await getAccount(user.id)).features.fullReports) return NextResponse.json({ error: 'REPORT_QUEUE' }, { status: 403, headers: NO_STORE });
     const rl = rateLimit(`nar:${user?.id ?? clientIp(req)}`, user ? 60 : 10, 3_600_000);
     if (!rl.ok) return tooMany(rl.retryAfter);
     // The paid LLM writer is only used for signed-in users; anonymous visitors get the offline writer.

@@ -2,15 +2,17 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Download, Eye, FileJson, FileText, Pencil, RefreshCw, Share2, Sparkles, Trash2 } from 'lucide-react';
+import { ArrowLeft, Download, Eye, FileJson, FileText, Pencil, RefreshCw, Send, Share2, Sparkles, Trash2 } from 'lucide-react';
 import { useApp } from '@/components/layout/providers';
 import { ShareDialog } from '@/components/dashboard/share-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Select } from '@/components/ui/form';
 import { Badge } from '@/components/ui/misc';
 import { api, ApiError, download } from '@/lib/client/api';
+import { QueueTracker, useQueued } from '@/components/results/report-queue';
+import type { QueueState } from '@/lib/report-queue';
 
-interface ReportMeta { id: string; module: string; version: number; status: string; theme: string; language: string; asOf: string; createdAt: string; summary: { moolank: number; bhagyank: number; kua: number; nameNumber: number | null; personalYear: number; nameScore: number | null; mobileScore: number | null; coupleScore: number | null; sections: number } }
+interface ReportMeta { queue?: QueueState; unlocked?: boolean; id: string; module: string; version: number; status: string; theme: string; language: string; asOf: string; createdAt: string; summary: { moolank: number; bhagyank: number; kua: number; nameNumber: number | null; personalYear: number; nameScore: number | null; mobileScore: number | null; coupleScore: number | null; sections: number } }
 interface ProfileData { profile: { id: string; displayName: string; aadhaarLast4: string | null; input: { fullName: string; dob: string; gender: string; city?: string; state?: string; mobile?: string; partner?: { name: string } } }; reports: ReportMeta[] }
 
 const THEMES = ['royal-gold-maroon', 'cosmic-blue', 'saffron-cream', 'minimal-white'] as const;
@@ -26,11 +28,15 @@ export default function ProfilePage() {
   const [busy, setBusy] = React.useState<string | null>(null);
   const [share, setShare] = React.useState<string | null>(null);
   const [theme, setTheme] = React.useState<string>('royal-gold-maroon');
+  const queued = useQueued();
+  const hi = lang === 'hi';
 
   const load = React.useCallback(async () => {
     try { setData(await api<ProfileData>(`/api/profiles/${id}`)); } catch (e) { setError(e instanceof Error ? e.message : t.err.server); }
   }, [id, t.err.server]);
   React.useEffect(() => { load(); }, [load]);
+  const anyQueued = !!data?.reports.some((r) => r.queue?.state === 'queued');
+  React.useEffect(() => { if (!anyQueued) return; const iv = setInterval(load, 60_000); return () => clearInterval(iv); }, [anyQueued, load]);
 
   const run = async (key: string, fn: () => Promise<unknown>) => {
     setBusy(key); setError(null);
@@ -104,13 +110,19 @@ export default function ProfilePage() {
                     {r.summary.mobileScore !== null && <Badge>📱 {r.summary.mobileScore}</Badge>}
                     {r.summary.coupleScore !== null && <Badge>♥ {r.summary.coupleScore}%</Badge>}
                   </span></td>
-                  <td className="py-2"><Badge tone={r.status === 'final' ? 'good' : r.status === 'awaiting_review' ? 'warn' : 'default'}>{t.dash.statuses[r.status]}</Badge></td>
+                  <td className="py-2">{queued ? <Badge tone={r.queue?.state === 'ready' ? 'good' : r.queue?.state === 'queued' ? 'gold' : 'default'}>{r.queue?.state === 'ready' ? (hi ? 'तैयार' : 'Ready') : r.queue?.state === 'queued' ? (hi ? 'तैयार हो रही है' : 'In progress') : (hi ? 'जमा नहीं' : 'Not submitted')}</Badge> : <Badge tone={r.status === 'final' ? 'good' : r.status === 'awaiting_review' ? 'warn' : 'default'}>{t.dash.statuses[r.status]}</Badge>}</td>
                   <td className="py-2"><span className="flex justify-end gap-1">
                     <Link href={`/reading?report=${r.id}`} className={buttonVariants({ size: 'sm', variant: 'outline' })}><Eye /> {t.dash.open}</Link>
+                    {queued && r.queue?.state !== 'ready' ? (
+                      r.queue?.state === 'queued'
+                        ? <span className="min-w-[260px]"><QueueTracker queue={r.queue} compact /></span>
+                        : <Button size="sm" variant="gold" disabled={!!busy} onClick={() => run(`req-${r.id}`, async () => { try { await api(`/api/reports/${r.id}/request`, { method: 'POST' }); await refreshMe(); } catch (e) { if (e instanceof ApiError && e.status === 402) { router.push('/pricing'); return; } throw e; } await load(); })}><Send /> {hi ? 'रिपोर्ट के लिए जमा करें' : 'Submit for report'}</Button>
+                    ) : (<>
                     <Button size="sm" variant="ghost" disabled={!!busy || r.status === 'awaiting_review'} title={r.status === 'awaiting_review' ? t.pdf.reviewFirst : undefined} onClick={() => run(`pdf-${r.id}`, () => downloadReport(r.id))}>
                       <Download className={busy === `pdf-${r.id}` ? 'animate-bounce' : ''} /> PDF
                     </Button>
                     <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => run(`out-${r.id}`, () => download(`/api/reports/${r.id}/pdf?kind=output&theme=${theme}`))}><Sparkles /> {t.dash.outputSheet}</Button>
+                    </>)}
                     <Button size="sm" variant="ghost" onClick={() => setShare(r.id)}><Share2 /> {t.dash.share}</Button>
                     <Button size="sm" variant="ghost" className="text-danger" aria-label={t.dash.delete} onClick={() => run('d', async () => { if (confirm(`${t.dash.delete} v${r.version}?`)) { await api(`/api/reports/${r.id}`, { method: 'DELETE' }); await load(); } })}><Trash2 /></Button>
                   </span></td>

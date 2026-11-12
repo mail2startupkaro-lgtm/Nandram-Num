@@ -6,6 +6,7 @@ import { renderReportPdf } from '@/lib/pdf/render';
 import { renderInputSheetPdf, renderOutputSheetPdf } from '@/lib/pdf/sheets';
 import { json, pdfResponse, slug, withUser } from '@/lib/server/http';
 import { writeNarrative } from '@/lib/server/reports';
+import { queueState, usesQueue } from '@/lib/report-queue';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,6 +30,12 @@ export const GET = withUser<{ id: string }>(async (req, user, { params }) => {
     return pdfResponse((await renderInputSheetPdf({ input: p.input, aadhaarLast4: p.aadhaarLast4, consentAt: p.consentAt, profileId: p.id, isoDate: r.asOf }, { ...style, language: p.input.language })).pdf, `${name}-input-sheet.pdf`);
   }
   const acct = await getAccount(user.id);
+  // General clients: no instant PDFs. The report (and its snapshot) can be downloaded once it has been submitted and is ready.
+  if (usesQueue(acct)) {
+    const q = queueState(r);
+    if (q.state === 'not_requested') return json({ error: 'REQUEST_REQUIRED' }, 409);
+    if (q.state !== 'ready') return json({ error: 'REPORT_NOT_READY', queue: q }, 409);
+  }
   if (kind === 'output') {
     const unlocked = acct.features.fullReports || (await isReportUnlocked(r.id));
     return pdfResponse((await renderOutputSheetPdf(r.result, { ...style, language: r.language, watermark: unlocked ? undefined : 'FREE PREVIEW' })).pdf, `${name}-snapshot.pdf`);

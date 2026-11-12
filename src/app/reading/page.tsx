@@ -126,7 +126,7 @@ function ReadingInner() {
       <>
         {error && <div className="container pt-6"><p className="rounded-md bg-danger/10 p-3 text-sm text-danger" role="alert">{error}</p></div>}
         <Results
-          result={result} narrative={narrative} onNarrative={(n) => { setNarrative(n); setSaved(false); }} saved={saved} onSave={save}
+          result={result} narrative={narrative} onNarrative={(n) => { setNarrative(n); setSaved(false); }} saved={saved} onSave={save} reportId={ctx.reportId}
           onEdit={() => setResult(null)}
           onNew={() => { setResult(null); setNarrative(null); setCtx({}); update(EMPTY); router.replace('/reading?new=1'); }}
           savedNote={saved && ctx.profileId ? <span className="text-success">{savedMsg ?? `v${ctx.version}`} · <Link className="underline" href={`/dashboard/${ctx.profileId}`}>{t.dash.viewProfile}</Link></span> : null}

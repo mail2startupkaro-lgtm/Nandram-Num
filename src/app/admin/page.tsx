@@ -8,6 +8,8 @@ import { ReportStudio } from '@/components/admin/report-studio';
 import { SignatureStudio } from '@/components/admin/signature-studio';
 import { BusinessStudio } from '@/components/admin/business-studio';
 import { MessagesTab } from '@/components/admin/messages';
+import { ServicesAdmin } from '@/components/admin/services-admin';
+import { ReportQueueAdmin } from '@/components/admin/report-queue-admin';
 // Finders pull in the angel-number content library – load only when the tab is opened.
 const finderLoading = () => <div className="glass h-40 animate-pulse rounded-lg" aria-busy="true" />;
 const AngelFinderTab = dynamic(() => import('@/components/admin/finders').then((m) => m.AngelFinderTab), { ssr: false, loading: finderLoading });
@@ -23,7 +25,7 @@ const inr = (p: number) => `₹${(p / 100).toLocaleString('en-IN', { minimumFrac
 const THEMES = ['royal-gold-maroon', 'cosmic-blue', 'saffron-cream', 'minimal-white'];
 const SECTIONS = ['intro', 'moolank', 'bhagyank', 'combination', 'loshu', 'missing', 'kua', 'forecast', 'lifePeriods', 'career', 'relationships', 'wellbeing', 'name', 'mobile', 'aadhaar', 'couple', 'remedies', 'closing'];
 const TABS = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard }, { id: 'messages', label: 'Messages', icon: Inbox }, { id: 'studio', label: 'Report generator', icon: FileText },
+  { id: 'overview', label: 'Overview', icon: LayoutDashboard }, { id: 'messages', label: 'Messages', icon: Inbox }, { id: 'queue', label: 'Report queue', icon: FileText }, { id: 'services', label: 'Services & orders', icon: Briefcase }, { id: 'studio', label: 'Report generator', icon: FileText },
   { id: 'signature', label: 'Signature analysis', icon: PenLine },
   { id: 'business', label: 'Business compatibility', icon: Briefcase },
   { id: 'angel', label: 'Angel number finder', icon: Sparkles }, { id: 'lucky', label: 'Lucky number finder', icon: Clover },
@@ -65,7 +67,7 @@ export default function AdminPage() {
           ))}
         </nav>
         <div className="min-w-0">
-          {tab === 'overview' && <Overview />}{tab === 'messages' && <MessagesTab onCounts={setNewMsgs} />}{tab === 'studio' && <ReportStudio />}{tab === 'signature' && <SignatureStudio />}{tab === 'business' && <BusinessStudio />}{tab === 'angel' && <AngelFinderTab />}{tab === 'lucky' && <LuckyFinderTab />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'experts' && <ExpertsTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
+          {tab === 'overview' && <Overview />}{tab === 'messages' && <MessagesTab onCounts={setNewMsgs} />}{tab === 'services' && <ServicesAdmin />}{tab === 'queue' && <ReportQueueAdmin />}{tab === 'studio' && <ReportStudio />}{tab === 'signature' && <SignatureStudio />}{tab === 'business' && <BusinessStudio />}{tab === 'angel' && <AngelFinderTab />}{tab === 'lucky' && <LuckyFinderTab />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'experts' && <ExpertsTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
           {tab === 'knowledge' && <KnowledgeTab />}{tab === 'themes' && <ThemesTab />}{tab === 'prompts' && <PromptsTab />}{tab === 'seller' && <SellerTab />}{tab === 'payments' && <PaymentReport />}
         </div>
       </div>

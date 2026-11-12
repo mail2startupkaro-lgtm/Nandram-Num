@@ -13,6 +13,7 @@ import { cn, downloadJson } from '@/lib/utils';
 import { Gauge, LifeRadar, Ring, YearBars } from './charts';
 import { NarrativePanel } from './narrative';
 import { PdfButton } from './pdf-button';
+import { ReportRequestPanel, useQueued } from './report-queue';
 import type { Narrative } from '@/lib/narrative/service';
 import { GridLegend, NumberGrid } from './grid';
 
@@ -25,10 +26,13 @@ const AREA_LABELS = {
 
 const relTone = (r: string) => (r === 'friend' ? 'good' : r === 'enemy' ? 'bad' : 'default') as 'good' | 'bad' | 'default';
 
-export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave, saved, savedNote }: {
+export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave, saved, savedNote, reportId }: {
   result: NumerologyResult; narrative: Narrative | null; onNarrative: (n: Narrative | null) => void; onEdit: () => void; onNew: () => void; onSave: () => void; saved: boolean;
   savedNote?: React.ReactNode;
+  /** Saved report id (general clients submit it for their complete report). */
+  reportId?: string;
 }) {
+  const queued = useQueued();
   const { t, lang } = useApp();
   const hi = lang === 'hi';
   const { dob, name, mobile, aadhaar, couple, remedies } = result.results;
@@ -61,8 +65,8 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
             </p>
           </div>
           <div className="flex flex-wrap gap-2 print:hidden">
-            <PdfButton result={result} narrative={narrative} />
-            <Button variant="outline" onClick={() => window.print()} className="no-print"><Printer /> {hi ? 'प्रिंट / PDF सहेजें' : 'Print / Save PDF'}</Button>
+            {!queued && <PdfButton result={result} narrative={narrative} />}
+            {!queued && <Button variant="outline" onClick={() => window.print()} className="no-print"><Printer /> {hi ? 'प्रिंट / PDF सहेजें' : 'Print / Save PDF'}</Button>}
             <Button variant="outline" onClick={onSave}>{saved ? <Check /> : <Save />} {saved ? t.btn.saved : t.btn.save}</Button>
             <Button variant="outline" onClick={() => downloadJson(fileName, narrative ? { ...result, narrative } : result)}><FileJson /> {t.btn.exportJson}</Button>
             <Button variant="ghost" onClick={onEdit}><Pencil /> {t.btn.edit}</Button>
@@ -81,7 +85,7 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
         </ul>
       </nav>
 
-      <NarrativePanel result={result} narrative={narrative} onChange={onNarrative} />
+      {queued ? <ReportRequestPanel reportId={reportId} saved={saved} onSave={onSave} /> : <NarrativePanel result={result} narrative={narrative} onChange={onNarrative} />}
 
       <DobSection r={result.results} />
 

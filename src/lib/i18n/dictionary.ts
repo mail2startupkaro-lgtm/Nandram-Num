@@ -4,7 +4,7 @@ export type Lang = 'en' | 'hi';
 const en = {
   brand: 'myNumerologist.com',
   tagline: 'Vedic, Chaldean & Lo Shu numerology by Acharya Nandram (15+ Years Experience)',
-  nav: { reading: 'Get your reading', dashboard: 'My reports', pricing: 'Pricing', calculators: 'Free calculators', mulank: 'Mulank', bhagyank: 'Bhagyank', contact: 'Contact us', angel: 'Angel Numbers', blog: 'Blog' },
+  nav: { reading: 'Get your reading', dashboard: 'My reports', pricing: 'Pricing', calculators: 'Free calculators', mulank: 'Mulank', bhagyank: 'Bhagyank', contact: 'Contact us', services: 'Services', about: 'About', angel: 'Angel Numbers', blog: 'Blog' },
   home: {
     title: 'Your numbers, read the Indian way',
     sub: 'Moolank, Bhagyank, Lo Shu Grid, name, mobile and marriage compatibility, with practical upay for every finding.',
@@ -78,9 +78,9 @@ const en = {
     devCode: 'Development mode – your code is',
   },
   pricing: {
-    title: 'Plans & pricing', sub: 'All prices in INR and include 18% GST. Pay securely with UPI, cards or net banking via Cashfree Payments.', free: 'Free', freeDesc: 'Free calculators, on-screen reading, watermarked Date of Birth preview PDF, up to 3 saved readings.',
+    title: 'Plans & pricing', sub: 'All prices in INR and include 18% GST. Pay securely with UPI, cards or net banking via Cashfree Payments.', free: 'Free', freeDesc: 'Free calculators, on-screen reading and up to 3 saved readings.',
     buy: 'Buy now', perMonth: '/ month', perYear: '/ year', oneTime: 'one-time', credits: 'report credits', credit: 'report credit', coupon: 'Coupon code', apply: 'Apply', state: 'State (for GST)', billingName: 'Name on invoice', gstin: 'GSTIN (optional, for business invoice)',
-    pay: 'Pay', paying: 'Opening payment…', success: 'Payment successful! Your plan is active.', failed: 'Payment did not complete.', discount: 'Discount', total: 'Total', mockNote: 'Test mode – no real payment is taken.', simulate: 'Simulate successful payment', loginToBuy: 'Sign in to buy', phone: 'Mobile number (for payment & receipt)', pending: 'Confirming your payment with the bank… If money was deducted, your plan will activate automatically within a few minutes.', errors: { EMAIL_REQUIRED: 'Enter a valid email address.', PHONE_REQUIRED: 'Enter a valid 10-digit mobile number.', GSTIN_INVALID: 'GSTIN is not valid.', PLAN_UNAVAILABLE: 'This plan is not available right now.', GATEWAY_ERROR: 'The payment gateway is not responding. Please try again in a minute.', GATEWAY_NOT_CONFIGURED: 'Online payment is not set up yet. Please contact us to buy this plan.' } as Record<string, string>,
+    pay: 'Pay', paying: 'Opening payment…', success: 'Payment successful! Your plan is active.', failed: 'Payment did not complete.', discount: 'Discount', total: 'Total', mockNote: 'Test mode – no real payment is taken.', simulate: 'Simulate successful payment', loginToBuy: 'Sign in to buy', phone: 'Mobile number (for payment & receipt)', pending: 'Confirming your payment with the bank… If money was deducted, your plan will activate automatically within a few minutes.', errors: { EMAIL_REQUIRED: 'Enter a valid email address.', PHONE_REQUIRED: 'Enter a valid 10-digit mobile number.', GSTIN_INVALID: 'GSTIN is not valid.', PLAN_UNAVAILABLE: 'This plan is not available right now.', GATEWAY_ERROR: 'The payment gateway is not responding. Please try again in a minute.', GATEWAY_NOT_CONFIGURED: 'Online payment is not set up yet. Please contact us to buy this plan.', LOGIN_REQUIRED: 'An account with this email or mobile already exists. Please sign in first, then buy.', DETAILS_INVALID: 'Please check the details you entered for this service.' } as Record<string, string>,
     features: { fullReports: 'Unlimited full reports', whiteLabel: 'White-label PDFs (your logo, signature, colours)', bulk: 'Bulk import & export', share: 'Share links for every report', single: 'Full Complete Life Report PDF', credits: 'Use credits on any client' } as Record<string, string>,
   },
   account: {
@@ -96,7 +96,7 @@ type Dict = typeof en;
 const hi: Dict = {
   brand: 'myNumerologist.com',
   tagline: 'आचार्य नंदराम द्वारा वैदिक, कैल्डियन और लो शू अंक ज्योतिष',
-  nav: { reading: 'अपनी रीडिंग पाएं', dashboard: 'मेरी रिपोर्ट', pricing: 'मूल्य', calculators: 'मुफ़्त कैलकुलेटर', mulank: 'मूलांक', bhagyank: 'भाग्यांक', contact: 'संपर्क करें', angel: 'एंजेल नंबर', blog: 'ब्लॉग' },
+  nav: { reading: 'अपनी रीडिंग पाएं', dashboard: 'मेरी रिपोर्ट', pricing: 'मूल्य', calculators: 'मुफ़्त कैलकुलेटर', mulank: 'मूलांक', bhagyank: 'भाग्यांक', contact: 'संपर्क करें', services: 'सेवाएँ', about: 'परिचय', angel: 'एंजेल नंबर', blog: 'ब्लॉग' },
   home: {
     title: 'आपके अंक, भारतीय पद्धति से',
     sub: 'मूलांक, भाग्यांक, लो शू ग्रिड, नाम, मोबाइल और विवाह मिलान, हर बात के साथ व्यावहारिक उपाय।',
@@ -164,9 +164,9 @@ const hi: Dict = {
     devCode: 'डेवलपमेंट मोड – आपका कोड है',
   },
   pricing: {
-    title: 'प्लान और मूल्य', sub: 'सभी मूल्य INR में, 18% GST सहित। Cashfree Payments द्वारा UPI, कार्ड या नेट बैंकिंग से सुरक्षित भुगतान।', free: 'मुफ़्त', freeDesc: 'मुफ़्त कैलकुलेटर, स्क्रीन पर रीडिंग, वॉटरमार्क वाली जन्म तिथि PDF, 3 सहेजी रीडिंग तक।',
+    title: 'प्लान और मूल्य', sub: 'सभी मूल्य INR में, 18% GST सहित। Cashfree Payments द्वारा UPI, कार्ड या नेट बैंकिंग से सुरक्षित भुगतान।', free: 'मुफ़्त', freeDesc: 'मुफ़्त कैलकुलेटर, स्क्रीन पर रीडिंग और 3 सहेजी रीडिंग तक।',
     buy: 'अभी खरीदें', perMonth: '/ माह', perYear: '/ वर्ष', oneTime: 'एक बार', credits: 'रिपोर्ट क्रेडिट', credit: 'रिपोर्ट क्रेडिट', coupon: 'कूपन कोड', apply: 'लागू करें', state: 'राज्य (GST हेतु)', billingName: 'इनवॉइस पर नाम', gstin: 'GSTIN (वैकल्पिक)',
-    pay: 'भुगतान करें', paying: 'भुगतान खुल रहा है…', success: 'भुगतान सफल! आपका प्लान सक्रिय है।', failed: 'भुगतान पूरा नहीं हुआ।', discount: 'छूट', total: 'कुल', mockNote: 'टेस्ट मोड – कोई वास्तविक भुगतान नहीं।', simulate: 'सफल भुगतान का अनुकरण करें', loginToBuy: 'खरीदने के लिए साइन इन करें', phone: 'मोबाइल नंबर (भुगतान और रसीद के लिए)', pending: 'बैंक से आपके भुगतान की पुष्टि हो रही है… यदि पैसे कट गए हैं तो कुछ मिनट में आपका प्लान अपने आप सक्रिय हो जाएगा।', errors: { EMAIL_REQUIRED: 'मान्य ईमेल पता दर्ज करें।', PHONE_REQUIRED: 'मान्य 10 अंकों का मोबाइल नंबर दर्ज करें।', GSTIN_INVALID: 'GSTIN मान्य नहीं है।', PLAN_UNAVAILABLE: 'यह प्लान अभी उपलब्ध नहीं है।', GATEWAY_ERROR: 'पेमेंट गेटवे जवाब नहीं दे रहा। एक मिनट बाद फिर प्रयास करें।', GATEWAY_NOT_CONFIGURED: 'ऑनलाइन भुगतान अभी सेट नहीं है। यह प्लान खरीदने के लिए हमसे संपर्क करें।' } as Record<string, string>,
+    pay: 'भुगतान करें', paying: 'भुगतान खुल रहा है…', success: 'भुगतान सफल! आपका प्लान सक्रिय है।', failed: 'भुगतान पूरा नहीं हुआ।', discount: 'छूट', total: 'कुल', mockNote: 'टेस्ट मोड – कोई वास्तविक भुगतान नहीं।', simulate: 'सफल भुगतान का अनुकरण करें', loginToBuy: 'खरीदने के लिए साइन इन करें', phone: 'मोबाइल नंबर (भुगतान और रसीद के लिए)', pending: 'बैंक से आपके भुगतान की पुष्टि हो रही है… यदि पैसे कट गए हैं तो कुछ मिनट में आपका प्लान अपने आप सक्रिय हो जाएगा।', errors: { EMAIL_REQUIRED: 'मान्य ईमेल पता दर्ज करें।', PHONE_REQUIRED: 'मान्य 10 अंकों का मोबाइल नंबर दर्ज करें।', GSTIN_INVALID: 'GSTIN मान्य नहीं है।', PLAN_UNAVAILABLE: 'यह प्लान अभी उपलब्ध नहीं है।', GATEWAY_ERROR: 'पेमेंट गेटवे जवाब नहीं दे रहा। एक मिनट बाद फिर प्रयास करें।', GATEWAY_NOT_CONFIGURED: 'ऑनलाइन भुगतान अभी सेट नहीं है। यह प्लान खरीदने के लिए हमसे संपर्क करें।', LOGIN_REQUIRED: 'इस ईमेल या मोबाइल से खाता पहले से है। कृपया पहले साइन इन करें, फिर खरीदें।', DETAILS_INVALID: 'कृपया इस सेवा के लिए दर्ज विवरण जाँचें।' } as Record<string, string>,
     features: { fullReports: 'असीमित पूर्ण रिपोर्ट', whiteLabel: 'व्हाइट-लेबल PDF (आपका लोगो, हस्ताक्षर, रंग)', bulk: 'बल्क आयात और निर्यात', share: 'हर रिपोर्ट के लिए शेयर लिंक', single: 'संपूर्ण जीवन रिपोर्ट PDF', credits: 'किसी भी क्लाइंट पर क्रेडिट उपयोग' } as Record<string, string>,
   },
   account: {

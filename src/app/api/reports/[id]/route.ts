@@ -2,6 +2,8 @@ import { z } from 'zod';
 import type { Narrative } from '@/lib/narrative/service';
 import { deleteReport, getReport, updateReport } from '@/lib/db/repo/reports';
 import { json, readJson, withUser } from '@/lib/server/http';
+import { getAccount } from '@/lib/billing/entitlements';
+import { queueState, usesQueue } from '@/lib/report-queue';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -9,7 +11,9 @@ type P = { id: string };
 
 export const GET = withUser<P>(async (_req, user, { params }) => {
   const r = await getReport(user.id, params.id);
-  return json({ report: r });
+  const queue = queueState(r);
+  if (usesQueue(await getAccount(user.id)) && queue.state !== 'ready') return json({ report: { ...r, narrative: null }, queue });
+  return json({ report: r, queue });
 });
 
 const Patch = z.object({

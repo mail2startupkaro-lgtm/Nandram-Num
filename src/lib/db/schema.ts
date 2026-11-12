@@ -65,6 +65,11 @@ export const reports = pgTable('reports', {
   summary: jsonb('summary').$type<ReportSummary>().notNull(),
   /** Set when the full PDF has been paid for (credit) or opened under a Pro plan. */
   unlockedAt: timestamp('unlocked_at', { withTimezone: true }),
+  /** Report-delivery queue for general clients: when the client submitted the report, when it becomes available, admin overrides. */
+  requestedAt: timestamp('requested_at', { withTimezone: true }),
+  deliverAt: timestamp('deliver_at', { withTimezone: true }),
+  releasedAt: timestamp('released_at', { withTimezone: true }),
+  onHold: boolean('on_hold').notNull().default(false),
   createdAt: created(),
   updatedAt: updated(),
 }, (t) => ({
@@ -377,3 +382,37 @@ export const contactMessages = pgTable('contact_messages', {
   updatedAt: updated(),
 }, (t) => ({ statusIdx: index('contact_messages_status_idx').on(t.status, t.createdAt) }));
 export type ContactMessage = typeof contactMessages.$inferSelect;
+
+// ---------- Expert services (bought online, delivered personally by the numerologist) ----------
+export type ServiceIntakeField = 'clientName' | 'dob' | 'gender' | 'tob' | 'pob' | 'mobile' | 'currentName' | 'parents' | 'letters' | 'partnerName' | 'partnerDob' | 'questions';
+export interface ServiceText { name: string; short: string; includes: string[]; delivery: string }
+/** Services shown on /services. Code always starts with "SVC_" so payments can tell a service from a report plan. */
+export const services = pgTable('services', {
+  code: varchar('code', { length: 30 }).primaryKey(),
+  en: jsonb('en').$type<ServiceText>().notNull(),
+  hi: jsonb('hi').$type<ServiceText>().notNull(),
+  pricePaise: integer('price_paise').notNull(),           // GST-inclusive
+  mrpPaise: integer('mrp_paise'),                          // optional "was" price shown struck through
+  priceConfirmed: boolean('price_confirmed').notNull().default(false), // online payment only after the owner confirms the price
+  intake: jsonb('intake').$type<ServiceIntakeField[]>().notNull(),
+  active: boolean('active').notNull().default(true),
+  featured: boolean('featured').notNull().default(false),
+  sort: integer('sort').notNull().default(0),
+  updatedAt: updated(),
+});
+
+/** One row per service purchase. The client's details (name, date of birth…) are stored encrypted. */
+export const serviceOrders = pgTable('service_orders', {
+  id: id(),
+  paymentId: text('payment_id').notNull().unique().references(() => payments.id, { onDelete: 'cascade' }),
+  userId: text('user_id').references(() => users.id, { onDelete: 'set null' }),
+  serviceCode: varchar('service_code', { length: 30 }).notNull(),
+  detailsEnc: text('details_enc').notNull(),
+  status: varchar('status', { length: 20 }).notNull().default('awaiting_payment'), // awaiting_payment | paid | in_progress | delivered | cancelled
+  adminNote: text('admin_note'),
+  deliveredAt: timestamp('delivered_at', { withTimezone: true }),
+  createdAt: created(),
+  updatedAt: updated(),
+}, (t) => ({ statusIdx: index('service_orders_status_idx').on(t.status, t.createdAt), userIdx: index('service_orders_user_idx').on(t.userId) }));
+export type Service = typeof services.$inferSelect;
+export type ServiceOrder = typeof serviceOrders.$inferSelect;

@@ -3,6 +3,11 @@ import { rateLimit, tooMany } from '@/lib/server/rate-limit';
 import { resolveShareLink } from '@/lib/db/repo/shares';
 import { clientIp, errorResponse, json, readJson } from '@/lib/server/http';
 import type { NumerologyResult } from '@/lib/numerology';
+import { eq } from 'drizzle-orm';
+import { getDb } from '@/lib/db/client';
+import { clientProfiles } from '@/lib/db/schema';
+import { getAccount } from '@/lib/billing/entitlements';
+import { queueState, usesQueue } from '@/lib/report-queue';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -50,6 +55,8 @@ export async function POST(req: Request, props: { params: Promise<{ token: strin
     const r = await resolveShareLink(params.token, password, { countView: true });
     if (r.status !== 'ok') return json({ status: r.status }, STATUS[r.status] ?? 400);
     const { report } = r;
+    const [owner] = await getDb().select({ ownerId: clientProfiles.ownerId }).from(clientProfiles).where(eq(clientProfiles.id, report.profileId)).limit(1);
+    const ready = !owner || !usesQueue(await getAccount(owner.ownerId)) || queueState(report).state === 'ready';
     return json({
       status: 'ok',
       expiresAt: r.expiresAt,
@@ -59,7 +66,7 @@ export async function POST(req: Request, props: { params: Promise<{ token: strin
         asOf: report.asOf,
         summary: report.summary,
         result: sanitizePublicResult(report.result),
-        narrative: report.narrative?.status === 'final' ? report.narrative : null,
+        narrative: ready && report.narrative?.status === 'final' ? report.narrative : null,
       },
     });
   } catch (e) {

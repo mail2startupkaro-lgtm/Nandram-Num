@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { CALCULATORS } from '@/lib/seo/calculators';
 import { MULANK } from '@/lib/mulank-data';
 import { NUMBER_POSTS } from '@/lib/blog/numbers';
+import { SERVICE_PAGES } from '@/lib/service-pages';
 import { CITIES, postSlug } from '@/lib/blog/cities';
 import { TOP_ANGEL } from '@/lib/angel/generate';
 
@@ -24,6 +25,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...MULANK.map((m) => ({ url: `${base()}/mulank/${m.n}`, lastModified: c, changeFrequency: 'monthly' as const, priority: 0.7 })),
     { url: `${base()}/bhagyank`, lastModified: now, priority: 0.8 },
     { url: `${base()}/contact`, lastModified: now, priority: 0.5 },
+    { url: `${base()}/services`, lastModified: now, priority: 0.9 },
+    { url: `${base()}/about`, lastModified: now, priority: 0.7 },
+    ...SERVICE_PAGES.map((x) => ({ url: `${base()}/${x.slug}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 })),
     ...NUMBER_POSTS.map((p) => ({ url: `${base()}/blog/${p.slug}`, lastModified: c, changeFrequency: 'monthly' as const, priority: 0.7 })),
     ...MULANK.map((m) => ({ url: `${base()}/bhagyank/${m.n}`, lastModified: c, changeFrequency: 'monthly' as const, priority: 0.7 })),
     { url: `${base()}/angel-numbers`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.9 },

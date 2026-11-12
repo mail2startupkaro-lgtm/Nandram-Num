@@ -1,4 +1,5 @@
 /** Reports: versioned per (profile, module). Results and narrative are stored encrypted. */
+import { queueState } from '@/lib/report-queue';
 import { and, desc, eq, max, sql } from 'drizzle-orm';
 import { generateNumerology, type NumerologyResult, type ReportModule } from '@/lib/numerology';
 import type { StoredInput } from '@/lib/numerology/schemas';
@@ -82,7 +83,9 @@ export async function listReports(ownerId: string, profileId: string, db: Db = g
   return db.select({
     id: reports.id, module: reports.module, version: reports.version, status: reports.status, theme: reports.theme, language: reports.language,
     asOf: reports.asOf, engineVersion: reports.engineVersion, summary: reports.summary, createdAt: reports.createdAt, updatedAt: reports.updatedAt,
-  }).from(reports).where(eq(reports.profileId, profileId)).orderBy(desc(reports.createdAt), desc(reports.version));
+    unlockedAt: reports.unlockedAt, requestedAt: reports.requestedAt, deliverAt: reports.deliverAt, releasedAt: reports.releasedAt, onHold: reports.onHold,
+  }).from(reports).where(eq(reports.profileId, profileId)).orderBy(desc(reports.createdAt), desc(reports.version))
+    .then((rows) => rows.map(({ requestedAt, deliverAt, releasedAt, onHold, unlockedAt, ...r }) => ({ ...r, unlocked: !!unlockedAt, queue: queueState({ requestedAt, deliverAt, releasedAt, onHold }) })));
 }
 
 export async function getReport(ownerId: string, reportId: string, db: Db = getDb()) {

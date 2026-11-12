@@ -1,0 +1,120 @@
+'use client';
+import * as React from 'react';
+import Link from 'next/link';
+import { CheckCircle2, Circle, Clock, Download, Loader2, Moon, Send } from 'lucide-react';
+import { useApp } from '@/components/layout/providers';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { api, ApiError, download } from '@/lib/client/api';
+import type { QueueState } from '@/lib/report-queue';
+import { cn } from '@/lib/utils';
+
+/** Is this visitor served by the delivery queue (general client) rather than instant PDFs (Pro / admin)? */
+export function useQueued() {
+  const { me } = useApp();
+  return !(me?.account?.isAdmin || me?.account?.features.fullReports);
+}
+
+const T = {
+  en: {
+    stages: [['Received', 'Your details have been received.'], ['In the queue', 'Your report is in the queue.'], ['Being prepared', 'Your report is being prepared.'], ['Ready', 'Your report is ready to download.']] as [string, string][],
+    expected: (t: string) => `Expected by ${t}`, paused: (t: string) => `Paused for the night – resumes at ${t}`, hold: 'On hold – we will update you shortly.',
+    hours: 'Reports are prepared between 8:00 am and 10:00 pm IST and are usually ready about 2 hours after you submit them.',
+    download: 'Download report (PDF)', snapshot: 'One-page summary', submit: 'Submit for report', submitting: 'Submitting…', uses: 'Uses 1 report credit.', credits: (n: number) => `Credits left: ${n}`,
+    noCredit: 'Choose a plan to get your complete report.', plans: 'See plans', signIn: 'Sign in to get your report', saveFirst: 'Save this reading first, then submit it for your complete report.', save: 'Save reading',
+    title: 'Your complete report', error: 'Something went wrong. Please try again.',
+  },
+  hi: {
+    stages: [['प्राप्त', 'आपका विवरण प्राप्त हो गया है।'], ['क्रम में', 'आपकी रिपोर्ट क्रम में है।'], ['तैयार हो रही है', 'आपकी रिपोर्ट तैयार की जा रही है।'], ['तैयार', 'आपकी रिपोर्ट डाउनलोड के लिए तैयार है।']] as [string, string][],
+    expected: (t: string) => `अपेक्षित समय: ${t}`, paused: (t: string) => `रात के लिए रुका – ${t} पर फिर शुरू`, hold: 'अस्थायी रूप से रुका – हम जल्द ही अपडेट देंगे।',
+    hours: 'रिपोर्ट सुबह 8:00 से रात 10:00 बजे (IST) के बीच तैयार की जाती हैं और जमा करने के लगभग 2 घंटे बाद तैयार हो जाती हैं।',
+    download: 'रिपोर्ट डाउनलोड करें (PDF)', snapshot: 'एक-पृष्ठ सारांश', submit: 'रिपोर्ट के लिए जमा करें', submitting: 'जमा हो रहा है…', uses: '1 रिपोर्ट क्रेडिट उपयोग होगा।', credits: (n: number) => `शेष क्रेडिट: ${n}`,
+    noCredit: 'अपनी संपूर्ण रिपोर्ट पाने के लिए प्लान चुनें।', plans: 'प्लान देखें', signIn: 'रिपोर्ट पाने के लिए साइन इन करें', saveFirst: 'पहले यह रीडिंग सहेजें, फिर अपनी संपूर्ण रिपोर्ट के लिए जमा करें।', save: 'रीडिंग सहेजें',
+    title: 'आपकी संपूर्ण रिपोर्ट', error: 'कुछ गड़बड़ हुई। कृपया फिर प्रयास करें।',
+  },
+};
+
+const when = (iso: string, lang: 'en' | 'hi') => new Date(iso).toLocaleString(lang === 'hi' ? 'hi-IN' : 'en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+
+/** Four-step status bar shown to general clients. */
+export function QueueTracker({ queue, compact = false }: { queue: QueueState; compact?: boolean }) {
+  const { lang } = useApp();
+  const t = T[lang];
+  if (queue.state === 'not_requested') return null;
+  const stage = queue.stage;
+  return (
+    <div className={cn('space-y-3', compact && 'space-y-2')} aria-live="polite">
+      <ol className={cn('grid gap-2', compact ? 'grid-cols-4' : 'sm:grid-cols-4')}>
+        {t.stages.map(([name, text], i) => {
+          const n = i + 1; const done = n < stage || stage === 4; const now = n === stage && stage !== 4;
+          return (
+            <li key={name} className={cn('rounded-lg border p-2.5', done ? 'border-success/40 bg-success/10' : now ? 'border-gold bg-gold/10' : 'border-border/60 opacity-60')}>
+              <p className="flex items-center gap-1.5 text-sm font-semibold">{done ? <CheckCircle2 className="h-4 w-4 text-success" /> : now ? <Loader2 className="h-4 w-4 animate-spin text-gold" /> : <Circle className="h-4 w-4" />}<span>{n}. {name}</span></p>
+              {!compact && <p className="mt-0.5 text-xs text-muted-foreground">{text}</p>}
+            </li>
+          );
+        })}
+      </ol>
+      {queue.state === 'queued' && (
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          {queue.onHold ? <span className="text-warning">{t.hold}</span> : queue.paused && queue.resumesAt ? <span className="inline-flex items-center gap-1"><Moon className="h-3.5 w-3.5 text-gold" />{t.paused(when(queue.resumesAt, lang))}</span> : null}
+          {!queue.onHold && <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5 text-gold" />{t.expected(when(queue.deliverAt, lang))}</span>}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The "complete report" box for general clients: Submit for report → status → Download when ready.
+ * Polls every minute while the report is being prepared.
+ */
+export function ReportRequestPanel({ reportId, saved, onSave, theme = 'royal-gold-maroon' }: { reportId?: string; saved: boolean; onSave: () => void | Promise<void>; theme?: string }) {
+  const { lang, me, refreshMe } = useApp();
+  const t = T[lang];
+  const [queue, setQueue] = React.useState<QueueState | null>(null);
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState<string | null>(null);
+  const [noCredit, setNoCredit] = React.useState(false);
+
+  const load = React.useCallback(async () => {
+    if (!reportId) return;
+    try { const r = await api<{ queue: QueueState }>(`/api/reports/${reportId}`); setQueue(r.queue); } catch { /* keep last */ }
+  }, [reportId]);
+  React.useEffect(() => { load(); }, [load]);
+  React.useEffect(() => {
+    if (!queue || queue.state !== 'queued') return;
+    const id = setInterval(load, 60_000); return () => clearInterval(id);
+  }, [queue, load]);
+
+  async function submit() {
+    if (!reportId) return;
+    setBusy(true); setErr(null); setNoCredit(false);
+    try { const r = await api<{ queue: QueueState }>(`/api/reports/${reportId}/request`, { method: 'POST' }); setQueue(r.queue); await refreshMe(); }
+    catch (e) { if (e instanceof ApiError && e.status === 402) setNoCredit(true); else setErr(t.error); }
+    finally { setBusy(false); }
+  }
+
+  let body: React.ReactNode;
+  if (!me?.user) body = <Link href="/login?next=/reading" className={buttonVariants({ variant: 'gold' })}>{t.signIn}</Link>;
+  else if (!reportId || !saved) body = <div className="space-y-2"><p className="text-sm text-muted-foreground">{t.saveFirst}</p><Button variant="gold" onClick={() => onSave()}>{t.save}</Button></div>;
+  else if (!queue) body = <div className="h-10 animate-pulse rounded bg-muted" />;
+  else if (queue.state === 'not_requested') body = noCredit
+    ? <div className="space-y-2"><p className="text-sm">{t.noCredit}</p><Link href="/pricing" className={buttonVariants({ variant: 'gold' })}>{t.plans}</Link></div>
+    : <div className="flex flex-wrap items-center gap-3"><Button variant="gold" disabled={busy} onClick={submit}><Send className="h-4 w-4" />{busy ? t.submitting : t.submit}</Button><span className="text-xs text-muted-foreground">{t.uses} {t.credits(me.account?.credits ?? 0)}</span></div>;
+  else body = (
+    <div className="space-y-3">
+      <QueueTracker queue={queue} />
+      {queue.state === 'ready' && <div className="flex flex-wrap gap-2"><Button variant="gold" disabled={busy} onClick={async () => { setBusy(true); try { await download(`/api/reports/${reportId}/pdf?kind=report&theme=${theme}`); } catch { setErr(t.error); } finally { setBusy(false); } }}><Download className="h-4 w-4" />{t.download}</Button>
+        <Button variant="ghost" onClick={() => download(`/api/reports/${reportId}/pdf?kind=output&theme=${theme}`).catch(() => setErr(t.error))}>{t.snapshot}</Button></div>}
+    </div>
+  );
+
+  return (
+    <section id="report" className="glass scroll-mt-24 space-y-3 rounded-lg border border-gold/30 p-5" aria-labelledby="rq-title">
+      <h2 id="rq-title" className="font-serif text-xl font-semibold">{t.title}</h2>
+      {body}
+      {err && <p className="text-sm text-danger" role="alert">{err}</p>}
+      <p className="text-xs text-muted-foreground">{t.hours}</p>
+    </section>
+  );
+}

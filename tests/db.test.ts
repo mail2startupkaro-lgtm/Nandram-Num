@@ -245,4 +245,43 @@ describe.skipIf(!URL)('database (Postgres)', () => {
       expect((await db.execute(sql`select 1 from payments where user_id = ${v.id}`)).rows.length).toBe(1);
     }
   });
+
+  it('services: draft prices are not payable; a paid service creates an encrypted order and an invoice', async () => {
+    const svcLib = await import('@/lib/billing/services');
+    const { createCheckout, fulfilPayment, CheckoutError } = await import('@/lib/billing/checkout');
+    const list = await svcLib.listServices({}, db);
+    expect(list.map((x) => x.code)).toEqual(['SVC_PERSONAL_REPORT', 'SVC_NAME_CORRECTION', 'SVC_LOSHU', 'SVC_MOBILE_NUMBER', 'SVC_BABY_NAME', 'SVC_COUPLE', 'SVC_BUSINESS_NAME', 'SVC_PERSONAL_YEAR']);
+    expect(list.every((x) => !svcLib.isPayable(x))).toBe(true); // seeded with draft prices
+    const [buyer] = await db.insert(schema.users).values({ name: 'Svc Buyer', email: 'svc@test.local', phone: '+919811100009' }).returning();
+    const intake = { currentName: 'Sunil Kumar', dob: '1988-03-12', gender: 'male', questions: 'Aadhaar 2345 6789 0123 for reference' };
+    await expect(createCheckout(buyer, { planCode: 'SVC_NAME_CORRECTION', billingState: 'Delhi', intake }, {}, db)).rejects.toThrow(CheckoutError);
+    const nc = list.find((x) => x.code === 'SVC_NAME_CORRECTION')!;
+    await svcLib.saveService({ ...nc, priceConfirmed: true, pricePaise: 151_000, mrpPaise: null }, db);
+    await expect(createCheckout(buyer, { planCode: 'SVC_NAME_CORRECTION', billingState: 'Delhi', intake: { dob: '1988-03-12' } }, {}, db)).rejects.toThrow('DETAILS_INVALID');
+    await expect(createCheckout(buyer, { planCode: 'SVC_NAME_CORRECTION', billingState: 'Delhi', intake: { ...intake, dob: '2999-01-01' } }, {}, db)).rejects.toThrow('DETAILS_INVALID');
+    const order = await createCheckout(buyer, { planCode: 'SVC_NAME_CORRECTION', billingState: 'Delhi', intake: { ...intake, injected: 'x' } }, {}, db);
+    expect(order.amountPaise).toBe(151_000);
+    const raw = JSON.stringify((await db.execute(sql`select * from service_orders`)).rows);
+    expect(raw).not.toContain('Sunil'); expect(raw).toContain('awaiting_payment');
+    expect((await svcLib.listServiceOrders({}, db)).length).toBe(0); // unpaid orders are hidden from the admin list
+    const res = await fulfilPayment(order.orderId, 'pay_test_svc', db);
+    expect(res.payment.invoiceNumber).toBeTruthy();
+    expect((await fulfilPayment(order.orderId, 'pay_test_svc', db)).alreadyPaid).toBe(true);
+    const [o] = await svcLib.listServiceOrders({}, db);
+    expect(o.status).toBe('paid'); expect(o.details.currentName).toBe('Sunil Kumar'); expect(o.details).not.toHaveProperty('injected');
+    expect(o.details.questions).toContain('XXXX-XXXX-0123'); expect(o.details.questions).not.toContain('2345 6789');
+    expect((await db.execute(sql`select credits from users where id = ${buyer.id}`)).rows[0]).toMatchObject({ credits: 0 });
+    expect(await svcLib.updateServiceOrder({ id: o.id, status: 'delivered', adminNote: 'Sent on WhatsApp' }, db)).toBe(true);
+    expect((await svcLib.listServiceOrders({ userId: buyer.id }, db))[0]).toMatchObject({ status: 'delivered', adminNote: 'Sent on WhatsApp' });
+    expect(await svcLib.deleteService('SVC_NAME_CORRECTION', db)).toBe('in_use');
+  });
+
+  it('services seeding: a service the owner deleted is not re-created on restart', async () => {
+    const svcLib = await import('@/lib/billing/services');
+    expect(await svcLib.deleteService('SVC_BABY_NAME', db)).toBe('deleted');
+    // On a cold start ensureServices reads this marker: every batch is done, so nothing is re-inserted.
+    const marker = (await db.execute(sql`select value from app_settings where key = 'servicesSeed'`)).rows[0] as { value: number };
+    expect(marker.value).toBe(2);
+    expect((await svcLib.listServices({ includeInactive: true }, db)).some((x) => x.code === 'SVC_BABY_NAME')).toBe(false);
+  });
 });

@@ -57,7 +57,7 @@ const AP = {
     online: (c: string) => ` Reports and consultations are delivered online, so people in ${c} and across India can use them from home.`,
     expertise: 'Areas of expertise', approach: 'His approach',
     approachList: ['Exact, traditional calculations so results are consistent every time.', 'Plain-language explanations you can read with your family.', 'Guidance, not fear: numerology supports decisions, it does not replace professional advice.'], langs: 'Reports in English, Hindi and Hinglish.',
-    start: 'Start my free reading', report: 'Complete life report', calcs: 'Free calculators →', aria: 'About Acharya Nandram' },
+    start: 'Start my free reading', report: 'Services & fees', calcs: 'Full profile →', aria: 'About Acharya Nandram' },
   hi: { stats: [['15+', 'वर्षों का अनुभव'], ['हज़ारों', 'व्यक्ति और परिवार लाभान्वित'], ['3', 'रिपोर्ट की भाषाएँ: अंग्रेज़ी, हिंदी, हिंग्लिश'], ['6', 'रीडिंग मॉड्यूल']] as [string, string][],
     skills: ['वैदिक अंक ज्योतिष (मूलांक, भाग्यांक, कुआ)', 'कैल्डियन नाम और हस्ताक्षर विश्लेषण', 'लो शू ग्रिड और अनुपस्थित अंकों के उपाय', 'मोबाइल और आधार वाइब्रेशन (सहमति से)', 'जोड़ी और विवाह अनुकूलता', 'व्यक्तिगत उपाय: रंग, दिन, मंत्र और दान'],
     eyebrow: 'लेखक के बारे में · प्रमुख अंक ज्योतिषी और मार्गदर्शक', name: 'आचार्य नंदराम', exp: 'अनुभव: 15+ वर्ष', initials: 'आ',
@@ -65,7 +65,7 @@ const AP = {
     online: (c: string) => ` रिपोर्ट और परामर्श ऑनलाइन दिए जाते हैं, इसलिए ${c} और पूरे भारत के लोग घर बैठे इनका लाभ ले सकते हैं।`,
     expertise: 'विशेषज्ञता के क्षेत्र', approach: 'उनकी कार्य-पद्धति',
     approachList: ['सटीक, पारंपरिक गणना, ताकि परिणाम हर बार एक जैसे रहें।', 'सरल भाषा में व्याख्या, जिसे आप परिवार के साथ पढ़ सकें।', 'डर नहीं, मार्गदर्शन: अंक ज्योतिष निर्णयों में सहायता करता है, पेशेवर सलाह का विकल्प नहीं है।'], langs: 'अंग्रेज़ी, हिंदी और हिंग्लिश में रिपोर्ट।',
-    start: 'मेरी मुफ़्त रीडिंग शुरू करें', report: 'संपूर्ण जीवन रिपोर्ट', calcs: 'मुफ़्त कैलकुलेटर →', aria: 'आचार्य नंदराम के बारे में' },
+    start: 'मेरी मुफ़्त रीडिंग शुरू करें', report: 'सेवाएँ और शुल्क', calcs: 'पूरी प्रोफ़ाइल →', aria: 'आचार्य नंदराम के बारे में' },
 };
 
 /** Full profile of the numerologist, shown at the end of every post. Facts are the ones already published on the home page. */
@@ -100,8 +100,8 @@ function AcharyaProfileView({ city, lang }: { city?: string; lang: Lang }) {
       </div>
       <div className="relative mt-7 flex flex-wrap gap-3">
         <Link href="/reading" className="inline-flex h-11 items-center gap-2 rounded-md bg-gradient-to-r from-[hsl(43_75%_42%)] to-[hsl(43_85%_58%)] px-5 text-sm font-semibold text-[hsl(250_45%_10%)] hover:brightness-105"><Sparkles className="h-4 w-4" />{t.start}</Link>
-        <Link href="/pricing" className="inline-flex h-11 items-center rounded-md border border-gold/50 px-5 text-sm hover:bg-gold/10">{t.report}</Link>
-        <Link href="/calculators" className="inline-flex h-11 items-center rounded-md px-3 text-sm text-gold hover:underline">{t.calcs}</Link>
+        <Link href="/services" className="inline-flex h-11 items-center rounded-md border border-gold/50 px-5 text-sm hover:bg-gold/10">{t.report}</Link>
+        <Link href="/about" className="inline-flex h-11 items-center rounded-md px-3 text-sm text-gold hover:underline">{t.calcs}</Link>
       </div>
     </section>
   );

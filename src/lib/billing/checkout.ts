@@ -5,11 +5,12 @@ import { coupons, creditLedger, invoiceCounters, payments, subscriptions, users,
 import { getSetting } from '@/lib/admin/settings';
 import { financialYear, GSTIN_RE, splitGstInclusive } from './gst';
 import { getPlan } from './plans';
+import { createServiceOrder, getService, isPayable, isServiceCode, markServiceOrderPaid, parseIntake } from './services';
 import { CASHFREE_ORDER_PREFIX, cashfreeConfig, cashfreePhone, createCashfreeOrder, getCashfreeOrder, getCashfreePayments, isCashfreeOrder, newCashfreeOrderId, toPaise } from './cashfree';
 
 export class CheckoutError extends Error { constructor(public code: string) { super(code); } }
 
-export async function validateCoupon(code: string, plan: Plan, db: Db = getDb()): Promise<{ coupon: Coupon; discountPaise: number }> {
+export async function validateCoupon(code: string, plan: Pick<Plan, 'code' | 'pricePaise'>, db: Db = getDb()): Promise<{ coupon: Coupon; discountPaise: number }> {
   const [c] = await db.select().from(coupons).where(eq(coupons.code, code.trim().toUpperCase())).limit(1);
   if (!c || !c.active) throw new CheckoutError('COUPON_INVALID');
   if (c.expiresAt && c.expiresAt.getTime() < Date.now()) throw new CheckoutError('COUPON_EXPIRED');
@@ -20,7 +21,19 @@ export async function validateCoupon(code: string, plan: Plan, db: Db = getDb())
   return { coupon: c, discountPaise: Math.max(0, discountPaise) };
 }
 
-export interface CheckoutInput { planCode: string; coupon?: string; billingName?: string; billingState: string; gstin?: string; phone?: string }
+export interface CheckoutInput { planCode: string; coupon?: string; billingName?: string; billingState: string; gstin?: string; phone?: string; intake?: unknown }
+
+/** What is being bought: a report plan (credits / Pro) or an expert service (SVC_…). */
+export async function getPurchasable(code: string, db: Db = getDb()) {
+  if (isServiceCode(code)) {
+    const s = await getService(code, db);
+    if (!s || !isPayable(s)) return null;
+    return { kind: 'service' as const, code: s.code, name: s.en.name, pricePaise: s.pricePaise, service: s };
+  }
+  const plan = await getPlan(code, db);
+  if (!plan || !plan.active || plan.pricePaise <= 0) return null;
+  return { kind: 'plan' as const, code: plan.code, name: plan.name, pricePaise: plan.pricePaise, plan };
+}
 
 /** Orders created without gateway keys in development (never in production). */
 export const MOCK_ORDER_PREFIX = 'mock_';
@@ -39,8 +52,11 @@ export function activeGateway(): 'cashfree' | 'mock' | null {
 const httpsAppUrl = () => { const u = process.env.APP_URL?.trim().replace(/\/$/, ''); return u && u.startsWith('https://') ? u : null; };
 
 export async function createCheckout(user: User, input: CheckoutInput, opts: { fetchImpl?: typeof fetch } = {}, db: Db = getDb()) {
-  const plan = await getPlan(input.planCode, db);
-  if (!plan || !plan.active || plan.pricePaise <= 0) throw new CheckoutError('PLAN_UNAVAILABLE');
+  const plan = await getPurchasable(input.planCode, db);
+  if (!plan) throw new CheckoutError('PLAN_UNAVAILABLE');
+  // Services need the client's details (name, date of birth…) before payment, validated per service.
+  const intake = plan.kind === 'service' ? (() => { try { return parseIntake(plan.service, input.intake); } catch { throw new CheckoutError('DETAILS_INVALID'); } })() : null;
+  const returnPath = plan.kind === 'service' ? '/services' : '/pricing';
   const gstin = input.gstin?.trim().toUpperCase() || undefined;
   if (gstin && !GSTIN_RE.test(gstin)) throw new CheckoutError('GSTIN_INVALID');
   const { discountPaise, coupon } = input.coupon ? await validateCoupon(input.coupon, plan, db) : { discountPaise: 0, coupon: null };
@@ -66,12 +82,13 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
     const orderId = newCashfreeOrderId();
     const base = httpsAppUrl();
     // Insert first so a webhook can never arrive for an order we don't know.
-    await db.insert(payments).values({ ...row, gatewayOrderId: orderId });
+    const [inserted] = await db.insert(payments).values({ ...row, gatewayOrderId: orderId }).returning({ id: payments.id });
+    if (intake) await createServiceOrder(inserted.id, user.id, plan.code, intake, db);
     let order;
     try {
       order = await createCashfreeOrder(cf, {
         orderId, amountPaise, customer: { id: user.id, phone, email: user.email, name: billingName },
-        returnUrl: base ? `${base}/pricing?cf_order={order_id}` : undefined,
+        returnUrl: base ? `${base}${returnPath}?cf_order={order_id}` : undefined,
         notifyUrl: base ? `${base}/api/billing/cashfree/webhook` : undefined,
         note: plan.name, tags: { plan: plan.code },
       }, opts.fetchImpl);
@@ -89,7 +106,8 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
 
   // Development test mode (no keys): the pricing dialog shows a "Simulate payment" button.
   const orderId = `${MOCK_ORDER_PREFIX}${newCashfreeOrderId().slice(CASHFREE_ORDER_PREFIX.length)}`;
-  await db.insert(payments).values({ ...row, gatewayOrderId: orderId });
+  const [inserted] = await db.insert(payments).values({ ...row, gatewayOrderId: orderId }).returning({ id: payments.id });
+  if (intake) await createServiceOrder(inserted.id, user.id, plan.code, intake, db);
   if (user.billingState !== input.billingState) await db.update(users).set({ billingState: input.billingState }).where(eq(users.id, user.id));
   return {
     gateway: 'mock' as const, mode: 'mock', paymentSessionId: '', mock: true,
@@ -106,7 +124,8 @@ export async function fulfilPayment(orderId: string, paymentId: string, db: Db =
     const [p] = await tx.select().from(payments).where(eq(payments.gatewayOrderId, orderId)).limit(1);
     if (p.status === 'paid') return { payment: p, alreadyPaid: true };
 
-    const plan = await getPlan(p.planCode, tx as unknown as Db);
+    // A paid service keeps its row even if the service was later edited or switched off.
+    const plan = isServiceCode(p.planCode) ? { credits: 0, intervalDays: null as number | null, code: p.planCode } : await getPlan(p.planCode, tx as unknown as Db);
     if (!plan) throw new CheckoutError('PLAN_UNAVAILABLE');
     const seller = await getSetting('seller', tx as unknown as Db);
     const fy = financialYear();
@@ -115,6 +134,7 @@ export async function fulfilPayment(orderId: string, paymentId: string, db: Db =
     const invoiceNumber = `${seller.invoicePrefix}/${fy}/${String(counter.last).padStart(5, '0')}`;
 
     const [paid] = await tx.update(payments).set({ status: 'paid', gatewayPaymentId: paymentId, paidAt: new Date(), invoiceNumber }).where(eq(payments.id, p.id)).returning();
+    if (isServiceCode(p.planCode)) await markServiceOrderPaid(p.id, tx as unknown as Db);
     if (p.couponCode) await tx.update(coupons).set({ used: sql`${coupons.used} + 1` }).where(eq(coupons.code, p.couponCode));
     if (plan.credits > 0) {
       await tx.update(users).set({ credits: sql`${users.credits} + ${plan.credits}` }).where(eq(users.id, p.userId));

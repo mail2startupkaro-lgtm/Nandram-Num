@@ -9,6 +9,7 @@ import { getOptionalUser } from '@/lib/auth/current-user';
 import { createSession, sessionCookie } from '@/lib/auth/session';
 import { getDb } from '@/lib/db/client';
 import { users } from '@/lib/db/schema';
+import { or } from 'drizzle-orm';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,6 +25,7 @@ export async function POST(req: Request) {
       gstin: z.string().max(15).optional(),
       phone: z.string().max(20).optional(),
       email: z.string().email().optional(),
+      intake: z.record(z.string(), z.string().max(2000)).optional(),
     }).parse(await readJson(req));
 
     const ip = clientIp(req);
@@ -44,30 +46,25 @@ export async function POST(req: Request) {
         return json({ error: 'PHONE_REQUIRED', issues: [{ path: 'phone', message: 'Enter a valid 10-digit mobile number for payment.' }] }, 400);
       }
 
-      const [existing] = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      // SECURITY: never sign a visitor into an account they have not proved they own. If the email or mobile
+      // already belongs to an account, ask them to sign in first (otherwise anyone could take over an account
+      // just by typing its email at checkout).
+      const [existing] = await db.select({ id: users.id }).from(users).where(or(eq(users.email, email), eq(users.phone, `+91${phoneClean}`))).limit(1);
       if (existing) {
-        user = existing;
-        const patch: Partial<typeof users.$inferInsert> = {};
-        if (!existing.phone && phoneClean) patch.phone = `+91${phoneClean}`;
-        if (!existing.name && body.billingName) patch.name = body.billingName;
-        if (!existing.billingState && body.billingState) patch.billingState = body.billingState;
-        if (Object.keys(patch).length > 0) {
-          await db.update(users).set(patch).where(eq(users.id, existing.id));
-        }
-      } else {
-        const [created] = await db.insert(users).values({
-          email,
-          phone: `+91${phoneClean}`,
-          name: body.billingName?.trim() || email.split('@')[0],
-          billingState: body.billingState,
-          role: 'customer',
-        }).returning();
-        user = created;
+        return json({ error: 'LOGIN_REQUIRED', issues: [{ path: 'email', message: 'An account with this email or mobile already exists. Please sign in to continue.' }] }, 409);
       }
+      const [created] = await db.insert(users).values({
+        email,
+        phone: `+91${phoneClean}`,
+        name: body.billingName?.trim() || email.split('@')[0],
+        billingState: body.billingState,
+        role: 'customer',
+      }).returning();
+      user = created;
       sessionToken = await createSession(user.id, req.headers.get('user-agent'), db);
     }
 
-    const order = await createCheckout(user, body);
+    const order = await createCheckout(user!, body);
     const headers: Record<string, string> = {};
     if (sessionToken) {
       headers['set-cookie'] = sessionCookie(sessionToken);

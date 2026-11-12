@@ -119,7 +119,7 @@ export default function PricingPage() {
       <p className="mt-4 font-serif text-4xl font-bold"><span className="gold-text">₹0</span></p>
       <p className="text-xs text-muted-foreground">{L('Free forever', 'हमेशा मुफ़्त')}</p>
       <p className="mt-3 text-sm text-muted-foreground">{t.pricing.freeDesc}</p>
-      <ul className="my-5 space-y-2 text-sm">{(hi ? ['मुफ़्त अंक ज्योतिष कैलकुलेटर', 'स्क्रीन पर रीडिंग (तुरंत)', 'वॉटरमार्क वाली जन्म तिथि प्रीव्यू PDF', '3 सहेजी गई रीडिंग तक'] : ['Free numerology calculators', 'On-screen reading (instant)', 'Watermarked Date of Birth preview PDF', 'Up to 3 saved readings']).map((f) => <li key={f} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />{f}</li>)}</ul>
+      <ul className="my-5 space-y-2 text-sm">{(hi ? ['मुफ़्त अंक ज्योतिष कैलकुलेटर', 'स्क्रीन पर रीडिंग (तुरंत)', '3 सहेजी गई रीडिंग तक'] : ['Free numerology calculators', 'On-screen reading (instant)', 'Up to 3 saved readings']).map((f) => <li key={f} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />{f}</li>)}</ul>
       <Link href="/reading" className={buttonVariants({ variant: 'outline', size: 'lg', className: 'mt-auto' })}>{t.nav.reading}</Link>
     </div>
   );
@@ -131,7 +131,7 @@ export default function PricingPage() {
   ];
   const rows: { label: string; cell: (c: (typeof cols)[number]) => React.ReactNode }[] = [
     { label: L('Calculators & on-screen reading', 'कैलकुलेटर और स्क्रीन पर रीडिंग'), cell: () => 'yes' },
-    { label: L('Full Complete Life Report PDF (all chapters)', 'संपूर्ण जीवन रिपोर्ट PDF (सभी अध्याय)'), cell: (c) => (c.paid ? 'yes' : L('Preview only', 'केवल प्रीव्यू')) },
+    { label: L('Full Complete Life Report PDF (all chapters)', 'संपूर्ण जीवन रिपोर्ट PDF (सभी अध्याय)'), cell: (c) => (c.paid ? 'yes' : 'no') },
     { label: L('Report credits', 'रिपोर्ट क्रेडिट'), cell: (c) => (c.pro ? L('Unlimited', 'असीमित') : c.credits > 0 ? String(c.credits) : 'no') },
     { label: L('Saved readings', 'सहेजी गई रीडिंग'), cell: (c) => (c.f.maxProfiles == null ? L('Unlimited', 'असीमित') : String(c.f.maxProfiles)) },
     { label: L('White-label PDFs (logo, signature, colours)', 'व्हाइट-लेबल PDF (लोगो, हस्ताक्षर, रंग)'), cell: (c) => (c.f.whiteLabel ? 'yes' : 'no') },
@@ -145,7 +145,7 @@ export default function PricingPage() {
     { icon: ShieldCheck, title: L('Secure payment', 'सुरक्षित भुगतान'), text: L('UPI, cards and net banking through Cashfree Payments.', 'Cashfree Payments द्वारा UPI, कार्ड और नेट बैंकिंग।') },
     { icon: Receipt, title: L('GST invoice', 'GST इनवॉइस'), text: L('A proper GST invoice for every paid order.', 'हर सशुल्क ऑर्डर के लिए विधिवत GST इनवॉइस।') },
     { icon: Languages, title: L('Hindi, English & Hinglish', 'हिंदी, अंग्रेज़ी और हिंग्लिश'), text: L('Choose the language of your report.', 'अपनी रिपोर्ट की भाषा स्वयं चुनें।') },
-    { icon: Zap, title: L('Instant PDF', 'तुरंत PDF'), text: L('Your designed report is ready in seconds.', 'आपकी डिज़ाइन की हुई रिपोर्ट कुछ ही सेकंड में तैयार।') },
+    { icon: Zap, title: L('Report in about 2 hours', 'लगभग 2 घंटे में रिपोर्ट'), text: L('Prepared between 8 am and 10 pm IST and ready about 2 hours after you submit.', 'सुबह 8 से रात 10 बजे (IST) के बीच तैयार, जमा करने के लगभग 2 घंटे बाद।') },
   ];
   const faq = hi ? [
     ['रिपोर्ट क्रेडिट क्या है?', 'एक क्रेडिट से किसी भी क्लाइंट की एक पूर्ण संपूर्ण जीवन रिपोर्ट PDF खुलती है। एकल रिपोर्ट में 1 क्रेडिट और 5-क्रेडिट पैक में 5 क्रेडिट मिलते हैं।'],

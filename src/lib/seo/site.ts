@@ -26,7 +26,7 @@ export const orgLd = () => ({
   '@context': 'https://schema.org',
   '@graph': [
     { '@type': 'Organization', '@id': `${SITE_URL}/#org`, name: SITE_NAME, url: SITE_URL, logo: abs('/icon.svg'), founder: { '@id': `${SITE_URL}/#expert` } },
-    { '@type': 'Person', '@id': `${SITE_URL}/#expert`, name: EXPERT.name, jobTitle: EXPERT.jobTitle, description: EXPERT.description, knowsAbout: EXPERT.knowsAbout, worksFor: { '@id': `${SITE_URL}/#org` }, url: SITE_URL },
+    { '@type': 'Person', '@id': `${SITE_URL}/#expert`, name: EXPERT.name, jobTitle: EXPERT.jobTitle, description: EXPERT.description, knowsAbout: EXPERT.knowsAbout, worksFor: { '@id': `${SITE_URL}/#org` }, url: abs('/about') },
     { '@type': 'WebSite', '@id': `${SITE_URL}/#website`, name: SITE_NAME, url: SITE_URL, inLanguage: ['en-IN', 'hi-IN'], publisher: { '@id': `${SITE_URL}/#org` } },
   ],
 });

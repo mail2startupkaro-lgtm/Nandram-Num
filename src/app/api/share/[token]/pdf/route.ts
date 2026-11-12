@@ -7,6 +7,8 @@ import { getDb } from '@/lib/db/client';
 import { clientProfiles } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { renderReportPdf } from '@/lib/pdf/render';
+import { getAccount } from '@/lib/billing/entitlements';
+import { queueState, usesQueue } from '@/lib/report-queue';
 import type { ThemeId } from '@/lib/pdf/themes';
 import { clientIp, errorResponse, json, pdfResponse, readJson, slug } from '@/lib/server/http';
 
@@ -31,6 +33,7 @@ export async function POST(req: Request, props: { params: Promise<{ token: strin
     const rep = r.report;
     if (!rep.narrative || rep.narrative.status !== 'final' || !(await isReportUnlocked(rep.id))) return json({ status: 'not_ready' }, 409);
     const [owner] = await getDb().select({ ownerId: clientProfiles.ownerId }).from(clientProfiles).where(eq(clientProfiles.id, rep.profileId)).limit(1);
+    if (owner && usesQueue(await getAccount(owner.ownerId)) && queueState(rep).state !== 'ready') return json({ status: 'not_ready' }, 409);
     const style = await pdfStyleFor(owner?.ownerId ?? null, rep.theme as ThemeId);
     const out = await renderReportPdf({ result: rep.result, narrative: rep.narrative, ...style });
     return pdfResponse(out.pdf, `${slug(rep.result.client.commonName || rep.result.client.fullName)}-numerology-report.pdf`);

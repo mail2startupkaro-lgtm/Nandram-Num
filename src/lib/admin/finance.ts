@@ -45,8 +45,8 @@ export async function salesReport(r: Range, db: Db = getDb()) {
       select to_char(date_trunc(${bucket}, paid_at at time zone 'Asia/Kolkata'), ${fmt}) k, count(*)::int orders, sum(amount_paise)::bigint gross, sum(taxable_paise)::bigint taxable
       from payments where status = 'paid' and paid_at >= ${r.start} and paid_at < ${r.end} group by 1 order by 1`),
     rows<{ code: string; name: string | null; orders: number; gross: string; discount: string; taxable: string }>(db, sql`
-      select p.plan_code code, pl.name, count(*)::int orders, sum(p.amount_paise)::bigint gross, sum(p.discount_paise)::bigint discount, sum(p.taxable_paise)::bigint taxable
-      from payments p left join plans pl on pl.code = p.plan_code
+      select p.plan_code code, coalesce(pl.name, sv.en->>'name') "name", count(*)::int orders, sum(p.amount_paise)::bigint gross, sum(p.discount_paise)::bigint discount, sum(p.taxable_paise)::bigint taxable
+      from payments p left join plans pl on pl.code = p.plan_code left join services sv on sv.code = p.plan_code
       where p.status = 'paid' and p.paid_at >= ${r.start} and p.paid_at < ${r.end} group by 1, 2 order by 4 desc`),
     rows<{ code: string; uses: number; discount: string; gross: string }>(db, sql`
       select coupon_code code, count(*)::int uses, sum(discount_paise)::bigint discount, sum(amount_paise)::bigint gross
@@ -103,12 +103,12 @@ export async function paymentRegister(r: Range, f: PaymentFilters, db: Db = getD
     conds.push(sql`(u.email ilike ${like} or u.phone ilike ${like} or u.name ilike ${like} or p.billing_name ilike ${like} or p.razorpay_order_id ilike ${like} or p.razorpay_payment_id ilike ${like} or p.invoice_number ilike ${like} or p.gstin ilike ${like})`);
   }
   const list = await rows<Record<string, unknown>>(db, sql`
-    select p.id, p.created_at "createdAt", p.paid_at "paidAt", p.status::text status, p.plan_code "planCode", pl.name "planName",
+    select p.id, p.created_at "createdAt", p.paid_at "paidAt", p.status::text status, p.plan_code "planCode", coalesce(pl.name, sv.en->>'name') "planName",
       u.name "customer", u.email, u.phone, p.billing_name "billingName", p.billing_state "billingState", p.gstin,
       p.list_price_paise "listPaise", p.discount_paise "discountPaise", p.coupon_code "couponCode", p.taxable_paise "taxablePaise",
       p.cgst_paise "cgstPaise", p.sgst_paise "sgstPaise", p.igst_paise "igstPaise", p.amount_paise "amountPaise",
       p.invoice_number "invoiceNumber", p.razorpay_order_id "orderId", p.razorpay_payment_id "paymentId"
-    from payments p join users u on u.id = p.user_id left join plans pl on pl.code = p.plan_code
+    from payments p join users u on u.id = p.user_id left join plans pl on pl.code = p.plan_code left join services sv on sv.code = p.plan_code
     where ${sql.join(conds, sql` and `)} order by p.created_at desc limit 2000`);
   return list.map((x) => ({ ...x, createdAt: new Date(x.createdAt as string).toISOString(), paidAt: x.paidAt ? new Date(x.paidAt as string).toISOString() : null })) as PaymentRow[];
 }

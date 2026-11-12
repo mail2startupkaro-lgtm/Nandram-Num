@@ -42,6 +42,8 @@ export async function POST(req: Request) {
   try {
     const user = await getOptionalUser(req);
     const full = !!user && (await getAccount(user.id)).features.fullReports;
+    // Instant PDFs are for Pro consultants and admins. General clients submit the saved report and download it when it is ready.
+    if (!full) return json(403, { error: 'REPORT_QUEUE' });
     if (!full) { const rl = rateLimit(`pdf:${clientIp(req)}`, 10, 3_600_000); if (!rl.ok) return tooMany(rl.retryAfter); }
     let result = parsed.data.result as unknown as NumerologyResult;
     if (!full) result = generateNumerology(result.client as never, { asOf: result.asOf, modules: ['dob'] }); // recomputed: DOB chapters only
