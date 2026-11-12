@@ -6,6 +6,16 @@ import { appSettings } from '@/lib/db/schema';
 export interface SellerSettings { legalName: string; gstin: string; address: string; state: string; stateCode: string; sac: string; email: string; phone: string; invoicePrefix: string }
 export interface ThemeSettings { defaultTheme: string; enabled: string[]; overrides: Record<string, { primary?: string; accent?: string; border?: string }> }
 export interface PromptSettings { extraStyleRules: string; sectionBriefs: Record<string, string> }
+export interface AnalyticsSettings {
+  measurementId: string;
+  gtmId: string;
+  enabled: boolean;
+  trackPageViews: boolean;
+  trackReadings: boolean;
+  trackCheckouts: boolean;
+  trackPdfDownloads: boolean;
+  trackServices: boolean;
+}
 
 export const SETTING_DEFAULTS = {
   seller: {
@@ -15,6 +25,16 @@ export const SETTING_DEFAULTS = {
   } as SellerSettings,
   themes: { defaultTheme: 'royal-gold-maroon', enabled: ['royal-gold-maroon', 'cosmic-blue', 'saffron-cream', 'minimal-white'], overrides: {} } as ThemeSettings,
   prompts: { extraStyleRules: '', sectionBriefs: {} } as PromptSettings,
+  analytics: {
+    measurementId: process.env.NEXT_PUBLIC_GA_ID || process.env.GA_MEASUREMENT_ID || '',
+    gtmId: process.env.NEXT_PUBLIC_GTM_ID || 'GTM-NPNKXF4B',
+    enabled: true,
+    trackPageViews: true,
+    trackReadings: true,
+    trackCheckouts: true,
+    trackPdfDownloads: true,
+    trackServices: true,
+  } as AnalyticsSettings,
 };
 export type SettingKey = keyof typeof SETTING_DEFAULTS;
 

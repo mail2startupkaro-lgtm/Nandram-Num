@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from 'next';
+import { Suspense } from 'react';
 import './globals.css';
 import './cosmic.css';
 import { Providers } from '@/components/layout/providers';
 import { Footer, Header } from '@/components/layout/chrome';
 import { CosmicBackground } from '@/components/layout/cosmic-bg';
+import { GoogleAnalytics } from '@/components/analytics/google-analytics';
 import { fontVariables } from './fonts';
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, EXPERT, SITE_NAME, SITE_URL, jsonLd, orgLd } from '@/lib/seo/site';
 
@@ -56,6 +58,9 @@ gtag('js', new Date());`,
           />
         </noscript>
         <Providers>
+          <Suspense fallback={null}>
+            <GoogleAnalytics />
+          </Suspense>
           <CosmicBackground />
           <Header />
           <main className="min-h-[70vh]">{children}</main>
