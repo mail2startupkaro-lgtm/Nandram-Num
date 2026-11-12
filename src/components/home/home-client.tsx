@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import Link from 'next/link';
-import { Award, CalendarDays, CheckCircle, Heart, IdCard, ScrollText, Smartphone, Sparkles, Type } from 'lucide-react';
+import { Award, Calculator, CalendarDays, CheckCircle, Heart, IdCard, MapPin, Orbit, ScrollText, Smartphone, Sparkles, Type } from 'lucide-react';
 import { useApp } from '@/components/layout/providers';
 import { Reveal } from '@/components/layout/cosmic-bg';
 import { YantraWheel } from '@/components/home/yantra-wheel';
@@ -34,7 +34,7 @@ const C = {
     plK: 'Navagraha', plH: 'Nine numbers, nine planets', plP: 'Each number from 1 to 9 is ruled by a planet that colours your nature.',
     calcK: 'Free instant reading', calcH: 'Reveal your numbers', calcP: 'The calculation happens instantly, right on your screen.',
     howK: 'How it works', howH: 'From your birth date to your blueprint',
-    steps: [['Share your details', 'Date of birth, name and optional mobile number, with your consent.'], ['Exact calculation', 'Traditional Vedic and Chaldean rules applied precisely, every time.'], ['Your personal report', 'A detailed reading with remedies, delivered as a beautiful PDF.']],
+    steps: [['Share your details', 'Date of birth, name and optional mobile number, with your consent.'], ['Exact calculation', 'Traditional Vedic and Chaldean rules applied precisely, every time.'], ['Your personal report', 'Prepared using Acharya Nandram’s method, built on 15+ years of practice – with remedies, in a beautiful PDF.']],
     repK: 'The life report', repH: 'A keepsake, not just a printout', repP: 'A print-ready A4 report with charts, grids and personal remedies.',
     stats: [['18', 'report sections'], ['6', 'reading modules'], ['3', 'languages'], ['4', 'report themes']],
     faqK: 'Questions', faqH: 'Frequently asked',
@@ -66,7 +66,7 @@ const C = {
     plK: 'नवग्रह', plH: 'नौ अंक, नौ ग्रह', plP: '1 से 9 तक हर अंक का एक स्वामी ग्रह है जो आपके स्वभाव को रंग देता है।',
     calcK: 'मुफ़्त तुरंत रीडिंग', calcH: 'अपने अंक जानें', calcP: 'गणना तुरंत आपकी स्क्रीन पर होती है।',
     howK: 'प्रक्रिया', howH: 'जन्म तिथि से जीवन के नक्शे तक',
-    steps: [['विवरण दें', 'जन्म तिथि, नाम और वैकल्पिक मोबाइल नंबर, आपकी सहमति से।'], ['सटीक गणना', 'पारंपरिक वैदिक और कैल्डियन नियम, हर बार सटीक।'], ['आपकी रिपोर्ट', 'उपायों सहित विस्तृत रीडिंग, सुंदर PDF में।']],
+    steps: [['विवरण दें', 'जन्म तिथि, नाम और वैकल्पिक मोबाइल नंबर, आपकी सहमति से।'], ['सटीक गणना', 'पारंपरिक वैदिक और कैल्डियन नियम, हर बार सटीक।'], ['आपकी रिपोर्ट', 'आचार्य नंदराम की 15+ वर्षों के अनुभव पर आधारित पद्धति से तैयार – उपायों सहित, सुंदर PDF में।']],
     repK: 'जीवन रिपोर्ट', repH: 'सिर्फ़ प्रिंटआउट नहीं, एक यादगार', repP: 'चार्ट, ग्रिड और व्यक्तिगत उपायों के साथ प्रिंट-योग्य A4 रिपोर्ट।',
     stats: [['18', 'रिपोर्ट खंड'], ['6', 'रीडिंग मॉड्यूल'], ['3', 'भाषाएँ'], ['4', 'रिपोर्ट थीम']],
     faqK: 'प्रश्न', faqH: 'अक्सर पूछे जाने वाले प्रश्न',
@@ -109,6 +109,9 @@ function Typer({ words }: { words: string[] }) {
   }, [words]);
   return <span className="cz-caret font-cinzel text-gold">{txt}</span>;
 }
+
+const EXPLORE_ICONS = [Sparkles, Orbit, Calculator, MapPin];
+const EXPLORE_MARKS = ['111', '1–9', '∑', '500+'];
 
 function Counter({ to }: { to: number }) {
   const ref = React.useRef<HTMLSpanElement>(null);
@@ -215,13 +218,20 @@ export function HomeClient() {
             ['/mulank', 'Mulank 1 to 9', 'Your root number from your date of birth: nature, planet, lucky days, colours and remedies.'],
             ['/calculators', 'Free numerology calculators', 'Moolank, Bhagyank, Lo Shu grid, name, mobile number and Kua calculators.'],
             ['/blog', 'Numerologist city guides', 'Online numerology guides for Mumbai, Delhi, Bengaluru and 500+ Indian cities.'],
-          ]).map(([href, t, d]) => (
-            <Link key={href} href={href} className="cz-card h-full p-5">
-              <h3 className="font-cinzel text-lg font-bold">{t}</h3>
-              <p className="mt-2 text-sm text-muted-foreground">{d}</p>
-              <span className="mt-3 inline-block text-[13px] text-gold">{c.explore} →</span>
-            </Link>
-          ))}
+          ]).map(([href, t, d], i) => {
+            const Icon = EXPLORE_ICONS[i];
+            return (
+              <Reveal key={href} delay={0.12 * i} className="h-full">
+                <Link href={href} className="cz-card cz-mod cz-ex h-full" style={{ '--d': `${i * 0.8}s` } as React.CSSProperties} {...tilt}>
+                  <span className="cz-num cz-ex-num">{EXPLORE_MARKS[i]}</span>
+                  <span className="cz-ic cz-ex-ic"><Icon className="h-6 w-6" /></span>
+                  <h3 className="font-cinzel text-lg font-bold">{t}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{d}</p>
+                  <span className="cz-go mt-3 inline-block text-[13px] text-gold">{c.explore}</span>
+                </Link>
+              </Reveal>
+            );
+          })}
         </div>
       </section>
 

@@ -93,6 +93,15 @@ html:not(.dark) .cz-card { background: hsl(0 0% 100% / .72); }
 .cz-go::after { content: " →"; display: inline-block; transition: transform .3s; }
 .cz-mod:hover .cz-go::after { transform: translateX(6px); }
 
+/* Explore-numerology cards: floating icon, periodic light sweep, staggered timing via --d */
+.cz-ex { padding: 26px 22px; }
+.cz-ex::after { content: ""; position: absolute; top: 0; left: -80%; width: 45%; height: 100%; pointer-events: none;
+  background: linear-gradient(90deg, transparent, hsl(43 95% 76% / .14), transparent); transform: skewX(-22deg);
+  animation: cz-sweep 6s ease-in-out infinite; animation-delay: var(--d, 0s); }
+.cz-ex .cz-ex-ic { width: 50px; height: 50px; margin-bottom: 14px; animation: cz-float 4s ease-in-out infinite; animation-delay: calc(var(--d, 0s) * -1); }
+.cz-ex:hover .cz-ex-ic { animation-play-state: paused; box-shadow: 0 0 26px hsl(var(--saffron) / .55); }
+.cz-ex .cz-ex-num { font-size: 64px; top: 10px; }
+
 /* planets */
 .cz-pl { text-align: center; padding: 20px 8px; border-radius: 18px; border: 1px solid hsl(var(--gold) / .28); background: hsl(var(--card) / .5); transition: transform .35s, background .35s; }
 .cz-pl:hover { transform: translateY(-10px); background: hsl(var(--gold) / .12); }

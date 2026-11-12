@@ -32,18 +32,21 @@ const themeScript = `try{var t=localStorage.getItem('theme');if(t!=='light'){doc
 // Applies the saved language (or ?lang=hi) before first paint: both languages are in the HTML and CSS shows one.
 const langScript = `try{var d=document.documentElement,q=new URLSearchParams(location.search).get('lang'),l=q==='hi'||q==='en'?q:localStorage.getItem('lang');if(q==='hi'||q==='en')localStorage.setItem('lang',q);if(l==='hi'){d.setAttribute('data-lang','hi');d.lang='hi-IN'}else{d.setAttribute('data-lang','en')}}catch(e){}`;
 
+const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID || 'GTM-NPNKXF4B';
+const gtmHeadScript = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','${GTM_ID}');
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en-IN" className={fontVariables} suppressHydrationWarning>
       <head>
-        <script async src="https://www.googletagmanager.com/gtm.js?id=GTM-NPNKXF4B" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());`,
-          }}
-        />
+        <script dangerouslySetInnerHTML={{ __html: gtmHeadScript }} />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <script dangerouslySetInnerHTML={{ __html: langScript }} />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(orgLd()) }} />
@@ -51,7 +54,7 @@ gtag('js', new Date());`,
       <body>
         <noscript>
           <iframe
-            src="https://www.googletagmanager.com/ns.html?id=GTM-NPNKXF4B"
+            src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
             height="0"
             width="0"
             style={{ display: 'none', visibility: 'hidden' }}
