@@ -177,16 +177,22 @@ async function htmlToPdf(browser: Browser, html: string, opts: { margin0?: boole
 
 /** Finds `@@C:<id>@@` markers (invisible text placed in chapter titles) and returns id → page number. */
 async function findChapterPages(pdf: Uint8Array): Promise<Record<string, number>> {
-  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
-  const doc = await pdfjs.getDocument({ data: pdf.slice(), isEvalSupported: false, disableFontFace: true, useSystemFonts: false, verbosity: 0 }).promise;
-  const out: Record<string, number> = {};
-  for (let i = 1; i <= doc.numPages; i++) {
-    const tc = await (await doc.getPage(i)).getTextContent();
-    const text = tc.items.map((x) => ('str' in x ? x.str : '')).join('');
-    for (const m of text.matchAll(/@@C:([a-zA-Z]+)@@/g)) if (!(m[1] in out)) out[m[1]] = i;
+  try {
+    await import('pdfjs-dist/legacy/build/pdf.worker.mjs');
+    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const doc = await pdfjs.getDocument({ data: pdf.slice(), isEvalSupported: false, disableFontFace: true, useSystemFonts: false, verbosity: 0 }).promise;
+    const out: Record<string, number> = {};
+    for (let i = 1; i <= doc.numPages; i++) {
+      const tc = await (await doc.getPage(i)).getTextContent();
+      const text = tc.items.map((x) => ('str' in x ? x.str : '')).join('');
+      for (const m of text.matchAll(/@@C:([a-zA-Z]+)@@/g)) if (!(m[1] in out)) out[m[1]] = i;
+    }
+    await doc.destroy();
+    return out;
+  } catch (err) {
+    console.warn('[pdf] findChapterPages encountered an issue, continuing with fallback:', err);
+    return {};
   }
-  await doc.destroy();
-  return out;
 }
 
 const hex = (h: string) => {
