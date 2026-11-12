@@ -22,19 +22,24 @@ export interface GridLine {
   strengthName: string;
   /** Name used when all three numbers are missing. */
   weaknessName: string;
-  /** Yog label when complete (Indian Lo Shu terminology), if any. */
+  /**
+   * Yog label when complete (Indian Lo Shu terminology), if any.
+   * Golden Yog = 4-5-6 (success line), Silver Yog = 2-5-8 (property line). The 3-5-7 plane is not a yog.
+   * Arrow names on the four lines through 5 follow the numbers (1-5-9 determination / indecision,
+   * 3-5-7 spirituality / scepticism, 4-5-6 willpower / frustration, 2-5-8 emotional balance / hypersensitivity).
+   */
   yog?: string;
 }
 
 export const LOSHU_LINES: GridLine[] = [
   { id: 'mental', name: 'Mental Plane', numbers: [4, 9, 2], orientation: 'horizontal', strengthName: 'Arrow of Intellect', weaknessName: 'Arrow of Poor Memory' },
-  { id: 'emotional', name: 'Emotional Plane', numbers: [3, 5, 7], orientation: 'horizontal', strengthName: 'Arrow of Emotional Balance', weaknessName: 'Arrow of Hypersensitivity', yog: 'Silver Yog' },
+  { id: 'emotional', name: 'Emotional Plane', numbers: [3, 5, 7], orientation: 'horizontal', strengthName: 'Arrow of Spirituality', weaknessName: 'Arrow of Scepticism' },
   { id: 'practical', name: 'Practical Plane', numbers: [8, 1, 6], orientation: 'horizontal', strengthName: 'Arrow of Practicality', weaknessName: 'Arrow of Disorder' },
   { id: 'thought', name: 'Thought Plane', numbers: [4, 3, 8], orientation: 'vertical', strengthName: 'Arrow of Planning', weaknessName: 'Arrow of Confusion' },
-  { id: 'will', name: 'Will Plane', numbers: [9, 5, 1], orientation: 'vertical', strengthName: 'Arrow of Determination', weaknessName: 'Arrow of Frustration' },
+  { id: 'will', name: 'Will Plane', numbers: [9, 5, 1], orientation: 'vertical', strengthName: 'Arrow of Determination', weaknessName: 'Arrow of Indecision' },
   { id: 'action', name: 'Action Plane', numbers: [2, 7, 6], orientation: 'vertical', strengthName: 'Arrow of Activity', weaknessName: 'Arrow of Hesitation' },
-  { id: 'golden', name: 'Success Line (4-5-6)', numbers: [4, 5, 6], orientation: 'diagonal', strengthName: 'Arrow of Prosperity', weaknessName: 'Arrow of Scepticism', yog: 'Golden Yog' },
-  { id: 'raj', name: 'Property Line (2-5-8)', numbers: [2, 5, 8], orientation: 'diagonal', strengthName: 'Arrow of Compassion', weaknessName: 'Arrow of Indecision', yog: 'Raj Yog' },
+  { id: 'golden', name: 'Success Line (4-5-6)', numbers: [4, 5, 6], orientation: 'diagonal', strengthName: 'Arrow of Willpower', weaknessName: 'Arrow of Frustration', yog: 'Golden Yog' },
+  { id: 'raj', name: 'Property Line (2-5-8)', numbers: [2, 5, 8], orientation: 'diagonal', strengthName: 'Arrow of Emotional Balance', weaknessName: 'Arrow of Hypersensitivity', yog: 'Silver Yog' },
 ];
 
 export interface LoShuNumberInfo {

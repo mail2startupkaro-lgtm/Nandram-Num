@@ -2,7 +2,7 @@
 import type { KnowledgeSeed } from './knowledge';
 import type { ClientContext, SectionPlan } from './plan';
 
-export const PROMPT_VERSION = 'v1.1';
+export const PROMPT_VERSION = 'v1.2'; // 1.2: Hindi (Devanagari) offline writer, Lo Shu yog/arrow names corrected
 
 export interface Persona {
   expertName: string;

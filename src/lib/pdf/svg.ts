@@ -36,7 +36,7 @@ export function divider(t: PdfTheme, width = 220): string {
 // ---------- Number medallion ----------
 export function numberMedallion(n: number | string, t: PdfTheme, size = 92, label?: string): string {
   const petals = Array.from({ length: 16 }, (_, i) => `<ellipse cx="50" cy="12" rx="5" ry="10" transform="rotate(${i * 22.5} 50 50)" fill="${t.accent}" opacity="0.28"/>`).join('');
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${size}" height="${size}">${petals}<circle cx="50" cy="50" r="33" fill="${t.paper}" stroke="${t.accent}" stroke-width="2"/><circle cx="50" cy="50" r="29" fill="none" stroke="${t.primary}" stroke-width="0.6"/><text x="50" y="${label ? 57 : 61}" text-anchor="middle" font-family="Playfair Display" font-weight="700" font-size="${String(n).length > 1 ? 26 : 34}" fill="${t.primary}">${esc(n)}</text>${label ? `<text x="50" y="71" text-anchor="middle" font-family="Poppins" font-size="7" fill="${t.muted}">${esc(label)}</text>` : ''}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="${size}" height="${size}">${petals}<circle cx="50" cy="50" r="33" fill="${t.paper}" stroke="${t.accent}" stroke-width="2"/><circle cx="50" cy="50" r="29" fill="none" stroke="${t.primary}" stroke-width="0.6"/><text x="50" y="${label ? 57 : 61}" text-anchor="middle" font-family="Playfair Display" font-weight="700" font-size="${String(n).length > 1 ? 26 : 34}" fill="${t.primary}">${esc(n)}</text>${label ? `<text x="50" y="71" text-anchor="middle" font-family="Poppins, 'Noto Sans Devanagari'" font-size="7" fill="${t.muted}">${esc(label)}</text>` : ''}</svg>`;
 }
 
 // ---------- Planet icons ----------
@@ -89,8 +89,8 @@ export function gridSvg(cells: GridCell[], t: PdfTheme, size = 210, opts: { high
     const hl = opts.highlight?.includes(c.number) ? `<rect x="${x - 2}" y="${y - 2}" width="${w + 4}" height="${w + 4}" rx="9" fill="none" stroke="${t.accent}" stroke-width="2.5"/>` : '';
     return `${hl}<rect x="${x}" y="${y}" width="${w}" height="${w}" rx="7" fill="${fill}" stroke="${stroke}" stroke-width="${c.status === 'missing' ? 1 : 1.6}" ${c.status === 'missing' ? 'stroke-dasharray="4 3"' : ''}/>
       <text x="${x + w / 2}" y="${y + w / 2 + fs * 0.35}" text-anchor="middle" font-family="Playfair Display" font-weight="700" font-size="${f(fs)}" fill="${c.status === 'missing' ? t.border : t.ink}">${txt}</text>
-      ${c.count > 1 ? `<text x="${x + w - 6}" y="${y + 13}" text-anchor="end" font-family="Poppins" font-weight="600" font-size="9" fill="${t.primary}">×${c.count}</text>` : ''}
-      ${opts.labels && c.label ? `<text x="${x + w / 2}" y="${y + w - 7}" text-anchor="middle" font-family="Poppins" font-size="8" fill="${t.muted}">${esc(c.label)}</text>` : ''}`;
+      ${c.count > 1 ? `<text x="${x + w - 6}" y="${y + 13}" text-anchor="end" font-family="Poppins, 'Noto Sans Devanagari'" font-weight="600" font-size="9" fill="${t.primary}">×${c.count}</text>` : ''}
+      ${opts.labels && c.label ? `<text x="${x + w / 2}" y="${y + w - 7}" text-anchor="middle" font-family="Poppins, 'Noto Sans Devanagari'" font-size="8" fill="${t.muted}">${esc(c.label)}</text>` : ''}`;
   }).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">${parts}</svg>`;
 }
@@ -106,7 +106,7 @@ export function radarSvg(axes: { label: string; value: number; value2?: number }
   const labels = axes.map((a, i) => {
     const [x, y] = pt(i, 124);
     const anchor = Math.abs(x - cx) < 4 ? 'middle' : x > cx ? 'start' : 'end';
-    return `<text x="${f(x)}" y="${f(y + 3)}" text-anchor="${anchor}" font-family="Poppins" font-size="9.5" fill="${t.ink}">${esc(a.label)} <tspan font-weight="600" fill="${t.primary}">${a.value}</tspan></text>`;
+    return `<text x="${f(x)}" y="${f(y + 3)}" text-anchor="${anchor}" font-family="Poppins, 'Noto Sans Devanagari'" font-size="9.5" fill="${t.ink}">${esc(a.label)} <tspan font-weight="600" fill="${t.primary}">${a.value}</tspan></text>`;
   }).join('');
   const dots = axes.map((a, i) => { const [x, y] = pt(i, a.value); return `<circle cx="${f(x)}" cy="${f(y)}" r="2.6" fill="${t.chart[1]}"/>`; }).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${size}" width="${W}" height="${size}">${rings}${spokes}${axes.some((a) => a.value2 !== undefined) ? poly('value2', t.chart[1], 0.15) : ''}${poly('value', t.chart[0], 0.3)}${dots}${labels}</svg>`;
@@ -115,13 +115,13 @@ export function radarSvg(axes: { label: string; value: number; value2?: number }
 // ---------- Bars (Personal Year timeline) ----------
 export function barsSvg(data: { label: string; value: number; highlight?: boolean; sub?: string }[], t: PdfTheme, width = 470, height = 190, max = 9): string {
   const padL = 22, padB = 34, padT = 14, w = width - padL - 6, h = height - padB - padT, bw = w / data.length;
-  const grid = [1, 3, 5, 7, 9].map((v) => { const y = padT + h - (h * v) / max; return `<line x1="${padL}" x2="${width - 6}" y1="${f(y)}" y2="${f(y)}" stroke="${t.border}" stroke-width="0.4" opacity=".6"/><text x="${padL - 6}" y="${f(y + 3)}" text-anchor="end" font-family="Poppins" font-size="8" fill="${t.muted}">${v}</text>`; }).join('');
+  const grid = [1, 3, 5, 7, 9].map((v) => { const y = padT + h - (h * v) / max; return `<line x1="${padL}" x2="${width - 6}" y1="${f(y)}" y2="${f(y)}" stroke="${t.border}" stroke-width="0.4" opacity=".6"/><text x="${padL - 6}" y="${f(y + 3)}" text-anchor="end" font-family="Poppins, 'Noto Sans Devanagari'" font-size="8" fill="${t.muted}">${v}</text>`; }).join('');
   const bars = data.map((d, i) => {
     const bh = (h * d.value) / max, x = padL + i * bw + bw * 0.18, y = padT + h - bh;
     return `<rect x="${f(x)}" y="${f(y)}" width="${f(bw * 0.64)}" height="${f(bh)}" rx="4" fill="${d.highlight ? t.chart[1] : t.chart[0]}" opacity="${d.highlight ? 1 : 0.8}"/>
       <text x="${f(x + bw * 0.32)}" y="${f(y - 4)}" text-anchor="middle" font-family="Playfair Display" font-weight="700" font-size="11" fill="${t.ink}">${d.value}</text>
-      <text x="${f(x + bw * 0.32)}" y="${height - padB + 13}" text-anchor="middle" font-family="Poppins" font-size="8.5" fill="${t.ink}">${esc(d.label)}</text>
-      ${d.sub ? `<text x="${f(x + bw * 0.32)}" y="${height - padB + 25}" text-anchor="middle" font-family="Poppins" font-size="6.8" fill="${t.muted}">${esc(d.sub)}</text>` : ''}`;
+      <text x="${f(x + bw * 0.32)}" y="${height - padB + 13}" text-anchor="middle" font-family="Poppins, 'Noto Sans Devanagari'" font-size="8.5" fill="${t.ink}">${esc(d.label)}</text>
+      ${d.sub ? `<text x="${f(x + bw * 0.32)}" y="${height - padB + 25}" text-anchor="middle" font-family="Poppins, 'Noto Sans Devanagari'" font-size="6.8" fill="${t.muted}">${esc(d.sub)}</text>` : ''}`;
   }).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">${grid}${bars}</svg>`;
 }
@@ -140,7 +140,7 @@ export function gaugeSvg(value: number, t: PdfTheme, label: string, size = 170):
     ${ticks}
     <line x1="${cx}" y1="${cy}" x2="${f(cx + (r - 18) * Math.cos(na))}" y2="${f(cy - (r - 18) * Math.sin(na))}" stroke="${t.ink}" stroke-width="2.2" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="4" fill="${t.ink}"/>
     <text x="${cx}" y="${cy + 26}" text-anchor="middle" font-family="Playfair Display" font-weight="700" font-size="22" fill="${t.ink}">${value}</text>
-    <text x="${cx}" y="${cy + 36}" text-anchor="middle" font-family="Poppins" font-size="8.5" fill="${t.muted}">${esc(label)}</text></svg>`;
+    <text x="${cx}" y="${cy + 36}" text-anchor="middle" font-family="Poppins, 'Noto Sans Devanagari'" font-size="8.5" fill="${t.muted}">${esc(label)}</text></svg>`;
 }
 
 export function ringSvg(value: number, t: PdfTheme, label: string, size = 150): string {
@@ -149,13 +149,13 @@ export function ringSvg(value: number, t: PdfTheme, label: string, size = 150): 
     <circle cx="75" cy="75" r="${r}" fill="none" stroke="${t.soft}" stroke-width="13"/>
     <circle cx="75" cy="75" r="${r}" fill="none" stroke="url(#rg)" stroke-width="13" stroke-linecap="round" stroke-dasharray="${f(c)}" stroke-dashoffset="${f(c * (1 - value / 100))}" transform="rotate(-90 75 75)"/>
     <text x="75" y="80" text-anchor="middle" font-family="Playfair Display" font-weight="700" font-size="30" fill="${t.ink}">${value}%</text>
-    <text x="75" y="98" text-anchor="middle" font-family="Poppins" font-size="9" fill="${t.muted}">${esc(label)}</text></svg>`;
+    <text x="75" y="98" text-anchor="middle" font-family="Poppins, 'Noto Sans Devanagari'" font-size="9" fill="${t.muted}">${esc(label)}</text></svg>`;
 }
 
 // ---------- Compass (Kua) ----------
 const DIR_ANGLE: Record<string, number> = { North: 0, 'North-East': 45, East: 90, 'South-East': 135, South: 180, 'South-West': 225, West: 270, 'North-West': 315 };
 const DIR_ABBR: Record<string, string> = { North: 'N', 'North-East': 'NE', East: 'E', 'South-East': 'SE', South: 'S', 'South-West': 'SW', West: 'W', 'North-West': 'NW' };
-export function compassSvg(good: Record<string, string>, bad: Record<string, string>, t: PdfTheme, size = 220): string {
+export function compassSvg(good: Record<string, string>, bad: Record<string, string>, t: PdfTheme, size = 220, lab: { abbr?: Record<string, string>; tags?: Record<string, string> } = {}): string {
   const cx = 110, cy = 110;
   const goodSet = new Map(Object.entries(good).map(([k, v]) => [v, k]));
   const badSet = new Set(Object.values(bad));
@@ -169,29 +169,29 @@ export function compassSvg(good: Record<string, string>, bad: Record<string, str
     const x = cx + 98 * Math.cos(rad), y = cy + 98 * Math.sin(rad);
     const tag = goodSet.get(d);
     const ix = cx + 58 * Math.cos(rad), iy = cy + 58 * Math.sin(rad);
-    return `<text x="${f(x)}" y="${f(y + 4)}" text-anchor="middle" font-family="Poppins" font-weight="600" font-size="11" fill="${goodSet.has(d) ? t.good : badSet.has(d) ? t.bad : t.muted}">${DIR_ABBR[d]}</text>${tag ? `<text x="${f(ix)}" y="${f(iy + 3)}" text-anchor="middle" font-family="Poppins" font-size="7.2" fill="${t.ink}">${esc({ success: 'Success', health: 'Health', relationships: 'Love', personalGrowth: 'Growth' }[tag] ?? tag)}</text>` : ''}`;
+    return `<text x="${f(x)}" y="${f(y + 4)}" text-anchor="middle" font-family="Poppins, 'Noto Sans Devanagari'" font-weight="600" font-size="11" fill="${goodSet.has(d) ? t.good : badSet.has(d) ? t.bad : t.muted}">${esc(lab.abbr?.[d] ?? DIR_ABBR[d])}</text>${tag ? `<text x="${f(ix)}" y="${f(iy + 3)}" text-anchor="middle" font-family="Poppins, 'Noto Sans Devanagari'" font-size="7.2" fill="${t.ink}">${esc(lab.tags?.[tag] ?? { success: 'Success', health: 'Health', relationships: 'Love', personalGrowth: 'Growth' }[tag] ?? tag)}</text>` : ''}`;
   }).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="${size}" height="${size}">${sectors}<circle cx="${cx}" cy="${cy}" r="86" fill="none" stroke="${t.border}" stroke-width="1"/><circle cx="${cx}" cy="${cy}" r="20" fill="${t.paper}" stroke="${t.accent}" stroke-width="1.5"/><path d="M${cx} ${cy - 16} L${cx + 5} ${cy} L${cx} ${cy + 16} L${cx - 5} ${cy} Z" fill="${t.primary}"/>${labels}</svg>`;
 }
 
 // ---------- Colour swatches ----------
-export function swatches(names: string[], t: PdfTheme): string {
+export function swatches(names: string[], t: PdfTheme, label: (s: string) => string = (x) => x): string {
   return names.map((n) => {
     const hex = COLOUR_HEX[n.toLowerCase()] ?? t.soft;
-    return `<span class="sw"><i style="background:${hex}"></i>${esc(n)}</span>`;
+    return `<span class="sw"><i style="background:${hex}"></i>${esc(label(n))}</span>`;
   }).join('');
 }
 
 // ---------- Timeline (pinnacles) ----------
-export function timelineSvg(items: { number: number; fromAge: number; toAge: number | null; current: boolean }[], t: PdfTheme, width = 470): string {
+export function timelineSvg(items: { number: number; fromAge: number; toAge: number | null; current: boolean }[], t: PdfTheme, width = 470, nowLabel = 'NOW'): string {
   const h = 92, pad = 16, seg = (width - pad * 2) / items.length;
   const parts = items.map((p, i) => {
     const x = pad + i * seg, cx = x + seg / 2;
     return `<rect x="${f(x + 3)}" y="40" width="${f(seg - 6)}" height="10" rx="5" fill="${p.current ? t.chart[1] : t.chart[0]}" opacity="${p.current ? 1 : 0.55}"/>
       <circle cx="${f(cx)}" cy="22" r="15" fill="${p.current ? t.primary : t.paper}" stroke="${t.accent}" stroke-width="1.5"/>
       <text x="${f(cx)}" y="28" text-anchor="middle" font-family="Playfair Display" font-weight="700" font-size="15" fill="${p.current ? t.paper : t.primary}">${p.number}</text>
-      <text x="${f(cx)}" y="66" text-anchor="middle" font-family="Poppins" font-size="9" fill="${t.ink}">${p.fromAge}–${p.toAge ?? '+'}</text>
-      ${p.current ? `<text x="${f(cx)}" y="80" text-anchor="middle" font-family="Poppins" font-weight="600" font-size="8" fill="${t.primary}">NOW</text>` : ''}`;
+      <text x="${f(cx)}" y="66" text-anchor="middle" font-family="Poppins, 'Noto Sans Devanagari'" font-size="9" fill="${t.ink}">${p.toAge === null ? `${p.fromAge}+` : `${p.fromAge}–${p.toAge}`}</text>
+      ${p.current ? `<text x="${f(cx)}" y="80" text-anchor="middle" font-family="Poppins, 'Noto Sans Devanagari'" font-weight="600" font-size="8" fill="${t.primary}">${esc(nowLabel)}</text>` : ''}`;
   }).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${h}" width="${width}" height="${h}">${parts}</svg>`;
 }

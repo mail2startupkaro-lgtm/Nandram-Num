@@ -7,6 +7,7 @@ import type { StoredInput } from '@/lib/numerology/schemas';
 import { planetOf } from '@/lib/numerology/data/planets';
 import { barsSvg, divider, esc, gaugeSvg, gridSvg, monogram, numberMedallion, planetIcon, remedyIcon, ringSvg, swatches } from './svg';
 import { baseCss, labelsFor } from './template';
+import { tr } from '@/lib/i18n/hi-terms';
 import { DEFAULT_BRANDING, resolveTheme, type Branding, type PdfTheme, type ThemeId } from './themes';
 import { renderSheetPdf } from './render';
 
@@ -81,15 +82,18 @@ export function buildInputSheetHtml(d: InputSheetData, t: PdfTheme, b: Branding,
   const lab = labelsFor(lang);
   const i = d.input;
   const row = (k: string, v?: string | null) => `<tr><td>${esc(k)}</td><td><b>${esc(v || '—')}</b></td></tr>`;
-  const concerns = (i.concerns ?? []).map((c) => c.replace(/([A-Z])/g, ' $1').replace(/^./, (x) => x.toUpperCase())).join(', ');
+  const hi = lang === 'hi';
+  const CONCERN_HI: Record<string, string> = { career: 'करियर', business: 'व्यवसाय', money: 'धन', marriage: 'विवाह', love: 'प्रेम', health: 'स्वास्थ्य', children: 'संतान', education: 'शिक्षा', foreignTravel: 'विदेश यात्रा', property: 'संपत्ति', legal: 'क़ानूनी मामले' };
+  const MARITAL_HI: Record<string, string> = { single: 'अविवाहित', married: 'विवाहित', engaged: 'सगाई हो चुकी', divorced: 'तलाक़शुदा', widowed: 'विधवा / विधुर' };
+  const concerns = (i.concerns ?? []).map((c) => (hi ? CONCERN_HI[c] ?? c : c.replace(/([A-Z])/g, ' $1').replace(/^./, (x) => x.toUpperCase()))).join(', ');
   const body = `
     <div class="grp"><h3>${esc(L.personal)}</h3><table class="tbl"><tbody>
       ${row(L.fullName, i.fullName)}${row(L.commonName, i.commonName)}${i.hindiName ? `<tr><td>${esc(L.hindiName)}</td><td style="font-family:'Noto Sans Devanagari'"><b>${esc(i.hindiName)}</b></td></tr>` : row(L.hindiName, null)}
       ${row(L.gender, L.genderMap[i.gender])}${row(L.dob, fmt(i.dob))}${row(L.tob, i.timeOfBirth)}${row(L.pob, i.placeOfBirth)}
     </tbody></table></div>
     <div class="grp"><h3>${esc(L.life)}</h3><table class="tbl"><tbody>
-      ${row(L.marital, i.maritalStatus ? titleCase(i.maritalStatus) : null)}${row(L.profession, i.profession)}${row(L.education, i.education)}
-      ${row(L.location, [i.city, i.state].filter(Boolean).join(', '))}${row(L.concerns, concerns)}${row(L.language, { en: 'English', hi: 'Hindi', hinglish: 'Hinglish' }[i.language ?? 'en'])}
+      ${row(L.marital, i.maritalStatus ? (hi ? MARITAL_HI[i.maritalStatus] ?? i.maritalStatus : titleCase(i.maritalStatus)) : null)}${row(L.profession, i.profession)}${row(L.education, i.education)}
+      ${row(L.location, [i.city, i.state].filter(Boolean).join(', '))}${row(L.concerns, concerns)}${row(L.language, (hi ? { en: 'अंग्रेज़ी', hi: 'हिंदी', hinglish: 'हिंग्लिश' } : { en: 'English', hi: 'Hindi', hinglish: 'Hinglish' })[i.language ?? 'en'])}
     </tbody></table></div>
     <div class="grp"><h3>${esc(L.numbers)}</h3><table class="tbl"><tbody>
       ${row(L.mobile, i.mobile)}${row(L.aadhaar, d.aadhaarLast4 ? `XXXX-XXXX-${d.aadhaarLast4}` : L.notProvided)}
@@ -111,37 +115,44 @@ export function buildOutputSheetHtml(r: NumerologyResult, t: PdfTheme, b: Brandi
   const L = SHEET_LABELS[lang];
   const lab = labelsFor(lang);
   const x = r.results, d = x.dob, rm = x.remedies;
+  const T = (v: string | null | undefined) => tr(lang, v);
+  const rel = d.numberRelations.combined;
+  const chips = (ns: number[], bg: string, fg: string) => ns.map((n) => `<span style="display:inline-flex;align-items:center;justify-content:center;width:6.4mm;height:6.4mm;border-radius:50%;background:${bg};color:${fg};font-family:'Playfair Display',serif;font-weight:700;font-size:9pt;margin-right:1mm">${n}</span>`).join('') || '—';
   const core: [string, number][] = [[lab.moolank, d.moolank.value], [lab.bhagyank, d.bhagyank.value], [lab.kua, d.kua.value], ...(x.name ? [[lab.nameNo, x.name.chaldean.nameNumber.single] as [string, number]] : []), [lab.py, d.personalCycles.current.personalYear]];
   const scores = [
-    x.name ? `<div class="center">${gaugeSvg(x.name.compatibilityScore, t, lab.compat, 130)}<div class="cap">${esc(L.name)}</div></div>` : '',
-    x.mobile ? `<div class="center">${gaugeSvg(x.mobile.score, t, x.mobile.verdict, 130)}<div class="cap">${esc(L.mobile)} ${esc(x.mobile.masked)}</div></div>` : '',
-    x.couple ? `<div class="center">${ringSvg(x.couple.overall, t, lab.overall, 104)}<div class="cap">${esc(titleCase(x.couple.partnerB.name))}</div></div>` : '',
+    x.name ? `<div class="center">${gaugeSvg(x.name.compatibilityScore, t, lab.compat, 108)}<div class="cap">${esc(L.name)}</div></div>` : '',
+    x.mobile ? `<div class="center">${gaugeSvg(x.mobile.score, t, T(x.mobile.verdict), 108)}<div class="cap">${esc(L.mobile)} ${esc(x.mobile.masked)}</div></div>` : '',
+    x.couple ? `<div class="center">${ringSvg(x.couple.overall, t, lab.overall, 88)}<div class="cap">${esc(titleCase(x.couple.partnerB.name))}</div></div>` : '',
   ].filter(Boolean);
   type Item = [Parameters<typeof remedyIcon>[0], string, string];
   const top5: Item[] = ([
-    ['mantra', lab.mantra, `“${rm.mantra.mantra}” · ${rm.mantra.dailyCount}× · ${rm.mantra.day}`],
-    ['gem', lab.gem, `${rm.gemstones[0].name} (${rm.gemstones[0].hindi}) · Rudraksha ${rm.gemstones[0].rudraksha} — ${lab.gemNote}`],
-    ...rm.loShuRemedies.slice(0, 2).map((g) => ['home', `${lab.missing} ${g.number}`, `${g.placement} · ${g.wristband}`] as [Parameters<typeof remedyIcon>[0], string, string]),
-    ['daan', `${lab.daan} · ${lab.fasting}`, `${rm.daan.join(', ')} · ${rm.fastingDay}`],
+    ['mantra', lab.mantra, `“${T(rm.mantra.mantra)}” · ${rm.mantra.dailyCount}× · ${T(rm.mantra.day)}`],
+    ['gem', lab.gem, `${lang === 'hi' ? T(rm.gemstones[0].name) : `${rm.gemstones[0].name} (${rm.gemstones[0].hindi})`} · ${lab.rudraksha} ${T(rm.gemstones[0].rudraksha)} — ${lab.gemNote}`],
+    ...rm.loShuRemedies.slice(0, 2).map((g) => ['home', `${lab.missing} ${g.number}`, `${T(g.placement)} · ${T(g.wristband)}`] as [Parameters<typeof remedyIcon>[0], string, string]),
+    ['daan', `${lab.daan} · ${lab.fasting}`, `${rm.daan.map(T).join(', ')} · ${T(rm.fastingDay)}`],
     ...(x.name?.needsCorrection && x.name.corrections[0] ? [['signature', lab.corrections, `${x.name.corrections[0].fullName} (${x.name.corrections[0].compound}/${x.name.corrections[0].single})`] as [Parameters<typeof remedyIcon>[0], string, string]] : []),
   ] as Item[]).slice(0, 5);
 
   const body = `
     <div class="row" style="align-items:center;margin-bottom:3mm"><div><div class="serif" style="font-size:16pt">${esc(titleCase(r.client.commonName || r.client.fullName))}</div><div class="small muted">${esc(lab.dob)} ${fmt(d.dob.iso)} · ${esc(lab.reportDate)} ${fmt(r.asOf)}</div></div></div>
-    <div class="core" style="grid-template-columns:repeat(${core.length},1fr);margin:0 0 3mm">${core.map(([k, n]) => `<div class="c" style="padding:2mm 1mm"><div class="k">${esc(k)}</div>${numberMedallion(n, t, 58)}<div class="p">${planetIcon(planetOf(n).id, t, 13)} ${esc(planetOf(n).name)}</div></div>`).join('')}</div>
+    <div class="core" style="grid-template-columns:repeat(${core.length},1fr);margin:0 0 3mm">${core.map(([k, n]) => `<div class="c" style="padding:2mm 1mm"><div class="k">${esc(k)}</div>${numberMedallion(n, t, 50)}<div class="p">${planetIcon(planetOf(n).id, t, 13)} ${esc(T(planetOf(n).name))}</div></div>`).join('')}</div>
     <div class="row" style="align-items:flex-start;gap:4mm;margin-bottom:3mm">
-      <div class="center" style="flex:0 0 52mm">${gridSvg(d.loShu.cells, t, 150)}<div class="cap">${esc(lab.loShu)} · ${esc(lab.missing)}: ${d.loShu.missing.join(', ') || '—'}</div></div>
-      <div class="center" style="flex:1">${barsSvg(d.personalCycles.timeline.slice(0, 6).map((y, i) => ({ label: String(y.year), value: y.personalYear, highlight: i === 0 })), t, 380, 150)}<div class="cap">${esc(lab.pyTimeline)}</div></div>
+      <div class="center" style="flex:0 0 52mm">${gridSvg(d.loShu.cells, t, 132)}<div class="cap">${esc(lab.loShu)} · ${esc(lab.missing)}: ${d.loShu.missing.join(', ') || '—'}</div></div>
+      <div class="center" style="flex:1">${barsSvg(d.personalCycles.timeline.slice(0, 6).map((y, i) => ({ label: String(y.year), value: y.personalYear, highlight: i === 0 })), t, 380, 128)}<div class="cap">${esc(lab.pyTimeline)}</div></div>
     </div>
     ${scores.length ? `<div class="row" style="justify-content:space-around;margin-bottom:2mm">${scores.join('')}</div>` : ''}
     <div class="row" style="gap:4mm">
       <div class="panel" style="flex:0 0 62mm;padding:3mm 4mm"><div class="serif" style="font-size:11pt;margin-bottom:1.5mm">${esc(L.lucky)}</div>
-        <dl class="kv" style="grid-template-columns:20mm 1fr;font-size:8.4pt"><dt>${esc(lab.numbers)}</dt><dd><b>${rm.lucky.numbers.join(', ')}</b></dd><dt>${esc(lab.days)}</dt><dd>${esc(rm.lucky.days.join(', '))}</dd>
-        <dt>${esc(lab.colours)}</dt><dd>${swatches(rm.lucky.colours.slice(0, 3), t)}</dd><dt>${esc(lab.directions)}</dt><dd>${esc(rm.lucky.directions.success)}, ${esc(rm.lucky.directions.health)}</dd></dl></div>
+        <dl class="kv" style="grid-template-columns:20mm 1fr;font-size:8.4pt"><dt>${esc(lab.numbers)}</dt><dd><b>${rm.lucky.numbers.join(', ')}</b></dd><dt>${esc(lab.days)}</dt><dd>${esc(rm.lucky.days.map(T).join(', '))}</dd>
+        <dt>${esc(lab.colours)}</dt><dd>${swatches(rm.lucky.colours.slice(0, 3), t, T)}</dd><dt>${esc(lab.directions)}</dt><dd>${esc(T(rm.lucky.directions.success))}, ${esc(T(rm.lucky.directions.health))}</dd><dt>${esc(lab.dates)}</dt><dd>${rm.lucky.dates.join(', ')}</dd>
+        <dt>${esc(lab.friendly)}</dt><dd>${chips(rel.friendly, `${t.good}22`, t.good)}</dd><dt>${esc(lab.enemy)}</dt><dd>${chips(rel.enemy, `${t.bad}1a`, t.bad)}</dd></dl></div>
       <div style="flex:1"><div class="serif" style="font-size:11pt;margin-bottom:1.5mm">${esc(L.topRemedies)}</div>
-        ${top5.map(([ic, k, v], i) => `<div style="display:flex;gap:2.5mm;align-items:flex-start;margin-bottom:1.8mm;font-size:8.4pt;line-height:1.4">${remedyIcon(ic, t, 16)}<div><b style="color:${t.primary}">${i + 1}. ${esc(k)}</b> — ${esc(v)}</div></div>`).join('')}</div>
+        ${top5.map(([ic, k, v], i) => `<div style="display:flex;gap:2.5mm;align-items:flex-start;margin-bottom:1.8mm;font-size:8.4pt;line-height:1.4">${remedyIcon(ic, t, 16)}<div><b style="color:${t.primary}">${i + 1}. ${esc(k)}</b> — ${esc(v)}</div></div>`).join('')}
+        <table style="font-size:8.4pt;margin-top:2mm"><thead><tr><th style="padding:1mm 2mm">${esc(lab.favYears)}</th><th></th></tr></thead><tbody>${Object.entries(rm.favourableYears).map(([k, ys]) => `<tr><td style="padding:1mm 2mm">${esc(lab.events[k] ?? k)}</td><td class="serif"><b>${ys.map((y) => y.year).join(', ') || '—'}</b></td></tr>`).join('')}</tbody></table>
+        <p class="small muted" style="margin:1.5mm 0 0;text-align:left">${esc(lab.yearNote)}</p></div>
+    </div>
     </div>`;
-  return shell(t, lang, b, L.outputTitle, fmt(r.asOf), body, '.core .c svg{margin:0 auto}', watermark);
+  return shell(t, lang, b, L.outputTitle, fmt(r.asOf), body, '.core .c>svg{margin:0 auto;display:block}', watermark);
 }
 
 // ---------- render ----------

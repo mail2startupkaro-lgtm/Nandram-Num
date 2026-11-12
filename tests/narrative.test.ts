@@ -157,3 +157,55 @@ describe('LLM path (mocked provider)', () => {
     expect(configFromEnv({ ANTHROPIC_API_KEY: 'x' }).provider).toBe('anthropic');
   });
 });
+
+describe('audit 2026-11-12: Hindi writer, date ranges, Lo Shu names', () => {
+  it('writes a Hindi report in Devanagari – no English sentences left', async () => {
+    const { generateNumerology } = await import('@/lib/numerology');
+    const { generateNarrative } = await import('@/lib/narrative');
+    const { KNOWLEDGE_SEED } = await import('@/lib/narrative/knowledge/seed');
+    const { KNOWLEDGE_HI } = await import('@/lib/narrative/knowledge/seed-hi');
+    // every default knowledge entry has a Hindi version without digits
+    for (const k of KNOWLEDGE_SEED) { expect(KNOWLEDGE_HI[k.key], k.key).toBeTruthy(); expect(KNOWLEDGE_HI[k.key]).not.toMatch(/\d/); }
+    const cases = [
+      { fullName: 'Ananya Deshpande', gender: 'female', dob: '05-02-2001', profession: 'Student', maritalStatus: 'single', concerns: ['education', 'love'], mobile: '7000048844', language: 'hi', partner: { name: 'Karan Mehta', gender: 'male', dob: '10-10-2000' } },
+      { fullName: 'Rahul Kumar Sharma', commonName: 'Rahul Sharma', gender: 'male', dob: '28-08-1990', maritalStatus: 'engaged', concerns: ['career'], mobile: '9876543210', language: 'hi' },
+      { fullName: 'Om Jha', gender: 'other', dob: '29-02-1996', maritalStatus: 'married', language: 'hi' },
+    ];
+    for (const c of cases) {
+      const r = generateNumerology(c, { asOf: '2026-11-12' });
+      const n = await generateNarrative(r, { language: 'hi', provider: null });
+      expect(n.languageFallback).toBe(false);
+      const names = [c.fullName, (c as { commonName?: string }).commonName ?? '', (c as { partner?: { name: string } }).partner?.name ?? '', (c as { profession?: string }).profession ?? ''].join(' ').split(/\s+/).filter(Boolean);
+      for (const s of n.sections) {
+        const latin = (s.text.match(/[A-Za-z]{3,}/g) ?? []).filter((w) => !names.includes(w) && !['XXXXXX', 'UPSC', 'NEET', 'JEE'].includes(w));
+        expect(latin, `${s.id}: ${latin.join(' ')}`).toEqual([]);
+        expect(s.text).toMatch(/[ऀ-ॿ]/);
+      }
+    }
+  });
+
+  it('keeps date ranges intact and names birth-to-age ranges naturally', async () => {
+    const { postProcess } = await import('@/lib/narrative/filter');
+    expect(postProcess('Runs 28 Aug 2026 – 27 Aug 2027 for you.')).toContain('28 Aug 2026 – 27 Aug 2027');
+    expect(postProcess('Good – but slow – and steady.')).not.toContain('–');
+    const { generateNumerology } = await import('@/lib/numerology');
+    const { generateNarrative } = await import('@/lib/narrative');
+    const r = generateNumerology({ fullName: 'Rahul Sharma', gender: 'male', dob: '28-08-1990', mobile: '7000048844' }, { asOf: '2026-11-12' });
+    const n = await generateNarrative(r, { language: 'en', provider: null });
+    const text = n.sections.map((s) => s.text).join('\n');
+    expect(text).not.toMatch(/\d{4}, \d{1,2} [A-Z][a-z]{2} \d{4}\)/); // "(28 Aug 2026, 27 Aug 2027)"
+    expect(text).not.toMatch(/00, 00/); // repeated malefic pairs are listed once
+  });
+
+  it('Lo Shu: Golden Yog is 4-5-6, Silver Yog is 2-5-8 and 3-5-7 is not a yog', async () => {
+    const { buildLoShu } = await import('@/lib/numerology');
+    const grid = (digits: number[]) => buildLoShu(digits.map((digit) => ({ digit, source: 'dob' as const })));
+    expect(grid([4, 5, 6]).yogs).toEqual([{ name: 'Golden Yog', numbers: [4, 5, 6] }]);
+    expect(grid([2, 5, 8]).yogs).toEqual([{ name: 'Silver Yog', numbers: [2, 5, 8] }]);
+    expect(grid([3, 5, 7]).yogs).toEqual([]);
+    expect(grid([3, 5, 7]).arrowsOfStrength.map((a) => a.name)).toEqual(['Arrow of Spirituality']);
+    expect(grid([1, 5, 9]).arrowsOfStrength.map((a) => a.name)).toEqual(['Arrow of Determination']);
+    const none = grid([1]).arrowsOfWeakness.map((a) => a.name);
+    expect(none).toEqual(expect.arrayContaining(['Arrow of Scepticism', 'Arrow of Frustration', 'Arrow of Hypersensitivity']));
+  });
+});

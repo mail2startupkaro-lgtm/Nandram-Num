@@ -1,12 +1,13 @@
 /**
  * Offline writer: builds each section from the facts + the expert's knowledge base with
  * deterministic phrasing variety. Used when no LLM key is configured, as the fallback when the
- * LLM fails validation, and in tests. Supports English and Hinglish ('hi' is written as Hinglish
- * and flagged, because the Hindi knowledge base is filled by the expert in the admin panel).
+ * LLM fails validation, and in tests. English and Hinglish are written here; Hindi (Devanagari) is written by
+ * template-hi.ts with the Hindi knowledge base (knowledge/seed-hi.ts).
  */
 import type { KnowledgeSeed } from '../knowledge';
 import type { ClientContext, SectionPlan } from '../plan';
 import { NUMBER_TRAITS } from '@/lib/i18n/numberMeanings';
+import { isStudent, W_HI } from './template-hi';
 
 type L = 'en' | 'hinglish';
 type F = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -159,7 +160,7 @@ const W: Record<string, Writer> = {
     return years.map((y, i) => {
       if (l === 'hinglish') return `${y.period ?? y.year} – is avadhi mein aapka Personal Year ${y.personalYear} hai. ${body(y.personalYear)}${i === 0 && focus ? ` ${focus} ke liye is saal ki shuruaat ka sahi upyog karein.` : ''}`;
       const when = y.period ?? String(y.year);
-      const opener = i === 0 ? pick([`Right now (${when}) you are in Personal Year ${y.personalYear}.`, `From your birthday in ${y.year} until your next birthday you are in Personal Year ${y.personalYear}.`], s) : pick([`Your birthday in ${y.year} moves you into Personal Year ${y.personalYear} (${when}).`, `From your birthday in ${y.year} the energy shifts to Personal Year ${y.personalYear}.`, `Then comes Personal Year ${y.personalYear}, from your birthday in ${y.year}.`], s + y.year);
+      const opener = i === 0 ? pick([`Right now (${when.replace(' – ', ' to ')}) you are in Personal Year ${y.personalYear}.`, `From your birthday in ${y.year} until your next birthday you are in Personal Year ${y.personalYear}.`], s) : pick([`Your birthday in ${y.year} moves you into Personal Year ${y.personalYear} (${when}).`, `From your birthday in ${y.year} the energy shifts to Personal Year ${y.personalYear}.`, `Then comes Personal Year ${y.personalYear}, from your birthday in ${y.year}.`], s + y.year);
       return `${opener} ${body(y.personalYear)}${i === 0 && focus ? ` For ${focus}, use this energy deliberately rather than waiting for the right moment.` : ''}`;
     });
   },
@@ -167,7 +168,7 @@ const W: Record<string, Writer> = {
   lifePeriods: (f, c, kb, l) => {
     const cur = (f.pinnacles as F[]).find((p) => p.current), next = (f.pinnacles as F[]).find((p) => cur && p.fromAge > cur.fromAge);
     const ch = (f.challenges as F[]).find((p) => p.current);
-    const range = (p: F) => (p.toAge === null ? (l === 'en' ? `from age ${p.fromAge} onwards` : `${p.fromAge} saal ke baad`) : (l === 'en' ? `between ages ${p.fromAge} and ${p.toAge}` : `${p.fromAge} se ${p.toAge} saal ke beech`));
+    const range = (p: F) => (p.toAge === null ? (l === 'en' ? `from age ${p.fromAge} onwards` : `${p.fromAge} saal ke baad`) : p.fromAge === 0 ? (l === 'en' ? `from birth to age ${p.toAge}` : `janm se ${p.toAge} saal tak`) : (l === 'en' ? `between ages ${p.fromAge} and ${p.toAge}` : `${p.fromAge} se ${p.toAge} saal ke beech`));
     if (!cur) return [];
     const tr = NUMBER_TRAITS.en[cur.number as number];
     if (l === 'hinglish') return [
@@ -183,8 +184,9 @@ const W: Record<string, Writer> = {
   },
 
   career: (f, c, kb, l, s) => {
-    const stage = STAGE_LINE[f.stage]?.[l] ?? '';
-    const prof = f.profession;
+    const student = isStudent(f.profession);
+    const stage = STAGE_LINE[student ? 'student' : f.stage]?.[l] ?? '';
+    const prof = student ? undefined : f.profession;
     const jobs = f.jobChangeYears?.length ? f.jobChangeYears : null, biz = f.businessYears?.length ? f.businessYears : null;
     const balance = c.gender === 'female' && c.maritalStatus === 'married' && f.careerScore >= 60
       ? (l === 'en' ? 'Your chart supports both a growing career and a stable home, so you need not choose one over the other; planning your week in advance keeps the balance.' : 'Aapke ank career aur ghar dono ko support karte hain, isliye ek ko chhodne ki zaroorat nahi. Hafte ki planning pehle se karein.')
@@ -218,7 +220,7 @@ const W: Record<string, Writer> = {
       pick([style, `When it comes to the heart, your numbers are clear. ${style}`], s),
       `Partners whose Moolank or Bhagyank is ${list(f.compatiblePartnerNumbers, l, true)} tend to understand you naturally${f.challengingPartnerNumbers.length ? `, while ${list(f.challengingPartnerNumbers, l)} need more patience on both sides` : ''}.`,
       ms === 'married' ? 'In married life, shared time and dividing responsibilities in the joint family or with in-laws keep the bond warm.'
-        : ms === 'engaged' ? `This engagement period is a good time to build understanding between both families.${years ? ` Favourable years for the wedding are ${list(years, l)}.` : ''}`
+        : ms === 'engaged' ? `This engagement period is a good time to build understanding between both families.${years ? ` By your own numbers, favourable years for the wedding are ${list(years, l)}.` : ''}`
         : years ? `If marriage is on your mind, whether arranged or love, ${list(years, l)} are the most supportive years.` : '',
       `Your love indicator reads ${f.loveScore} out of 100 and your family indicator ${f.familyScore}.`,
     ].filter(Boolean);
@@ -252,11 +254,11 @@ const W: Record<string, Writer> = {
     const rel = (r: string) => (r === 'friend' ? (l === 'en' ? 'supports' : 'support karta hai') : r === 'enemy' ? (l === 'en' ? 'clashes with' : 'takraata hai') : (l === 'en' ? 'is neutral to' : 'neutral hai'));
     if (l === 'hinglish') return [
       `Aapke mobile ${f.masked} ka yog ${f.compound} hai, yaani ank ${f.total}. Yeh Bhagyank ko ${rel(f.relationWithBhagyank)}. Score ${f.score}/100, nishkarsh: ${f.verdict}. ${v}`,
-      [f.maleficPairs.length ? `Isme ${list(f.maleficPairs, l)} jaise kathin jode hain.` : '', f.missingNumbersFilled.length ? `Yeh aapke grid ke ${list(f.missingNumbersFilled, l)} ank ki kami poori karta hai.` : '', `Naye number ka yog ${list(f.idealTotals, l, true)} hona chahiye.`].join(' ').trim(),
+      [f.maleficPairs.length ? `Isme ${list([...new Set(f.maleficPairs as string[])], l)} jaise kathin jode hain.` : '', f.missingNumbersFilled.length ? `Yeh aapke grid ke ${list(f.missingNumbersFilled, l)} ank ki kami poori karta hai.` : '', `Naye number ka yog ${list(f.idealTotals, l, true)} hona chahiye.`].join(' ').trim(),
     ];
     return [
       `Your mobile number ${f.masked} totals ${f.compound}, a single vibration of ${f.total}, which ${rel(f.relationWithBhagyank)} your Bhagyank. It scores ${f.score} out of 100: ${f.verdict}. ${v}`,
-      [f.maleficPairs.length ? `It contains the difficult pairs ${list(f.maleficPairs, l)}.` : 'There are no strongly malefic digit pairs in it.', f.missingNumbersFilled.length ? `It also brings in ${list(f.missingNumbersFilled, l)}, numbers missing from your grid.` : '', `If you ever choose a new number, aim for a total that reduces to ${list(f.idealTotals, l, true)}.`].join(' ').trim(),
+      [f.maleficPairs.length ? `It contains the difficult pairs ${list([...new Set(f.maleficPairs as string[])], l)}.` : 'There are no strongly malefic digit pairs in it.', f.missingNumbersFilled.length ? `It also brings in ${list(f.missingNumbersFilled, l)}, numbers missing from your grid.` : '', `If you ever choose a new number, aim for a total that reduces to ${list(f.idealTotals, l, true)}.`].join(' ').trim(),
     ];
   },
 
@@ -279,7 +281,7 @@ const W: Record<string, Writer> = {
     return [
       pick([`Together, you and ${f.partnerName} share an overall compatibility of ${f.overall}%.`, `The combined numbers of you and ${f.partnerName} give an overall harmony of ${f.overall}%.`], s) + ` ${kbText(kb, 'COUPLE_GENERAL')[0] ?? ''}`,
       `Your strongest areas are ${best.map(([k, v]) => `${lbl(k)} (${v})`).join(' and ')}. The areas asking for conscious effort are ${weak.map(([k, v]) => `${lbl(k)} (${v})`).join(' and ')}.`,
-      `${f.bothMissing.length ? `Neither of you has ${list(f.bothMissing, l, true)} in your grid, so the remedies for ${f.bothMissing.length > 1 ? 'these numbers' : 'this number'} are worth following together. ` : ''}For the wedding or other important joint decisions, dates that reduce to ${list(f.marriageDateNumbers, l, true)} are favourable${f.auspiciousYears.length ? `, and ${list(f.auspiciousYears, l)} ${f.auspiciousYears.length > 1 ? 'are' : 'is'} especially auspicious` : ''}.`,
+      `${f.bothMissing.length ? `Neither of you has ${list(f.bothMissing, l, true)} in your grid, so the remedies for ${f.bothMissing.length > 1 ? 'these numbers' : 'this number'} are worth following together. ` : ''}For the wedding or other important joint decisions, dates that reduce to ${list(f.marriageDateNumbers, l, true)} are favourable${f.auspiciousYears.length ? `, and ${list(f.auspiciousYears, l)} ${f.auspiciousYears.length > 1 ? 'are' : 'is'} especially auspicious for the two of you together` : ''}.`,
     ];
   },
 
@@ -309,8 +311,14 @@ const W: Record<string, Writer> = {
 };
 
 export function writeSectionTemplate(section: SectionPlan, ctx: ClientContext, kb: KnowledgeSeed[]): { text: string; languageFallback: boolean } {
+  const seed = `${ctx.fullName}|${section.id}`;
+  const clean = (paras: string[]) => paras.map((p) => p.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n\n');
+  if (ctx.language === 'hi') {
+    const hi = W_HI[section.id];
+    if (hi) return { text: clean(hi(section.facts, ctx, kb, seed)), languageFallback: false };
+  }
   const l: L = ctx.language === 'en' ? 'en' : 'hinglish';
   const writer = W[section.id];
-  const paras = writer ? writer(section.facts, ctx, kb, l, `${ctx.fullName}|${section.id}`) : [];
-  return { text: paras.map((p) => p.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n\n'), languageFallback: ctx.language === 'hi' };
+  const paras = writer ? writer(section.facts, ctx, kb, l, seed) : [];
+  return { text: clean(paras), languageFallback: ctx.language === 'hi' };
 }

@@ -66,7 +66,7 @@ export const SERVICE_PAGES: ServicePage[] = [
     faq: [
       { en: ['Which numbers go into the Lo Shu grid?', 'Every non-zero digit of your date of birth, plus your Moolank, Bhagyank and Kua number, as used in Indian numerology.'], hi: ['लो शू ग्रिड में कौन-से अंक जाते हैं?', 'आपकी जन्म तिथि का हर शून्य-रहित अंक, साथ में मूलांक, भाग्यांक और कुआ अंक, जैसा भारतीय अंक ज्योतिष में होता है।'] },
       { en: ['Is a missing number a problem?', 'It shows a quality that needs conscious effort. Simple remedies – colours, placements and habits – help balance it.'], hi: ['क्या अनुपस्थित अंक समस्या है?', 'यह ऐसा गुण दिखाता है जिसके लिए सचेत प्रयास चाहिए। रंग, वस्तुओं का स्थान और आदतें जैसे सरल उपाय इसे संतुलित करते हैं।'] },
-      { en: ['What is Raj Yog in the Lo Shu grid?', 'A complete line of numbers (for example 2-5-8 or 4-5-6) that strengthens a particular area of life.'], hi: ['लो शू ग्रिड में राज योग क्या है?', 'अंकों की पूरी पंक्ति (जैसे 2-5-8 या 4-5-6) जो जीवन के किसी विशेष क्षेत्र को मज़बूत करती है।'] },
+      { en: ['What is Raj Yog in the Lo Shu grid?', 'A complete line through the centre of the grid: 4-5-6 is the Golden Raj Yog (success) and 2-5-8 is the Silver Raj Yog (property). Each strengthens that area of life.'], hi: ['लो शू ग्रिड में राज योग क्या है?', 'ग्रिड के केंद्र से गुज़रने वाली पूरी रेखा: 4-5-6 स्वर्ण राज योग (सफलता) है और 2-5-8 रजत राज योग (संपत्ति) है। दोनों जीवन के उस क्षेत्र को मज़बूत करते हैं।'] },
     ],
   },
   {

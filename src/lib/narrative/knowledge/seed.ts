@@ -85,18 +85,17 @@ export const KNOWLEDGE_SEED: KnowledgeSeed[] = [
   ].map((body, i) => ({ key: `EXCESS_${i + 1}`, title: `Strong ${['One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'][i]}`, body, tags: ['excess'] })),
 
   // ---------- Yogs & arrows ----------
-  { key: 'YOG_GOLDEN_YOG', title: 'Golden Yog', body: 'The success line is complete in your chart, a classic sign of prosperity and of efforts turning into tangible rewards.' },
-  { key: 'YOG_RAJ_YOG', title: 'Raj Yog', body: 'The property line is complete in your chart, supporting authority, property and a respected position in society.' },
-  { key: 'YOG_SILVER_YOG', title: 'Silver Yog', body: 'The emotional line is complete, giving emotional maturity, spiritual depth and a balanced heart.' },
+  { key: 'YOG_GOLDEN_YOG', title: 'Golden Yog', body: 'The success line is complete in your chart. This is the Golden Raj Yog, a classic sign of prosperity, recognition and of efforts turning into tangible rewards.' },
+  { key: 'YOG_SILVER_YOG', title: 'Silver Yog', body: 'The property line is complete in your chart. This is the Silver Raj Yog, which supports land, home and property matters and a stable, respected position in society.' },
   ...([
     ['MENTAL', 'Arrow of Intellect', 'Your mental plane is complete: memory, planning and intelligence are clear strengths.', 'Arrow of Poor Memory', 'Your mental plane is empty, so memory and focus need deliberate support through notes, routine and rest.'],
-    ['EMOTIONAL', 'Arrow of Emotional Balance', 'Your emotional plane is complete, giving you steady feelings and genuine empathy.', 'Arrow of Hypersensitivity', 'Your emotional plane is empty, so you may feel things deeply and hide them. Expressing feelings openly with trusted people is important for you.'],
+    ['EMOTIONAL', 'Arrow of Spirituality', 'Your emotional plane is complete, giving you inner calm, genuine empathy and a natural pull towards spiritual understanding.', 'Arrow of Scepticism', 'Your emotional plane is empty, so you may trust only what you can see and prove, and keep your feelings guarded. Staying open to intuition and sharing feelings with trusted people brings balance.'],
     ['PRACTICAL', 'Arrow of Practicality', 'Your practical plane is complete: you are grounded, organised and good with material matters.', 'Arrow of Disorder', 'Your practical plane is empty, so structure in daily life and money matters needs conscious effort.'],
     ['THOUGHT', 'Arrow of Planning', 'Your thought plane is complete, making you a natural planner who sees steps ahead.', 'Arrow of Confusion', 'Your thought plane is empty, so decisions improve when you write options down and take advice.'],
-    ['WILL', 'Arrow of Determination', 'Your will plane is complete: once you decide, you persist until you succeed.', 'Arrow of Frustration', 'Your will plane is empty, so motivation can dip when results are slow. Small, visible goals keep you moving.'],
+    ['WILL', 'Arrow of Determination', 'Your will plane is complete: once you decide, you persist until you succeed.', 'Arrow of Indecision', 'Your will plane is empty, so decisions may be put off and motivation can dip when results are slow. Small, visible goals and fixed dates keep you moving.'],
     ['ACTION', 'Arrow of Activity', 'Your action plane is complete: you turn ideas into action quickly.', 'Arrow of Hesitation', 'Your action plane is empty, so you may wait too long before acting. Fixed deadlines help.'],
-    ['GOLDEN', 'Arrow of Prosperity', 'The success line is complete, supporting steady growth in wealth.', 'Arrow of Scepticism', 'The success line is empty, so you may doubt opportunities or people. Measured trust and reliable advice help you grow.'],
-    ['RAJ', 'Arrow of Compassion', 'The property line is complete, bringing kindness and stability in property matters.', 'Arrow of Indecision', 'The property line is empty, so big decisions, especially about property, need extra time and counsel.'],
+    ['GOLDEN', 'Arrow of Willpower', 'The success line is complete, giving strong willpower and supporting steady growth in wealth and position.', 'Arrow of Frustration', 'The success line is empty, so results may feel slower than your effort deserves and expectations of others can lead to disappointment. Patience and realistic goals protect your peace of mind.'],
+    ['RAJ', 'Arrow of Emotional Balance', 'The property line is complete, bringing emotional balance and stability in home and property matters.', 'Arrow of Hypersensitivity', 'The property line is empty, so you may take things to heart easily, and big decisions about home and property need extra time and counsel.'],
   ] as const).flatMap(([id, sName, sBody, wName, wBody]) => [
     { key: `ARROW_STRENGTH_${id}`, title: sName, body: sBody, tags: ['arrow'] },
     { key: `ARROW_WEAKNESS_${id}`, title: wName, body: wBody, tags: ['arrow'] },

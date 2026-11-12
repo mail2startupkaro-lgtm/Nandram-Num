@@ -50,13 +50,13 @@ export const CALCULATORS: CalcPage[] = [
     intro: ['The Lo Shu Grid is a 3 × 3 magic square. Your birth-date digits, Moolank, Bhagyank and Kua number are placed in it to show which energies you have in plenty and which are missing.'],
     faq: [
       { q: 'What does a missing number mean?', a: 'A missing number marks a quality you need to develop consciously. Each one has simple remedies such as colours, crystals and placement at home.' },
-      { q: 'What is Raj Yog in the Lo Shu Grid?', a: 'When 2, 5 and 8 are all present, the property line is complete. In Indian practice this is called Raj Yog and supports authority and property.' },
+      { q: 'What is Raj Yog in the Lo Shu Grid?', a: 'A Raj Yog is a complete line through the centre of the grid. When 4, 5 and 6 are all present, the success line is complete – the Golden Raj Yog, which supports prosperity and recognition. When 2, 5 and 8 are all present, the property line is complete – the Silver Raj Yog, which supports home and property.' },
     ],
     hi: { h1: 'मुफ़्त लो शू ग्रिड कैलकुलेटर', description: 'अपनी जन्म तिथि से अपना लो शू ग्रिड बनाएँ। अनुपस्थित और दोहराए गए अंक, पूर्ण तल और राज योग व स्वर्ण योग जैसे योग देखें।',
       intro: ['लो शू ग्रिड 3 × 3 का एक जादुई वर्ग है। इसमें आपकी जन्म तिथि के अंक, मूलांक, भाग्यांक और कुआ अंक रखे जाते हैं, ताकि पता चले कि कौन-सी ऊर्जाएँ आपमें भरपूर हैं और कौन-सी अनुपस्थित हैं।'],
       faq: [
         { q: 'अनुपस्थित अंक का क्या अर्थ है?', a: 'अनुपस्थित अंक ऐसे गुण को दर्शाता है जिसे आपको सचेत रूप से विकसित करना है। हर अनुपस्थित अंक के लिए रंग, क्रिस्टल और घर में वस्तुएँ रखने जैसे सरल उपाय होते हैं।' },
-        { q: 'लो शू ग्रिड में राज योग क्या है?', a: 'जब 2, 5 और 8 तीनों उपस्थित हों, तो संपत्ति रेखा पूर्ण होती है। भारतीय पद्धति में इसे राज योग कहा जाता है, जो अधिकार और संपत्ति में सहायक है।' },
+        { q: 'लो शू ग्रिड में राज योग क्या है?', a: 'राज योग ग्रिड के केंद्र से गुज़रने वाली पूर्ण रेखा है। जब 4, 5 और 6 तीनों उपस्थित हों, तो सफलता रेखा पूर्ण होती है – यह स्वर्ण राज योग है, जो समृद्धि और मान-सम्मान देता है। जब 2, 5 और 8 तीनों उपस्थित हों, तो संपत्ति रेखा पूर्ण होती है – यह रजत राज योग है, जो घर और संपत्ति में सहायक है।' },
       ] },
   },
   {

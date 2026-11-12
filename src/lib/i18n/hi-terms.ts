@@ -106,7 +106,7 @@ export const HI_TERMS: Record<string, string> = {
   'Arrow of Intellect': 'बुद्धि का तीर', 'Arrow of Poor Memory': 'कमज़ोर स्मरणशक्ति का तीर', 'Arrow of Emotional Balance': 'भावनात्मक संतुलन का तीर', 'Arrow of Hypersensitivity': 'अति-संवेदनशीलता का तीर',
   'Arrow of Practicality': 'व्यावहारिकता का तीर', 'Arrow of Disorder': 'अव्यवस्था का तीर', 'Arrow of Planning': 'योजना का तीर', 'Arrow of Confusion': 'भ्रम का तीर',
   'Arrow of Determination': 'दृढ़ संकल्प का तीर', 'Arrow of Frustration': 'निराशा का तीर', 'Arrow of Activity': 'सक्रियता का तीर', 'Arrow of Hesitation': 'झिझक का तीर',
-  'Arrow of Prosperity': 'समृद्धि का तीर', 'Arrow of Scepticism': 'संशय का तीर', 'Arrow of Compassion': 'करुणा का तीर', 'Arrow of Indecision': 'अनिर्णय का तीर',
+  'Arrow of Prosperity': 'समृद्धि का तीर', 'Arrow of Scepticism': 'संशय का तीर', 'Arrow of Compassion': 'करुणा का तीर', 'Arrow of Indecision': 'अनिर्णय का तीर', 'Arrow of Spirituality': 'आध्यात्मिकता का तीर', 'Arrow of Willpower': 'इच्छाशक्ति का तीर',
   'Silver Yog': 'रजत योग', 'Golden Yog': 'स्वर्ण योग', 'Raj Yog': 'राज योग',
   complete: 'पूर्ण', partial: 'आंशिक', empty: 'खाली',
   // verdicts / categories / relations

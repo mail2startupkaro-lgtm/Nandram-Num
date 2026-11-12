@@ -44,8 +44,9 @@ function fixDashes(text: string): string {
   // keep at most one em dash per paragraph; others become commas
   return text.split('\n').map((para) => {
     let seen = 0;
-    return para.replace(/\s*[—–]\s*/g, (m) => {
-      if (/\d\s*[–]\s*\d/.test(m)) return m;
+    return para.replace(/\s*[—–]\s*/g, (m, offset: number) => {
+      // Keep number and date ranges ("2026–2027", "28 Aug 2026 – 27 Aug 2027") exactly as written.
+      if (m.includes('–') && /\d$/.test(para.slice(0, offset)) && /^\d/.test(para.slice(offset + m.length))) return m;
       seen++;
       return seen === 1 && /—/.test(m) ? ' — ' : ', ';
     });

@@ -47,10 +47,10 @@ describe('Known test cases – DOB', () => {
     expect(r.loShu.arrowsOfStrength.map((a) => a.lineId)).toEqual(['practical', 'will']);
     expect(r.loShu.arrowsOfWeakness).toEqual([]);
   });
-  it('#6 Lo Shu for 28-08-1990 (male): empty Emotional plane → Arrow of Hypersensitivity', () => {
+  it('#6 Lo Shu for 28-08-1990 (male): empty Emotional plane (3-5-7) → Arrow of Scepticism', () => {
     const r = analyseDob({ dob: '1990-08-28', gender: 'male' }, { asOf });
     expect(r.loShu.counts).toEqual({ 1: 4, 2: 1, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 2, 9: 2 }); // DOB 1 + Moolank 1 + Bhagyank 1 + Kua 1
-    expect(r.loShu.arrowsOfWeakness.map((a) => a.name)).toContain('Arrow of Hypersensitivity');
+    expect(r.loShu.arrowsOfWeakness.map((a) => a.name)).toContain('Arrow of Scepticism');
     expect(r.kua.value).toBe(1);
     expect(r.kua.favourable.success).toBe('South-East');
   });
