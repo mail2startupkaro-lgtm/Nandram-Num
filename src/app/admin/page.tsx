@@ -149,18 +149,23 @@ function UsersTab() {
   );
 }
 
-const EMPTY_PLAN = { code: '', name: '', description: '', pricePaise: 49_900, intervalDays: null as number | null, credits: 1, active: true, sort: 10, features: { fullReports: false, whiteLabel: false, bulk: false, share: false, watermark: true, maxProfiles: 25 as number | null } };
+const EMPTY_PLAN = { code: '', name: '', description: '', pricePaise: 49_900, intervalDays: null as number | null, credits: 1, active: true, sort: 10, features: { fullReports: false, whiteLabel: false, bulk: false, share: false, watermark: true, maxProfiles: 25 as number | null, mrpPaise: null as number | null } };
 type PlanRow = typeof EMPTY_PLAN & { usage?: { orders: number; paid: number; revenue: number; activeSubs: number } };
 const FEATURE_LABELS: Record<string, string> = { fullReports: 'Full reports without credits', whiteLabel: 'White-label PDFs', bulk: 'Bulk import/export', share: 'Share links', watermark: 'Watermark on PDFs' };
 
 function PlanForm({ p, onChange, isNew }: { p: PlanRow; onChange: (patch: Partial<PlanRow>) => void; isNew?: boolean }) {
   const taxable = Math.round(p.pricePaise / 1.18);
   const perMonth = p.intervalDays ? Math.round((p.pricePaise * 30) / p.intervalDays) : null;
+  const realPrice = p.features.mrpPaise && p.features.mrpPaise > p.pricePaise ? p.features.mrpPaise : (p.pricePaise >= 100000 ? p.pricePaise * 2 : p.pricePaise * 2);
+  const discountPaise = Math.max(0, realPrice - p.pricePaise);
+  const discountPct = realPrice > 0 ? Math.round((discountPaise / realPrice) * 100) : 0;
+
   return (
     <div className="grid gap-3 md:grid-cols-6">
       <Field label="Code" hint={isNew ? 'A–Z, 0–9, _ (cannot change later)' : undefined}><Input value={p.code} disabled={!isNew} onChange={(e) => onChange({ code: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '') })} placeholder="GOLD_PACK" /></Field>
       <Field label="Name" className="md:col-span-2"><Input value={p.name} onChange={(e) => onChange({ name: e.target.value })} /></Field>
-      <Field label="Price ₹ (incl. GST)"><Input type="number" min={1} step="1" value={p.pricePaise / 100} onChange={(e) => onChange({ pricePaise: Math.round(Number(e.target.value) * 100) })} /></Field>
+      <Field label="Offer Price ₹ (Selling, incl. GST)"><Input type="number" min={1} step="1" value={p.pricePaise / 100} onChange={(e) => onChange({ pricePaise: Math.round(Number(e.target.value) * 100) })} /></Field>
+      <Field label="Real Price ₹ (MRP / Struck-through)" hint="Blank = auto 2×"><Input type="number" min={0} step="1" value={p.features.mrpPaise ? p.features.mrpPaise / 100 : ''} onChange={(e) => onChange({ features: { ...p.features, mrpPaise: e.target.value ? Math.round(Number(e.target.value) * 100) : null } })} placeholder="e.g. 999" /></Field>
       <Field label="Billing">
         <Select value={p.intervalDays === null ? 'once' : String(p.intervalDays)} onChange={(e) => onChange({ intervalDays: e.target.value === 'once' ? null : Number(e.target.value) })}>
           <option value="once">One-time</option><option value="30">Monthly (30 days)</option><option value="90">Quarterly (90 days)</option><option value="180">Half-yearly (180 days)</option><option value="365">Yearly (365 days)</option>
@@ -175,7 +180,9 @@ function PlanForm({ p, onChange, isNew }: { p: PlanRow; onChange: (patch: Partia
         {(['fullReports', 'whiteLabel', 'bulk', 'share', 'watermark'] as const).map((f) => <label key={f} className="flex items-center gap-1"><input type="checkbox" checked={p.features[f]} onChange={(e) => onChange({ features: { ...p.features, [f]: e.target.checked } })} />{FEATURE_LABELS[f]}</label>)}
         <label className="flex items-center gap-1 font-semibold"><input type="checkbox" checked={p.active} onChange={(e) => onChange({ active: e.target.checked })} />Active (shown on pricing page)</label>
       </div>
-      <p className="text-xs text-muted-foreground md:col-span-6">Taxable value {inr(taxable)} + GST 18% {inr(p.pricePaise - taxable)} = {inr(p.pricePaise)}{perMonth ? ` · ≈ ${inr(perMonth)} per month` : ''}{p.credits ? ` · ${inr(Math.round(p.pricePaise / p.credits))} per credit` : ''}</p>
+      <p className="text-xs text-muted-foreground md:col-span-6">
+        1 · Real Price {inr(realPrice)} → 2 · Offer Price {inr(p.pricePaise)} ({discountPct}% OFF, Save {inr(discountPaise)}) · Taxable {inr(taxable)} + GST 18% {inr(p.pricePaise - taxable)}{perMonth ? ` · ≈ ${inr(perMonth)}/mo` : ''}{p.credits ? ` · ${inr(Math.round(p.pricePaise / p.credits))}/credit` : ''}
+      </p>
     </div>
   );
 }

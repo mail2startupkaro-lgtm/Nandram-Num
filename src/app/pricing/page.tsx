@@ -8,8 +8,9 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/form';
 import { api, ApiError } from '@/lib/client/api';
 import { DisclaimerNote } from '@/components/legal/disclaimer-note';
+import { getPlanPrices } from '@/lib/billing/plans';
 
-interface Plan { code: string; name: string; description: string; pricePaise: number; intervalDays: number | null; credits: number; features: Record<string, boolean | number | null> }
+interface Plan { code: string; name: string; description: string; pricePaise: number; intervalDays: number | null; credits: number; features: Record<string, boolean | number | null | undefined>; mrpPaise?: number | null }
 interface Order { gateway: 'cashfree' | 'mock'; mode: string; paymentSessionId: string; mock: boolean; orderId: string; amountPaise: number; discountPaise: number; plan: { code: string; name: string }; prefill: { name: string; email: string; contact: string } }
 type CashfreeResult = { error?: { message?: string }; redirect?: boolean; paymentDetails?: { paymentMessage?: string } };
 declare global { interface Window {
@@ -94,6 +95,7 @@ export default function PricingPage() {
   function renderCard(p: Plan, i: number) {
     const x = extras(p);
     const pr = isPro(p);
+    const prices = getPlanPrices(p);
     return (
       <div key={p.code} style={{ animationDelay: `${i * 90}ms` }} className={`mk-rise mk-card glass relative flex flex-col rounded-2xl p-6 ${x.hot ? 'border-2 border-gold shadow-[0_0_34px_hsl(var(--gold)/0.28)]' : ''}`}>
         {x.badge && <span className={`absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wider ${x.hot ? 'bg-gradient-to-r from-[hsl(43_75%_42%)] to-[hsl(43_85%_58%)] text-[hsl(250_45%_10%)]' : 'border border-gold/60 bg-background text-gold'}`}>{x.badge}</span>}
@@ -101,10 +103,48 @@ export default function PricingPage() {
           <p className="font-serif text-xl font-semibold">{planName(p, hi)}</p>
           {pr ? <Crown className="h-5 w-5 text-gold" /> : <Zap className="h-5 w-5 text-gold/70" />}
         </div>
-        <p className="mt-4 font-serif text-4xl font-bold"><span className="gold-text">{inr(p.pricePaise)}</span> <span className="font-sans text-sm font-normal text-muted-foreground">{p.intervalDays ? (p.intervalDays > 31 ? t.pricing.perYear : t.pricing.perMonth) : t.pricing.oneTime}</span></p>
-        <p className="text-xs text-muted-foreground">{L('incl. 18% GST', '18% GST सहित')}</p>
-        {x.sub && <p className="mt-1 text-sm text-gold">{x.sub}</p>}
-        {x.save && <p className="mt-2 inline-block self-start rounded-md bg-success/15 px-2 py-0.5 text-xs font-medium text-success">{x.save}</p>}
+
+        {/* Pricing: 1 Real Price & 2 Offer Price */}
+        <div className="mt-4 rounded-xl border border-gold/30 bg-gold/5 p-3.5 space-y-2">
+          {/* Pricing 1: Real Price */}
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              {L('1 · Real Price', '1 · वास्तविक मूल्य')}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-medium text-muted-foreground line-through decoration-danger decoration-[1.5px]">
+                {inr(prices.realPricePaise)}
+              </span>
+              <span className="rounded bg-danger/15 px-1.5 py-0.5 text-[10px] font-bold text-danger">
+                {prices.discountPercent}% {L('OFF', 'छूट')}
+              </span>
+            </div>
+          </div>
+
+          {/* Pricing 2: Offer Price */}
+          <div className="border-t border-border/40 pt-2">
+            <div className="flex items-baseline justify-between gap-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-gold">
+                {L('2 · Offer Price', '2 · ऑफ़र मूल्य')}
+              </span>
+              <span className="text-[11px] font-semibold text-success">
+                {L(`Save ${inr(prices.discountPaise)}`, `${inr(prices.discountPaise)} की बचत`)}
+              </span>
+            </div>
+            <p className="mt-1 font-serif text-4xl font-extrabold leading-none">
+              <span className="gold-text">{inr(p.pricePaise)}</span>{' '}
+              <span className="font-sans text-xs font-normal text-muted-foreground">
+                {p.intervalDays ? (p.intervalDays > 31 ? t.pricing.perYear : t.pricing.perMonth) : t.pricing.oneTime}
+              </span>
+            </p>
+          </div>
+
+          <p className="text-[11px] text-muted-foreground">
+            {L('incl. 18% GST', '18% GST सहित')}
+            {x.sub ? ` · ${x.sub}` : ''}
+          </p>
+        </div>
+
         <p className="mt-3 text-sm text-muted-foreground">{planDesc(p, hi)}</p>
         <ul className="my-5 space-y-2 text-sm">{featureList(p).map((f) => <li key={f} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />{f}</li>)}</ul>
         <Button variant={pr || x.hot ? 'gold' : 'outline'} size="lg" className="mt-auto" onClick={() => setChosen(p)}>
@@ -286,6 +326,8 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
     } catch (e) { setPending(false); setError(e instanceof ApiError ? (t.pricing.errors[e.body.error ?? ''] ?? e.message) : t.err.server); setBusy(false); }
   }
 
+  const prices = getPlanPrices(plan);
+
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 p-4" role="dialog" aria-modal="true" onClick={onClose}>
       <div className="glass w-full max-w-md rounded-lg bg-background p-5" onClick={(e) => e.stopPropagation()}>
@@ -305,10 +347,31 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
             <Field label={t.pricing.phone} htmlFor="ph" required><Input id="ph" type="tel" inputMode="numeric" autoComplete="tel-national" maxLength={14} placeholder="98765 43210" value={phone} onChange={(e) => setPhone(e.target.value)} /></Field>
             <div className="flex items-end gap-2"><Field label={t.pricing.coupon} htmlFor="cp" className="flex-1"><Input id="cp" value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} /></Field><Button variant="outline" onClick={applyCoupon} disabled={!coupon}>{t.pricing.apply}</Button></div>
             {couponMsg && <p className={`text-xs ${discount ? 'text-success' : 'text-danger'}`}>{couponMsg}</p>}
-            <div className="rounded-md bg-muted p-3 text-sm">
-              <div className="flex justify-between"><span>{planName(plan, hi)}</span><span>{inr(plan.pricePaise)}</span></div>
-              {discount > 0 && <div className="flex justify-between text-success"><span>{t.pricing.discount}</span><span>-{inr(discount)}</span></div>}
-              <div className="mt-1 flex justify-between border-t border-border pt-1 font-semibold"><span>{t.pricing.total} ({hi ? 'GST सहित' : 'incl. GST'})</span><span>{inr(plan.pricePaise - discount)}</span></div>
+            <div className="rounded-md bg-muted/80 border border-border/60 p-3.5 text-sm space-y-1.5">
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>1 · {hi ? 'वास्तविक मूल्य (Real Price)' : 'Real Price (MRP)'}</span>
+                <span className="line-through">{inr(prices.realPricePaise)}</span>
+              </div>
+              <div className="flex justify-between items-baseline">
+                <span className="text-xs font-bold uppercase tracking-wider text-gold">2 · {hi ? 'ऑफ़र मूल्य (Offer Price)' : 'Offer Price'}</span>
+                <span className="font-semibold text-foreground">{inr(plan.pricePaise)}</span>
+              </div>
+              {prices.discountPaise > 0 && (
+                <div className="flex justify-between text-xs font-medium text-emerald-400">
+                  <span>{hi ? `तुरंत बचत (${prices.discountPercent}% छूट)` : `Instant Savings (${prices.discountPercent}% OFF)`}</span>
+                  <span>-{inr(prices.discountPaise)}</span>
+                </div>
+              )}
+              {discount > 0 && (
+                <div className="flex justify-between text-xs font-medium text-success">
+                  <span>{t.pricing.discount} ({coupon})</span>
+                  <span>-{inr(discount)}</span>
+                </div>
+              )}
+              <div className="mt-2 flex justify-between border-t border-border/80 pt-2 font-bold text-base">
+                <span>{t.pricing.total} ({hi ? 'GST सहित' : 'incl. GST'})</span>
+                <span className="text-gold">{inr(plan.pricePaise - discount)}</span>
+              </div>
             </div>
             {order?.mock ? (
               <div className="space-y-2 rounded-md border border-warning/40 bg-warning/10 p-3">

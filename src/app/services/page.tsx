@@ -85,9 +85,30 @@ export default async function ServicesPage() {
               <div className="mt-5 flex flex-wrap items-end justify-between gap-3 border-t border-border/50 pt-4">
                 <div>
                   {s.pricePaise ? (
-                    <p className="font-serif text-3xl font-bold"><span className="gold-text">{inr(s.pricePaise)}</span>{s.mrpPaise ? <span className="ml-2 text-base font-normal text-muted-foreground line-through">{inr(s.mrpPaise)}</span> : null}</p>
-                  ) : <p className="font-serif text-xl font-semibold text-gold"><Bi en="Price on request" hi="मूल्य पूछताछ पर" /></p>}
-                  <p className="text-xs text-muted-foreground"><Bi en={s.pricePaise ? 'incl. 18% GST · one-time' : 'Send an enquiry for the fee'} hi={s.pricePaise ? '18% GST सहित · एक बार' : 'शुल्क जानने के लिए पूछताछ भेजें'} /></p>
+                    (() => {
+                      const real = s.mrpPaise && s.mrpPaise > s.pricePaise ? s.mrpPaise : s.pricePaise * 2;
+                      const pct = Math.round(((real - s.pricePaise) / real) * 100);
+                      return (
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-1.5 text-xs">
+                            <span className="text-muted-foreground font-medium">1 · <Bi en="Real Price" hi="वास्तविक मूल्य" />:</span>
+                            <span className="line-through text-muted-foreground decoration-danger decoration-[1.5px]">{inr(real)}</span>
+                            <span className="rounded bg-danger/15 px-1.5 py-0.2 text-[10px] font-bold text-danger">{pct}% <Bi en="OFF" hi="छूट" /></span>
+                          </div>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-xs font-bold uppercase tracking-wider text-gold">2 · <Bi en="Offer Price" hi="ऑफ़र मूल्य" />:</span>
+                            <span className="font-serif text-3xl font-bold"><span className="gold-text">{inr(s.pricePaise)}</span></span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground"><Bi en="incl. 18% GST · one-time" hi="18% GST सहित · एक बार" /></p>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div>
+                      <p className="font-serif text-xl font-semibold text-gold"><Bi en="Price on request" hi="मूल्य पूछताछ पर" /></p>
+                      <p className="text-xs text-muted-foreground"><Bi en="Send an enquiry for the fee" hi="शुल्क जानने के लिए पूछताछ भेजें" /></p>
+                    </div>
+                  )}
                 </div>
                 <BookService svc={s} className="min-w-[170px]" />
               </div>

@@ -50,8 +50,33 @@ export async function ServiceLanding({ slug }: { slug: string }) {
     <div className="glass rounded-2xl border border-gold/40 p-5 sm:p-6">
       <BiBlock en={<OfferText t={svc.en} />} hi={<OfferText t={svc.hi} />} />
       <div className="mt-5 flex flex-wrap items-end justify-between gap-3 border-t border-border/50 pt-4">
-        <div>{svc.pricePaise ? <p className="font-serif text-3xl font-bold"><span className="gold-text">{inr(svc.pricePaise)}</span>{svc.mrpPaise ? <span className="ml-2 text-base font-normal text-muted-foreground line-through">{inr(svc.mrpPaise)}</span> : null}</p> : <p className="font-serif text-xl font-semibold text-gold"><Bi en="Price on request" hi="मूल्य पूछताछ पर" /></p>}
-          <p className="text-xs text-muted-foreground"><Bi en={svc.pricePaise ? 'incl. 18% GST · secure payment by Cashfree' : 'Send an enquiry for the fee'} hi={svc.pricePaise ? '18% GST सहित · Cashfree द्वारा सुरक्षित भुगतान' : 'शुल्क जानने के लिए पूछताछ भेजें'} /></p></div>
+        <div>
+          {svc.pricePaise ? (
+            (() => {
+              const real = svc.mrpPaise && svc.mrpPaise > svc.pricePaise ? svc.mrpPaise : svc.pricePaise * 2;
+              const pct = Math.round(((real - svc.pricePaise) / real) * 100);
+              return (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span className="text-muted-foreground font-medium">1 · <Bi en="Real Price" hi="वास्तविक मूल्य" />:</span>
+                    <span className="line-through text-muted-foreground decoration-danger decoration-[1.5px]">{inr(real)}</span>
+                    <span className="rounded bg-danger/15 px-1.5 py-0.2 text-[10px] font-bold text-danger">{pct}% <Bi en="OFF" hi="छूट" /></span>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-xs font-bold uppercase tracking-wider text-gold">2 · <Bi en="Offer Price" hi="ऑफ़र मूल्य" />:</span>
+                    <span className="font-serif text-3xl font-bold"><span className="gold-text">{inr(svc.pricePaise)}</span></span>
+                  </div>
+                  <p className="text-xs text-muted-foreground"><Bi en="incl. 18% GST · secure payment by Cashfree" hi="18% GST सहित · Cashfree द्वारा सुरक्षित भुगतान" /></p>
+                </div>
+              );
+            })()
+          ) : (
+            <div>
+              <p className="font-serif text-xl font-semibold text-gold"><Bi en="Price on request" hi="मूल्य पूछताछ पर" /></p>
+              <p className="text-xs text-muted-foreground"><Bi en="Send an enquiry for the fee" hi="शुल्क जानने के लिए पूछताछ भेजें" /></p>
+            </div>
+          )}
+        </div>
         <BookService svc={svc} className="min-w-[180px]" />
       </div>
     </div>
