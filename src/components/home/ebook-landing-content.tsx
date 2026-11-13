@@ -109,14 +109,19 @@ export function EbookLandingContent() {
       trackEvent('generate_lead', { lead_magnet: 'free-ebook', page: 'ebook_landing' });
 
       // Trigger automatic download
-      setTimeout(() => {
+      const targetUrl = res.downloadUrl || PDF_URL;
+      try {
         const link = document.createElement('a');
-        link.href = res.downloadUrl || PDF_URL;
-        link.download = PDF_FILENAME;
+        link.href = targetUrl;
+        link.setAttribute('download', PDF_FILENAME);
+        link.setAttribute('target', '_blank');
+        link.setAttribute('rel', 'noopener noreferrer');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-      }, 700);
+      } catch {
+        // browser suppressed
+      }
     } catch (err2) {
       if (err2 instanceof ApiError) {
         setErr(
@@ -321,13 +326,19 @@ export function EbookLandingContent() {
                 )}
 
                 <div className="space-y-2.5">
+                  <div className="rounded-lg border border-amber-400/40 bg-amber-500/10 p-2 text-xs text-amber-200">
+                    {hi
+                      ? '📥 यदि फाइल डाउनलोड न हुई हो, तो नीचे बटन पर क्लिक करें:'
+                      : '📥 If the file did not download automatically, click below:'}
+                  </div>
+
                   <a
                     href={result.downloadUrl || PDF_URL}
                     download={PDF_FILENAME}
-                    className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 px-6 font-semibold text-slate-950 shadow-lg hover:brightness-110"
+                    className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 px-6 font-semibold text-slate-950 shadow-[0_0_20px_rgba(245,158,11,0.4)] hover:brightness-110"
                   >
                     <Download className="h-5 w-5" />
-                    <span>{hi ? 'पुनः डाउनलोड करें (PDF - 4.2 MB)' : 'Download PDF Again (4.2 MB)'}</span>
+                    <span>{hi ? '📥 ई-बुक (PDF) डाउनलोड करें' : '📥 Download eBook (PDF)'}</span>
                   </a>
 
                   <a

@@ -196,15 +196,20 @@ export function EbookLeadPopup() {
         has_dob: Boolean(dob),
       });
 
-      // Automatically trigger PDF download after brief moment
-      setTimeout(() => {
+      // Automatically trigger PDF download
+      const targetUrl = res.downloadUrl || PDF_URL;
+      try {
         const link = document.createElement('a');
-        link.href = res.downloadUrl || PDF_URL;
-        link.download = PDF_FILENAME;
+        link.href = targetUrl;
+        link.setAttribute('download', PDF_FILENAME);
+        link.setAttribute('target', '_blank');
+        link.setAttribute('rel', 'noopener noreferrer');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-      }, 700);
+      } catch {
+        // browser suppressed automatic trigger
+      }
     } catch (err2) {
       if (err2 instanceof ApiError) {
         const path = err2.body.issues?.[0]?.path;
@@ -641,15 +646,21 @@ export function EbookLeadPopup() {
 
                     {/* Action Buttons */}
                     <div className="space-y-2.5">
+                      <div className="rounded-lg border border-amber-400/40 bg-amber-500/10 p-2.5 text-xs text-amber-200 text-center font-medium">
+                        {hi
+                          ? '📥 डाउनलोड अपने-आप शुरू हो गया है। यदि फाइल डाउनलोड न हुई हो, तो नीचे बटन पर क्लिक करें:'
+                          : '📥 Download has started automatically. If it did not start, please click the button below:'}
+                      </div>
+
                       {/* Direct Download Button */}
                       <a
                         href={result.downloadUrl || PDF_URL}
                         download={PDF_FILENAME}
-                        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 px-6 font-semibold text-slate-950 shadow-lg hover:brightness-110 transition-all"
+                        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 px-6 font-semibold text-slate-950 shadow-[0_0_25px_rgba(245,158,11,0.45)] hover:brightness-110 transition-all text-base animate-pulse"
                         onClick={() => trackEvent('download_ebook_click', { source: 'popup_success' })}
                       >
                         <Download className="h-5 w-5" />
-                        <span>{hi ? 'ई-बुक डाउनलोड करें (PDF - 4.2 MB)' : 'Download Free eBook (PDF - 4.2 MB)'}</span>
+                        <span>{hi ? '📥 ई-बुक (PDF) डाउनलोड करें' : '📥 Download eBook (PDF)'}</span>
                       </a>
 
                       {/* Read Online Button */}
