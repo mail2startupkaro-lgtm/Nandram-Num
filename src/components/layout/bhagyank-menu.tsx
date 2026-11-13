@@ -29,8 +29,8 @@ export function BhagyankMenu() {
   return (
     <div ref={wrap} className="relative hidden md:block" onMouseEnter={show} onMouseLeave={hide}>
       <button type="button" aria-haspopup="true" aria-expanded={open} onClick={() => setOpen(!open)}
-        className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-2 text-sm hover:bg-muted lg:px-2.5">
-        {t.nav.bhagyank}<ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
+        className="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-md px-2 text-[12.5px] font-medium text-foreground/85 hover:bg-gold/10 hover:text-gold transition-colors">
+        {t.nav.bhagyank}<ChevronDown className={`h-3 w-3 text-gold/70 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
         <div className="fixed inset-x-0 top-[65px] z-50 mx-auto w-[min(92vw,820px)] pt-2">
