@@ -15,9 +15,9 @@ export const POST = withOptionalUser(async (req, user) => {
   const raw = await readJson<Record<string, unknown>>(req, 10_000);
   if (typeof raw?.website === 'string' && raw.website.length > 0) { // bot: pretend success, store nothing
     const dob = typeof raw.dob === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw.dob) ? raw.dob : '2000-01-01';
-    try { return json({ ok: true, ...miniReading(dob) }, 201); } catch { return json({ ok: true, moolank: 1, bhagyank: 1 }, 201); }
+    try { return json({ ok: true, downloadUrl: '/ebooks/numerology-made-easy-guide.pdf', ...miniReading(dob) }, 201); } catch { return json({ ok: true, downloadUrl: '/ebooks/numerology-made-easy-guide.pdf', moolank: 1, bhagyank: 1 }, 201); }
   }
   const input = LeadInput.parse(raw);
   const r = await createLead(input, { ip, userAgent: req.headers.get('user-agent'), userId: user?.id ?? null });
-  return json({ ok: true, moolank: r.moolank, bhagyank: r.bhagyank }, 201);
+  return json({ ok: true, moolank: r.moolank, bhagyank: r.bhagyank, downloadUrl: r.downloadUrl }, 201);
 });

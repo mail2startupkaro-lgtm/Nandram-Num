@@ -23,16 +23,23 @@ const isoDob = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((s) => {
 export const LeadInput = z.object({
   name: z.string().trim().min(2).max(120),
   phone: z.string().trim().min(8).max(20),
-  dob: isoDob,
+  dob: z.string().trim().optional().or(z.literal('')).refine((s) => {
+    if (!s) return true;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+    try { const d = parseDate(s); return d.year >= 1900 && toIso(d) <= toIso(todayIST()); } catch { return false; }
+  }, 'DOB_INVALID'),
   service: z.string().trim().max(40).regex(/^(SVC_[A-Z0-9_]+)?$/).optional(),
-  magnet: z.enum(['mini-reading', 'sample-report']).default('mini-reading'),
+  magnet: z.enum(['mini-reading', 'sample-report', 'free-ebook']).default('mini-reading'),
   language: z.enum(['en', 'hi']).default('en'),
   consent: z.literal(true),
   page: z.string().max(200).optional(),
   referrer: z.string().max(500).optional(),
   utmSource: utm, utmMedium: utm, utmCampaign: z.string().trim().max(150).optional(), utmTerm: utm, utmContent: utm,
   website: z.string().max(0).optional(), // honeypot
-}).superRefine((v, ctx) => { if (!normaliseContactPhone(v.phone)) ctx.addIssue({ code: 'custom', path: ['phone'], message: 'PHONE_INVALID' }); });
+}).superRefine((v, ctx) => {
+  if (!normaliseContactPhone(v.phone)) ctx.addIssue({ code: 'custom', path: ['phone'], message: 'PHONE_INVALID' });
+  if (v.magnet !== 'free-ebook' && !v.dob) ctx.addIssue({ code: 'custom', path: ['dob'], message: 'DOB_INVALID' });
+});
 export type LeadInput = z.infer<typeof LeadInput>;
 
 /** The instant result shown to the visitor. */
@@ -43,8 +50,9 @@ export function miniReading(dobIso: string) {
 
 export async function createLead(input: LeadInput, meta: { ip?: string | null; userAgent?: string | null; userId?: string | null } = {}, db: Db = getDb()) {
   const phone = normaliseContactPhone(input.phone)!;
-  const r = miniReading(input.dob);
-  const leadMagnet = input.magnet === 'sample-report' ? `sample-report:${input.service || 'all'}` : 'mini-reading';
+  const hasValidDob = Boolean(input.dob && /^\d{4}-\d{2}-\d{2}$/.test(input.dob));
+  const r = hasValidDob ? miniReading(input.dob!) : { moolank: null, bhagyank: null };
+  const leadMagnet = input.magnet === 'free-ebook' ? 'free-ebook:numerology-made-easy' : input.magnet === 'sample-report' ? `sample-report:${input.service || 'all'}` : 'mini-reading';
   const utmSet = { utmSource: input.utmSource || null, utmMedium: input.utmMedium || null, utmCampaign: input.utmCampaign || null, utmTerm: input.utmTerm || null, utmContent: input.utmContent || null };
   const id = await db.transaction(async (tx) => {
     // One lead per phone (the CRM table has a unique phone index): a returning visitor updates their row.
@@ -53,12 +61,12 @@ export async function createLead(input: LeadInput, meta: { ip?: string | null; u
     if (existing) {
       leadId = existing.id;
       await tx.update(marketingLeads).set({
-        fullName: input.name, dob: input.dob, language: input.language, moolank: r.moolank, bhagyank: r.bhagyank, leadMagnet,
+        fullName: input.name, dob: input.dob || null, language: input.language, moolank: r.moolank, bhagyank: r.bhagyank, leadMagnet,
         ...(input.service ? { primaryConcern: input.service } : {}), ...(input.utmSource ? utmSet : {}), ...(meta.userId ? { userId: meta.userId } : {}), updatedAt: new Date(),
       }).where(eq(marketingLeads.id, leadId));
     } else {
       const [row] = await tx.insert(marketingLeads).values({
-        userId: meta.userId ?? null, fullName: input.name, phone, dob: input.dob, language: input.language,
+        userId: meta.userId ?? null, fullName: input.name, phone, dob: input.dob || null, language: input.language,
         moolank: r.moolank, bhagyank: r.bhagyank, primaryConcern: input.service || null, leadSource: LEAD_SOURCE, leadMagnet, ...utmSet,
         referrerUrl: input.referrer?.slice(0, 500) || null, ipAddress: meta.ip?.slice(0, 64) ?? null, userAgent: meta.userAgent?.slice(0, 400) ?? null,
         metadata: { page: input.page?.slice(0, 200) ?? null },
@@ -68,7 +76,7 @@ export async function createLead(input: LeadInput, meta: { ip?: string | null; u
     await tx.insert(marketingConsents).values({ leadId, channel: 'whatsapp', purpose: 'numerology-services', consentText: CONSENT_TEXT[input.language], ipAddress: meta.ip?.slice(0, 64) ?? null, userAgent: meta.userAgent?.slice(0, 400) ?? null });
     return leadId;
   });
-  return { id, ...r };
+  return { id, ...r, downloadUrl: '/ebooks/numerology-made-easy-guide.pdf' };
 }
 
 export async function listLeads(opts: { limit?: number } = {}, db: Db = getDb()) {

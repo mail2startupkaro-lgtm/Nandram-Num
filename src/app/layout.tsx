@@ -7,6 +7,7 @@ import { Footer, Header } from '@/components/layout/chrome';
 import { CosmicBackground } from '@/components/layout/cosmic-bg';
 import { GoogleAnalytics } from '@/components/analytics/google-analytics';
 import { SecretAdminLogin } from '@/components/auth/secret-admin-login';
+import { EbookLeadPopup } from '@/components/layout/ebook-lead-popup';
 import { fontVariables } from './fonts';
 import { DEFAULT_DESCRIPTION, DEFAULT_TITLE, EXPERT, SITE_NAME, SITE_URL, jsonLd, orgLd } from '@/lib/seo/site';
 
@@ -69,6 +70,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <GoogleAnalytics />
           </Suspense>
           <SecretAdminLogin />
+          <EbookLeadPopup />
           <CosmicBackground />
           <Header />
           <main className="min-h-[70vh]">{children}</main>

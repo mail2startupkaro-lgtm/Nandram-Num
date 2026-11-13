@@ -94,6 +94,15 @@ export function Header() {
           <Link href="/calculators" className="hidden whitespace-nowrap rounded-md px-2.5 py-2 text-sm hover:bg-muted xl:inline-block">{t.nav.calculators}</Link>
           <ServicesMenu />
           <Link href="/blog" className="hidden whitespace-nowrap rounded-md px-2.5 py-2 text-sm hover:bg-muted lg:inline-block">{t.nav.blog}</Link>
+          <button
+            type="button"
+            onClick={() => window.dispatchEvent(new Event('mn-open-ebook-popup'))}
+            className="hidden items-center gap-1.5 whitespace-nowrap rounded-full border border-amber-400/50 bg-gradient-to-r from-amber-500/15 via-gold/20 to-amber-500/15 px-2.5 py-1 text-xs font-semibold text-gold hover:border-gold hover:bg-gold/20 xl:inline-flex transition-all"
+            title={lang === 'hi' ? 'मुफ़्त अंक ज्योतिष ई-बुक प्राप्त करें' : 'Get Free Numerology eBook'}
+          >
+            <span className="text-amber-300">🎁</span>
+            <Bi en="Free eBook" hi="मुफ़्त ई-बुक" />
+          </button>
           <Link href="/contact" className="hidden whitespace-nowrap rounded-md px-2.5 py-2 text-sm hover:bg-muted 2xl:inline-block">{t.nav.contact}</Link>
           {user?.role === 'super_admin' && <Link href="/admin" className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-2 text-sm text-gold hover:bg-muted sm:px-3"><Shield className="h-4 w-4" />{t.auth.admin}</Link>}
           {user && <Link href="/dashboard" className="whitespace-nowrap rounded-md px-2 py-2 text-sm hover:bg-muted sm:px-3">{t.nav.dashboard}</Link>}
@@ -128,6 +137,19 @@ export function Header() {
       {nav && (
         <nav id="mobile-nav" aria-label={lang === 'hi' ? 'मुख्य मेन्यू' : 'Main'} className="border-t border-gold/20 bg-background/95 backdrop-blur-md md:hidden">
           <ul className="container grid grid-cols-2 gap-1 py-3 text-sm">
+            <li className="col-span-2 mb-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setNav(false);
+                  window.dispatchEvent(new Event('mn-open-ebook-popup'));
+                }}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-gold/50 bg-gradient-to-r from-amber-500/15 via-gold/20 to-amber-500/15 px-3 py-2 text-center text-sm font-bold text-gold hover:bg-gold/25"
+              >
+                <span>🎁</span>
+                <Bi en="Free Guide eBook (PDF)" hi="मुफ़्त अंक ज्योतिष ई-बुक (PDF)" />
+              </button>
+            </li>
             {[['/reading', t.nav.reading], ['/angel-numbers', t.nav.angel], ['/mulank', t.nav.mulank], ['/bhagyank', t.nav.bhagyank], ['/calculators', t.nav.calculators], ['/angel-numbers/calculator', lang === 'hi' ? 'एंजेल नंबर कैलकुलेटर' : 'Angel number calculator'], ['/services', t.nav.services], ['/pricing', t.nav.pricing], ['/blog', t.nav.blog], ['/international-numerology', lang === 'hi' ? 'अंतरराष्ट्रीय क्लाइंट' : 'International clients'], ['/about', t.nav.about], ['/contact', t.nav.contact]].map(([href, label]) => (
               <li key={href}><Link href={href} onClick={() => setNav(false)} className="block rounded-md px-3 py-2.5 hover:bg-muted">{label}</Link></li>
             ))}
@@ -145,7 +167,7 @@ export function Footer() {
     <footer className="mt-16 border-t border-gold/20 py-8 text-center text-xs text-muted-foreground">
       <div className="container space-y-2">
         <p className="mx-auto max-w-2xl">{t.disclaimer} <Link href="/disclaimer" className="underline underline-offset-2 hover:text-foreground"><Bi en="Read the full disclaimer" hi="पूरा अस्वीकरण पढ़ें" /></Link></p>
-        <p className="flex flex-wrap justify-center gap-x-4 gap-y-1"><Link href="/terms" className="hover:text-foreground"><Bi en="Terms of Service" hi="सेवा की शर्तें" /></Link><Link href="/privacy" className="hover:text-foreground"><Bi en="Privacy Policy" hi="गोपनीयता नीति" /></Link><Link href="/refund" className="hover:text-foreground"><Bi en="Refund Policy" hi="रिफ़ंड नीति" /></Link><Link href="/disclaimer" className="hover:text-foreground"><Bi en="Disclaimer" hi="अस्वीकरण" /></Link><Link href="/mulank" className="hover:text-foreground">{t.nav.mulank}</Link><Link href="/bhagyank" className="hover:text-foreground">{t.nav.bhagyank}</Link><Link href="/angel-numbers" className="hover:text-foreground">{t.nav.angel}</Link><Link href="/angel-numbers/calculator" className="hover:text-foreground"><Bi en="Angel Number Calculator" hi="एंजेल नंबर कैलकुलेटर" /></Link><Link href="/blog" className="hover:text-foreground">{t.nav.blog}</Link><Link href="/pricing" className="hover:text-foreground">{t.nav.pricing}</Link><Link href="/calculators" className="hover:text-foreground">{t.nav.calculators}</Link><Link href="/services" className="hover:text-foreground">{t.nav.services}</Link><Link href="/international-numerology" className="hover:text-foreground"><Bi en="International clients" hi="अंतरराष्ट्रीय क्लाइंट" /></Link><Link href="/about" className="hover:text-foreground">{t.nav.about}</Link><Link href="/contact" className="hover:text-foreground">{t.nav.contact}</Link></p>
+        <p className="flex flex-wrap justify-center gap-x-4 gap-y-1"><Link href="/terms" className="hover:text-foreground"><Bi en="Terms of Service" hi="सेवा की शर्तें" /></Link><Link href="/privacy" className="hover:text-foreground"><Bi en="Privacy Policy" hi="गोपनीयता नीति" /></Link><Link href="/refund" className="hover:text-foreground"><Bi en="Refund Policy" hi="रिफ़ंड नीति" /></Link><Link href="/disclaimer" className="hover:text-foreground"><Bi en="Disclaimer" hi="अस्वीकरण" /></Link><button type="button" onClick={() => window.dispatchEvent(new Event('mn-open-ebook-popup'))} className="hover:text-gold font-medium text-gold"><Bi en="🎁 Free Guide eBook" hi="🎁 मुफ़्त ई-बुक" /></button><Link href="/mulank" className="hover:text-foreground">{t.nav.mulank}</Link><Link href="/bhagyank" className="hover:text-foreground">{t.nav.bhagyank}</Link><Link href="/angel-numbers" className="hover:text-foreground">{t.nav.angel}</Link><Link href="/angel-numbers/calculator" className="hover:text-foreground"><Bi en="Angel Number Calculator" hi="एंजेल नंबर कैलकुलेटर" /></Link><Link href="/blog" className="hover:text-foreground">{t.nav.blog}</Link><Link href="/pricing" className="hover:text-foreground">{t.nav.pricing}</Link><Link href="/calculators" className="hover:text-foreground">{t.nav.calculators}</Link><Link href="/services" className="hover:text-foreground">{t.nav.services}</Link><Link href="/international-numerology" className="hover:text-foreground"><Bi en="International clients" hi="अंतरराष्ट्रीय क्लाइंट" /></Link><Link href="/about" className="hover:text-foreground">{t.nav.about}</Link><Link href="/contact" className="hover:text-foreground">{t.nav.contact}</Link></p>
         <p>© {new Date().getFullYear()} {t.brand}</p>
       </div>
     </footer>
