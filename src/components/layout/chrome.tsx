@@ -95,21 +95,8 @@ export function Header() {
           <AngelMenu />
           <Link href="/calculators" className={`hidden md:inline-flex ${navLinkClass}`}>{t.nav.calculators}</Link>
           <ServicesMenu />
-          <Link href="/pricing" className={`hidden lg:inline-flex ${navLinkClass}`}>{t.nav.pricing}</Link>
-          <Link href="/blog" className={`hidden xl:inline-flex ${navLinkClass}`}>{t.nav.blog}</Link>
-          <Link href="/about" className={`hidden 2xl:inline-flex ${navLinkClass}`}>{t.nav.about}</Link>
-          <Link href="/contact" className={`hidden 2xl:inline-flex ${navLinkClass}`}>{t.nav.contact}</Link>
-
-          {/* Free eBook Trigger Badge */}
-          <button
-            type="button"
-            onClick={() => window.dispatchEvent(new Event('mn-open-ebook-popup'))}
-            className="hidden xl:inline-flex h-7 items-center gap-1.5 whitespace-nowrap rounded-full border border-amber-400/40 bg-gradient-to-r from-amber-500/15 via-gold/20 to-amber-500/15 px-2.5 text-[11px] font-semibold text-gold hover:border-gold hover:bg-gold/20 transition-all shrink-0 ml-1"
-            title={lang === 'hi' ? 'मुफ़्त अंक ज्योतिष ई-बुक प्राप्त करें' : 'Get Free Numerology eBook'}
-          >
-            <span className="text-amber-300 text-xs">🎁</span>
-            <Bi en="Free eBook" hi="मुफ़्त ई-बुक" />
-          </button>
+          <Link href="/pricing" className={`hidden md:inline-flex ${navLinkClass}`}>{t.nav.pricing}</Link>
+          <Link href="/contact" className={`hidden md:inline-flex ${navLinkClass}`}>{t.nav.contact}</Link>
 
           {user?.role === 'super_admin' && (
             <Link href="/admin" className="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-md px-2 text-[12.5px] font-semibold text-gold hover:bg-gold/10">
@@ -204,20 +191,7 @@ export function Header() {
       {nav && (
         <nav id="mobile-nav" aria-label={lang === 'hi' ? 'मुख्य मेन्यू' : 'Main'} className="border-t border-gold/20 bg-background/95 backdrop-blur-md md:hidden">
           <ul className="container grid grid-cols-2 gap-1 py-3 text-sm">
-            <li className="col-span-2 mb-1">
-              <button
-                type="button"
-                onClick={() => {
-                  setNav(false);
-                  window.dispatchEvent(new Event('mn-open-ebook-popup'));
-                }}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-gold/50 bg-gradient-to-r from-amber-500/15 via-gold/20 to-amber-500/15 px-3 py-2 text-center text-sm font-bold text-gold hover:bg-gold/25"
-              >
-                <span>🎁</span>
-                <Bi en="Free Guide eBook (PDF)" hi="मुफ़्त अंक ज्योतिष ई-बुक (PDF)" />
-              </button>
-            </li>
-            {[['/reading', t.nav.reading], ['/angel-numbers', t.nav.angel], ['/mulank', t.nav.mulank], ['/bhagyank', t.nav.bhagyank], ['/calculators', t.nav.calculators], ['/angel-numbers/calculator', lang === 'hi' ? 'एंजेल नंबर कैलकुलेटर' : 'Angel number calculator'], ['/services', t.nav.services], ['/pricing', t.nav.pricing], ['/blog', t.nav.blog], ['/international-numerology', lang === 'hi' ? 'अंतरराष्ट्रीय क्लाइंट' : 'International clients'], ['/about', t.nav.about], ['/contact', t.nav.contact]].map(([href, label]) => (
+            {[['/reading', t.nav.reading], ['/angel-numbers', t.nav.angel], ['/mulank', t.nav.mulank], ['/bhagyank', t.nav.bhagyank], ['/calculators', t.nav.calculators], ['/angel-numbers/calculator', lang === 'hi' ? 'एंजेल नंबर कैलकुलेटर' : 'Angel number calculator'], ['/services', t.nav.services], ['/pricing', t.nav.pricing], ['/international-numerology', lang === 'hi' ? 'अंतरराष्ट्रीय क्लाइंट' : 'International clients'], ['/contact', t.nav.contact]].map(([href, label]) => (
               <li key={href}><Link href={href} onClick={() => setNav(false)} className="block rounded-md px-3 py-2.5 hover:bg-muted">{label}</Link></li>
             ))}
             <li><button type="button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-left hover:bg-muted">{theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}{lang === 'hi' ? 'थीम बदलें' : 'Switch theme'}</button></li>
