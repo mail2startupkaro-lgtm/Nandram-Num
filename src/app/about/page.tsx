@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Award, BookOpen, Calculator, FileText, Heart, Languages, ShieldCheck, Sparkles } from 'lucide-react';
 import { AcharyaProfile } from '@/components/blog/blog-parts';
@@ -29,7 +30,7 @@ const WORK = [
 export default function AboutPage() {
   const ld = [
     { '@context': 'https://schema.org', '@type': 'ProfilePage', url: abs('/about'), name: `About ${EXPERT.name}`,
-      mainEntity: { '@type': 'Person', '@id': `${SITE_URL}/#expert`, name: EXPERT.name, jobTitle: EXPERT.jobTitle, description: EXPERT.description, knowsAbout: EXPERT.knowsAbout, knowsLanguage: ['en', 'hi'], url: abs('/about'), worksFor: { '@id': `${SITE_URL}/#org` } } },
+      mainEntity: { '@type': 'Person', '@id': `${SITE_URL}/#expert`, name: EXPERT.name, jobTitle: EXPERT.jobTitle, description: EXPERT.description, image: abs('/images/acharya-nandram.png'), knowsAbout: EXPERT.knowsAbout, knowsLanguage: ['en', 'hi'], url: abs('/about'), worksFor: { '@id': `${SITE_URL}/#org` } } },
     { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Home', item: abs('/') }, { '@type': 'ListItem', position: 2, name: 'About', item: abs('/about') }] },
   ];
   return (
@@ -39,7 +40,16 @@ export default function AboutPage() {
         <div className="relative mx-auto h-52 w-52">
           <span className="mk-spin absolute inset-0 rounded-full border border-dashed border-gold/60" />
           <span className="mk-spin-rev absolute inset-4 rounded-full border border-gold/30" />
-          <span className="mk-pulse absolute inset-8 flex items-center justify-center rounded-full bg-gradient-to-br from-[#2a0e1b] to-[#24130a]"><span className="gold-text font-cinzel text-6xl font-bold"><Bi en="AN" hi="आ" /></span></span>
+          <div className="absolute inset-7 overflow-hidden rounded-full border border-gold/40 bg-gradient-to-br from-[#2a0e1b] via-[#1a0b12] to-[#24130a] shadow-[0_0_25px_hsl(var(--gold)/0.3)]">
+            <Image
+              src="/images/acharya-nandram.png"
+              alt="Acharya Nandram – Numerologist"
+              width={208}
+              height={208}
+              priority
+              className="h-full w-full object-cover object-top"
+            />
+          </div>
         </div>
         <div className="mk-rise space-y-3">
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold"><Bi en="About the numerologist" hi="अंक ज्योतिषी के बारे में" /></p>

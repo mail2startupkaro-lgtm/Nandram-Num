@@ -1,5 +1,6 @@
 'use client';
 import * as React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Award, Calculator, CalendarDays, CheckCircle, Heart, IdCard, MapPin, Orbit, ScrollText, Smartphone, Sparkles, Type } from 'lucide-react';
 import { useApp } from '@/components/layout/providers';
@@ -299,7 +300,20 @@ export function HomeClient() {
         <Reveal>
           <div className="cz-card relative overflow-hidden rounded-2xl border border-gold/40 bg-gradient-to-br from-card/90 via-card/75 to-card/90 p-8 sm:p-12 shadow-[0_0_40px_rgba(245,158,11,0.14)]">
             <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-gold/10 blur-3xl pointer-events-none" />
-            <div className="grid items-center gap-8 lg:grid-cols-[1fr_auto]">
+            <div className="grid items-center gap-8 md:grid-cols-[auto_1fr_auto]">
+              <div className="relative mx-auto h-40 w-40 shrink-0">
+                <span className="mk-spin absolute inset-0 rounded-full border border-dashed border-gold/60" />
+                <span className="mk-spin-rev absolute inset-3 rounded-full border border-gold/30" />
+                <div className="absolute inset-5 overflow-hidden rounded-full border border-gold/40 bg-gradient-to-br from-[#2a0e1b] via-[#1a0b12] to-[#24130a] shadow-[0_0_20px_rgba(245,158,11,0.25)]">
+                  <Image
+                    src="/images/acharya-nandram.png"
+                    alt="Acharya Nandram – Lead Numerologist"
+                    width={160}
+                    height={160}
+                    className="h-full w-full object-cover object-top"
+                  />
+                </div>
+              </div>
               <div>
                 <span className="cz-kicker text-gold">
                   {lang === 'hi' ? 'अंक ज्योतिष विशेषज्ञ' : 'Lead Numerologist & Guide'}

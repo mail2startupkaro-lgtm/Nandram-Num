@@ -450,10 +450,15 @@ export function buildBodyHtml(inp: TemplateInput, pages: Record<string, number> 
     ${sec(S.closing, true)}</div>
     ${inp.expertNote?.trim() ? `<div class="panel" style="margin-top:6mm;white-space:pre-line">${esc(inp.expertNote.trim())}</div>` : ''}
     <div style="margin-top:8mm" class="row">
-      <div><div class="muted small" style="letter-spacing:.2em;text-transform:uppercase">${esc(lab.by)}</div>
-        ${b.signatureDataUrl ? `<img src="${esc(b.signatureDataUrl)}" style="height:18mm;margin:3mm 0">` : `<div class="serif" style="font-style:italic;font-size:24pt;color:${t.primary};margin:3mm 0 1mm">${esc(b.expertName)}</div>`}
-        <div style="width:60mm;border-top:1px solid ${t.accent};padding-top:1.5mm"><b>${esc(b.expertName)}</b><br><span class="small muted">${esc(b.expertTitle ?? '')}</span></div>
-        <div class="small" style="margin-top:4mm">${esc(b.brandName)}<br>${esc(b.contactLine ?? '')}${b.website ? `<br>${esc(b.website)}` : ''}</div></div>
+      <div style="display:flex;gap:4mm;align-items:center">
+        ${b.photoDataUrl ? `<img src="${esc(b.photoDataUrl)}" style="width:22mm;height:22mm;border-radius:50%;object-fit:cover;border:1.5px solid ${t.accent};background:rgba(0,0,0,0.04);flex-shrink:0">` : ''}
+        <div>
+          <div class="muted small" style="letter-spacing:.2em;text-transform:uppercase">${esc(lab.by)}</div>
+          ${b.signatureDataUrl ? `<img src="${esc(b.signatureDataUrl)}" style="height:18mm;margin:3mm 0">` : `<div class="serif" style="font-style:italic;font-size:24pt;color:${t.primary};margin:2mm 0 1mm">${esc(b.expertName)}</div>`}
+          <div style="width:60mm;border-top:1px solid ${t.accent};padding-top:1.5mm"><b>${esc(b.expertName)}</b><br><span class="small muted">${esc(b.expertTitle ?? '')}</span></div>
+          <div class="small" style="margin-top:3mm">${esc(b.brandName)}<br>${esc(b.contactLine ?? '')}${b.website ? `<br>${esc(b.website)}` : ''}</div>
+        </div>
+      </div>
       <div class="panel center" style="flex:0 0 62mm;text-align:center"><div class="serif" style="font-size:12pt;margin-bottom:2mm">${esc(lab.book)}</div><div style="background:#fff;padding:2mm;border-radius:2mm;line-height:0">${qrSvg}</div><div class="small muted" style="margin-top:1.5mm">${esc(lab.scan)}</div></div>
     </div>
     ${disclaimerPanel(lang, t)}

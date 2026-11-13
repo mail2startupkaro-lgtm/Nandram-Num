@@ -1,4 +1,5 @@
 /** Four PDF themes (Section 8). All use light "paper" for print; covers are full-bleed. White-label overrides merge on top. */
+import { ACHARYA_NANDRAM_PHOTO_DATA_URL } from './expert-photo';
 
 export type ThemeId = 'royal-gold-maroon' | 'cosmic-blue' | 'saffron-cream' | 'minimal-white';
 
@@ -72,6 +73,7 @@ export const DEFAULT_BRANDING: Branding = {
   contactLine: process.env.EXPERT_CONTACT || (process.env.APP_URL || 'https://www.mynumerologist.com').replace(/^https?:\/\//, ''),
   website: process.env.BRAND_WEBSITE || '',
   bookingUrl: process.env.BOOKING_URL || `${(process.env.APP_URL || 'https://www.mynumerologist.com').replace(/\/$/, '')}/pricing`,
+  photoDataUrl: ACHARYA_NANDRAM_PHOTO_DATA_URL,
 };
 
 export function resolveTheme(id: ThemeId | undefined, b?: Branding): PdfTheme {

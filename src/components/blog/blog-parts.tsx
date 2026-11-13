@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { Award, BadgeCheck, BookOpen, CheckCircle, Languages, Sparkles, Users } from 'lucide-react';
 import { ForLang } from '@/components/i18n/bi';
@@ -83,7 +84,15 @@ function AcharyaProfileView({ city, lang }: { city?: string; lang: Lang }) {
         <div className="relative mx-auto h-36 w-36 shrink-0">
           <span className="mk-spin absolute inset-0 rounded-full border border-dashed border-gold/60" />
           <span className="mk-spin-rev absolute inset-3 rounded-full border border-gold/30" />
-          <span className="mk-pulse absolute inset-5 flex items-center justify-center rounded-full bg-gradient-to-br from-[#2a0e1b] to-[#24130a]"><span className="gold-text font-cinzel text-4xl font-bold">{t.initials}</span></span>
+          <div className="absolute inset-5 overflow-hidden rounded-full border border-gold/40 bg-gradient-to-br from-[#2a0e1b] via-[#1a0b12] to-[#24130a] shadow-[0_0_20px_hsl(var(--gold)/0.25)]">
+            <Image
+              src="/images/acharya-nandram.png"
+              alt="Acharya Nandram – Numerologist"
+              width={144}
+              height={144}
+              className="h-full w-full object-cover object-top"
+            />
+          </div>
         </div>
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold">{t.eyebrow}</p>

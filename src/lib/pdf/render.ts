@@ -75,7 +75,7 @@ async function getBrowser(): Promise<Browser> {
     browserPromise = (async () => {
       const { chromium } = await import('playwright-core');
       let executablePath = process.env.PDF_CHROMIUM_PATH;
-      let args = ['--font-render-hinting=none', '--disable-dev-shm-usage', '--no-sandbox'];
+      let args = ['--font-render-hinting=none', '--disable-dev-shm-usage', '--no-sandbox', '--disable-gpu'];
 
       const isServerless = !!(process.env.VERCEL || process.env.AWS_EXECUTION_ENV || (process.env.NODE_ENV === 'production' && process.platform === 'linux'));
       console.log(`[pdf] getBrowser start (isServerless=${isServerless}, arch=${process.arch})`);
