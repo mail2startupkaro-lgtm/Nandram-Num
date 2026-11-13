@@ -1,8 +1,10 @@
+import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { getSetting, setSetting } from '@/lib/admin/settings';
 import { GSTIN_RE } from '@/lib/billing/gst';
 import { withAdmin } from '@/lib/server/admin';
 import { json, readJson } from '@/lib/server/http';
+import { SERVICE_PAGES } from '@/lib/service-pages';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,6 +14,7 @@ export const GET = withAdmin(async () => json({
   themes: await getSetting('themes'),
   prompts: await getSetting('prompts'),
   analytics: await getSetting('analytics'),
+  offer: await getSetting('offer'),
 }));
 
 const THEME_IDS = ['royal-gold-maroon', 'cosmic-blue', 'saffron-cream', 'minimal-white'] as const;
@@ -33,11 +36,22 @@ const Body = z.discriminatedUnion('key', [
       trackServices: z.boolean(),
     }),
   }),
+  z.object({
+    key: z.literal('offer'),
+    value: z.object({
+      enabled: z.boolean(),
+      endsAt: z.string().max(40).refine((v) => v === '' || !Number.isNaN(new Date(v).getTime()), 'Invalid date'),
+      labelEn: z.string().trim().max(60),
+      labelHi: z.string().trim().max(60),
+    }),
+  }),
 ]);
 
 export const PUT = withAdmin(async (req) => {
   const b = Body.parse(await readJson(req));
   if (b.key === 'themes' && !b.value.enabled.includes(b.value.defaultTheme)) return json({ error: 'VALIDATION', issues: [{ path: 'defaultTheme', message: 'The default theme must be enabled.' }] }, 422);
+  if (b.key === 'offer' && b.value.enabled && !(new Date(b.value.endsAt).getTime() > Date.now())) return json({ error: 'VALIDATION', issues: [{ path: 'endsAt', message: 'Set an end date in the future to switch the offer on.' }] }, 422);
   await setSetting(b.key, b.value as never);
+  if (b.key === 'offer') { revalidatePath('/services'); for (const p of SERVICE_PAGES) revalidatePath(`/${p.slug}`); }
   return json({ ok: true });
 });

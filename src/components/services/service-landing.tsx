@@ -12,6 +12,9 @@ import { SERVICE_PAGES, servicePageBySlug } from '@/lib/service-pages';
 import { abs, EXPERT, jsonLd as toLd } from '@/lib/seo/site';
 import { DisclaimerNote } from '@/components/legal/disclaimer-note';
 import { ServicePrice } from '@/components/services/service-price';
+import { LeadForm, OfferCountdown, SampleReports, StickyCta } from '@/components/services/funnel';
+import { formatOfferEnd, funnelWhatsapp, getLiveOffer } from '@/lib/funnel/offer';
+import { sampleFor } from '@/lib/service-samples';
 
 export function serviceMetadata(slug: string): Metadata {
   const p = servicePageBySlug(slug)!;
@@ -38,18 +41,24 @@ const STEPS = [
 
 export async function ServiceLanding({ slug }: { slug: string }) {
   const page = servicePageBySlug(slug)!;
-  const svc = await loadService(page.serviceCode);
+  const [svc, liveOffer] = await Promise.all([loadService(page.serviceCode), getLiveOffer()]);
+  const offerOn = liveOffer && svc?.pricePaise ? liveOffer : null;
+  const endText = offerOn ? { en: formatOfferEnd(offerOn.endsAt, 'en'), hi: formatOfferEnd(offerOn.endsAt, 'hi') } : null;
+  const wa = funnelWhatsapp();
+  const sample = sampleFor(page.serviceCode);
+  const funnelServices = svc ? [{ code: svc.code, name: { en: svc.en.name, hi: svc.hi.name } }] : [];
   const others = SERVICE_PAGES.filter((x) => x.slug !== slug);
   const ld = [
     { '@context': 'https://schema.org', '@type': 'Service', name: page.h1.en, description: page.description, serviceType: 'Numerology consultation', areaServed: 'IN', url: abs(`/${page.slug}`), availableLanguage: ['English', 'Hindi'],
       provider: { '@type': 'Person', name: EXPERT.name, url: abs('/about') },
-      ...(svc?.pricePaise ? { offers: { '@type': 'Offer', price: (svc.pricePaise / 100).toFixed(2), priceCurrency: 'INR', availability: 'https://schema.org/InStock', url: abs(`/${page.slug}`) } } : {}) },
+      ...(svc?.pricePaise ? { offers: { '@type': 'Offer', price: (svc.pricePaise / 100).toFixed(2), priceCurrency: 'INR', availability: 'https://schema.org/InStock', url: abs(`/${page.slug}`), ...(offerOn ? { priceValidUntil: offerOn.endsAt.slice(0, 10) } : {}) } } : {}) },
     { '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: page.faq.map((f) => ({ '@type': 'Question', name: f.en[0], acceptedAnswer: { '@type': 'Answer', text: f.en[1] } })) },
     { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ name: 'Home', item: abs('/') }, { name: 'Services', item: abs('/services') }, { name: page.h1.en, item: abs(`/${page.slug}`) }].map((x, i) => ({ '@type': 'ListItem', position: i + 1, ...x })) },
   ];
   const offer = svc && (
     <div className="glass rounded-2xl border border-gold/40 p-5 sm:p-6">
       <BiBlock en={<OfferText t={svc.en} />} hi={<OfferText t={svc.hi} />} />
+      {offerOn && endText && <div className="mt-4"><OfferCountdown variant="inline" endsAt={offerOn.endsAt} label={offerOn.label} endText={endText} /></div>}
       <div className="mt-5 flex flex-wrap items-end justify-between gap-3 border-t border-border/50 pt-4">
         <div>
           {svc.pricePaise ? (
@@ -66,7 +75,8 @@ export async function ServiceLanding({ slug }: { slug: string }) {
     </div>
   );
   return (
-    <div className="container max-w-6xl space-y-12 py-10 sm:py-14">
+    <div className="container max-w-6xl space-y-12 pb-24 pt-10 sm:pt-14 md:pb-14">
+      {offerOn && endText && <OfferCountdown endsAt={offerOn.endsAt} label={offerOn.label} endText={endText} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toLd(ld) }} />
       <nav aria-labelledby="bc-label" className="text-xs text-muted-foreground"><span id="bc-label" className="sr-only"><Bi en="Breadcrumb" hi="पथ" /></span><Link href="/" className="hover:text-foreground"><Bi en="Home" hi="होम" /></Link> / <Link href="/services" className="hover:text-foreground"><Bi en="Services" hi="सेवाएँ" /></Link> / <Bi en={page.h1.en} hi={page.h1.hi} /></nav>
       <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
@@ -75,7 +85,7 @@ export async function ServiceLanding({ slug }: { slug: string }) {
           <h1 className="font-cinzel text-4xl font-bold sm:text-5xl"><span className="gold-text"><Bi en={page.h1.en} hi={page.h1.hi} /></span></h1>
           <BiBlock className="space-y-3" en={page.intro.en.map((x) => <p key={x} className="text-lg text-muted-foreground">{x}</p>)} hi={page.intro.hi.map((x) => <p key={x} className="text-lg text-muted-foreground">{x}</p>)} />
         </header>
-        <div className="lg:sticky lg:top-24 lg:self-start">{offer}</div>
+        <div id="book" className="scroll-mt-24 lg:sticky lg:top-24 lg:self-start">{offer}{sample && <a href="#sample" className="mt-3 flex items-center justify-center gap-1.5 text-sm text-gold hover:underline"><Bi en="See a sample report first →" hi="पहले नमूना रिपोर्ट देखें →" /></a>}</div>
       </div>
       <ServiceReturnBanner />
 
@@ -83,6 +93,14 @@ export async function ServiceLanding({ slug }: { slug: string }) {
         <section aria-labelledby="calc-h" className="space-y-4">
           <h2 id="calc-h" className="font-cinzel text-2xl font-bold sm:text-3xl"><Bi en={page.calculator.title.en} hi={page.calculator.title.hi} /></h2>
           <Calculator kind={page.calculator.kind} />
+        </section>
+      )}
+
+      {sample && (
+        <section id="sample" aria-labelledby="smp-h" className="scroll-mt-20 space-y-4">
+          <div className="text-center"><p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold"><Bi en="See before you pay" hi="भुगतान से पहले देखें" /></p>
+            <h2 id="smp-h" className="font-cinzel text-2xl font-bold sm:text-3xl"><Bi en="Sample Report" hi="नमूना रिपोर्ट" /></h2></div>
+          <SampleReports samples={[sample]} services={funnelServices} whatsapp={wa} bookHref="#book" />
         </section>
       )}
 
@@ -98,6 +116,13 @@ export async function ServiceLanding({ slug }: { slug: string }) {
         {page.faq.map((f) => <details key={f.en[0]} className="glass rounded-lg p-4"><summary className="cursor-pointer font-medium"><Bi en={f.en[0]} hi={f.hi[0]} /></summary><p className="mt-2 text-sm text-muted-foreground"><Bi en={f.en[1]} hi={f.hi[1]} /></p></details>)}
       </section>
 
+      <section aria-labelledby="lead-h" className="grid items-center gap-6 rounded-2xl border-2 border-gold/40 bg-gradient-to-br from-gold/10 via-card/70 to-maroon/25 p-6 sm:p-8 lg:grid-cols-[1fr_1.1fr]">
+        <div><p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold"><Bi en="Free · 30 seconds" hi="मुफ़्त · 30 सेकंड" /></p>
+          <h2 id="lead-h" className="mt-1 font-cinzel text-2xl font-bold sm:text-3xl"><Bi en="Get Your Free Mini-Reading" hi="अपनी मुफ़्त मिनी-रीडिंग पाएँ" /></h2>
+          <p className="mt-2 text-muted-foreground"><Bi en="See your Moolank and Bhagyank instantly, unlock the full sample above, and get a direct WhatsApp line to Acharya Nandram." hi="अपना मूलांक और भाग्यांक तुरंत देखें, ऊपर की पूरी नमूना रिपोर्ट खोलें और आचार्य नंदराम से सीधे WhatsApp पर जुड़ें।" /></p></div>
+        <div className="glass rounded-xl p-5"><LeadForm services={funnelServices} defaultService={svc?.code ?? ''} whatsapp={wa} compact bookHref="#book" /></div>
+      </section>
+
       {offer && <div className="mx-auto max-w-2xl">{offer}</div>}
       <AcharyaProfile />
 
@@ -108,6 +133,7 @@ export async function ServiceLanding({ slug }: { slug: string }) {
         <div className="flex flex-wrap gap-2">{others.map((o) => <Link key={o.slug} href={`/${o.slug}`} className="rounded-full border border-gold/25 px-3 py-1 text-sm hover:bg-gold/10"><Bi en={o.menu.en} hi={o.menu.hi} /></Link>)}<Link href="/services" className="px-3 py-1 text-sm text-gold hover:underline"><Bi en="All services & fees →" hi="सभी सेवाएँ और शुल्क →" /></Link></div>
       </section>
       <DisclaimerNote />
+      <StickyCta whatsapp={wa} bookHref="#book" />
     </div>
   );
 }

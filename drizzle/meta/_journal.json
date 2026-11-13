@@ -57,6 +57,13 @@
       "when": 1794488496137,
       "tag": "0007_service_usd",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794552000000,
+      "tag": "0008_funnel_leads",
+      "breakpoints": true
     }
   ]
 }

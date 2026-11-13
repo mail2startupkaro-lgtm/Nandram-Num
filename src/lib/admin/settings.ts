@@ -16,6 +16,8 @@ export interface AnalyticsSettings {
   trackPdfDownloads: boolean;
   trackServices: boolean;
 }
+/** Limited-time offer shown on /services and the service pages. Counts down to a REAL end date set by the owner; never resets. */
+export interface OfferSettings { enabled: boolean; endsAt: string; labelEn: string; labelHi: string }
 
 export const SETTING_DEFAULTS = {
   seller: {
@@ -35,6 +37,7 @@ export const SETTING_DEFAULTS = {
     trackPdfDownloads: true,
     trackServices: true,
   } as AnalyticsSettings,
+  offer: { enabled: false, endsAt: '', labelEn: 'Limited-time offer', labelHi: 'सीमित समय का ऑफ़र' } as OfferSettings,
 };
 export type SettingKey = keyof typeof SETTING_DEFAULTS;
 

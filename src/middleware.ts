@@ -14,6 +14,12 @@ export function middleware(req: NextRequest) {
   if (isPrivate(path)) {
     if (!(process.env.AUTH_DEV_BYPASS_EMAIL && process.env.NODE_ENV !== 'production') && !req.cookies.get('nsid')) {
       const url = req.nextUrl.clone();
+      // Admin is secret: do not reveal or redirect to /login?next=/admin; redirect unauthenticated visitors to /
+      if (path === '/admin' || path.startsWith('/admin/')) {
+        url.pathname = '/';
+        url.search = '';
+        return NextResponse.redirect(url);
+      }
       url.pathname = '/login';
       url.search = `?next=${encodeURIComponent(path + req.nextUrl.search)}`;
       return NextResponse.redirect(url);
