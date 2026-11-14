@@ -2,7 +2,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Download, Eye, FileJson, FileText, Pencil, RefreshCw, Send, Share2, Sparkles, Trash2 } from 'lucide-react';
+import { ArrowLeft, Download, Eye, FileJson, FileText, Mail, Pencil, RefreshCw, Send, Share2, Sparkles, Trash2 } from 'lucide-react';
 import { useApp } from '@/components/layout/providers';
 import { ShareDialog } from '@/components/dashboard/share-dialog';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { QueueTracker, useQueued } from '@/components/results/report-queue';
 import type { QueueState } from '@/lib/report-queue';
 
 interface ReportMeta { queue?: QueueState; unlocked?: boolean; id: string; module: string; version: number; status: string; theme: string; language: string; asOf: string; createdAt: string; summary: { moolank: number; bhagyank: number; kua: number; nameNumber: number | null; personalYear: number; nameScore: number | null; mobileScore: number | null; coupleScore: number | null; sections: number } }
-interface ProfileData { profile: { id: string; displayName: string; aadhaarLast4: string | null; input: { fullName: string; dob: string; gender: string; city?: string; state?: string; mobile?: string; partner?: { name: string } } }; reports: ReportMeta[] }
+interface ProfileData { profile: { id: string; displayName: string; aadhaarLast4: string | null; input: { fullName: string; dob: string; gender: string; city?: string; state?: string; mobile?: string; email?: string; partner?: { name: string } } }; reports: ReportMeta[] }
 
 const THEMES = ['royal-gold-maroon', 'cosmic-blue', 'saffron-cream', 'minimal-white'] as const;
 const fmtDate = (d: string) => (/^\d{4}-\d{2}-\d{2}$/.test(d) ? d.split('-').reverse().join('-') : d);
@@ -71,7 +71,7 @@ export default function ProfilePage() {
         <p className="text-sm uppercase tracking-[0.2em] text-gold">{t.dash.profile}</p>
         <h1 className="text-3xl font-bold sm:text-4xl">{p.displayName}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {p.input.fullName} · {fmtDate(p.input.dob)} · {[p.input.city, p.input.state].filter(Boolean).join(', ')}{p.input.mobile ? ` · ${p.input.mobile}` : ''}{p.aadhaarLast4 ? ` · Aadhaar XXXX-XXXX-${p.aadhaarLast4}` : ''}{p.input.partner ? ` · ♥ ${p.input.partner.name}` : ''}
+          {p.input.fullName} · {fmtDate(p.input.dob)} · {[p.input.city, p.input.state].filter(Boolean).join(', ')}{p.input.email ? ` · ✉ ${p.input.email}` : ''}{p.input.mobile ? ` · ${p.input.mobile}` : ''}{p.aadhaarLast4 ? ` · Aadhaar XXXX-XXXX-${p.aadhaarLast4}` : ''}{p.input.partner ? ` · ♥ ${p.input.partner.name}` : ''}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Link href={`/reading?profile=${p.id}`} className={buttonVariants({ variant: 'outline' })}><Pencil /> {t.dash.editDetails}</Link>
@@ -121,7 +121,12 @@ export default function ProfilePage() {
                     <Button size="sm" variant="ghost" disabled={!!busy || r.status === 'awaiting_review'} title={r.status === 'awaiting_review' ? t.pdf.reviewFirst : undefined} onClick={() => run(`pdf-${r.id}`, () => downloadReport(r.id))}>
                       <Download className={busy === `pdf-${r.id}` ? 'animate-bounce' : ''} /> PDF
                     </Button>
-                    <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => run(`out-${r.id}`, () => download(`/api/reports/${r.id}/pdf?kind=output&theme=${theme}`))}><Sparkles /> {t.dash.outputSheet}</Button>
+                    <Button size="sm" variant="ghost" disabled={!!busy || r.status === 'awaiting_review'} title={hi ? 'ईमेल पर भेजें' : 'Send to email'} onClick={() => run(`em-${r.id}`, async () => { const res = await api<{ ok: boolean; sentTo: string }>(`/api/reports/${r.id}/email`, { method: 'POST', json: { theme } }); alert(hi ? `रिपोर्ट ${res.sentTo} पर भेज दी गई है!` : `Report successfully emailed to ${res.sentTo}!`); })}>
+                      <Mail className={busy === `em-${r.id}` ? 'animate-pulse' : ''} /> {hi ? 'ईमेल' : 'Email'}
+                    </Button>
+                    <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => run(`out-${r.id}`, () => download(`/api/reports/${r.id}/pdf?kind=output&theme=${theme}`))}>
+                      <Sparkles /> {t.dash.outputSheet}
+                    </Button>
                     </>)}
                     <Button size="sm" variant="ghost" onClick={() => setShare(r.id)}><Share2 /> {t.dash.share}</Button>
                     <Button size="sm" variant="ghost" className="text-danger" aria-label={t.dash.delete} onClick={() => run('d', async () => { if (confirm(`${t.dash.delete} v${r.version}?`)) { await api(`/api/reports/${r.id}`, { method: 'DELETE' }); await load(); } })}><Trash2 /></Button>

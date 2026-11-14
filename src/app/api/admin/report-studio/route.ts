@@ -14,6 +14,7 @@ import { THEMES, type ThemeId } from '@/lib/pdf/themes';
 import { withAdmin } from '@/lib/server/admin';
 import { json, pdfResponse, readJson, slug } from '@/lib/server/http';
 import { writeNarrative } from '@/lib/server/reports';
+import { sendReportEmail } from '@/lib/email/report-email';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,7 +22,8 @@ export const maxDuration = 120;
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const Body = z.object({
-  action: z.enum(['preview', 'pdf']),
+  action: z.enum(['preview', 'pdf', 'email']),
+  email: z.string().trim().email().optional(),
   input: z.unknown(),
   modules: z.array(z.enum(['dob', 'name', 'mobile', 'aadhaar', 'couple', 'complete'])).min(1).default(['complete']),
   language: z.enum(['en', 'hi', 'hinglish']).default('en'),
@@ -76,5 +78,28 @@ export const POST = withAdmin(async (req, user) => {
     reportTitle: b.reportTitle?.trim() || undefined,
   });
   const filePrefix = b.reportTitle ? slug(b.reportTitle) : 'numerology-report';
-  return pdfResponse(out.pdf, `${slug(result.client.commonName || result.client.fullName)}-${filePrefix}.pdf`, { 'x-page-count': String(out.pageCount) });
+  const clientName = result.client.commonName || result.client.fullName || 'Client';
+  const fileName = `${slug(clientName)}-${filePrefix}.pdf`;
+
+  if (b.action === 'email') {
+    const targetEmail = b.email || input.email;
+    if (!targetEmail) {
+      return json({ error: 'EMAIL_REQUIRED', message: 'Enter a client email ID to send the report.' }, 400);
+    }
+    const emailRes = await sendReportEmail({
+      to: targetEmail,
+      clientName,
+      reportPdf: out.pdf,
+      fileName,
+      language: b.language,
+      brandName: (overrides.brandName as string) || style.branding?.brandName,
+      expertName: (overrides.expertName as string) || style.branding?.expertName,
+    });
+    if (!emailRes.ok) {
+      return json({ error: 'DELIVERY_FAILED', message: emailRes.error || 'Failed to send email.' }, 500);
+    }
+    return json({ ok: true, sentTo: targetEmail, dev: emailRes.dev });
+  }
+
+  return pdfResponse(out.pdf, fileName, { 'x-page-count': String(out.pageCount) });
 });

@@ -1,7 +1,7 @@
 'use client';
 /** Admin → Report generator: build a fully customised, service-tailored report for any client, verify it, edit the text, download the PDF. */
 import * as React from 'react';
-import { AlertTriangle, Check, CheckCircle2, FileDown, FileText, Info, RefreshCw, ShieldCheck, Sparkles, X, XCircle } from 'lucide-react';
+import { AlertTriangle, Check, CheckCircle2, FileDown, FileText, Info, Mail, RefreshCw, ShieldCheck, Sparkles, X, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox, Field, Input, Select } from '@/components/ui/form';
 import { Badge } from '@/components/ui/misc';
@@ -61,7 +61,7 @@ export function ReportStudio({
   const [activeOrderBanner, setActiveOrderBanner] = React.useState<{ id: string; name: string; service: string } | null>(null);
 
   const [c, setC] = React.useState({
-    fullName: '', commonName: '', hindiName: '', gender: 'male', kuaBasis: '', dob: '', timeOfBirth: '', placeOfBirth: '', mobile: '',
+    fullName: '', commonName: '', hindiName: '', gender: 'male', kuaBasis: '', dob: '', timeOfBirth: '', placeOfBirth: '', mobile: '', email: '',
     maritalStatus: '', profession: '', city: '', state: '', concerns: [] as string[],
     partnerName: '', partnerGender: 'female', partnerDob: '',
   });
@@ -160,6 +160,7 @@ export function ReportStudio({
       dob,
       gender,
       mobile: d.mobile || '',
+      email: d.email || '',
       timeOfBirth: d.tob || '',
       placeOfBirth: d.pob || '',
       partnerName: d.partnerName || '',

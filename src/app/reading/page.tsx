@@ -23,7 +23,7 @@ const DRAFT_KEY = 'wizardDraft.v1';
 interface Ctx { profileId?: string; reportId?: string; version?: number }
 
 function ReadingInner() {
-  const { t, lang } = useApp();
+  const { t, lang, me } = useApp();
   const params = useSearchParams();
   const router = useRouter();
   const [form, setForm] = React.useState<WizardState>(EMPTY);
@@ -34,6 +34,13 @@ function ReadingInner() {
   const [ctx, setCtx] = React.useState<Ctx>({});
   const [saved, setSaved] = React.useState(false);
   const [savedMsg, setSavedMsg] = React.useState<string | null>(null);
+
+  // Auto-fill logged-in client email if not already specified
+  React.useEffect(() => {
+    if (me?.user?.email && !ctx.reportId) {
+      setForm((prev) => (prev.email ? prev : { ...prev, email: me.user!.email! }));
+    }
+  }, [me?.user?.email, ctx.reportId]);
 
   // Load from ?report=, ?profile= or the local draft
   React.useEffect(() => {

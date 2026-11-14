@@ -66,7 +66,7 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
             </p>
           </div>
           <div className="flex flex-wrap gap-2 print:hidden">
-            {!queued && <PdfButton result={result} narrative={narrative} />}
+            {!queued && <PdfButton result={result} narrative={narrative} reportId={reportId} />}
             {!queued && <Button variant="outline" onClick={() => window.print()} className="no-print"><Printer /> {hi ? 'प्रिंट / PDF सहेजें' : 'Print / Save PDF'}</Button>}
             <Button variant="outline" onClick={onSave}>{saved ? <Check /> : <Save />} {saved ? t.btn.saved : t.btn.save}</Button>
             <Button variant="outline" onClick={() => downloadJson(fileName, narrative ? { ...result, narrative } : result)}><FileJson /> {t.btn.exportJson}</Button>

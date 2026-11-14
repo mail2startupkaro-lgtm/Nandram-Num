@@ -99,10 +99,13 @@ export function Wizard({ value, onChange, onSubmit, onImport, submitting, server
       </Field>
     </div>,
 
-    // 2 Numbers
+    // 2 Numbers & Contact
     <div key="2" className="grid gap-4">
       <Field label={t.f.mobile} htmlFor="mobile" hint={t.f.mobileHint} error={err('mobile')}>
         <Input id="mobile" type="tel" inputMode="numeric" autoComplete="tel-national" placeholder="98765 43210" value={s.mobile} aria-invalid={inv('mobile')} onChange={(e) => set('mobile', e.target.value)} />
+      </Field>
+      <Field label={t.f.email} htmlFor="email" hint={t.f.emailHint} error={err('email')}>
+        <Input id="email" type="email" inputMode="email" autoComplete="email" placeholder="client@example.com" value={s.email} aria-invalid={inv('email')} onChange={(e) => set('email', e.target.value)} />
       </Field>
       <div className="rounded-md border border-gold/30 bg-gold/5 p-4">
         <p className="mb-3 flex gap-2 text-sm"><Lock className="mt-0.5 h-4 w-4 shrink-0 text-gold" />{t.f.aadhaarNotice}</p>

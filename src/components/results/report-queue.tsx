@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import Link from 'next/link';
-import { CheckCircle2, Circle, Clock, Download, Loader2, Moon, Send } from 'lucide-react';
+import { Check, CheckCircle2, Circle, Clock, Download, Loader2, Mail, Moon, Send } from 'lucide-react';
 import { useApp } from '@/components/layout/providers';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { api, ApiError, download } from '@/lib/client/api';
@@ -80,11 +80,27 @@ export function ReportRequestPanel({ reportId, saved, onSave, theme = 'royal-gol
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
   const [noCredit, setNoCredit] = React.useState(false);
+  const [clientEmail, setClientEmail] = React.useState('');
+  const [emailBusy, setEmailBusy] = React.useState(false);
+  const [emailSent, setEmailSent] = React.useState(false);
+
+  // Auto-seed email from user account
+  React.useEffect(() => {
+    if (me?.user?.email && !clientEmail) {
+      setClientEmail(me.user.email);
+    }
+  }, [me?.user?.email, clientEmail]);
 
   const load = React.useCallback(async () => {
     if (!reportId) return;
-    try { const r = await api<{ queue: QueueState }>(`/api/reports/${reportId}`); setQueue(r.queue); } catch { /* keep last */ }
-  }, [reportId]);
+    try {
+      const r = await api<{ queue: QueueState; report?: { result?: { client?: { email?: string } } } }>(`/api/reports/${reportId}`);
+      setQueue(r.queue);
+      if (r.report?.result?.client?.email && !clientEmail) {
+        setClientEmail(r.report.result.client.email);
+      }
+    } catch { /* keep last */ }
+  }, [reportId, clientEmail]);
   React.useEffect(() => { load(); }, [load]);
   React.useEffect(() => {
     if (!queue || queue.state !== 'queued') return;
@@ -94,9 +110,32 @@ export function ReportRequestPanel({ reportId, saved, onSave, theme = 'royal-gol
   async function submit() {
     if (!reportId) return;
     setBusy(true); setErr(null); setNoCredit(false);
-    try { const r = await api<{ queue: QueueState }>(`/api/reports/${reportId}/request`, { method: 'POST' }); setQueue(r.queue); await refreshMe(); }
+    try {
+      const r = await api<{ queue: QueueState }>(`/api/reports/${reportId}/request`, {
+        method: 'POST',
+        json: { email: clientEmail.trim() || undefined },
+      });
+      setQueue(r.queue);
+      await refreshMe();
+    }
     catch (e) { if (e instanceof ApiError && e.status === 402) setNoCredit(true); else setErr(t.error); }
     finally { setBusy(false); }
+  }
+
+  async function sendEmailNow() {
+    if (!reportId) return;
+    setEmailBusy(true); setErr(null);
+    try {
+      await api(`/api/reports/${reportId}/email`, {
+        method: 'POST',
+        json: { email: clientEmail.trim() || undefined, theme },
+      });
+      setEmailSent(true);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : t.error);
+    } finally {
+      setEmailBusy(false);
+    }
   }
 
   let body: React.ReactNode;
@@ -105,12 +144,49 @@ export function ReportRequestPanel({ reportId, saved, onSave, theme = 'royal-gol
   else if (!queue) body = <div className="h-10 animate-pulse rounded bg-muted" />;
   else if (queue.state === 'not_requested') body = noCredit
     ? <div className="space-y-2"><p className="text-sm">{t.noCredit}</p><Link href="/pricing" className={buttonVariants({ variant: 'gold' })}>{t.plans}</Link></div>
-    : <div className="flex flex-wrap items-center gap-3"><Button variant="gold" disabled={busy} onClick={submit}><Send className="h-4 w-4" />{busy ? t.submitting : t.submit}</Button><span className="text-xs text-muted-foreground">{t.uses} {t.credits(me.account?.credits ?? 0)}</span></div>;
+    : (
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="email"
+            placeholder={lang === 'hi' ? 'ईमेल आईडी (रिपोर्ट प्राप्त करने के लिए)' : 'Email ID (to receive report)'}
+            value={clientEmail}
+            onChange={(e) => setClientEmail(e.target.value)}
+            className="h-10 min-w-[240px] flex-1 rounded-md border border-input bg-background/80 px-3 text-sm focus:border-gold focus:outline-none"
+          />
+          <Button variant="gold" disabled={busy} onClick={submit}>
+            <Send className="h-4 w-4" />{busy ? t.submitting : t.submit}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {t.uses} {t.credits(me.account?.credits ?? 0)} · {lang === 'hi' ? 'रिपोर्ट तैयार होने पर ईमेल पर भेजी जाएगी और डाउनलोड के लिए उपलब्ध रहेगी।' : 'Report will be emailed to this ID and also available for download.'}
+        </p>
+      </div>
+    );
   else body = (
     <div className="space-y-3">
       <QueueTracker queue={queue} />
-      {queue.state === 'ready' && <div className="flex flex-wrap gap-2"><Button variant="gold" disabled={busy} onClick={async () => { setBusy(true); try { await download(`/api/reports/${reportId}/pdf?kind=report&theme=${theme}`); } catch { setErr(t.error); } finally { setBusy(false); } }}><Download className="h-4 w-4" />{t.download}</Button>
-        <Button variant="ghost" onClick={() => download(`/api/reports/${reportId}/pdf?kind=output&theme=${theme}`).catch(() => setErr(t.error))}>{t.snapshot}</Button></div>}
+      {queue.state === 'ready' && (
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button variant="gold" disabled={busy} onClick={async () => { setBusy(true); try { await download(`/api/reports/${reportId}/pdf?kind=report&theme=${theme}`); } catch { setErr(t.error); } finally { setBusy(false); } }}>
+              <Download className="h-4 w-4" />{t.download}
+            </Button>
+            <Button variant="ghost" onClick={() => download(`/api/reports/${reportId}/pdf?kind=output&theme=${theme}`).catch(() => setErr(t.error))}>
+              {t.snapshot}
+            </Button>
+            <Button variant="outline" disabled={emailBusy} onClick={sendEmailNow}>
+              <Mail className="h-4 w-4" />{emailSent ? (lang === 'hi' ? 'ईमेल भेजा गया ✓' : 'Emailed ✓') : emailBusy ? (lang === 'hi' ? 'भेजा जा रहा है…' : 'Sending…') : (lang === 'hi' ? 'ईमेल पर भेजें' : 'Send to email')}
+            </Button>
+          </div>
+          {emailSent && (
+            <p className="flex items-center gap-1.5 text-xs text-success">
+              <Check className="h-3.5 w-3.5" />
+              {lang === 'hi' ? `रिपोर्ट ${clientEmail || me?.user?.email || 'ईमेल'} पर भेज दी गई है।` : `Report successfully sent to ${clientEmail || me?.user?.email || 'your email'}.`}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 

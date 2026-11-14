@@ -37,6 +37,7 @@ export const ClientInputBase = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   mobile: z.string().optional(),
+  email: z.string().trim().email().optional().or(z.literal('').transform(() => undefined)),
   /** Never persisted. Only accepted together with consent. */
   aadhaar: z.string().optional(),
   aadhaarConsent: z.boolean().default(false),
