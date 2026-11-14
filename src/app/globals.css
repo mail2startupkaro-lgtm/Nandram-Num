@@ -166,6 +166,20 @@ html:not([data-lang='hi']) .lang-hi { display: none !important; }
     page-break-inside: avoid !important;
   }
 
+  /* Each chapter or module starts on a fresh page */
+  section.chapter,
+  .print-fresh-page,
+  section[id="report"],
+  section[id="dob"],
+  section[id="name"],
+  section[id="mobile"],
+  section[id="aadhaar"],
+  section[id="couple"],
+  section[id="remedies"] {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
   h1, h2, h3 {
     break-after: avoid !important;
     page-break-after: avoid !important;

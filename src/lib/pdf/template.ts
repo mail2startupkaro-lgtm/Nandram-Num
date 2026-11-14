@@ -116,8 +116,8 @@ export function baseCss(t: PdfTheme, lang: Lang): string {
   h1,h2,h3,.serif{font-family:'Playfair Display','Noto Sans Devanagari',Georgia,serif;color:${t.primary};font-weight:700;margin:0}
   p{margin:0 0 3.2mm;text-align:justify;hyphens:auto}
   .mk{position:absolute;font-size:1px;line-height:1px;color:transparent;white-space:nowrap}
-  .chapter{position:relative;margin-top:12mm}
-  .chapter.newpage{break-before:page;margin-top:0}
+  .chapter{position:relative;break-before:page;page-break-before:always;margin-top:0}
+  .chapter.newpage{break-before:page;page-break-before:always;margin-top:0}
   .ch-intro{break-inside:avoid}
   .ch-head{display:flex;align-items:center;gap:5mm;margin:0 0 3mm;break-after:avoid}
   .ch-icon{width:17mm;height:17mm;border-radius:50%;background:${t.soft};border:1.2px solid ${t.accent};display:flex;align-items:center;justify-content:center;flex:none}
@@ -186,7 +186,7 @@ const chip = (n: number | string, kind: 'good' | 'bad' | 'neu' | 'warn') => `<sp
 
 interface ChapterParts { id: string; title: string; icon: string; /** Kept together with the chapter heading (never split across pages). */ intro: string; inner: string }
 
-function chapterHtml(index: number, c: ChapterParts, t: PdfTheme, lab: Labels, newPage = false) {
+function chapterHtml(index: number, c: ChapterParts, t: PdfTheme, lab: Labels, newPage = true) {
   return `<section class="chapter${newPage ? ' newpage' : ''}" id="ch-${c.id}"><div class="ch-intro"><div class="ch-head"><div class="ch-icon">${c.icon}</div><div><div class="ch-num">${esc(lab.chapter)} ${String(index).padStart(2, '0')}</div><h2 class="ch-title">${esc(c.title)}<span class="mk">@@C:${c.id}@@</span></h2></div></div><div class="orn">${divider(t, 200)}</div>${c.intro}</div>${c.inner}</section>`;
 }
 
@@ -319,7 +319,7 @@ function buildChapters(inp: TemplateInput, lab: Labels): ChapterParts[] {
     ch.push({
       id: 'numbers', title: lab.ch.numbers, icon: remedyIcon('number', t, 40),
       intro: m ? mobileHead : aadhaarHead,
-      inner: m ? `${sec(S.mobile, true)}${a ? `<div style="break-inside:avoid">${aadhaarHead}${sec(S.aadhaar)}</div>` : ''}` : sec(S.aadhaar, true),
+      inner: m ? `${sec(S.mobile, true)}${a ? `<div style="break-before:page;page-break-before:always;margin-top:0">${aadhaarHead}${sec(S.aadhaar)}</div>` : ''}` : sec(S.aadhaar, true),
     });
   }
 
@@ -446,7 +446,7 @@ export function buildBodyHtml(inp: TemplateInput, pages: Record<string, number> 
   const chapters = buildChapters(inp, lab).filter((c) => !inp.hiddenChapters?.includes(c.id));
   const S = Object.fromEntries(narrative.sections.map((s) => [s.id, s])) as Record<string, NarrativeSection | undefined>;
 
-  const closing = `<section class="chapter" id="ch-closing"><div class="ch-intro"><div class="ch-head"><div class="ch-icon">${remedyIcon('signature', t, 40)}</div><div><div class="ch-num">${esc(lab.chapter)} ${String(chapters.length + 1).padStart(2, '0')}</div><h2 class="ch-title">${esc(lab.ch.closing)}<span class="mk">@@C:closing@@</span></h2></div></div><div class="orn">${divider(t, 200)}</div>
+  const closing = `<section class="chapter newpage" id="ch-closing"><div class="ch-intro"><div class="ch-head"><div class="ch-icon">${remedyIcon('signature', t, 40)}</div><div><div class="ch-num">${esc(lab.chapter)} ${String(chapters.length + 1).padStart(2, '0')}</div><h2 class="ch-title">${esc(lab.ch.closing)}<span class="mk">@@C:closing@@</span></h2></div></div><div class="orn">${divider(t, 200)}</div>
     ${sec(S.closing, true)}</div>
     ${inp.expertNote?.trim() ? `<div class="panel" style="margin-top:6mm;white-space:pre-line">${esc(inp.expertNote.trim())}</div>` : ''}
     <div style="margin-top:8mm" class="row">
@@ -473,7 +473,7 @@ export function buildBodyHtml(inp: TemplateInput, pages: Record<string, number> 
     <div class="bgm">${mandala(150 * 3.78, t.accent, 1, 24)}</div>
     ${inp.watermark ? `<div class="watermark">${esc(inp.watermark)}</div>` : ''}
     ${toc}
-    ${chapters.map((c, i) => chapterHtml(i + 1, c, t, lab, i === 0)).join('')}
+    ${chapters.map((c, i) => chapterHtml(i + 1, c, t, lab, true)).join('')}
     ${closing}
   </body></html>`;
   return { html, chapterIds: ids };
