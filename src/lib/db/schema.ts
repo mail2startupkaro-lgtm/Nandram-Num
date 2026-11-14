@@ -289,6 +289,16 @@ export const marketingLeads = pgTable('marketing_leads', {
   ipAddress: varchar('ip_address', { length: 64 }),
   userAgent: text('user_agent'),
   metadata: jsonb('metadata').default({}),
+  // CRM (migration 0009)
+  crmStage: varchar('crm_stage', { length: 20 }).notNull().default('new'), // new | contacted | interested | consultation | proposal | won | lost
+  ownerId: text('owner_id').references(() => users.id, { onDelete: 'set null' }),
+  dealValuePaise: integer('deal_value_paise'),
+  priority: varchar('priority', { length: 10 }).notNull().default('normal'), // low | normal | high
+  nextFollowUpAt: timestamp('next_follow_up_at', { withTimezone: true }),
+  lastContactedAt: timestamp('last_contacted_at', { withTimezone: true }),
+  lostReason: text('lost_reason'),
+  notes: text('notes'),
+  stageChangedAt: timestamp('stage_changed_at', { withTimezone: true }).notNull().defaultNow(),
   createdAt: created(),
   updatedAt: updated(),
 }, (t) => ({
@@ -364,6 +374,29 @@ export const marketingEvents = pgTable('marketing_events', {
 }, (t) => ({
   leadEvent: index('marketing_events_lead_name_idx').on(t.leadId, t.eventName, t.occurredAt),
 }));
+
+/** CRM timeline: notes, calls, WhatsApp messages, stage changes and system events for a contact. */
+export const crmActivities = pgTable('crm_activities', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  leadId: text('lead_id').notNull().references(() => marketingLeads.id, { onDelete: 'cascade' }),
+  type: varchar('type', { length: 20 }).notNull(), // note | call | whatsapp | email | meeting | stage | task | system
+  body: text('body'),
+  meta: jsonb('meta').notNull().default({}),
+  createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: created(),
+}, (t) => ({ leadIdx: index('crm_activities_lead_idx').on(t.leadId, t.createdAt) }));
+
+/** CRM follow-up tasks. */
+export const crmTasks = pgTable('crm_tasks', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()`),
+  leadId: text('lead_id').notNull().references(() => marketingLeads.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 200 }).notNull(),
+  dueAt: timestamp('due_at', { withTimezone: true }).notNull(),
+  priority: varchar('priority', { length: 10 }).notNull().default('normal'),
+  doneAt: timestamp('done_at', { withTimezone: true }),
+  createdBy: text('created_by').references(() => users.id, { onDelete: 'set null' }),
+  createdAt: created(),
+}, (t) => ({ leadIdx: index('crm_tasks_lead_idx').on(t.leadId) }));
 
 export type MarketingLead = typeof marketingLeads.$inferSelect;
 export type MarketingConsent = typeof marketingConsents.$inferSelect;

@@ -1,13 +1,12 @@
 'use client';
-/** Admin → Offer & leads: the limited-time offer end date and the leads from the services funnel. */
+/** Admin → Limited-time offer: the offer end date (funnel leads are in Admin → CRM). */
 import * as React from 'react';
-import { Download, MessageCircle, RefreshCw, Save, Timer } from 'lucide-react';
+import { Save, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/form';
 import { api, ApiError } from '@/lib/client/api';
 import type { OfferSettings } from '@/lib/admin/settings';
 
-interface Lead { id: string; createdAt: string; name: string; phone: string | null; dob: string | null; moolank: number | null; bhagyank: number | null; service: string | null; magnet: string | null; language: string | null; utmSource: string | null; utmMedium: string | null; utmCampaign: string | null }
 
 /** ISO (UTC) ⇄ value for <input type="datetime-local"> shown in IST. */
 const IST_MS = 330 * 60_000;
@@ -17,13 +16,11 @@ const fmt = (iso: string) => new Date(iso).toLocaleString('en-IN', { timeZone: '
 
 export function FunnelAdmin() {
   const [o, setO] = React.useState<OfferSettings | null>(null);
-  const [leads, setLeads] = React.useState<Lead[] | null>(null);
   const [msg, setMsg] = React.useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = React.useState(false);
 
   const load = React.useCallback(async () => {
     try { setO((await api<{ offer: OfferSettings }>('/api/admin/settings')).offer); } catch { setMsg({ ok: false, text: 'Could not load the offer settings.' }); }
-    try { setLeads((await api<{ leads: Lead[] }>('/api/admin/leads')).leads); } catch { setLeads([]); }
   }, []);
   React.useEffect(() => { load(); }, [load]);
 
@@ -58,28 +55,7 @@ export function FunnelAdmin() {
         )}
       </section>
 
-      <section className="glass rounded-xl p-5">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-serif text-xl font-semibold">Leads from the services funnel {leads && <span className="text-sm text-muted-foreground">({leads.length}{leads.length === 300 ? '+' : ''})</span>}</h2>
-          <div className="flex gap-2"><Button size="sm" variant="outline" onClick={load}><RefreshCw className="h-4 w-4" />Refresh</Button><a href="/api/admin/leads?format=csv" className="inline-flex h-9 items-center gap-1.5 rounded-md border border-gold/50 px-3 text-sm hover:bg-gold/10"><Download className="h-4 w-4" />CSV</a></div>
-        </div>
-        <p className="mb-3 text-xs text-muted-foreground">Visitors who asked for the free mini-reading or unlocked a sample report, with WhatsApp consent. UTM columns show which ad or post brought them.</p>
-        {!leads ? <p className="text-sm">Loading…</p> : leads.length === 0 ? <p className="text-sm text-muted-foreground">No leads yet.</p> : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px] text-sm">
-              <thead><tr className="border-b text-left text-xs uppercase text-muted-foreground"><th className="py-2 pr-2">When</th><th className="pr-2">Name</th><th className="pr-2">WhatsApp</th><th className="pr-2">DOB</th><th className="pr-2">M / B</th><th className="pr-2">Interested in</th><th className="pr-2">Source</th></tr></thead>
-              <tbody>{leads.map((l) => { const wa = (l.phone ?? '').replace(/\D/g, ''); return (
-                <tr key={l.id} className="border-b border-border/40">
-                  <td className="py-2 pr-2 whitespace-nowrap">{fmt(l.createdAt)}</td><td className="pr-2">{l.name}</td>
-                  <td className="pr-2">{wa ? <a href={`https://wa.me/${wa}?text=${encodeURIComponent(`Namaste ${l.name}, this is Acharya Nandram's team from myNumerologist.com.`)}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-success hover:underline"><MessageCircle className="h-3.5 w-3.5" />{l.phone}</a> : '–'}</td>
-                  <td className="pr-2 whitespace-nowrap">{l.dob ?? '–'}</td><td className="pr-2">{l.moolank ?? '–'} / {l.bhagyank ?? '–'}</td>
-                  <td className="pr-2 text-xs">{l.service?.replace(/^SVC_/, '').replace(/_/g, ' ').toLowerCase() ?? '–'}<span className="block text-muted-foreground">{l.magnet}</span></td>
-                  <td className="pr-2 text-xs">{[l.utmSource, l.utmMedium, l.utmCampaign].filter(Boolean).join(' / ') || 'direct'}</td>
-                </tr>); })}</tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <p className="text-sm text-muted-foreground">Leads from the services funnel and the free e-book popup now live in <strong>Admin → CRM</strong> (pipeline, follow-ups, WhatsApp templates, tags, CSV export).</p>
     </div>
   );
 }

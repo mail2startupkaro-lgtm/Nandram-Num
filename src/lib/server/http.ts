@@ -18,6 +18,7 @@ export function errorResponse(e: unknown): Response {
   if (e instanceof AuthError) return json({ error: e.code }, e.status);
   if (e instanceof PaymentRequiredError) return json({ error: 'PAYMENT_REQUIRED', reason: e.message }, 402);
   if (e instanceof NotFoundError) return json({ error: e.message }, 404);
+  if (e instanceof Error && (e as { crm?: boolean }).crm) { const c = e as Error & { status: number; extra: Record<string, unknown> }; return json({ error: c.message, ...c.extra }, c.status); }
   if (e instanceof ZodError) return json({ error: 'VALIDATION', issues: e.issues.map((i) => ({ path: i.path.join('.'), message: i.message })) }, 422);
   if (e instanceof NumerologyInputError) return json({ error: 'VALIDATION', issues: [{ path: e.code, message: e.message }] }, 422);
   if (e instanceof Error && e.message === 'REFUSING_TO_STORE_12_DIGIT_NUMBER') return json({ error: 'PII_REJECTED' }, 422);

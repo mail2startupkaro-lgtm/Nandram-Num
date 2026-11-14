@@ -64,6 +64,13 @@
       "when": 1794552000000,
       "tag": "0008_funnel_leads",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1794638400000,
+      "tag": "0009_crm",
+      "breakpoints": true
     }
   ]
 }

@@ -3,7 +3,7 @@ import { and, eq, ne } from 'drizzle-orm';
 import { AuthError } from '@/lib/auth/otp';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
 import { getDb, type Db } from '@/lib/db/client';
-import { brandings, clientProfiles, payments, serviceOrders, sessions, users, type User } from '@/lib/db/schema';
+import { brandings, clientProfiles, payments, serviceOrders, sessions, users, type User, marketingLeads } from '@/lib/db/schema';
 import { encryptJson } from '@/lib/security/crypto';
 import { sha256Hex } from '@/lib/security/crypto';
 
@@ -33,6 +33,7 @@ export async function eraseAccount(user: User, password: string, db: Db = getDb(
   if (user.role === 'super_admin') throw new AuthError('ADMIN_CANNOT_SELF_DELETE', 400);
   if (user.passwordHash && !(await verifyPassword(password, user.passwordHash))) throw new AuthError('INVALID_CREDENTIALS', 401);
   return db.transaction(async (tx) => {
+    await tx.delete(marketingLeads).where(eq(marketingLeads.userId, user.id)); // CRM contact, timeline, tasks, consents
     const [paid] = await tx.select({ id: payments.id }).from(payments).where(and(eq(payments.userId, user.id), eq(payments.status, 'paid'))).limit(1);
     if (!paid) { await tx.delete(users).where(eq(users.id, user.id)); return 'deleted' as const; }
     await tx.delete(clientProfiles).where(eq(clientProfiles.ownerId, user.id)); // reports and share links cascade
