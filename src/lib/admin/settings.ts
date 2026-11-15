@@ -2,6 +2,7 @@
 import { eq } from 'drizzle-orm';
 import { getDb, type Db } from '@/lib/db/client';
 import { appSettings } from '@/lib/db/schema';
+import { DEFAULT_TESTIMONIALS, type TestimonialSettings } from '@/lib/testimonials';
 
 export interface SellerSettings { legalName: string; gstin: string; address: string; state: string; stateCode: string; sac: string; email: string; phone: string; invoicePrefix: string }
 export interface ThemeSettings { defaultTheme: string; enabled: string[]; overrides: Record<string, { primary?: string; accent?: string; border?: string }> }
@@ -38,6 +39,7 @@ export const SETTING_DEFAULTS = {
     trackServices: true,
   } as AnalyticsSettings,
   offer: { enabled: false, endsAt: '', labelEn: 'Limited-time offer', labelHi: 'सीमित समय का ऑफ़र' } as OfferSettings,
+  testimonials: DEFAULT_TESTIMONIALS as TestimonialSettings,
 };
 export type SettingKey = keyof typeof SETTING_DEFAULTS;
 

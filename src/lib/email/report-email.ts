@@ -25,6 +25,35 @@ export interface ReportEmailResult {
   error?: string;
 }
 
+/** Escapes special HTML characters to prevent HTML/XSS injection in emails. */
+function escHtml(s: string): string {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** Strips CRLF, control, and non-printable characters to prevent Email Header Injection. */
+function sanitizeOneLine(s: string): string {
+  return String(s ?? '').replace(/[\r\n\x00-\x1f\x7f]+/g, ' ').trim();
+}
+
+/** Validates that a URL is strictly http(s) to prevent javascript: or data: URL injection. */
+function safeUrl(u?: string): string | undefined {
+  if (!u) return undefined;
+  try {
+    const parsed = new URL(u);
+    if (parsed.protocol === 'https:' || parsed.protocol === 'http:') {
+      return parsed.toString();
+    }
+  } catch {
+    // invalid url
+  }
+  return undefined;
+}
+
 function buildHtmlBody(opts: {
   clientName: string;
   brandName: string;
@@ -33,7 +62,12 @@ function buildHtmlBody(opts: {
   reportUrl?: string;
   hi: boolean;
 }): string {
-  const { clientName, brandName, expertName, fileName, reportUrl, hi } = opts;
+  const clientName = escHtml(sanitizeOneLine(opts.clientName));
+  const brandName = escHtml(sanitizeOneLine(opts.brandName));
+  const expertName = escHtml(sanitizeOneLine(opts.expertName));
+  const fileName = escHtml(sanitizeOneLine(opts.fileName));
+  const reportUrl = safeUrl(opts.reportUrl);
+  const hi = opts.hi;
 
   const greeting = hi ? `नमस्ते ${clientName},` : `Dear ${clientName},`;
   const headline = hi ? 'आपकी संपूर्ण अंक ज्योतिष रिपोर्ट तैयार है' : 'Your Complete Numerology Report is Ready';
@@ -133,35 +167,38 @@ ${brandName}`;
 }
 
 export async function sendReportEmail(opts: ReportEmailOptions): Promise<ReportEmailResult> {
-  const to = opts.to.trim().toLowerCase();
+  const to = sanitizeOneLine(opts.to).toLowerCase();
   if (!to || !to.includes('@')) {
     return { ok: false, sentTo: to, error: 'Invalid recipient email' };
   }
 
-  const brandName = opts.brandName || process.env.BRAND_NAME || 'mynumerologist.com';
-  const expertName = opts.expertName || process.env.EXPERT_NAME || 'Acharya Nandram';
-  const fileName = opts.fileName || `${opts.clientName.replace(/[^A-Za-z0-9]+/g, '-').toLowerCase()}-numerology-report.pdf`;
+  const clientName = sanitizeOneLine(opts.clientName || 'Client');
+  const brandName = sanitizeOneLine(opts.brandName || process.env.BRAND_NAME || 'mynumerologist.com');
+  const expertName = sanitizeOneLine(opts.expertName || process.env.EXPERT_NAME || 'Acharya Nandram');
+  const rawFileName = opts.fileName || `${clientName.replace(/[^A-Za-z0-9]+/g, '-').toLowerCase()}-numerology-report.pdf`;
+  const fileName = sanitizeOneLine(rawFileName.replace(/[^A-Za-z0-9._-]+/g, '_'));
+  const safeReportUrl = safeUrl(opts.reportUrl);
   const hi = opts.language === 'hi';
 
   const subject = hi
-    ? `आपकी अंक ज्योतिष रिपोर्ट - ${opts.clientName} | ${brandName}`
-    : `Your Numerology Report - ${opts.clientName} | ${brandName}`;
+    ? `आपकी अंक ज्योतिष रिपोर्ट - ${clientName} | ${brandName}`
+    : `Your Numerology Report - ${clientName} | ${brandName}`;
 
   const html = buildHtmlBody({
-    clientName: opts.clientName,
+    clientName,
     brandName,
     expertName,
     fileName,
-    reportUrl: opts.reportUrl,
+    reportUrl: safeReportUrl,
     hi,
   });
 
   const text = buildTextBody({
-    clientName: opts.clientName,
+    clientName,
     brandName,
     expertName,
     fileName,
-    reportUrl: opts.reportUrl,
+    reportUrl: safeReportUrl,
     hi,
   });
 

@@ -48,10 +48,12 @@ export async function POST(req: Request) {
     if (!rl.ok) return tooMany(rl.retryAfter);
 
     let result = parsed.data.result as unknown as NumerologyResult;
-    const targetEmail = (parsed.data.email || result.client.email || user?.email || '').trim().toLowerCase();
-    if (!targetEmail || !targetEmail.includes('@')) {
+    const rawTarget = (parsed.data.email || result.client.email || user?.email || '').trim().toLowerCase();
+    const emailParsed = z.string().email().max(320).safeParse(rawTarget);
+    if (!emailParsed.success) {
       return json({ error: 'EMAIL_REQUIRED', message: 'Please provide a valid email ID to receive your report.' }, 400);
     }
+    const targetEmail = emailParsed.data;
 
     const narrative = parsed.data.narrative as Narrative | undefined;
     if (narrative?.status === 'awaiting_review') return json({ error: 'REVIEW_PENDING' }, 409);

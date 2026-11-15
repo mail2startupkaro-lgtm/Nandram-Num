@@ -11,13 +11,14 @@ export const consoleSender: Sender = async (d) => {
 
 export function emailSender(fetchImpl: typeof fetch = fetch): Sender {
   return async (d) => {
+    const brand = String(d.brand ?? 'Numerology').replace(/[\r\n\x00-\x1f\x7f]+/g, ' ').trim();
     const res = await fetchImpl('https://api.resend.com/emails', {
       method: 'POST',
       headers: { authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'content-type': 'application/json' },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM || `${d.brand} <no-reply@example.com>`,
+        from: process.env.EMAIL_FROM || `${brand} <no-reply@example.com>`,
         to: [d.to],
-        subject: `${d.code} is your ${d.brand} login code`,
+        subject: `${d.code} is your ${brand} login code`,
         text: `Your login code is ${d.code}. It is valid for 10 minutes. If you did not request it, you can ignore this email.`,
       }),
     });

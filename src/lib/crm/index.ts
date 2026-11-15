@@ -478,7 +478,7 @@ export async function importContacts(list: unknown[], by: string | null, db: Db 
 
 /** Excel-safe CSV (formula-looking cells are prefixed). */
 export function contactsCsv(list: ContactRow[]) {
-  const cell = (v: unknown) => { let s = v == null ? '' : Array.isArray(v) ? v.map((t) => (t as { name: string }).name).join('; ') : String(v); if (/^[=+\-@]/.test(s) && !/^\+\d/.test(s)) s = `'${s}`; return `"${s.replace(/"/g, '""')}"`; };
+  const cell = (v: unknown) => { let s = v == null ? '' : Array.isArray(v) ? v.map((t) => (t as { name: string }).name).join('; ') : String(v); if (/^[=+\-@\t\r]/.test(s) && !/^\+\d/.test(s)) s = `'${s}`; return `"${s.replace(/"/g, '""')}"`; };
   const cols: [keyof ContactRow, string][] = [['name', 'Name'], ['phone', 'Phone'], ['email', 'Email'], ['dob', 'DOB'], ['moolank', 'Moolank'], ['bhagyank', 'Bhagyank'], ['city', 'City'], ['state', 'State'], ['language', 'Language'], ['stage', 'Stage'], ['priority', 'Priority'], ['score', 'Score'], ['source', 'Source'], ['service', 'Interested in'], ['tags', 'Tags'], ['ownerName', 'Owner'], ['dealValuePaise', 'Deal value (paise)'], ['paidPaise', 'Paid (paise)'], ['nextFollowUpAt', 'Next follow-up'], ['lastContactedAt', 'Last contacted'], ['waConsent', 'WhatsApp consent'], ['utmSource', 'UTM source'], ['utmMedium', 'UTM medium'], ['utmCampaign', 'UTM campaign'], ['createdAt', 'Added'], ['notes', 'Notes']];
   return [cols.map((c) => c[1]).join(','), ...list.map((r) => cols.map(([k]) => cell(r[k])).join(','))].join('\r\n');
 }
