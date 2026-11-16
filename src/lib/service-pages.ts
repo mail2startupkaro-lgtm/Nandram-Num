@@ -1,5 +1,5 @@
 /**
- * The eight service landing pages in the header "Services" menu (English + Hindi).
+ * The service landing pages in the header "Services" menu (English + Hindi).
  * Each page sells one service from the `services` table (fee, what's included and delivery come from Admin → Services),
  * and adds SEO content, a free tool where it helps, and FAQs.
  */
@@ -142,6 +142,29 @@ export const SERVICE_PAGES: ServicePage[] = [
       { en: ['Whose date of birth is used?', 'The main owner\'s. For partnerships, mention every partner\'s date of birth in the notes.'], hi: ['किसकी जन्म तिथि उपयोग होती है?', 'मुख्य मालिक की। साझेदारी में टिप्पणी में हर साझेदार की जन्म तिथि लिखें।'] },
       { en: ['Can you check an existing business name?', 'Yes. If the number does not suit you, we suggest small spelling changes or a tagline rather than a full rename.'], hi: ['क्या आप मौजूदा व्यवसाय का नाम जाँच सकते हैं?', 'हाँ। यदि अंक अनुकूल न हो तो पूरा नाम बदलने के बजाय वर्तनी में छोटे बदलाव या टैगलाइन सुझाते हैं।'] },
       { en: ['Do you check domain and trademark availability?', 'No – please check those yourself or with your lawyer before finalising.'], hi: ['क्या आप डोमेन और ट्रेडमार्क की उपलब्धता जाँचते हैं?', 'नहीं – अंतिम निर्णय से पहले इन्हें स्वयं या अपने वकील से जाँचें।'] },
+    ],
+  },
+  {
+    slug: 'business-compatibility-numerology', serviceCode: 'SVC_BUSINESS_COMPAT',
+    menu: { en: 'Business Compatibility', hi: 'व्यवसाय अनुकूलता' }, menuSub: { en: 'Which business suits your DOB – 1000+ categories', hi: 'जन्म तिथि से कौन-सा व्यवसाय शुभ – 1000+ श्रेणियाँ' },
+    title: 'Business Compatibility by Date of Birth – 1000+ Businesses',
+    description: 'Which business suits you as per numerology? Your date of birth checked against 1000+ business categories, with ranking, timing, name and remedies. Report available.',
+    h1: { en: 'Business Compatibility as per Date of Birth', hi: 'जन्म तिथि के अनुसार व्यवसाय अनुकूलता' },
+    intro: {
+      en: ['Two people can open the same shop in the same market and get very different results. In numerology, a business does well for you when its ruling numbers are friendly with your Moolank and Bhagyank and are present in your Lo Shu grid.', 'We score your date of birth and name against more than 1000 business categories – from a kirana store, café or boutique to a pharmacy, CA practice, software company, transport fleet or petrol pump – and Acharya Nandram prepares a report with your best matches, a verdict on the businesses you are already considering, the right years to start and practical remedies.'],
+      hi: ['एक ही बाज़ार में एक ही दुकान खोलकर दो लोगों को बहुत अलग परिणाम मिल सकते हैं। अंक ज्योतिष में कोई व्यवसाय आपके लिए तब अच्छा चलता है जब उसके स्वामी अंक आपके मूलांक और भाग्यांक के मित्र हों और आपके लो शू ग्रिड में उपस्थित हों।', 'हम आपकी जन्म तिथि और नाम का 1000 से अधिक व्यवसाय श्रेणियों से मिलान करते हैं – किराना, कैफ़े या बुटीक से लेकर फ़ार्मेसी, CA प्रैक्टिस, सॉफ़्टवेयर कंपनी, ट्रांसपोर्ट या पेट्रोल पंप तक – और आचार्य नंदराम आपके सर्वोत्तम विकल्पों, आपके विचाराधीन व्यवसायों पर निर्णय, शुरुआत के सही वर्षों और व्यावहारिक उपायों के साथ रिपोर्ट तैयार करते हैं।'],
+    },
+    forWho: {
+      en: ['You want to start a business but cannot decide which one', 'You are choosing between two or three business ideas', 'Your current business is not growing despite hard work', 'You are planning a second business, franchise or expansion', 'You are leaving a job and want a field that suits your numbers'],
+      hi: ['आप व्यवसाय शुरू करना चाहते हैं पर तय नहीं कर पा रहे कि कौन-सा', 'आप दो-तीन व्यवसाय विचारों में से चुन रहे हैं', 'मेहनत के बावजूद आपका वर्तमान व्यवसाय नहीं बढ़ रहा', 'आप दूसरा व्यवसाय, फ़्रैंचाइज़ी या विस्तार की योजना बना रहे हैं', 'आप नौकरी छोड़कर ऐसा क्षेत्र चाहते हैं जो आपके अंकों के अनुकूल हो'],
+    },
+    related: [{ href: '/business-name-numerology', label: { en: 'Business name numerology', hi: 'व्यवसाय नाम अंक ज्योतिष' } }, { href: '/personal-year-consultancy', label: { en: 'Personal year – when to launch', hi: 'व्यक्तिगत वर्ष – कब शुरू करें' } }, { href: '/mobile-number-numerology', label: { en: 'Business mobile number', hi: 'व्यवसायिक मोबाइल नंबर' } }],
+    faq: [
+      { en: ['How do you find which business suits my date of birth?', 'Every business category is linked to its ruling planets and numbers (for example 5 Mercury for trade and communication, 6 Venus for beauty, food and luxury, 8 Saturn for property, oil and machinery). Each one is scored against your Bhagyank, Moolank, name number and the numbers present or missing in your Lo Shu grid, then adjusted for the capital and risk you are comfortable with.'], hi: ['आप कैसे पता करते हैं कि कौन-सा व्यवसाय मेरी जन्म तिथि के अनुकूल है?', 'हर व्यवसाय श्रेणी अपने स्वामी ग्रहों और अंकों से जुड़ी है (जैसे व्यापार और संचार के लिए 5 बुध, सौंदर्य, भोजन और विलासिता के लिए 6 शुक्र, संपत्ति, तेल और मशीनरी के लिए 8 शनि)। हर श्रेणी को आपके भाग्यांक, मूलांक, नामांक और लो शू ग्रिड में उपस्थित या अनुपस्थित अंकों से अंक दिए जाते हैं, फिर आपकी पूँजी और जोखिम क्षमता के अनुसार समायोजित किया जाता है।'] },
+      { en: ['How many business categories are covered?', 'More than 1000 – retail and trading, food and hospitality, manufacturing, property and construction, IT and media, finance, education, health, agriculture, transport, security and more. You can search the full list on this page.'], hi: ['कितनी व्यवसाय श्रेणियाँ शामिल हैं?', '1000 से अधिक – खुदरा और व्यापार, भोजन और आतिथ्य, विनिर्माण, संपत्ति और निर्माण, IT और मीडिया, वित्त, शिक्षा, स्वास्थ्य, कृषि, परिवहन, सुरक्षा आदि। पूरी सूची आप इसी पृष्ठ पर खोज सकते हैं।'] },
+      { en: ['My business is not in the list. Can you still check it?', 'Yes. Write it in the booking form; Acharya Nandram maps it to its ruling numbers and includes it in your report.'], hi: ['मेरा व्यवसाय सूची में नहीं है। क्या फिर भी जाँच होगी?', 'हाँ। बुकिंग फ़ॉर्म में लिखें; आचार्य नंदराम उसे उसके स्वामी अंकों से जोड़कर आपकी रिपोर्ट में शामिल करेंगे।'] },
+      { en: ['Is this financial or investment advice?', 'No. Numerology shows which fields come naturally to you and when the timing is supportive. Please check market demand, licences and finances with the right professionals before investing.'], hi: ['क्या यह वित्तीय या निवेश सलाह है?', 'नहीं। अंक ज्योतिष बताता है कि कौन-से क्षेत्र आपके स्वभाव के अनुकूल हैं और कब समय सहायक है। निवेश से पहले बाज़ार की माँग, लाइसेंस और वित्त की जाँच उपयुक्त विशेषज्ञों से करें।'] },
+      { en: ['Can partners get a joint business report?', 'Yes. Mention each partner\'s name and date of birth in the notes; Acharya Nandram checks each partner\'s numbers and notes which of your shortlisted businesses suit the partnership.'], hi: ['क्या साझेदार संयुक्त व्यवसाय रिपोर्ट ले सकते हैं?', 'हाँ। टिप्पणी में हर साझेदार का नाम और जन्म तिथि लिखें; आचार्य नंदराम हर साझेदार के अंक जाँचकर बताएँगे कि आपके चुने हुए व्यवसायों में से कौन-से साझेदारी के अनुकूल हैं।'] },
     ],
   },
   {

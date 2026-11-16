@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2, Clock, FileText, LockKeyhole, Send, Users } from 'lucide-react';
 import { AcharyaProfile } from '@/components/blog/blog-parts';
@@ -39,7 +40,7 @@ const STEPS = [
   { icon: Send, en: 'Delivered on email & WhatsApp', hi: 'ईमेल और WhatsApp पर डिलीवरी' },
 ];
 
-export async function ServiceLanding({ slug }: { slug: string }) {
+export async function ServiceLanding({ slug, children }: { slug: string; children?: ReactNode }) {
   const page = servicePageBySlug(slug)!;
   const [svc, liveOffer] = await Promise.all([loadService(page.serviceCode), getLiveOffer()]);
   const offerOn = liveOffer && svc?.pricePaise ? liveOffer : null;
@@ -95,6 +96,8 @@ export async function ServiceLanding({ slug }: { slug: string }) {
           <Calculator kind={page.calculator.kind} />
         </section>
       )}
+
+      {children}
 
       {sample && (
         <section id="sample" aria-labelledby="smp-h" className="scroll-mt-20 space-y-4">

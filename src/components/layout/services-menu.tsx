@@ -1,16 +1,16 @@
 'use client';
 import * as React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Baby, Briefcase, CalendarDays, ChevronDown, FileText, Grid3x3, Heart, Smartphone, Type } from 'lucide-react';
+import { ArrowRight, Baby, Briefcase, Building2, CalendarDays, ChevronDown, FileText, Grid3x3, Heart, Smartphone, Type } from 'lucide-react';
 import { SERVICE_PAGES } from '@/lib/service-pages';
 import { useApp } from './providers';
 
 const ICONS: Record<string, typeof FileText> = {
   'personal-numerology-report': FileText, 'name-numerology': Type, 'lo-shu-grid': Grid3x3, 'mobile-number-numerology': Smartphone,
-  'baby-name-numerology': Baby, 'couple-compatibility-report': Heart, 'business-name-numerology': Briefcase, 'personal-year-consultancy': CalendarDays,
+  'baby-name-numerology': Baby, 'couple-compatibility-report': Heart, 'business-name-numerology': Briefcase, 'personal-year-consultancy': CalendarDays, 'business-compatibility-numerology': Building2,
 };
 
-/** Header "Services" dropdown: the eight service pages + all services & fees. */
+/** Header "Services" dropdown: the service pages + all services & fees. */
 export function ServicesMenu() {
   const { t, lang } = useApp();
   const hi = lang === 'hi';

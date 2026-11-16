@@ -250,7 +250,7 @@ describe.skipIf(!URL)('database (Postgres)', () => {
     const svcLib = await import('@/lib/billing/services');
     const { createCheckout, fulfilPayment, CheckoutError } = await import('@/lib/billing/checkout');
     const list = await svcLib.listServices({}, db);
-    expect(list.map((x) => x.code)).toEqual(['SVC_PERSONAL_REPORT', 'SVC_NAME_CORRECTION', 'SVC_LOSHU', 'SVC_MOBILE_NUMBER', 'SVC_BABY_NAME', 'SVC_COUPLE', 'SVC_BUSINESS_NAME', 'SVC_PERSONAL_YEAR']);
+    expect(list.map((x) => x.code)).toEqual(['SVC_PERSONAL_REPORT', 'SVC_NAME_CORRECTION', 'SVC_LOSHU', 'SVC_MOBILE_NUMBER', 'SVC_BABY_NAME', 'SVC_COUPLE', 'SVC_BUSINESS_NAME', 'SVC_PERSONAL_YEAR', 'SVC_BUSINESS_COMPAT']);
     expect(list.every((x) => !svcLib.isPayable(x))).toBe(true); // seeded with draft prices
     const [buyer] = await db.insert(schema.users).values({ name: 'Svc Buyer', email: 'svc@test.local', phone: '+919811100009' }).returning();
     const intake = { currentName: 'Sunil Kumar', dob: '1988-03-12', gender: 'male', questions: 'Aadhaar 2345 6789 0123 for reference' };
@@ -318,7 +318,7 @@ describe.skipIf(!URL)('database (Postgres)', () => {
     expect(await svcLib.deleteService('SVC_BABY_NAME', db)).toBe('deleted');
     // On a cold start ensureServices reads this marker: every batch is done, so nothing is re-inserted.
     const marker = (await db.execute(sql`select value from app_settings where key = 'servicesSeed'`)).rows[0] as { value: number };
-    expect(marker.value).toBe(2);
+    expect(marker.value).toBe(3);
     expect((await svcLib.listServices({ includeInactive: true }, db)).some((x) => x.code === 'SVC_BABY_NAME')).toBe(false);
   });
 });

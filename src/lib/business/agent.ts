@@ -18,6 +18,7 @@ export const ReportSchema = z.object({
   businessPersonality: z.array(z.string().max(300)).min(2).max(8),
   topPicks: z.array(z.object({ id: z.string(), why: z.string().max(700), howToStart: z.string().max(700), watch: z.string().max(400) })).min(1).max(5),
   avoidNote: z.string().max(800),
+  shortlistAdvice: z.string().max(1500).optional(),
   partnership: z.string().max(800),
   nameAdvice: z.string().max(800),
   placeAdvice: z.string().max(800),
@@ -39,6 +40,7 @@ Write a business / profession compatibility consultation.
 Rules:
 - Use ONLY the numbers and scores given. Never calculate new numbers or invent scores.
 - topPicks: choose 3–5 items ONLY from the TOP RANKED list, by their exact id. You may re-order using the practical context (capital, risk, interests, education, current work), and explain why.
+- If the CLIENT SHORTLIST is not empty, write shortlistAdvice: a verdict on each shortlisted business using its given score, rank and verdict, and what to do about it.
 - Be practical: how to start small, which business model, what to watch out for. Mention the client's education and current work when relevant.
 - Place: in numerology the birth place is not a core factor; use the place-number harmony given as a supporting signal only, and say so gently. Use Kua success direction for shop/office entrance or seating.
 - Remedies must be traditional and safe (lucky day to start, colours, name spelling correction, daan, mantra). Never prescribe gemstones without "after expert check".
@@ -46,7 +48,7 @@ Rules:
 - Write all text values in ${LANG[lang]}.
 
 Reply with ONE JSON object and nothing else:
-{"headline":"…","summary":"4–6 sentences","businessPersonality":["…"],"topPicks":[{"id":"exact id","why":"…","howToStart":"…","watch":"…"}],"avoidNote":"…","partnership":"which partner numbers suit and why","nameAdvice":"…","placeAdvice":"…","timingAdvice":"…","remedies":["…"],"actionPlan":["step 1…"],"closing":"…"}`;
+{"headline":"…","summary":"4–6 sentences","businessPersonality":["…"],"topPicks":[{"id":"exact id","why":"…","howToStart":"…","watch":"…"}],"avoidNote":"…","shortlistAdvice":"verdict on each shortlisted business, or empty","partnership":"which partner numbers suit and why","nameAdvice":"…","placeAdvice":"…","timingAdvice":"…","remedies":["…"],"actionPlan":["step 1…"],"closing":"…"}`;
 }
 
 export function dataText(c: BizContext, a: BizAnalytics) {
@@ -68,6 +70,13 @@ LO SHU GRID
 Missing: ${a.grid.missing.join(', ') || 'none'}; repeated: ${a.grid.repeated.map((r) => `${r.number}×${r.count}`).join(', ') || 'none'}; yogs: ${a.grid.yogs.join(', ') || 'none'}; strength arrows: ${a.grid.strengths.join(', ') || 'none'}; weakness arrows: ${a.grid.weaknesses.join(', ') || 'none'}
 Life-area scores: ${Object.entries(a.lifeAreas).map(([k, v]) => `${k} ${v}`).join(', ')}
 Number strengths (1–9): ${a.numberStrength.map((x) => `${x.n}:${x.score}`).join(', ')}
+
+ANALYSED: ${a.totals.analysed} categories (${a.totals.businesses} businesses, ${a.totals.professions} professions)
+
+CLIENT SHORTLIST (businesses the client is considering)
+${a.checked.length ? a.checked.map((r) => `- ${r.label} | rank ${r.rank} of ${a.totals.analysed} | score ${r.score} | ${r.verdict.en} | numbers ${r.numbers.join('/')}${r.factors.length ? ` | ${r.factors.join('; ')}` : ''}`).join('\n') : 'none'}
+
+BEST GROUPS: ${a.groupScores.slice(0, 8).map((x) => `${x.group} ${x.score}`).join(', ')}
 
 TOP RANKED (choose topPicks from these ids)
 ${a.top.map(line).join('\n')}
@@ -99,6 +108,7 @@ export function ruleReport(c: BizContext, a: BizAnalytics): BizReport {
     summary: `${c.fullName} has Bhagyank ${P.bhagyank} ruled by ${P.planet.name} and Moolank ${P.moolank}. The strongest numbers in the chart are ${[...a.numberStrength].sort((x, y) => y.score - x.score).slice(0, 3).map((x) => x.n).join(', ')}, which point towards ${a.sectorScores.slice(0, 2).map((s) => s.sector).join(' and ')}. The top match scores ${picks[0].score}/100. The current personal year is ${a.currentYear.personalYear}: ${a.currentYear.theme.toLowerCase()}.`,
     businessPersonality: [`${P.planet.name} (Bhagyank ${P.bhagyank}) traditionally favours: ${P.planet.careers.join(', ')}.`, `Moolank and Bhagyank are ${({ friend: 'friendly', neutral: 'neutral', enemy: 'in conflict' } as const)[P.moolankBhagyank]} to each other${P.moolankBhagyank === 'enemy' ? ' – inner drive and destiny pull differently, so choose work that uses both' : ''}.`, a.grid.missing.length ? `Missing numbers ${a.grid.missing.join(', ')} show skills to build or delegate.` : 'No missing numbers – a well-rounded grid.', ...(a.grid.yogs.length ? [`Yogs present: ${a.grid.yogs.join(', ')}.`] : [])],
     topPicks: picks.map((p) => ({ id: p.id, why: `Score ${p.score}/100. Supported by numbers ${p.numbers.join(', ')}${p.factors.length ? `; ${p.factors.join('; ')}` : ''}.`, howToStart: p.kind === 'business' ? (p.capital === 3 ? 'Start with a smaller pilot or as a partner/franchisee before full investment.' : 'Start lean, test demand locally and grow step by step.') : 'Build qualifications and experience in this field; consider consulting or a side practice later.', watch: p.factors.find((f) => /missing|unfriendly|capital|risk/i.test(f)) ?? 'Keep finances disciplined and review progress every quarter.' })),
+    shortlistAdvice: a.checked.length ? a.checked.map((r) => `${r.label}: ${r.score}/100, rank ${r.rank} of ${a.totals.analysed} – ${r.verdict.en.toLowerCase()}${r.score >= 62 ? '.' : `; ${r.factors.find((f) => /unfriendly|missing|capital|risk/i.test(f)) ?? 'its main numbers do not support the chart'} – compare it with the top matches first.`}`).join(' ') : undefined,
     avoidNote: `Least suited right now: ${a.avoid.slice(0, 3).map((x) => x.label).join(', ')}. Their main numbers do not support Bhagyank ${P.bhagyank} as well.`,
     partnership: `Partners whose Bhagyank or Moolank is ${P.friendly.filter((x) => x !== P.bhagyank).join(', ')} tend to be supportive. Be careful with ${P.avoid.join(', ') || 'no specific numbers'}.`,
     nameAdvice: a.businessName ? `"${a.businessName.text}" totals ${a.businessName.compound}/${a.businessName.single} (${a.businessName.category}) and is ${a.businessName.toBhagyank} to the Bhagyank. ${a.businessName.score >= 70 ? 'It supports the owner.' : `Consider a spelling that totals ${a.nameTargets.map((t) => t.compounds[0]).filter(Boolean).join(', ')}.`}` : `Choose a business name totalling ${a.nameTargets.map((t) => t.compounds.join('/')).join(', ')} (Chaldean).`,

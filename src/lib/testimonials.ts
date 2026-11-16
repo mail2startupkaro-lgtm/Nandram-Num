@@ -6,7 +6,7 @@
  */
 export type TestimonialService =
   | 'general' | 'SVC_PERSONAL_REPORT' | 'SVC_NAME_CORRECTION' | 'SVC_LOSHU' | 'SVC_MOBILE_NUMBER'
-  | 'SVC_BABY_NAME' | 'SVC_COUPLE' | 'SVC_BUSINESS_NAME' | 'SVC_PERSONAL_YEAR';
+  | 'SVC_BABY_NAME' | 'SVC_COUPLE' | 'SVC_BUSINESS_NAME' | 'SVC_PERSONAL_YEAR' | 'SVC_BUSINESS_COMPAT';
 
 export interface Testimonial {
   id: string;
@@ -32,6 +32,7 @@ export const TESTIMONIAL_SERVICES: { id: TestimonialService; en: string; hi: str
   { id: 'SVC_COUPLE', en: 'Relationship Compatibility', hi: 'संबंध अनुकूलता', slug: 'couple-compatibility-report' },
   { id: 'SVC_BUSINESS_NAME', en: 'Business Name Numerology', hi: 'व्यवसाय नाम अंक ज्योतिष', slug: 'business-name-numerology' },
   { id: 'SVC_PERSONAL_YEAR', en: 'Personal Year Consultancy', hi: 'व्यक्तिगत वर्ष परामर्श', slug: 'personal-year-consultancy' },
+  { id: 'SVC_BUSINESS_COMPAT', en: 'Business Compatibility Report', hi: 'व्यवसाय अनुकूलता रिपोर्ट', slug: 'business-compatibility-numerology' },
 ];
 export const serviceLabel = (s: TestimonialService) => TESTIMONIAL_SERVICES.find((x) => x.id === s) ?? TESTIMONIAL_SERVICES[0];
 

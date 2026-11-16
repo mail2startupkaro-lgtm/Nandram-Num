@@ -4,6 +4,7 @@ import { SAMPLE_NUMBERS as N, SERVICE_SAMPLES } from '@/lib/service-samples';
 import { DEFAULT_SERVICES } from '@/lib/billing/services';
 import { formatOfferEnd, liveOffer } from '@/lib/funnel/offer';
 import { LeadInput, leadsCsv, miniReading } from '@/lib/funnel/leads';
+import { businessAnalytics } from '@/lib/business/engine';
 
 const asOf = { day: 13, month: 11, year: 2026 };
 
@@ -66,6 +67,19 @@ describe('sample reports match the engine', () => {
       const r = analyseNameSystem(x.name, 'chaldean').nameNumber; expect([r.compound, r.single], x.name).toEqual([x.compound, x.single]);
       if (x.score !== null) expect(analyseName({ fullName: x.name }, N.riya.moolank, N.riya.bhagyank).compatibilityScore).toBe(x.score);
     }
+  });
+
+  it('Riya – business compatibility sample (1000+ categories)', () => {
+    const a = businessAnalytics({ fullName: N.riya.name, dob: { year: 1992, month: 8, day: 14 }, gender: 'female', birthPlace: 'Jaipur', mode: 'business', capital: 2, risk: 'medium', interests: [], asOf,
+      shortlist: N.bizCompat.shortlist.map((x) => x[0]) });
+    expect(a.totals.analysed).toBe(N.bizCompat.analysed);
+    for (const [id, sc] of N.bizCompat.top) expect(a.all.find((x) => x.id === id)!.score).toBe(sc);
+    expect(a.top[0].id).toBe(N.bizCompat.top[0][0]);
+    expect(a.sectorScores.slice(0, 2).map((x) => [x.sector, x.score])).toEqual(N.bizCompat.sectors);
+    expect(a.checked.map((x) => [x.id, x.score, x.rank])).toEqual(N.bizCompat.shortlist);
+    expect(a.checked.map((x) => x.verdict.key)).toEqual(['excellent', 'good', 'weak']);
+    expect(a.timing.filter((t) => t.score >= 80).map((t) => t.year).slice(0, 2)).toEqual(N.bizCompat.launchYears);
+    expect([a.person.friendly, a.person.avoid, a.person.planet.weekday, a.directions.success]).toEqual([[1, 2, 4, 7], [8, 9], 'Tuesday', 'North-West']);
   });
 });
 

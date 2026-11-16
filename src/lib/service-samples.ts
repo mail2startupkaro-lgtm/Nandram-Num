@@ -29,6 +29,8 @@ export const SAMPLE_NUMBERS = {
   baby: { dob: '2026-03-21', moolank: 3, bhagyank: 7, names: [{ name: 'Anaya Sharma', compound: 25, single: 7, score: 88 }, { name: 'Kiara Sharma', compound: 23, single: 5, score: 80 }, { name: 'Diya Sharma', compound: 23, single: 5, score: 80 }, { name: 'Ishani Sharma', compound: 32, single: 5, score: 80 }] },
   couple: { partner: { name: 'Arjun Mehta', dob: '1990-01-03', gender: 'male' as const, moolank: 3, bhagyank: 5, nameSingle: 7 }, overall: 78, areas: { love: 90, communication: 80, finance: 60, family: 80, health: 100, stability: 67 }, bothMissing: [6], bestYear: 2027 },
   business: [{ name: 'Riya Interiors', compound: 35, single: 8, score: null as number | null }, { name: 'Sharma Interiors', compound: 46, single: 1, score: 100 }, { name: 'Riiyaa Interiors', compound: 37, single: 1, score: 100 }],
+  bizCompat: { analysed: 1335, top: [['online-reputation-management', 89], ['led-lights-trading', 87], ['solar-panel-dealer', 87]] as [string, number][], sectors: [['Technology & Media', 88], ['Trade & Retail', 87]] as [string, number][],
+    shortlist: [['digital-marketing-agency', 77, 190], ['interior-design-firm', 68, 642], ['petrol-pump', 39, 1325]] as [string, number, number][], launchYears: [2026, 2029] },
   months: [[11, 2026, 7], [12, 2026, 8], [1, 2027, 6], [2, 2027, 7], [3, 2027, 8], [4, 2027, 9], [5, 2027, 1], [6, 2027, 2], [7, 2027, 3]] as [number, number, number][],
 };
 
@@ -143,6 +145,25 @@ export const SERVICE_SAMPLES: ServiceSample[] = [
         hi: ['1 (सूर्य) नेतृत्व, पहचान और याद रहने वाला नाम देता है – डिज़ाइन ब्रांड के लिए आदर्श। यह मालिक के मूलांक और भाग्यांक दोनों का मित्र है, इसलिए व्यवसाय उन्हें थकाता नहीं, सहारा देता है।'] } },
       { h: l('3. Launch dates, mobile and colours', '3. लॉन्च तिथियाँ, मोबाइल और रंग'), p: { en: ['Launch on dates adding to 1 (1, 10, 19, 28). Business mobile total: 1, 5 or 6.'], hi: ['1 योग वाली तिथियों (1, 10, 19, 28) पर लॉन्च करें। व्यवसायिक मोबाइल योग: 1, 5 या 6।'] },
         rows: [{ k: l('Brand colours', 'ब्रांड रंग'), v: l('Gold / orange with green', 'सुनहरा / नारंगी, हरे के साथ') }] },
+    ],
+  },
+  {
+    code: 'SVC_BUSINESS_COMPAT', open: 2, client: RIYA,
+    title: l('Business Compatibility Report – sample pages', 'व्यवसाय अनुकूलता रिपोर्ट – नमूना पृष्ठ'),
+    tiles: [{ k: l('Categories checked', 'जाँची गई श्रेणियाँ'), v: '1,335' }, { k: l('Best sector', 'सर्वोत्तम क्षेत्र'), v: '88' }, { k: l('Best match', 'सर्वोत्तम मेल'), v: '89' }, { k: l('Personal year', 'व्यक्तिगत वर्ष'), v: '5' }],
+    sections: [
+      { h: l('1. Your business personality', '1. आपका व्यावसायिक स्वभाव'), p: {
+        en: ['Riya, your Bhagyank 7 (Ketu) with Moolank 5 (Mercury) and name number 3 gives a sharp, analytical and communicative business nature. Numbers 1, 2, 4 and 7 are friendly to your Bhagyank and all four are present in your grid – so work built on ideas, technology, communication and expertise comes most naturally. 8 and 9 do not support your Bhagyank.'],
+        hi: ['रिया, आपका भाग्यांक 7 (केतु), मूलांक 5 (बुध) और नामांक 3 आपको तेज़, विश्लेषणात्मक और संवाद-कुशल व्यावसायिक स्वभाव देते हैं। अंक 1, 2, 4 और 7 आपके भाग्यांक के मित्र हैं और चारों आपके ग्रिड में उपस्थित हैं – इसलिए विचार, तकनीक, संचार और विशेषज्ञता पर आधारित काम आपके लिए सबसे स्वाभाविक है। 8 और 9 आपके भाग्यांक का साथ नहीं देते।'] },
+        rows: [{ k: l('Technology & Media', 'तकनीक और मीडिया'), v: l('88 / 100 – strongest sector', '88 / 100 – सबसे मज़बूत क्षेत्र') }, { k: l('Trade & Retail', 'व्यापार और खुदरा'), v: l('87 / 100', '87 / 100') }] },
+      { h: l('2. Your top matches out of 1,335 businesses', '2. 1,335 व्यवसायों में आपके शीर्ष मेल'), p: { en: ['Ranked by compatibility with your numbers and a medium capital budget:'], hi: ['आपके अंकों और मध्यम पूँजी के अनुसार अनुकूलता क्रम:'] },
+        rows: [{ k: l('1. Online reputation management', '1. ऑनलाइन रेप्युटेशन मैनेजमेंट'), v: l('89 / 100', '89 / 100') }, { k: l('2. LED lights trading', '2. LED लाइट्स का व्यापार'), v: l('87 / 100', '87 / 100') }, { k: l('3. Solar panel dealer', '3. सोलर पैनल डीलर'), v: l('87 / 100', '87 / 100') }] },
+      { h: l('3. Verdict on the businesses you are considering', '3. आपके विचाराधीन व्यवसायों पर निर्णय'), p: { en: ['Each business you name gets its own score and rank:'], hi: ['आपके बताए हर व्यवसाय का अपना स्कोर और स्थान:'] },
+        rows: [{ k: l('Digital marketing agency', 'डिजिटल मार्केटिंग एजेंसी'), v: l('77 · rank 190 – highly compatible', '77 · स्थान 190 – अत्यंत अनुकूल') }, { k: l('Interior design firm', 'इंटीरियर डिज़ाइन फ़र्म'), v: l('68 · rank 642 – compatible; number 6 is missing in your grid', '68 · स्थान 642 – अनुकूल; आपके ग्रिड में 6 अनुपस्थित है') }, { k: l('Petrol pump', 'पेट्रोल पंप'), v: l('39 · rank 1,325 – not advised (8 & 9 based)', '39 · स्थान 1,325 – अनुशंसित नहीं (8 और 9 आधारित)') }] },
+      { h: l('4. When to launch', '4. कब शुरू करें'), p: {
+        en: ['Personal year 5 (14 Aug 2026 – 13 Aug 2027) favours change and new ventures; 2029 (personal year 8) is the strongest year for expansion and investment. Start important work on a Tuesday, and face North-West while working.'],
+        hi: ['व्यक्तिगत वर्ष 5 (14 अगस्त 2026 – 13 अगस्त 2027) बदलाव और नए उद्यम के पक्ष में है; 2029 (व्यक्तिगत वर्ष 8) विस्तार और निवेश का सबसे मज़बूत वर्ष है। महत्वपूर्ण काम मंगलवार को शुरू करें और काम करते समय उत्तर-पश्चिम की ओर मुख रखें।'] } },
+      { h: l('5. Business name, remedies & action plan', '5. व्यवसाय नाम, उपाय और कार्य-योजना'), p: { en: ['The full report adds business name totals that suit you, remedies for missing numbers 3 and 6, the least-suited businesses and a step-by-step action plan.'], hi: ['पूरी रिपोर्ट में आपके अनुकूल व्यवसाय नाम के योग, अनुपस्थित अंक 3 और 6 के उपाय, सबसे कम अनुकूल व्यवसाय और चरण-दर-चरण कार्य-योजना भी है।'] } },
     ],
   },
   {

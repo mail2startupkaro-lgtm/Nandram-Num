@@ -4,7 +4,7 @@ import { withAdmin } from '@/lib/server/admin';
 import { json, readJson } from '@/lib/server/http';
 import { rateLimit, tooMany } from '@/lib/server/rate-limit';
 import { runBusinessAgent } from '@/lib/business/agent';
-import { SECTORS } from '@/lib/business/catalogue';
+import { ITEM_BY_ID, SECTORS } from '@/lib/business/catalogue';
 import { businessAnalytics } from '@/lib/business/engine';
 
 export const runtime = 'nodejs';
@@ -18,12 +18,13 @@ const Body = z.object({
   birthPlace: z.string().trim().min(2).max(80), currentCity: txt(80), businessName: txt(120),
   mode: z.enum(['business', 'profession', 'both']).default('both'), capital: z.union([z.literal(1), z.literal(2), z.literal(3)]).default(2),
   risk: z.enum(['low', 'medium', 'high']).default('medium'), interests: z.array(z.enum(SECTORS)).max(10).default([]),
+  shortlist: z.array(z.string().max(80).refine((id) => ITEM_BY_ID.has(id), 'Unknown business category')).max(20).default([]),
   education: txt(120), currentWork: txt(160), goals: txt(1000), language: z.enum(['en', 'hi', 'hinglish']).default('en'),
 });
 const CAP = ['', 'Low (up to ₹5 lakh)', 'Medium (₹5–50 lakh)', 'High (above ₹50 lakh)'];
 const MODE = { business: 'own business', profession: 'job / profession', both: 'business or profession' };
 
-/** Admin-only Business / Profession compatibility: analytical data + AI agent report. Nothing is stored. */
+/** Admin-only Business / Profession compatibility (1000+ categories): analytical data + AI agent report. Nothing is stored. */
 export const POST = withAdmin(async (req, user) => {
   const rl = rateLimit(`biz:${user.id}`, 30, 10 * 60_000);
   if (!rl.ok) return tooMany(rl.retryAfter);

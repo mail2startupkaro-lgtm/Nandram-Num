@@ -12,7 +12,7 @@ import { formatMoney } from '@/lib/billing/currency';
 const INTAKE: { k: ServiceIntakeField; label: string }[] = [
   { k: 'clientName', label: 'Full name' }, { k: 'currentName', label: 'Current name spelling' }, { k: 'dob', label: 'Date of birth' }, { k: 'gender', label: 'Gender' },
   { k: 'tob', label: 'Time of birth' }, { k: 'pob', label: 'Place of birth' }, { k: 'mobile', label: 'Mobile to analyse' }, { k: 'parents', label: "Parents' names" },
-  { k: 'letters', label: 'Preferred letters' }, { k: 'partnerName', label: "Partner's name" }, { k: 'partnerDob', label: "Partner's DOB" }, { k: 'questions', label: 'Questions / notes' },
+  { k: 'letters', label: 'Preferred letters' }, { k: 'partnerName', label: "Partner's name" }, { k: 'partnerDob', label: "Partner's DOB" }, { k: 'businesses', label: 'Businesses considering' }, { k: 'questions', label: 'Questions / notes' },
 ];
 const STATUS = ['paid', 'in_progress', 'delivered', 'cancelled'] as const;
 const STATUS_LABEL: Record<string, string> = { awaiting_payment: 'Awaiting payment', paid: 'Paid – to do', in_progress: 'In progress', delivered: 'Delivered', cancelled: 'Cancelled' };
@@ -65,7 +65,7 @@ function OrderCard({ o, name, onChanged, onGenerateReport }: { o: Order; name: s
           <p className="text-xs text-muted-foreground">{o.payment.paidAt ? `Paid ${new Date(o.payment.paidAt).toLocaleString('en-IN')}` : new Date(o.createdAt).toLocaleString('en-IN')} · {formatMoney(o.payment.amountPaise, o.payment.currency === 'USD' ? 'USD' : 'INR')}{o.payment.invoiceNumber ? ` · ${o.payment.invoiceNumber}` : ''} · billed to {o.payment.billingName ?? '—'}</p></div>
         <div className="flex flex-wrap items-center gap-2">
           {onGenerateReport && (
-            <Button size="sm" variant="gold" onClick={() => onGenerateReport(o)} title="Generate tailored service report in Report Studio">
+            <Button size="sm" variant="gold" onClick={() => onGenerateReport(o)} title={o.serviceCode === 'SVC_BUSINESS_COMPAT' ? 'Open in the Business compatibility report generator' : 'Generate tailored service report in Report Studio'}>
               <Sparkles className="h-4 w-4" /> Generate Report
             </Button>
           )}

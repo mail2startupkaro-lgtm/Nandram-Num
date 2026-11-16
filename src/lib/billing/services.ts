@@ -11,7 +11,7 @@ import { decryptJson, encryptJson } from '@/lib/security/crypto';
 
 export const SERVICE_PREFIX = 'SVC_';
 export const isServiceCode = (code: string) => code.startsWith(SERVICE_PREFIX);
-export const INTAKE_FIELDS: ServiceIntakeField[] = ['clientName', 'dob', 'gender', 'tob', 'pob', 'mobile', 'currentName', 'parents', 'letters', 'partnerName', 'partnerDob', 'questions'];
+export const INTAKE_FIELDS: ServiceIntakeField[] = ['clientName', 'dob', 'gender', 'tob', 'pob', 'mobile', 'currentName', 'parents', 'letters', 'partnerName', 'partnerDob', 'businesses', 'questions'];
 export const SERVICE_ORDER_STATUSES = ['awaiting_payment', 'paid', 'in_progress', 'delivered', 'cancelled'] as const;
 export type ServiceOrderStatus = (typeof SERVICE_ORDER_STATUSES)[number];
 
@@ -68,6 +68,13 @@ export const DEFAULT_SERVICES: (typeof services.$inferInsert)[] = [
       ['आपके वर्तमान या प्रस्तावित नामों का विश्लेषण (अधिकतम 5)', 'अंकों सहित सर्वोत्तम वर्तनी विकल्प', 'मालिक के मूलांक और भाग्यांक से मेल', 'लॉन्च की शुभ तिथियाँ और व्यवसायिक मोबाइल नंबर के योग', 'ब्रांड रंग के सुझाव'], '3–4 कार्य-दिवसों में'),
   },
   {
+    code: 'SVC_BUSINESS_COMPAT', sort: 9, featured: false, pricePaise: 2_100_00, mrpPaise: 4_200_00, intake: ['clientName', 'dob', 'gender', 'pob', 'businesses', 'questions'],
+    en: t('Business Compatibility Report', 'Which business suits your date of birth? Your Moolank, Bhagyank, name number and Lo Shu grid checked against 1000+ business categories – with timing, name, direction and remedies.',
+      ['Your compatibility score for 1000+ business categories, ranked', 'Top recommendations with how to start and what to watch', 'A clear verdict on each business you are already considering', 'Best sectors and least-suited businesses', 'Best years to launch or expand, business name totals, lucky direction and remedies', 'Downloadable PDF report prepared by Acharya Nandram'], 'Delivered within 2–3 working days'),
+    hi: t('व्यवसाय अनुकूलता रिपोर्ट', 'आपकी जन्म तिथि के लिए कौन-सा व्यवसाय शुभ है? आपके मूलांक, भाग्यांक, नामांक और लो शू ग्रिड का 1000+ व्यवसाय श्रेणियों से मिलान – समय, नाम, दिशा और उपायों सहित।',
+      ['1000+ व्यवसाय श्रेणियों के लिए आपका अनुकूलता स्कोर, क्रम सहित', 'शीर्ष सुझाव – कैसे शुरू करें और किन बातों का ध्यान रखें', 'जिन व्यवसायों पर आप पहले से विचार कर रहे हैं, हर एक पर स्पष्ट निर्णय', 'सर्वोत्तम क्षेत्र और सबसे कम अनुकूल व्यवसाय', 'शुरुआत या विस्तार के शुभ वर्ष, व्यवसाय नाम के योग, शुभ दिशा और उपाय', 'आचार्य नंदराम द्वारा तैयार डाउनलोड योग्य PDF रिपोर्ट'], '2–3 कार्य-दिवसों में'),
+  },
+  {
     code: 'SVC_PERSONAL_YEAR', sort: 8, featured: false, pricePaise: 1_500_00, mrpPaise: 3_000_00, intake: ['clientName', 'dob', 'gender', 'mobile', 'questions'],
     en: t('Personal Year Consultancy', 'Plan the year ahead with your personal year, month and day numbers – when to start, when to wait and when to act on big decisions.',
       ['Your personal year theme from birthday to birthday', 'Month-by-month guidance for the next 12 months', 'Best dates for important decisions you name', 'Remedies to support the year', 'Personal answers to your questions on call or WhatsApp'], 'Scheduled within 3 working days'),
@@ -83,6 +90,7 @@ export const DEFAULT_SERVICES: (typeof services.$inferInsert)[] = [
 const SEED_BATCHES: string[][] = [
   ['SVC_PERSONAL_REPORT', 'SVC_NAME_CORRECTION', 'SVC_MOBILE_NUMBER', 'SVC_BABY_NAME'],
   ['SVC_LOSHU', 'SVC_COUPLE', 'SVC_BUSINESS_NAME', 'SVC_PERSONAL_YEAR'],
+  ['SVC_BUSINESS_COMPAT'],
 ];
 let seeded = false;
 export async function ensureServices(db: Db = getDb()) {
@@ -140,9 +148,10 @@ const FIELD: Record<ServiceIntakeField, z.ZodTypeAny> = {
   clientName: z.string().trim().min(2).max(120), dob: isoDate, gender: z.enum(['male', 'female', 'other']),
   tob: z.string().trim().max(10).optional(), pob: z.string().trim().max(120).optional(), mobile: z.string().trim().max(20).optional(),
   currentName: z.string().trim().min(2).max(300), partnerName: z.string().trim().min(2).max(120), partnerDob: isoDate, parents: z.string().trim().max(200).optional(), letters: z.string().trim().max(60).optional(),
+  businesses: z.string().trim().max(600).optional(),
   questions: z.string().trim().max(2000).optional(),
 };
-const OPTIONAL: ServiceIntakeField[] = ['tob', 'pob', 'mobile', 'parents', 'letters', 'questions'];
+const OPTIONAL: ServiceIntakeField[] = ['tob', 'pob', 'mobile', 'parents', 'letters', 'businesses', 'questions'];
 export type IntakeDetails = Partial<Record<ServiceIntakeField, string>>;
 
 /** Validates exactly the fields this service asks for; unknown keys are dropped. Aadhaar-like numbers are masked. */

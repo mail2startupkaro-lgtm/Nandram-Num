@@ -1,6 +1,6 @@
 /**
  * Business / Profession Compatibility – analytical engine. Pure and deterministic.
- * Scores every business and profession against the person's Bhagyank, Moolank, name number and Lo Shu grid,
+ * Scores every one of the 1000+ businesses and professions against the person's Bhagyank, Moolank, name number and Lo Shu grid,
  * then adds practical filters (capital, risk appetite, interests), timing, place and business-name checks.
  */
 import { analyseDob, analyseNameSystem, type DateParts } from '@/lib/numerology';
@@ -14,6 +14,16 @@ export interface BizInput {
   birthPlace: string; currentCity?: string; businessName?: string;
   mode: 'business' | 'profession' | 'both'; capital: 1 | 2 | 3; risk: 'low' | 'medium' | 'high';
   interests: string[]; asOf: DateParts;
+  /** Category ids the client is already considering – each gets its own verdict in the report. */
+  shortlist?: string[];
+}
+
+/** Plain-language verdict for a 0–100 compatibility score. */
+export function verdictOf(score: number) {
+  return score >= 75 ? { key: 'excellent', en: 'Highly compatible', hi: 'अत्यंत अनुकूल' } as const
+    : score >= 62 ? { key: 'good', en: 'Compatible', hi: 'अनुकूल' } as const
+      : score >= 48 ? { key: 'moderate', en: 'Moderate – needs care', hi: 'सामान्य – सावधानी आवश्यक' } as const
+        : { key: 'weak', en: 'Not advised', hi: 'अनुशंसित नहीं' } as const;
 }
 
 const REL_SCORE: Record<Relation, number> = { friend: 100, neutral: 60, enemy: 15 };
@@ -67,13 +77,20 @@ export function businessAnalytics(i: BizInput) {
     }
     if (i.interests.includes(it.sector)) { adj += 5; factors.push('Matches stated interest'); }
     const score = Math.max(5, Math.min(97, Math.round(8 + 0.82 * num + adj)));
-    return { id: it.id, label: it.label, sector: it.sector, kind: it.kind as Kind, numbers: it.numbers, capital: it.capital, numerologyFit: Math.round(num), score, factors };
+    return { id: it.id, label: it.label, sector: it.sector, group: it.group, kind: it.kind as Kind, numbers: it.numbers, capital: it.capital, numerologyFit: Math.round(num), score, factors };
   };
 
   const pool = ITEMS.filter((it) => i.mode === 'both' || it.kind === i.mode);
   const ranked = pool.map(scoreItem).sort((x, y) => y.score - x.score || y.numerologyFit - x.numerologyFit || x.capital - y.capital);
   const sectorScores = Object.entries(ranked.reduce<Record<string, number[]>>((acc, r) => { (acc[r.sector] ??= []).push(r.score); return acc; }, {}))
     .map(([sector, xs]) => ({ sector, score: Math.round(xs.sort((a, c) => c - a).slice(0, 2).reduce((a, c) => a + c, 0) / Math.min(2, xs.length)) })).sort((x, y) => y.score - x.score);
+
+  const rankOf = new Map(ranked.map((r, j) => [r.id, j + 1]));
+  const groupScores = Object.entries(ranked.reduce<Record<string, { sector: string; xs: number[] }>>((acc, r) => { (acc[r.group] ??= { sector: r.sector, xs: [] }).xs.push(r.score); return acc; }, {}))
+    .map(([group, v]) => ({ group, sector: v.sector, count: v.xs.length, score: Math.round(v.xs.slice(0, 3).reduce((a, c) => a + c, 0) / Math.min(3, v.xs.length)) })).sort((x, y) => y.score - x.score);
+  const bestBySector = sectorScores.map((s) => ({ sector: s.sector, score: s.score, items: ranked.filter((r) => r.sector === s.sector).slice(0, 3) }));
+  const checked = [...new Set(i.shortlist ?? [])].map((id) => ranked.find((r) => r.id === id)).filter((r): r is (typeof ranked)[number] => !!r)
+    .map((r) => ({ ...r, rank: rankOf.get(r.id)!, verdict: verdictOf(r.score) }));
 
   const timing = dob.personalCycles.timeline.slice(0, 9).map((t) => ({ year: t.year, personalYear: t.personalYear, ...YEAR_TIMING[t.personalYear] }));
   const bizName = i.businessName?.trim() ? (() => {
@@ -96,10 +113,14 @@ export function businessAnalytics(i: BizInput) {
     grid: { counts, missing: dob.loShu.missing, repeated: dob.loShu.repeated, yogs: dob.loShu.yogs.map((y) => y.name), strengths: dob.loShu.arrowsOfStrength.map((a) => a.name), weaknesses: dob.loShu.arrowsOfWeakness.map((a) => a.name) },
     lifeAreas: dob.lifeAreaScores,
     numberStrength,
-    top: ranked.slice(0, 10),
+    totals: { analysed: pool.length, businesses: pool.filter((x) => x.kind === 'business').length, professions: pool.filter((x) => x.kind === 'profession').length },
+    top: ranked.slice(0, 12),
     avoid: ranked.slice(-5).reverse(),
     all: ranked,
     sectorScores,
+    groupScores,
+    bestBySector,
+    checked,
     timing,
     currentYear: { personalYear: dob.personalCycles.current.personalYear, ...YEAR_TIMING[dob.personalCycles.current.personalYear] },
     places: { birth: placeNumber(i.birthPlace, b, m), current: i.currentCity?.trim() ? placeNumber(i.currentCity, b, m) : null },

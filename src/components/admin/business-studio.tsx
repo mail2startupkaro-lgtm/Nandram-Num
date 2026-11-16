@@ -1,12 +1,15 @@
 'use client';
 import * as React from 'react';
-import { Bot, Briefcase, Copy, Loader2, Printer, Sparkles } from 'lucide-react';
+import { Bot, Briefcase, ChevronLeft, ChevronRight, ClipboardList, Copy, Loader2, Printer, Search, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/form';
 import { Badge } from '@/components/ui/misc';
 import { api, ApiError } from '@/lib/client/api';
-import { SECTORS } from '@/lib/business/catalogue';
-import type { BizAnalytics } from '@/lib/business/engine';
+import { BUSINESS_COUNT, ITEM_BY_ID, ITEMS, SECTORS } from '@/lib/business/catalogue';
+import { verdictOf, type BizAnalytics } from '@/lib/business/engine';
+import { matchCategories } from '@/lib/business/match';
+import { SITE_NAME } from '@/lib/seo/site';
+import type { Order } from '@/components/admin/services-admin';
 import type { BizReport } from '@/lib/business/agent';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +29,7 @@ function Bar({ label, value, sub, onClick, active }: { label: React.ReactNode; v
 }
 const Card = ({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) => <section className={cn('glass rounded-lg p-5', className)}><h3 className="mb-3 font-serif text-lg font-semibold text-gold">{title}</h3>{children}</section>;
 const Kpi = ({ label, value, sub }: { label: string; value: React.ReactNode; sub?: string }) => <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 text-center"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p><p className="gold-text font-serif text-3xl font-bold">{value}</p>{sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}</div>;
+const fmt = (n: number) => n.toLocaleString('en-IN');
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
 function label(d: BizAnalytics, id: string) { return d.all.find((x) => x.id === id)?.label ?? id; }
@@ -33,36 +37,131 @@ function score(d: BizAnalytics, id: string) { return d.all.find((x) => x.id === 
 
 function asText(name: string, r: Result) {
   const d = r.data, p = r.report;
-  return [`BUSINESS / PROFESSION COMPATIBILITY – ${name}`, `Moolank ${d.person.moolank} · Bhagyank ${d.person.bhagyank} · Name number ${d.person.nameNumber}`, '', p.headline, p.summary, '',
+  return [`BUSINESS COMPATIBILITY REPORT – ${name}`, `Moolank ${d.person.moolank} · Bhagyank ${d.person.bhagyank} · Name number ${d.person.nameNumber} · ${fmt(d.totals.analysed)} categories analysed`, '', p.headline, p.summary, '',
+    ...(d.checked.length ? ['BUSINESSES YOU ARE CONSIDERING', ...d.checked.map((c) => `• ${c.label} – ${c.score}/100, rank ${fmt(c.rank)} of ${fmt(d.totals.analysed)} – ${c.verdict.en}`), ...(p.shortlistAdvice ? [p.shortlistAdvice] : []), ''] : []),
     'TOP MATCHES', ...p.topPicks.map((t, i) => `${i + 1}. ${label(d, t.id)} (${score(d, t.id)}/100) – ${t.why} Start: ${t.howToStart} Watch: ${t.watch}`), '',
-    'RANKING', ...d.top.map((x, i) => `${i + 1}. ${x.label} – ${x.score}`), '', `Least suited: ${p.avoidNote}`, '', `Partnership: ${p.partnership}`, `Name: ${p.nameAdvice}`, `Place: ${p.placeAdvice}`, `Timing: ${p.timingAdvice}`, '',
+    'RANKING', ...d.top.map((x, i) => `${i + 1}. ${x.label} – ${x.score}`), '', 'BEST SECTORS', ...d.bestBySector.slice(0, 5).map((s) => `${s.sector} ${s.score}: ${s.items.map((x) => x.label).join(', ')}`), '',
+    `Least suited: ${p.avoidNote}`, '', `Partnership: ${p.partnership}`, `Name: ${p.nameAdvice}`, `Place: ${p.placeAdvice}`, `Timing: ${p.timingAdvice}`, '',
     'REMEDIES', ...p.remedies.map((x) => `• ${x}`), '', 'ACTION PLAN', ...p.actionPlan.map((x, i) => `${i + 1}. ${x}`), '', p.closing].join('\n');
 }
 
-function printReport(name: string, r: Result, by: string) {
+const VERDICT_CSS: Record<string, string> = { excellent: '#1f7a46', good: '#8a6d12', moderate: '#b5651d', weak: '#9b2335' };
+
+function printReport(name: string, r: Result, opts: { by: string; appendix: boolean; meta: { dob: string; place: string; business?: string } }) {
   const d = r.data, p = r.report;
+  const date = new Date(r.generatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
   const bars = (xs: { l: string; v: number }[]) => xs.map((x) => `<div class="bar"><span>${esc(x.l)}</span><b>${x.v}</b><i style="width:${x.v}%"></i></div>`).join('');
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Business Compatibility – ${esc(name)}</title><style>
-body{font-family:Georgia,serif;color:#2a1a10;max-width:840px;margin:32px auto;padding:0 20px;line-height:1.55}h1{color:#7a1f2b;margin:0}h2{color:#7a1f2b;border-bottom:2px solid #c9a227;padding-bottom:4px;margin-top:26px}
-.k{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.k div{border:1px solid #e5d3a1;border-radius:8px;padding:8px;text-align:center}.k b{display:block;font-size:22px;color:#7a1f2b}
-.bar{position:relative;display:flex;justify-content:space-between;border-bottom:1px solid #eee;padding:5px 0;font-size:14px}.bar i{position:absolute;left:0;bottom:-1px;height:3px;background:#c9a227}
-.pick{border:1px solid #e5d3a1;border-radius:10px;padding:10px 14px;margin:8px 0}small{color:#7a6a55}</style></head><body>
-<h1>Business / Profession Compatibility Report</h1><p><b>${esc(name)}</b> · ${new Date(r.generatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}<br><small>Prepared by ${esc(by)}</small></p>
-<div class="k"><div>Moolank<b>${d.person.moolank}</b></div><div>Bhagyank<b>${d.person.bhagyankMaster ? `${d.person.bhagyankMaster}/${d.person.bhagyank}` : d.person.bhagyank}</b></div><div>Name no.<b>${d.person.nameCompound}/${d.person.nameNumber}</b></div><div>Personal year<b>${d.currentYear.personalYear}</b></div><div>Best match<b>${d.top[0].score}</b></div></div>
+  const grid = LOSHU.map((row) => `<tr>${row.map((n) => `<td class="${d.grid.counts[n] ? '' : 'miss'}">${d.grid.counts[n] ? String(n).repeat(d.grid.counts[n]) : '–'}</td>`).join('')}</tr>`).join('');
+  const appendix = opts.appendix ? `<section class="pb"><h2>Appendix – Complete Ranking of ${fmt(d.totals.analysed)} Categories</h2><p><small>Every business${d.totals.professions ? ' and profession' : ''} in the catalogue, ranked for ${esc(name)}. Scores: 75+ highly compatible · 62–74 compatible · 48–61 moderate · below 48 not advised.</small></p>
+    <table class="app"><thead><tr><th>#</th><th>Category</th><th>Group</th><th>Score</th></tr></thead><tbody>${d.all.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.label)}</td><td>${esc(x.group)}</td><td style="color:${VERDICT_CSS[verdictOf(x.score).key]}"><b>${x.score}</b></td></tr>`).join('')}</tbody></table></section>` : '';
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Business Compatibility Report – ${esc(name)}</title><style>
+@page{size:A4;margin:16mm 14mm}body{font-family:Georgia,'Noto Serif Devanagari',serif;color:#2a1a10;max-width:860px;margin:0 auto;padding:0 18px;line-height:1.55}
+h1{color:#7a1f2b;margin:0;font-size:30px}h2{color:#7a1f2b;border-bottom:2px solid #c9a227;padding-bottom:4px;margin-top:28px;font-size:20px}h3{margin:14px 0 4px;color:#5a2a10}
+.cover{border:3px double #c9a227;border-radius:14px;padding:26px 28px;margin:18px 0 8px;background:linear-gradient(135deg,#fffaf0,#fbf1d9)}.brand{letter-spacing:.3em;text-transform:uppercase;font-size:11px;color:#8a6d12}
+.k{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:16px}.k div{border:1px solid #e5d3a1;border-radius:8px;padding:8px;text-align:center;background:#fff;font-size:11px}.k b{display:block;font-size:22px;color:#7a1f2b}
+.bar{position:relative;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #eee;padding:5px 0;font-size:13.5px}.bar i{position:absolute;left:0;bottom:-1px;height:3px;background:#c9a227}
+.pick{border:1px solid #e5d3a1;border-radius:10px;padding:10px 14px;margin:8px 0;break-inside:avoid}small{color:#7a6a55}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{border:1px solid #e5d3a1;padding:5px 8px;text-align:left}th{background:#fbf1d9}
+.lo td{width:52px;height:46px;text-align:center;font-size:18px;font-weight:bold;color:#7a1f2b}.lo td.miss{color:#bbb;background:#fafafa}.lo{width:auto}
+.v{display:inline-block;border-radius:99px;padding:1px 9px;color:#fff;font-size:12px}.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.app{font-size:10.5px}.app td,.app th{padding:2px 6px}.pb{break-before:page}.foot{margin-top:30px;border-top:1px solid #e5d3a1;padding-top:8px;font-size:11px;color:#7a6a55}
+@media print{.noprint{display:none}}</style></head><body>
+<div class="cover"><p class="brand">${esc(SITE_NAME)} · Business Numerology</p><h1>Business Compatibility Report</h1>
+<p style="margin:6px 0 0"><b style="font-size:18px">${esc(name)}</b><br>Date of birth ${esc(opts.meta.dob)}${opts.meta.place ? ` · Birth place ${esc(opts.meta.place)}` : ''}${opts.meta.business ? ` · Business name “${esc(opts.meta.business)}”` : ''}<br><small>Prepared by ${esc(opts.by)} · ${date} · ${fmt(d.totals.analysed)} categories analysed</small></p>
+<div class="k"><div>Moolank<b>${d.person.moolank}</b></div><div>Bhagyank<b>${d.person.bhagyankMaster ? `${d.person.bhagyankMaster}/${d.person.bhagyank}` : d.person.bhagyank}</b></div><div>Name no.<b>${d.person.nameCompound}/${d.person.nameNumber}</b></div><div>Personal year<b>${d.currentYear.personalYear}</b></div><div>Best sector<b>${d.sectorScores[0].score}</b></div><div>Best match<b>${d.top[0].score}</b></div></div></div>
+
 <h2>${esc(p.headline)}</h2><p>${esc(p.summary)}</p><ul>${p.businessPersonality.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+<div class="two"><div><h3>Lo Shu grid</h3><table class="lo">${grid}</table><p><small>Missing: ${d.grid.missing.join(', ') || 'none'}${d.grid.yogs.length ? ` · ${esc(d.grid.yogs.join(', '))}` : ''}</small></p></div>
+<div><h3>Friendly & difficult numbers</h3><p>Friendly to Bhagyank ${d.person.bhagyank}: <b>${d.person.friendly.join(', ')}</b><br>Difficult: <b>${d.person.avoid.join(', ') || 'none'}</b><br>Ruling planet: ${esc(d.person.planet.name)} · lucky day ${esc(d.person.planet.weekday)}<br>Colours: ${esc(d.person.planet.colours.join(', '))}</p></div></div>
+
+${d.checked.length ? `<h2>Businesses You Are Considering</h2><table><thead><tr><th>Business</th><th>Score</th><th>Rank</th><th>Verdict</th></tr></thead><tbody>${d.checked.map((c) => `<tr><td>${esc(c.label)}<br><small>${esc(c.group)} · numbers ${c.numbers.join(', ')}${c.factors.length ? ` · ${esc(c.factors.join('; '))}` : ''}</small></td><td><b>${c.score}</b>/100</td><td>${fmt(c.rank)} of ${fmt(d.totals.analysed)}</td><td><span class="v" style="background:${VERDICT_CSS[c.verdict.key]}">${c.verdict.en}</span></td></tr>`).join('')}</tbody></table>${p.shortlistAdvice ? `<p>${esc(p.shortlistAdvice)}</p>` : ''}` : ''}
+
 <h2>Top Recommendations</h2>${p.topPicks.map((t, i) => `<div class="pick"><b>${i + 1}. ${esc(label(d, t.id))} – ${score(d, t.id)}/100</b><p>${esc(t.why)}</p><p><b>How to start:</b> ${esc(t.howToStart)}</p><p><b>Watch:</b> ${esc(t.watch)}</p></div>`).join('')}
-<h2>Compatibility Ranking</h2>${bars(d.top.map((x) => ({ l: x.label, v: x.score })))}<p><b>Least suited:</b> ${esc(p.avoidNote)}</p>
+<h2>Your Top ${d.top.length} of ${fmt(d.totals.analysed)}</h2>${bars(d.top.map((x) => ({ l: `${x.label} · ${x.group}`, v: x.score })))}
 <h2>Sector Analysis</h2>${bars(d.sectorScores.map((x) => ({ l: x.sector, v: x.score })))}
-<h2>Partnership, Name, Place & Timing</h2><p><b>Partnership:</b> ${esc(p.partnership)}</p><p><b>Business name:</b> ${esc(p.nameAdvice)}</p><p><b>Place & direction:</b> ${esc(p.placeAdvice)}</p><p><b>Timing:</b> ${esc(p.timingAdvice)}</p>
-${bars(d.timing.map((t) => ({ l: `${t.year} – personal year ${t.personalYear}: ${t.theme}`, v: t.score })))}
+<h3>Best businesses in each sector</h3><table><tbody>${d.bestBySector.map((s) => `<tr><td><b>${esc(s.sector)}</b> (${s.score})</td><td>${s.items.map((x) => `${esc(x.label)} <small>${x.score}</small>`).join(' · ')}</td></tr>`).join('')}</tbody></table>
+<h3>Strongest business groups</h3>${bars(d.groupScores.slice(0, 10).map((x) => ({ l: `${x.group} (${x.count} categories)`, v: x.score })))}
+<h2>Least Suited</h2><p>${esc(p.avoidNote)}</p><p><small>${d.avoid.map((x) => `${esc(x.label)} (${x.score})`).join(' · ')}</small></p>
+<h2>Timing, Name, Place & Partnership</h2><p><b>Timing:</b> ${esc(p.timingAdvice)}</p>${bars(d.timing.map((t) => ({ l: `${t.year} – personal year ${t.personalYear}: ${t.theme}`, v: t.score })))}
+<p><b>Business name:</b> ${esc(p.nameAdvice)}</p><p><small>Good Chaldean totals: ${d.nameTargets.map((t) => `${t.single} (${t.compounds.join(', ')})`).join(' · ')}</small></p>
+<p><b>Place & direction:</b> ${esc(p.placeAdvice)}</p><p><b>Partnership:</b> ${esc(p.partnership)}</p>
 <h2>Remedies</h2><ul>${p.remedies.map((x) => `<li>${esc(x)}</li>`).join('')}</ul><h2>Action Plan</h2><ol>${p.actionPlan.map((x) => `<li>${esc(x)}</li>`).join('')}</ol><p><i>${esc(p.closing)}</i></p>
-<p><small>Numerology offers guidance based on traditional methods. It is not financial, investment, tax or legal advice.</small></p></body></html>`;
-  const w = window.open('', '_blank'); if (!w) return; w.document.write(html); w.document.close(); setTimeout(() => w.print(), 400);
+${appendix}
+<p class="foot">Prepared by ${esc(opts.by)} · ${esc(SITE_NAME)}. Numerology offers guidance based on traditional methods. It is not financial, investment, tax or legal advice – check market demand, licences and finances with qualified professionals before investing.</p></body></html>`;
+  const w = window.open('', '_blank'); if (!w) return; w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500);
 }
 
-export function BusinessStudio() {
-  const [f, setF] = React.useState({ fullName: '', commonName: '', dob: '', gender: 'male', birthPlace: '', currentCity: '', businessName: '', mode: 'both', capital: '2', risk: 'medium', education: '', currentWork: '', goals: '', language: 'en', preparedBy: 'Acharya Nandram' });
+/** Search across all 1000+ categories and pick the ones the client is considering. */
+function ShortlistPicker({ value, onChange }: { value: string[]; onChange: (v: string[]) => void }) {
+  const [q, setQ] = React.useState('');
+  const n = q.trim().toLowerCase();
+  const hits = n.length < 2 ? [] : ITEMS.filter((x) => !value.includes(x.id) && (x.label.toLowerCase().includes(n) || x.group.toLowerCase().includes(n))).slice(0, 10);
+  const add = (id: string) => { if (value.length < 20) onChange([...value, id]); setQ(''); };
+  return (
+    <div className="space-y-2">
+      <div className="relative max-w-xl">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${fmt(BUSINESS_COUNT)} categories – e.g. café, pharmacy, transport`} className="pl-9" aria-label="Search business categories"
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (hits[0]) add(hits[0].id); } }} />
+        {hits.length > 0 && (
+          <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-md border border-border bg-background shadow-xl">
+            {hits.map((h) => <li key={h.id}><button type="button" className="w-full px-3 py-2 text-left text-sm hover:bg-gold/10" onClick={() => add(h.id)}>{h.label}<span className="block text-[11px] text-muted-foreground">{h.sector} · {h.group}</span></button></li>)}
+          </ul>
+        )}
+      </div>
+      {value.length > 0 && <div className="flex flex-wrap gap-2">{value.map((id) => <span key={id} className="inline-flex items-center gap-1 rounded-full border border-gold/60 bg-gold/15 px-3 py-1 text-xs font-medium">{ITEM_BY_ID.get(id)?.label ?? id}<button type="button" aria-label="Remove" onClick={() => onChange(value.filter((x) => x !== id))} className="text-muted-foreground hover:text-foreground"><X className="h-3 w-3" /></button></span>)}</div>}
+      <p className="text-[11px] text-muted-foreground">Up to 20. Each one gets its own score, rank and verdict in the report.</p>
+    </div>
+  );
+}
+
+/** Browse the client's ranking of every category. */
+function RankingExplorer({ d }: { d: BizAnalytics }) {
+  const [q, setQ] = React.useState(''); const [sector, setSector] = React.useState(''); const [band, setBand] = React.useState(''); const [page, setPage] = React.useState(0);
+  const PER = 30; const n = q.trim().toLowerCase();
+  const rows = React.useMemo(() => d.all.map((x, i) => ({ ...x, rank: i + 1 })).filter((x) => (!sector || x.sector === sector) && (!band || verdictOf(x.score).key === band) && (!n || x.label.toLowerCase().includes(n) || x.group.toLowerCase().includes(n))), [d, sector, band, n]);
+  React.useEffect(() => setPage(0), [sector, band, n]);
+  const pages = Math.max(1, Math.ceil(rows.length / PER));
+  return (
+    <Card title={`Full ranking – all ${fmt(d.totals.analysed)} categories`}>
+      <div className="mb-3 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+        <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search a business or group" aria-label="Search the ranking" />
+        <Select value={sector} onChange={(e) => setSector(e.target.value)} aria-label="Sector"><option value="">All sectors</option>{SECTORS.map((s) => <option key={s}>{s}</option>)}</Select>
+        <Select value={band} onChange={(e) => setBand(e.target.value)} aria-label="Verdict"><option value="">All verdicts</option><option value="excellent">Highly compatible (75+)</option><option value="good">Compatible (62–74)</option><option value="moderate">Moderate (48–61)</option><option value="weak">Not advised (&lt;48)</option></Select>
+      </div>
+      <p className="mb-2 text-xs text-muted-foreground">{fmt(rows.length)} shown · {(['excellent', 'good', 'moderate', 'weak'] as const).map((k) => `${d.all.filter((x) => verdictOf(x.score).key === k).length} ${k}`).join(' · ')}</p>
+      <div className="divide-y divide-border/40">
+        {rows.slice(page * PER, page * PER + PER).map((x) => (
+          <div key={x.id} className="grid grid-cols-[3.5rem_1fr_3rem] items-center gap-2 py-1.5 text-sm">
+            <span className="tabular-nums text-muted-foreground">#{x.rank}</span>
+            <span className="min-w-0"><span className="block truncate">{x.label}</span><span className="block truncate text-[11px] text-muted-foreground">{x.group} · numbers {x.numbers.join(', ')}{x.factors.length ? ` · ${x.factors.join(' · ')}` : ''}</span></span>
+            <span className={cn('text-right font-semibold tabular-nums', x.score >= 75 ? 'text-emerald-400' : x.score >= 62 ? 'text-gold' : x.score >= 48 ? 'text-amber-400' : 'text-rose-400')}>{x.score}</span>
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 flex items-center justify-between text-sm"><Button type="button" variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(page - 1)}><ChevronLeft className="h-4 w-4" />Prev</Button><span className="text-muted-foreground">Page {page + 1} of {pages}</span><Button type="button" variant="outline" size="sm" disabled={page >= pages - 1} onClick={() => setPage(page + 1)}>Next<ChevronRight className="h-4 w-4" /></Button></div>
+    </Card>
+  );
+}
+
+const BLANK = { fullName: '', commonName: '', dob: '', gender: 'male', birthPlace: '', currentCity: '', businessName: '', mode: 'business', capital: '2', risk: 'medium', education: '', currentWork: '', goals: '', language: 'en', preparedBy: 'Acharya Nandram' };
+
+/** Admin → Business compatibility report: separate report generator for the Business Compatibility service (1000+ categories). */
+export function BusinessStudio({ preloadedOrder, onClearPreloadedOrder }: { preloadedOrder?: Order | null; onClearPreloadedOrder?: () => void } = {}) {
+  const [f, setF] = React.useState(BLANK);
   const [interests, setInterests] = React.useState<string[]>([]);
+  const [shortlist, setShortlist] = React.useState<string[]>([]);
+  const [appendix, setAppendix] = React.useState(true);
+  const [fromOrder, setFromOrder] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (!preloadedOrder) return;
+    const dt = preloadedOrder.details ?? {};
+    const m = matchCategories(dt.businesses ?? '');
+    setF({ ...BLANK, fullName: dt.clientName ?? '', dob: dt.dob ?? '', gender: dt.gender ?? 'male', birthPlace: dt.pob ?? '', businessName: dt.currentName ?? '',
+      goals: [m.unmatched.length ? `Also considering (not in catalogue): ${m.unmatched.join(', ')}` : '', dt.questions ?? ''].filter(Boolean).join('\n').slice(0, 1000) });
+    setShortlist(m.ids); setFromOrder(`${dt.clientName ?? 'Client'} · ordered ${new Date(preloadedOrder.createdAt).toLocaleDateString('en-IN')}${dt.businesses ? ` · considering: ${dt.businesses}` : ''}`);
+    setRes(null); onClearPreloadedOrder?.();
+  }, [preloadedOrder]); // eslint-disable-line react-hooks/exhaustive-deps
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState('');
   const [res, setRes] = React.useState<Result | null>(null);
@@ -72,7 +171,7 @@ export function BusinessStudio() {
   async function run(e: React.FormEvent) {
     e.preventDefault(); setBusy(true); setErr(''); setRes(null); setSel(null);
     try {
-      const r = await api<Result>('/api/admin/business', { method: 'POST', json: { ...f, preparedBy: undefined, capital: Number(f.capital), interests,
+      const r = await api<Result>('/api/admin/business', { method: 'POST', json: { ...f, preparedBy: undefined, capital: Number(f.capital), interests, shortlist,
         commonName: f.commonName || undefined, currentCity: f.currentCity || undefined, businessName: f.businessName || undefined, education: f.education || undefined, currentWork: f.currentWork || undefined, goals: f.goals || undefined } });
       setRes(r); setTimeout(() => document.getElementById('biz-result')?.scrollIntoView({ behavior: 'smooth' }), 50);
     } catch (x) { setErr(x instanceof ApiError ? (x.body.error === 'RATE_LIMITED' ? 'Too many reports – please wait a few minutes.' : x.message) : 'Something went wrong. Please try again.'); }
@@ -84,9 +183,11 @@ export function BusinessStudio() {
   return (
     <div className="space-y-6">
       <div className="glass rounded-lg p-5">
-        <h2 className="flex items-center gap-2 text-2xl font-semibold"><Briefcase className="h-6 w-6 text-gold" />Business / Profession Compatibility</h2>
-        <p className="mt-1 text-sm text-muted-foreground">The numerology engine scores {`50+`} businesses and professions against the client&apos;s Moolank, Bhagyank, name number and Lo Shu grid, then the AI agent writes the consultation from that data. Nothing is saved.</p>
+        <h2 className="flex items-center gap-2 text-2xl font-semibold"><Briefcase className="h-6 w-6 text-gold" />Business Compatibility Report Generator</h2>
+        <p className="mt-1 text-sm text-muted-foreground">The numerology engine scores all {fmt(BUSINESS_COUNT)} business categories (plus {ITEMS.length - BUSINESS_COUNT} jobs / professions) against the client&apos;s Moolank, Bhagyank, name number and Lo Shu grid, gives each business the client is considering its own verdict, and the AI agent writes the consultation from that data. Print / Save PDF gives the branded client report. Nothing is saved.</p>
+        <p className="mt-2 text-xs text-muted-foreground">Paid orders for the Business Compatibility service open here from Services → Orders → Generate Report.</p>
       </div>
+      {fromOrder && <div className="glass flex flex-wrap items-center gap-2 rounded-lg border border-gold/50 p-3 text-sm"><ClipboardList className="h-4 w-4 text-gold" /><span>Loaded from service order: {fromOrder}. Check the details, then generate.</span><button type="button" className="ml-auto text-xs text-muted-foreground hover:text-foreground" onClick={() => setFromOrder(null)}>Dismiss</button></div>}
 
       <form onSubmit={run} className="glass space-y-6 rounded-lg p-5">
         <section className="space-y-3"><h3 className="font-serif text-lg font-semibold text-gold">1. Client</h3>
@@ -101,7 +202,7 @@ export function BusinessStudio() {
         </section>
         <section className="space-y-3"><h3 className="font-serif text-lg font-semibold text-gold">2. Business parameters</h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Field label="Looking for" htmlFor="bz-m"><Select id="bz-m" value={f.mode} onChange={set('mode')}><option value="both">Business or profession</option><option value="business">Own business</option><option value="profession">Job / profession</option></Select></Field>
+            <Field label="Looking for" htmlFor="bz-m"><Select id="bz-m" value={f.mode} onChange={set('mode')}><option value="business">Own business</option><option value="both">Business or job</option><option value="profession">Job / profession</option></Select></Field>
             <Field label="Capital available" htmlFor="bz-c"><Select id="bz-c" value={f.capital} onChange={set('capital')}><option value="1">Low (up to ₹5 lakh)</option><option value="2">Medium (₹5–50 lakh)</option><option value="3">High (above ₹50 lakh)</option></Select></Field>
             <Field label="Risk appetite" htmlFor="bz-r"><Select id="bz-r" value={f.risk} onChange={set('risk')}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></Select></Field>
             <Field label="Report language" htmlFor="bz-l"><Select id="bz-l" value={f.language} onChange={set('language')}><option value="en">English</option><option value="hi">हिंदी</option><option value="hinglish">Hinglish</option></Select></Field>
@@ -112,9 +213,11 @@ export function BusinessStudio() {
           <div><p className="mb-2 text-sm font-medium">Interested sectors</p><div className="flex flex-wrap gap-2">{SECTORS.map((s) => <button key={s} type="button" aria-pressed={interests.includes(s)} onClick={() => setInterests(interests.includes(s) ? interests.filter((x) => x !== s) : [...interests, s])} className={cn('rounded-full border px-3 py-1.5 text-xs', interests.includes(s) ? 'border-gold bg-gold/20 font-semibold' : 'border-border hover:bg-muted')}>{s}</button>)}</div></div>
           <Field label="Goals / notes for the agent" htmlFor="bz-gl"><textarea id="bz-gl" rows={3} maxLength={1000} value={f.goals} onChange={set('goals')} placeholder="e.g. Wants to leave job in 2 years, family has a cloth shop, prefers low-risk…" className="w-full rounded-md border border-input bg-background/70 px-3 py-2 text-sm" /></Field>
         </section>
+        <section className="space-y-3"><h3 className="font-serif text-lg font-semibold text-gold">3. Businesses the client is considering</h3><ShortlistPicker value={shortlist} onChange={setShortlist} /></section>
         <div className="flex flex-wrap items-center gap-3">
           <Button type="submit" disabled={busy || !f.fullName || !f.dob || !f.birthPlace}>{busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}{busy ? 'Agent is analysing…' : 'Generate compatibility report'}</Button>
           <label className="flex items-center gap-2 text-sm text-muted-foreground">Prepared by<Input value={f.preparedBy} onChange={set('preparedBy')} className="w-52" /></label>
+          <label className="flex items-center gap-2 text-sm text-muted-foreground"><input type="checkbox" checked={appendix} onChange={(e) => setAppendix(e.target.checked)} />Add full ranking appendix to PDF</label>
           {err && <p className="text-sm text-danger" role="alert">{err}</p>}
         </div>
       </form>
@@ -125,7 +228,7 @@ export function BusinessStudio() {
             <Badge tone={res.source === 'ai' ? 'gold' : 'default'}><Bot className="mr-1 inline h-3 w-3" />{res.source === 'ai' ? `AI agent${res.model ? ` · ${res.model}` : ''}` : 'Built-in analyst'}</Badge>
             {res.note && <span className="text-muted-foreground">{res.note}</span>}
             <div className="ml-auto flex gap-2"><Button type="button" variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(asText(f.fullName, res))}><Copy className="mr-1 h-4 w-4" />Copy text</Button>
-              <Button type="button" size="sm" onClick={() => printReport(f.fullName, res, f.preparedBy || 'Acharya Nandram')}><Printer className="mr-1 h-4 w-4" />Print / Save PDF</Button></div>
+              <Button type="button" size="sm" onClick={() => printReport(f.fullName, res, { by: f.preparedBy || 'Acharya Nandram', appendix, meta: { dob: f.dob ? new Date(`${f.dob}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : '', place: f.birthPlace, business: f.businessName || undefined } })}><Printer className="mr-1 h-4 w-4" />Print / Save PDF</Button></div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -134,11 +237,23 @@ export function BusinessStudio() {
             <Kpi label="Name number" value={`${d.person.nameCompound}/${d.person.nameNumber}`} sub={REL[d.person.nameToBhagyank]} />
             <Kpi label="Best match" value={d.top[0].score} sub={d.top[0].label} />
             <Kpi label="Personal year" value={d.currentYear.personalYear} sub={`Launch score ${d.currentYear.score}`} />
-            <Kpi label="Birth place" value={d.places.birth ? d.places.birth.single : '–'} sub={d.places.birth ? REL[d.places.birth.toBhagyank] : ''} />
+            <Kpi label="Categories analysed" value={fmt(d.totals.analysed)} sub={`Best sector: ${d.sectorScores[0].sector}`} />
           </div>
 
           <Card title={p.headline}><p className="text-sm leading-relaxed text-muted-foreground">{p.summary}</p>
             <ul className="mt-3 space-y-1.5 text-sm">{p.businessPersonality.map((x) => <li key={x} className="flex gap-2"><span className="text-gold">✦</span>{x}</li>)}</ul></Card>
+
+          {d.checked.length > 0 && (
+            <Card title="Businesses the client is considering">
+              <div className="grid gap-3 md:grid-cols-2">{d.checked.map((c) => (
+                <div key={c.id} className={cn('rounded-xl border p-4', c.score >= 75 ? 'border-emerald-400/50 bg-emerald-500/10' : c.score >= 62 ? 'border-gold/50 bg-gold/10' : c.score >= 48 ? 'border-amber-400/50 bg-amber-500/10' : 'border-rose-400/50 bg-rose-500/10')}>
+                  <div className="flex items-start justify-between gap-2"><p className="font-serif text-lg font-semibold">{c.label}</p><span className="text-xl font-bold text-gold">{c.score}</span></div>
+                  <p className="text-sm font-semibold">{c.verdict.en} · rank {fmt(c.rank)} of {fmt(d.totals.analysed)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{c.group} · numbers {c.numbers.join(', ')}{c.factors.length ? ` · ${c.factors.join(' · ')}` : ''}</p>
+                </div>))}</div>
+              {p.shortlistAdvice && <p className="mt-3 text-sm">{p.shortlistAdvice}</p>}
+            </Card>
+          )}
 
           <Card title="Top recommendations">
             <div className="grid gap-3 md:grid-cols-2">{p.topPicks.map((t, i) => (
@@ -163,8 +278,12 @@ export function BusinessStudio() {
                 <div>{d.numberStrength.map((x) => <Bar key={x.n} label={`${x.n} · ${x.planet}`} value={x.score} />)}</div>
               </div>
             </Card>
+            <Card title="Strongest business groups">{d.groupScores.slice(0, 10).map((x) => <Bar key={x.group} label={<>{x.group} <span className="text-[10px] text-muted-foreground">· {x.count}</span></>} value={x.score} />)}</Card>
+            <Card title="Best businesses in each sector"><ul className="space-y-2 text-sm">{d.bestBySector.map((s) => <li key={s.sector}><span className="font-semibold">{s.sector}</span> <span className="text-gold">{s.score}</span><span className="block text-xs text-muted-foreground">{s.items.map((x) => `${x.label} (${x.score})`).join(' · ')}</span></li>)}</ul></Card>
             <Card title="Life-area scores">{Object.entries(d.lifeAreas).map(([k, v]) => <Bar key={k} label={k.replace(/([A-Z])/g, ' $1').replace(/^./, (c) => c.toUpperCase())} value={v} />)}</Card>
           </div>
+
+          <RankingExplorer d={d} />
 
           <Card title="Timing – best years to launch or expand">
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-9">{d.timing.map((t) => (
