@@ -25,7 +25,13 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image', title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 } },
   formatDetection: { telephone: false },
-  verification: { google: process.env.GOOGLE_SITE_VERIFICATION || 'google0e19ae8949867d4f', other: process.env.BING_SITE_VERIFICATION ? { 'msvalidate.01': process.env.BING_SITE_VERIFICATION } : undefined },
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || 'google0e19ae8949867d4f',
+    other: {
+      ...(process.env.BING_SITE_VERIFICATION ? { 'msvalidate.01': process.env.BING_SITE_VERIFICATION } : {}),
+      'p:domain_verify': '933ba6d5cccc2457a68c478bc61d2a85',
+    },
+  },
   category: 'Spirituality',
 };
 export const viewport: Viewport = { width: 'device-width', initialScale: 1, themeColor: '#140f2b' };
