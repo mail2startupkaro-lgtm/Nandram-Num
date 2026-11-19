@@ -1,5 +1,5 @@
 /** Signature analysis: pixel measurements on synthetic signatures, numerology facts and the offline analyst. */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { classifyMetrics, combineSamples, consistencyScore, measureSignature, type GrayImage } from '@/lib/signature/measure';
 import { signatureNumbers, signingVariants } from '@/lib/signature/numbers';
 import { effectiveFeatures, engineScores, ruleBasedAnalysis, runSignatureAgent, AnalysisSchema } from '@/lib/signature/agent';
@@ -101,6 +101,37 @@ describe('offline analyst and report', () => {
     expect(r.source).toBe('rules');
     expect(AnalysisSchema.safeParse(r.analysis).success).toBe(true);
     expect(r.analysis.corrections.map((c) => c.title).join(' | ')).toMatch(/cutting through|baseline rise|full stop/i);
+  });
+  it('calls Gemini vision when GEMINI_API_KEY is configured and parses valid JSON', async () => {
+    const aiPayload = {
+      overallScore: 82,
+      headline: 'A dynamic, ambitious signature with strong momentum',
+      summary: 'The signature reflects strong executive presence, a sharp rising angle, and clear determination to expand in business.',
+      observations: [{ featureId: 'baseline', feature: 'Baseline', observed: 'Rising +12°', meaning: 'Optimistic growth mindset', impact: 'positive', confidence: 'high' }],
+      personality: ['Natural leadership qualities and self-starter mindset.'],
+      career: { fit: 'High synergy with commerce and management.', advice: 'Maintain consistent flow in legal and financial contracts.' },
+      finance: 'Supportive of steady wealth accumulation.',
+      relationships: 'Transparent and communicative.',
+      strengths: ['Rising baseline indicates progress'],
+      watchouts: ['Keep the first letter prominent'],
+      corrections: [{ title: 'Maintain the upward flourish', detail: 'Keep the 10-15 degree ascending angle intact.', priority: 'high' }],
+      idealSignature: { steps: ['Sign with steady ascending line'], startDay: 'Wednesday', inkColour: 'Blue or Black', practice: 'Practice 21 times daily' },
+      closing: 'Your signature channels your inner planetary strength.',
+    };
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({
+      candidates: [{ content: { parts: [{ text: JSON.stringify(aiPayload) }] } }],
+    }), { status: 200 }));
+    const r = await runSignatureAgent(input, n, {
+      env: { LLM_PROVIDER: 'gemini', GEMINI_API_KEY: 'test-gemini-key', LLM_MODEL: 'gemini-2.0-flash' },
+      fetchImpl: fetchMock as unknown as typeof fetch,
+    });
+    expect(r.source).toBe('ai');
+    expect(r.model).toBe('gemini-2.0-flash');
+    expect(r.analysis.headline).toBe('A dynamic, ambitious signature with strong momentum');
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toContain('models/gemini-2.0-flash:generateContent?key=test-gemini-key');
+    const body = JSON.parse(String(init.body));
+    expect(body.generationConfig.responseMimeType).toBe('application/json');
   });
   it('builds a 5-section report in English and Hindi with escaped text', () => {
     const fs = effectiveFeatures(input);

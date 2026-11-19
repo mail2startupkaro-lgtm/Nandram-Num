@@ -158,6 +158,32 @@ function extractJson(text: string): unknown {
 async function callVision(cfg: LlmConfig, model: string, system: string, text: string, images: SigImage[], fetchImpl: typeof fetch): Promise<string> {
   const ctrl = new AbortController(); const timer = setTimeout(() => ctrl.abort(), Math.max(cfg.timeoutMs, 90000));
   try {
+    if (cfg.provider === 'gemini') {
+      const parts = [
+        ...images.map((im) => ({
+          inlineData: { mimeType: im.mediaType, data: im.base64 },
+        })),
+        { text },
+      ];
+      const url = `${cfg.baseUrl ?? 'https://generativelanguage.googleapis.com'}/v1beta/models/${model}:generateContent?key=${cfg.apiKey}`;
+      const res = await fetchImpl(url, {
+        method: 'POST',
+        signal: ctrl.signal,
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts }],
+          systemInstruction: { parts: [{ text: system }] },
+          generationConfig: {
+            temperature: 0.2,
+            maxOutputTokens: 4500,
+            responseMimeType: 'application/json',
+          },
+        }),
+      });
+      if (!res.ok) throw new Error(`LLM HTTP ${res.status}`);
+      const j = await res.json();
+      return (j.candidates?.[0]?.content?.parts ?? []).map((p: { text?: string }) => p.text ?? '').join('\n');
+    }
     if (cfg.provider === 'anthropic') {
       const content = [...images.map((im) => ({ type: 'image', source: { type: 'base64', media_type: im.mediaType, data: im.base64 } })), { type: 'text', text }];
       const res = await fetchImpl(`${cfg.baseUrl ?? 'https://api.anthropic.com'}/v1/messages`, { method: 'POST', signal: ctrl.signal,

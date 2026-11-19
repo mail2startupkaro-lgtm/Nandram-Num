@@ -17,7 +17,7 @@ export interface LlmProvider {
 }
 
 export interface LlmConfig {
-  provider: 'anthropic' | 'openai' | 'template';
+  provider: 'gemini' | 'anthropic' | 'openai' | 'template';
   model: string;
   apiKey?: string;
   temperature: number;
@@ -26,12 +26,12 @@ export interface LlmConfig {
 }
 
 export function configFromEnv(env: Record<string, string | undefined> = process.env): LlmConfig {
-  const provider = (env.LLM_PROVIDER ?? (env.ANTHROPIC_API_KEY ? 'anthropic' : env.OPENAI_API_KEY ? 'openai' : 'template')) as LlmConfig['provider'];
+  const provider = (env.LLM_PROVIDER ?? (env.GEMINI_API_KEY || env.GOOGLE_API_KEY ? 'gemini' : env.ANTHROPIC_API_KEY ? 'anthropic' : env.OPENAI_API_KEY ? 'openai' : 'template')) as LlmConfig['provider'];
   const t = Number(env.LLM_TEMPERATURE ?? 0.5);
   return {
     provider,
-    model: env.LLM_MODEL ?? '',
-    apiKey: provider === 'anthropic' ? env.ANTHROPIC_API_KEY : provider === 'openai' ? env.OPENAI_API_KEY : undefined,
+    model: env.LLM_MODEL ?? (provider === 'gemini' ? 'gemini-2.0-flash' : ''),
+    apiKey: provider === 'gemini' ? (env.GEMINI_API_KEY || env.GOOGLE_API_KEY) : provider === 'anthropic' ? env.ANTHROPIC_API_KEY : provider === 'openai' ? env.OPENAI_API_KEY : undefined,
     temperature: Math.min(0.6, Math.max(0.4, Number.isFinite(t) ? t : 0.5)),
     timeoutMs: Number(env.LLM_TIMEOUT_MS ?? 45000),
     baseUrl: env.LLM_BASE_URL,
@@ -82,7 +82,35 @@ export class OpenAIProvider implements LlmProvider {
   }
 }
 
+export class GeminiProvider implements LlmProvider {
+  readonly id = 'gemini';
+  constructor(private cfg: LlmConfig, private fetchImpl: typeof fetch = fetch) {
+    if (!cfg.apiKey) throw new Error('GEMINI_API_KEY missing');
+    if (!cfg.model) throw new Error('LLM_MODEL missing');
+  }
+  get model() { return this.cfg.model; }
+  async complete(req: LlmRequest): Promise<string> {
+    const url = `${this.cfg.baseUrl ?? 'https://generativelanguage.googleapis.com'}/v1beta/models/${this.cfg.model}:generateContent?key=${this.cfg.apiKey}`;
+    const json = await postJson(url,
+      {},
+      {
+        contents: req.messages.map((m) => ({
+          role: m.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: m.content }],
+        })),
+        systemInstruction: req.system ? { parts: [{ text: req.system }] } : undefined,
+        generationConfig: {
+          temperature: this.cfg.temperature,
+          maxOutputTokens: req.maxTokens,
+        },
+      },
+      this.cfg.timeoutMs, this.fetchImpl);
+    return (json.candidates?.[0]?.content?.parts ?? []).map((p: { text?: string }) => p.text ?? '').join('\n').trim();
+  }
+}
+
 export function providerFromConfig(cfg: LlmConfig, fetchImpl?: typeof fetch): LlmProvider | null {
+  if (cfg.provider === 'gemini') return new GeminiProvider(cfg, fetchImpl);
   if (cfg.provider === 'anthropic') return new AnthropicProvider(cfg, fetchImpl);
   if (cfg.provider === 'openai') return new OpenAIProvider(cfg, fetchImpl);
   return null; // template writer

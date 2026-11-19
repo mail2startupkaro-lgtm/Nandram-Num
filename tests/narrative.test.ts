@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { generateNumerology, verhoeffCheckDigit } from '@/lib/numerology';
 import {
-  AnthropicProvider, BANNED_TERMS, buildPlan, checkNumbers, clientContext, collectNumbers, configFromEnv, forbiddenHits,
+  AnthropicProvider, GeminiProvider, BANNED_TERMS, buildPlan, checkNumbers, clientContext, collectNumbers, configFromEnv, forbiddenHits,
   generateNarrative, MemoryCache, numbersInText, postProcess, systemPrompt, type LlmProvider,
 } from '@/lib/narrative';
 import { KNOWLEDGE_SEED } from '@/lib/narrative/knowledge/seed';
@@ -151,10 +151,21 @@ describe('LLM path (mocked provider)', () => {
     const body = JSON.parse(String(init.body));
     expect(body).toMatchObject({ model: 'test-model', system: 'S', temperature: 0.5, max_tokens: 100 });
   });
+  it('Gemini provider sends the expected request and reads output', async () => {
+    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: 'Namaste from Gemini' }] } }] }), { status: 200 }));
+    const p = new GeminiProvider({ provider: 'gemini', model: 'gemini-2.0-flash', apiKey: 'test-key', temperature: 0.5, timeoutMs: 1000 }, fetchMock as unknown as typeof fetch);
+    expect(await p.complete({ system: 'S', messages: [{ role: 'user', content: 'U' }], maxTokens: 100 })).toBe('Namaste from Gemini');
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toContain('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=test-key');
+    const body = JSON.parse(String(init.body));
+    expect(body).toMatchObject({ contents: [{ role: 'user', parts: [{ text: 'U' }] }], systemInstruction: { parts: [{ text: 'S' }] } });
+  });
   it('env config clamps temperature to 0.4–0.6 and defaults to the template writer', () => {
     expect(configFromEnv({ LLM_TEMPERATURE: '0.9' }).temperature).toBe(0.6);
     expect(configFromEnv({}).provider).toBe('template');
     expect(configFromEnv({ ANTHROPIC_API_KEY: 'x' }).provider).toBe('anthropic');
+    expect(configFromEnv({ GEMINI_API_KEY: 'x' }).provider).toBe('gemini');
+    expect(configFromEnv({ GOOGLE_API_KEY: 'x' }).provider).toBe('gemini');
   });
 });
 
