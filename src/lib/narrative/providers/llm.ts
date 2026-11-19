@@ -30,7 +30,7 @@ export function configFromEnv(env: Record<string, string | undefined> = process.
   const t = Number(env.LLM_TEMPERATURE ?? 0.5);
   return {
     provider,
-    model: env.LLM_MODEL ?? (provider === 'gemini' ? 'gemini-2.0-flash' : ''),
+    model: env.LLM_MODEL ?? (provider === 'gemini' ? 'gemini-3-flash-preview' : ''),
     apiKey: provider === 'gemini' ? (env.GEMINI_API_KEY || env.GOOGLE_API_KEY) : provider === 'anthropic' ? env.ANTHROPIC_API_KEY : provider === 'openai' ? env.OPENAI_API_KEY : undefined,
     temperature: Math.min(0.6, Math.max(0.4, Number.isFinite(t) ? t : 0.5)),
     timeoutMs: Number(env.LLM_TIMEOUT_MS ?? 45000),
