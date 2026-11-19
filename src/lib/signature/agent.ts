@@ -165,7 +165,7 @@ async function callVision(cfg: LlmConfig, model: string, system: string, text: s
         })),
         { text },
       ];
-      const url = `${cfg.baseUrl ?? 'https://generativelanguage.googleapis.com'}/v1beta/models/${model}:generateContent?key=${cfg.apiKey}`;
+      const url = `${cfg.baseUrl || 'https://generativelanguage.googleapis.com'}/v1beta/models/${model}:generateContent?key=${cfg.apiKey}`;
       const res = await fetchImpl(url, {
         method: 'POST',
         signal: ctrl.signal,

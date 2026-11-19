@@ -34,7 +34,7 @@ export function configFromEnv(env: Record<string, string | undefined> = process.
     apiKey: provider === 'gemini' ? (env.GEMINI_API_KEY || env.GOOGLE_API_KEY) : provider === 'anthropic' ? env.ANTHROPIC_API_KEY : provider === 'openai' ? env.OPENAI_API_KEY : undefined,
     temperature: Math.min(0.6, Math.max(0.4, Number.isFinite(t) ? t : 0.5)),
     timeoutMs: Number(env.LLM_TIMEOUT_MS ?? 45000),
-    baseUrl: env.LLM_BASE_URL,
+    baseUrl: env.LLM_BASE_URL?.trim() || undefined,
   };
 }
 
@@ -58,7 +58,7 @@ export class AnthropicProvider implements LlmProvider {
   }
   get model() { return this.cfg.model; }
   async complete(req: LlmRequest): Promise<string> {
-    const json = await postJson(`${this.cfg.baseUrl ?? 'https://api.anthropic.com'}/v1/messages`,
+    const json = await postJson(`${this.cfg.baseUrl || 'https://api.anthropic.com'}/v1/messages`,
       { 'x-api-key': this.cfg.apiKey!, 'anthropic-version': '2023-06-01' },
       { model: this.cfg.model, max_tokens: req.maxTokens, temperature: this.cfg.temperature, system: req.system, messages: req.messages },
       this.cfg.timeoutMs, this.fetchImpl);
@@ -74,7 +74,7 @@ export class OpenAIProvider implements LlmProvider {
   }
   get model() { return this.cfg.model; }
   async complete(req: LlmRequest): Promise<string> {
-    const json = await postJson(`${this.cfg.baseUrl ?? 'https://api.openai.com'}/v1/chat/completions`,
+    const json = await postJson(`${this.cfg.baseUrl || 'https://api.openai.com'}/v1/chat/completions`,
       { authorization: `Bearer ${this.cfg.apiKey}` },
       { model: this.cfg.model, max_tokens: req.maxTokens, temperature: this.cfg.temperature, messages: [{ role: 'system', content: req.system }, ...req.messages] },
       this.cfg.timeoutMs, this.fetchImpl);
@@ -90,7 +90,7 @@ export class GeminiProvider implements LlmProvider {
   }
   get model() { return this.cfg.model; }
   async complete(req: LlmRequest): Promise<string> {
-    const url = `${this.cfg.baseUrl ?? 'https://generativelanguage.googleapis.com'}/v1beta/models/${this.cfg.model}:generateContent?key=${this.cfg.apiKey}`;
+    const url = `${this.cfg.baseUrl || 'https://generativelanguage.googleapis.com'}/v1beta/models/${this.cfg.model}:generateContent?key=${this.cfg.apiKey}`;
     const json = await postJson(url,
       {},
       {
