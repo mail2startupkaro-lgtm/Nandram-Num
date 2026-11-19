@@ -31,6 +31,8 @@ export const SAMPLE_NUMBERS = {
   business: [{ name: 'Riya Interiors', compound: 35, single: 8, score: null as number | null }, { name: 'Sharma Interiors', compound: 46, single: 1, score: 100 }, { name: 'Riiyaa Interiors', compound: 37, single: 1, score: 100 }],
   bizCompat: { analysed: 1335, top: [['online-reputation-management', 89], ['led-lights-trading', 87], ['solar-panel-dealer', 87]] as [string, number][], sectors: [['Technology & Media', 88], ['Trade & Retail', 87]] as [string, number][],
     shortlist: [['digital-marketing-agency', 77, 190], ['interior-design-firm', 68, 642], ['petrol-pump', 39, 1325]] as [string, number, number][], launchYears: [2026, 2029] },
+  signature: { signedAs: 'Riya S', signCompound: 8, signSingle: 8, fullCompound: 21, fullSingle: 3, letter: 'R', letterValue: 2, weekday: 'Tuesday',
+    options: [['Riya Sharma', 21, 3, 90], ['Riya', 5, 5, 84], ['R. S.', 5, 5, 84], ['Riya S.', 8, 8, 12]] as [string, number, number, number][], dates: ['2026-12-01', '2026-12-15'] },
   months: [[11, 2026, 7], [12, 2026, 8], [1, 2027, 6], [2, 2027, 7], [3, 2027, 8], [4, 2027, 9], [5, 2027, 1], [6, 2027, 2], [7, 2027, 3]] as [number, number, number][],
 };
 
@@ -177,6 +179,35 @@ export const SERVICE_SAMPLES: ServiceSample[] = [
       { h: l('2. Month by month', '2. माह-दर-माह'), p: { en: ['Personal month numbers for the coming months:'], hi: ['आने वाले महीनों के व्यक्तिगत माह अंक:'] },
         rows: [{ k: l('Nov 2026 · 7', 'नवं 2026 · 7'), v: l('Pause, review, learn', 'रुकें, समीक्षा करें, सीखें') }, { k: l('Dec 2026 · 8', 'दिस 2026 · 8'), v: l('Money and career push', 'धन और करियर में ज़ोर') }, { k: l('Jan 2027 · 6', 'जन 2027 · 6'), v: l('Family, home matters', 'परिवार, घर के काम') }, { k: l('May 2027 · 1', 'मई 2027 · 1'), v: l('Best month to launch', 'शुरुआत का सबसे अच्छा महीना') }] },
       { h: l('3. Dates for your decisions', '3. आपके निर्णयों की तिथियाँ'), p: { en: ['Dates adding to 1 or 5 (1, 5, 10, 14, 19, 23, 28) suit signing and starting. Your own questions are answered on call or WhatsApp.'], hi: ['1 या 5 योग वाली तिथियाँ (1, 5, 10, 14, 19, 23, 28) हस्ताक्षर और शुरुआत के लिए उपयुक्त हैं। आपके प्रश्नों के उत्तर कॉल या WhatsApp पर।'] } },
+    ],
+  },
+  {
+    code: 'SVC_SIGNATURE', open: 2, client: l('Riya Sharma · Female · DOB 14 Aug 1992 · signs as “Riya S.”', 'रिया शर्मा · महिला · जन्म तिथि 14 अगस्त 1992 · हस्ताक्षर “Riya S.”'),
+    title: l('Signature Analysis Report – sample pages', 'हस्ताक्षर विश्लेषण रिपोर्ट – नमूना पृष्ठ'),
+    tiles: [{ k: l('Signed name', 'हस्ताक्षर-नाम'), v: '8/8', note: l('not friendly to 7', '7 का शत्रु') }, { k: l('Better form', 'बेहतर रूप'), v: '21/3' }, { k: l('First letter', 'पहला अक्षर'), v: 'R = 2' }, { k: l('Start day', 'आरंभ दिवस'), v: 'Tue' }],
+    sections: [
+      { h: l('1. What the signature shows', '1. हस्ताक्षर क्या दर्शाता है'), p: { en: ['Riya’s signature was measured from two samples (consistency 92/100):'], hi: ['रिया के हस्ताक्षर को दो नमूनों से मापा गया (एकरूपता 92/100):'] },
+        rows: [
+          { k: l('Baseline', 'आधार रेखा'), v: l('Falls about 9° – tiredness or discouragement; needs attention', 'लगभग 9° नीचे गिरती है – थकान या निराशा; ध्यान दें') },
+          { k: l('First letter R', 'पहला अक्षर R'), v: l('Same height as the rest – achievements may not get due credit', 'बाकी अक्षरों जितना – उपलब्धियों को उचित श्रेय न मिलना') },
+          { k: l('Slant', 'झुकाव'), v: l('Mixed – forward at the start, backward at the end; reactions can be hard to predict', 'मिश्रित – शुरुआत में आगे, अंत में पीछे; प्रतिक्रियाएँ अनुमान से बाहर हो सकती हैं') },
+          { k: l('Ending', 'अंत'), v: l('Falls away and ends with a full stop – believed to stop the flow', 'नीचे गिरकर पूर्ण विराम पर समाप्त – प्रवाह रुकने का संकेत') },
+        ] },
+      { h: l('2. Numerology of the signed name', '2. हस्ताक्षर-नाम का अंक ज्योतिष'), p: {
+        en: ['Bhagyank 7 (Ketu), Moolank 5 (Mercury). “Riya S.” totals 8 in Chaldean numerology – a number that is not friendly to Bhagyank 7 and is heavy for this chart. The full name “Riya Sharma” totals 21/3, the Crown of the Magi – advancement and victory after effort. The first letter R (2, Moon) is friendly to the Bhagyank.'],
+        hi: ['भाग्यांक 7 (केतु), मूलांक 5 (बुध)। कैल्डियन अंक ज्योतिष में “Riya S.” का योग 8 है – यह अंक भाग्यांक 7 का मित्र नहीं है और इस चार्ट के लिए भारी है। पूरा नाम “Riya Sharma” 21/3 है – मैगी का मुकुट, प्रयास के बाद उन्नति और विजय। पहला अक्षर R (2, चंद्र) भाग्यांक का मित्र है।'] } },
+      { h: l('3. The best way to sign – ranked', '3. हस्ताक्षर का सबसे अच्छा तरीका – क्रमवार'), p: { en: ['Each way of writing the name, scored for Riya’s numbers:'], hi: ['नाम लिखने का हर तरीका, रिया के अंकों के अनुसार स्कोर:'] },
+        rows: [
+          { k: l('Riya Sharma', 'Riya Sharma'), v: l('21/3 · favourable · 90 – recommended', '21/3 · शुभ · 90 – अनुशंसित') },
+          { k: l('Riya', 'Riya'), v: l('5 · favourable · 84', '5 · शुभ · 84') },
+          { k: l('Riya S. (current)', 'Riya S. (वर्तमान)'), v: l('8 · not friendly · 12 – change', '8 · शत्रु · 12 – बदलें') },
+        ] },
+      { h: l('4. Corrections, in order of priority', '4. सुधार, प्राथमिकता क्रम में'), p: {
+        en: ['Sign the full name “Riya Sharma”; let the baseline rise gently (10–15°); make the R about 1.5× taller; drop the full stop and finish with a light upward stroke.'],
+        hi: ['पूरा नाम “Riya Sharma” लिखें; आधार रेखा को धीरे-धीरे ऊपर उठने दें (10–15°); R को लगभग 1.5 गुना ऊँचा करें; पूर्ण विराम हटाएँ और हल्के ऊपर जाते स्ट्रोक से समाप्त करें।'] } },
+      { h: l('5. Ideal signature, start dates & 21-day chart', '5. आदर्श हस्ताक्षर, आरंभ तिथियाँ और 21 दिन का चार्ट'), p: {
+        en: ['Start on a Tuesday – suggested dates 1 Dec and 15 Dec 2026 – and practise daily for 21 days with the tick-box chart in the report. Blue or black ink for documents.'],
+        hi: ['मंगलवार से शुरू करें – सुझाई गई तिथियाँ 1 दिसंबर और 15 दिसंबर 2026 – और रिपोर्ट के चार्ट के साथ 21 दिन रोज़ अभ्यास करें। दस्तावेज़ों के लिए नीली या काली स्याही।'] } },
     ],
   },
 ];

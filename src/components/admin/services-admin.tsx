@@ -65,7 +65,7 @@ function OrderCard({ o, name, onChanged, onGenerateReport }: { o: Order; name: s
           <p className="text-xs text-muted-foreground">{o.payment.paidAt ? `Paid ${new Date(o.payment.paidAt).toLocaleString('en-IN')}` : new Date(o.createdAt).toLocaleString('en-IN')} · {formatMoney(o.payment.amountPaise, o.payment.currency === 'USD' ? 'USD' : 'INR')}{o.payment.invoiceNumber ? ` · ${o.payment.invoiceNumber}` : ''} · billed to {o.payment.billingName ?? '—'}</p></div>
         <div className="flex flex-wrap items-center gap-2">
           {onGenerateReport && (
-            <Button size="sm" variant="gold" onClick={() => onGenerateReport(o)} title={o.serviceCode === 'SVC_BUSINESS_COMPAT' ? 'Open in the Business compatibility report generator' : 'Generate tailored service report in Report Studio'}>
+            <Button size="sm" variant="gold" onClick={() => onGenerateReport(o)} title={o.serviceCode === 'SVC_BUSINESS_COMPAT' ? 'Open in the Business compatibility report generator' : o.serviceCode === 'SVC_SIGNATURE' ? 'Open in Signature analysis with the client details filled in' : 'Generate tailored service report in Report Studio'}>
               <Sparkles className="h-4 w-4" /> Generate Report
             </Button>
           )}

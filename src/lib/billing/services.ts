@@ -81,6 +81,13 @@ export const DEFAULT_SERVICES: (typeof services.$inferInsert)[] = [
     hi: t('व्यक्तिगत वर्ष परामर्श', 'अपने व्यक्तिगत वर्ष, माह और दिन के अंकों से आने वाले वर्ष की योजना बनाएँ – कब शुरुआत करें, कब प्रतीक्षा करें और कब बड़े निर्णय लें।',
       ['जन्मदिन से जन्मदिन तक आपके व्यक्तिगत वर्ष का विषय', 'अगले 12 महीनों के लिए माह-दर-माह मार्गदर्शन', 'आपके बताए महत्वपूर्ण निर्णयों के लिए शुभ तिथियाँ', 'वर्ष को सहारा देने वाले उपाय', 'कॉल या WhatsApp पर आपके प्रश्नों के व्यक्तिगत उत्तर'], '3 कार्य-दिवसों के भीतर समय तय'),
   },
+  {
+    code: 'SVC_SIGNATURE', sort: 10, featured: false, pricePaise: 475_00, mrpPaise: 2_475_00, priceConfirmed: true, intake: ['clientName', 'dob', 'gender', 'currentName', 'questions'],
+    en: t('Signature Analysis & Correction', 'Your signature read with graphology and numerology – what it reveals, what may be holding you back, and a corrected signature to practise.',
+      ['11 signature features checked: baseline, slant, size, first letter, cutting strokes, ending, dots and more', 'Numerology of your signed name and first letter with your Moolank and Bhagyank', 'The best way to sign your name – ranked options', 'Personality, career and money indications from your signature', 'Step-by-step ideal signature with do\'s and don\'ts', 'Start dates, ink colour and a 21-day practice chart', 'Designed PDF report prepared by Acharya Nandram'], 'PDF within 1–2 working days of receiving your signature photos'),
+    hi: t('हस्ताक्षर विश्लेषण और सुधार', 'हस्तलेख विज्ञान और अंक ज्योतिष से आपके हस्ताक्षर की रीडिंग – यह क्या दर्शाता है, क्या आपको रोक रहा हो सकता है, और अभ्यास के लिए सुधारा हुआ हस्ताक्षर।',
+      ['हस्ताक्षर की 11 विशेषताओं की जाँच: आधार रेखा, झुकाव, आकार, पहला अक्षर, काटती रेखाएँ, अंत, बिंदु और अधिक', 'आपके हस्ताक्षर-नाम और पहले अक्षर का अंक ज्योतिष, मूलांक और भाग्यांक के साथ', 'नाम लिखने का सबसे अच्छा तरीका – क्रमवार विकल्प', 'हस्ताक्षर से व्यक्तित्व, करियर और धन के संकेत', 'करें और न करें सहित आदर्श हस्ताक्षर चरण-दर-चरण', 'शुभ आरंभ तिथियाँ, स्याही का रंग और 21 दिन का अभ्यास चार्ट', 'आचार्य नंदराम द्वारा तैयार डिज़ाइन की हुई PDF रिपोर्ट'], 'हस्ताक्षर की फ़ोटो मिलने के 1–2 कार्य-दिवसों में PDF'),
+  },
 ];
 
 /**
@@ -91,6 +98,7 @@ const SEED_BATCHES: string[][] = [
   ['SVC_PERSONAL_REPORT', 'SVC_NAME_CORRECTION', 'SVC_MOBILE_NUMBER', 'SVC_BABY_NAME'],
   ['SVC_LOSHU', 'SVC_COUPLE', 'SVC_BUSINESS_NAME', 'SVC_PERSONAL_YEAR'],
   ['SVC_BUSINESS_COMPAT'],
+  ['SVC_SIGNATURE'],
 ];
 let seeded = false;
 export async function ensureServices(db: Db = getDb()) {

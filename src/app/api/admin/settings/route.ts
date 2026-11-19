@@ -21,7 +21,7 @@ export const GET = withAdmin(async () => json({
 
 const THEME_IDS = ['royal-gold-maroon', 'cosmic-blue', 'saffron-cream', 'minimal-white'] as const;
 const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/).optional();
-const SVC = ['general', 'SVC_PERSONAL_REPORT', 'SVC_NAME_CORRECTION', 'SVC_LOSHU', 'SVC_MOBILE_NUMBER', 'SVC_BABY_NAME', 'SVC_COUPLE', 'SVC_BUSINESS_NAME', 'SVC_PERSONAL_YEAR', 'SVC_BUSINESS_COMPAT'] as const;
+const SVC = ['general', 'SVC_PERSONAL_REPORT', 'SVC_NAME_CORRECTION', 'SVC_LOSHU', 'SVC_MOBILE_NUMBER', 'SVC_BABY_NAME', 'SVC_COUPLE', 'SVC_BUSINESS_NAME', 'SVC_PERSONAL_YEAR', 'SVC_BUSINESS_COMPAT', 'SVC_SIGNATURE'] as const;
 const TestimonialItem = z.object({
   id: z.string().regex(/^[a-z0-9]{1,30}$/), name: z.string().trim().min(2).max(60), gender: z.enum(['male', 'female']), location: z.string().trim().max(60),
   service: z.enum(SVC), quoteEn: z.string().trim().min(10).max(600), quoteHi: z.string().trim().max(600), rating: z.number().int().min(1).max(5).nullable(),

@@ -1,4 +1,5 @@
 'use client';
+import { visitEvent } from './visit-tracker';
 
 declare global {
   interface Window {
@@ -7,8 +8,15 @@ declare global {
   }
 }
 
+/** Events also recorded in the site's own Visitor analytics (whatsapp/call clicks are captured automatically there). */
+const FIRST_PARTY = new Set(['generate_lead', 'begin_checkout', 'purchase', 'service_inquiry', 'reading_generated', 'pdf_download', 'download_ebook_click', 'sample_view', 'popup_manual_open', 'contact_submit', 'sign_up', 'login']);
+
 /** Sends custom event to Google Analytics / GTM if available */
 export function trackEvent(name: string, params: Record<string, unknown> = {}) {
+  if (FIRST_PARTY.has(name)) {
+    const label = [params.lead_magnet, params.service, params.service_code, params.tier, params.source, params.page].find((x) => typeof x === 'string') as string | undefined;
+    visitEvent(name, { label, value: typeof params.value === 'number' ? params.value : undefined });
+  }
   try {
     if (typeof window !== 'undefined' && typeof window.gtag === 'function') {
       window.gtag('event', name, params);

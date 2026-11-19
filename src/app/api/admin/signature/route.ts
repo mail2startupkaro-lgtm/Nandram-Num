@@ -3,15 +3,18 @@ import { parseDate } from '@/lib/numerology';
 import { withAdmin } from '@/lib/server/admin';
 import { json, readJson } from '@/lib/server/http';
 import { rateLimit, tooMany } from '@/lib/server/rate-limit';
-import { runSignatureAgent } from '@/lib/signature/agent';
+import { runSignatureAgent, type SigImage } from '@/lib/signature/agent';
 import { FEATURES, PROFESSIONS } from '@/lib/signature/catalogue';
+import type { MeasuredFeatures } from '@/lib/signature/measure';
 import { signatureNumbers } from '@/lib/signature/numbers';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 120;
 
-const MAX_IMAGE_B64 = 4_000_000; // ~3 MB image (the browser downsizes before upload)
+const MAX_IMAGE_B64 = 1_500_000; // the browser downsizes each sample (~1200 px JPEG) before upload
+const DataImage = z.string().max(MAX_IMAGE_B64 + 40).regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/, 'Image must be PNG, JPG or WEBP');
+const Measured = z.record(z.string().max(20), z.object({ option: z.string().max(20), value: z.string().max(200), confidence: z.number().min(0).max(1) }));
 const Body = z.object({
   fullName: z.string().trim().min(2).max(120).regex(/[A-Za-z]/, 'Name must contain Latin letters'),
   signatureName: z.string().trim().max(120).optional(),
@@ -24,25 +27,32 @@ const Body = z.object({
   concerns: z.string().trim().max(1000).optional(),
   language: z.enum(['en', 'hi', 'hinglish']).default('en'),
   hand: z.enum(['right', 'left']).optional(),
-  image: z.string().max(MAX_IMAGE_B64 + 40).regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/, 'Image must be PNG, JPG or WEBP').optional(),
+  image: DataImage.optional(),
+  images: z.array(DataImage).max(3).optional(),
+  measured: Measured.optional(),
+  consistency: z.number().int().min(0).max(100).nullable().optional(),
   observations: z.record(z.string(), z.string()).default({}),
 });
 
-/** Admin-only AI signature analysis. Nothing is saved: the image goes only to the configured AI provider. */
+const validOption = (f: string, o: string) => FEATURES.some((x) => x.id === f && x.options.some((y) => y.id === o));
+const toImage = (d: string): SigImage | null => { const m = /^data:(image\/(?:png|jpeg|webp));base64,(.+)$/.exec(d); return m ? { mediaType: m[1] as SigImage['mediaType'], base64: m[2] } : null; };
+
+/** Admin-only AI signature analysis. Nothing is saved: images go only to the configured AI provider. */
 export const POST = withAdmin(async (req, user) => {
   const rl = rateLimit(`sig:${user.id}`, 20, 10 * 60_000);
   if (!rl.ok) return tooMany(rl.retryAfter);
-  const b = Body.parse(await readJson(req, 6_000_000));
+  const b = Body.parse(await readJson(req, 4_400_000));
   const dob = parseDate(b.dob);
-  const observations = Object.fromEntries(Object.entries(b.observations).filter(([f, o]) => FEATURES.some((x) => x.id === f && x.options.some((y) => y.id === o))));
+  const observations = Object.fromEntries(Object.entries(b.observations).filter(([f, o]) => validOption(f, o)));
+  const measured: MeasuredFeatures = Object.fromEntries(Object.entries(b.measured ?? {}).filter(([f, m]) => validOption(f, m.option)));
   const prof = PROFESSIONS.find((p) => p.id === b.professionId)!;
   const numbers = signatureNumbers({ fullName: b.fullName, signatureName: b.signatureName, dob, professionId: b.professionId, professionText: b.professionText });
-  const m = b.image ? /^data:(image\/(?:png|jpeg|webp));base64,(.+)$/.exec(b.image) : null;
+  const images = [...(b.images ?? []), ...(b.image ? [b.image] : [])].slice(0, 3).map(toImage).filter((x): x is SigImage => !!x);
   const result = await runSignatureAgent({
     fullName: b.fullName, signatureName: b.signatureName, dobText: b.dob, gender: b.gender,
     profession: prof.id === 'other' ? b.professionText || 'Other' : `${prof.label}${b.professionText ? ` – ${b.professionText}` : ''}`,
     experienceYears: b.experienceYears, goals: b.goals, concerns: b.concerns, language: b.language, hand: b.hand,
-    image: m ? { mediaType: m[1] as 'image/png' | 'image/jpeg' | 'image/webp', base64: m[2] } : undefined, observations,
+    images, observations, measured, consistency: b.consistency ?? null,
   }, numbers);
   return json({ numbers, ...result, generatedAt: new Date().toISOString() });
 });

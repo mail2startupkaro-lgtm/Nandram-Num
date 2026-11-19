@@ -141,3 +141,20 @@ describe.skipIf(!process.env.TEST_DATABASE_URL)('funnel leads (database)', () =>
     await pool.end();
   });
 });
+
+describe('signature analysis sample matches the engine', () => {
+  it('Riya – signed-name numbers, ranked forms, start day and dates', async () => {
+    const { signatureNumbers } = await import('@/lib/signature/numbers');
+    const { parseDate } = await import('@/lib/numerology');
+    const S = N.signature;
+    const n = signatureNumbers({ fullName: N.riya.name, signatureName: S.signedAs, dob: parseDate(N.riya.dob), professionId: 'arts', asOf: parseDate('2026-11-13') });
+    expect([n.moolank, n.bhagyank]).toEqual([N.riya.moolank, N.riya.bhagyank]);
+    expect([n.signName.compound, n.signName.single, n.signToBhagyank]).toEqual([S.signCompound, S.signSingle, 'enemy']);
+    expect([n.fullName.compound, n.fullName.single]).toEqual([S.fullCompound, S.fullSingle]);
+    expect([n.firstLetter.letter, n.firstLetter.value, n.firstLetter.toBhagyank]).toEqual([S.letter, S.letterValue, 'friend']);
+    expect(n.planet.weekday).toBe(S.weekday);
+    expect(n.bestOption?.text).toBe(S.options[0][0]);
+    for (const [text, c, si, score] of S.options) expect(n.nameOptions.find((o) => o.text === text), text).toMatchObject({ compound: c, single: si, score });
+    for (const d of S.dates) expect(n.startDates.map((x) => x.iso)).toContain(d);
+  });
+});

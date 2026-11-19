@@ -71,6 +71,13 @@
       "when": 1794638400000,
       "tag": "0009_crm",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795080000000,
+      "tag": "0010_site_analytics",
+      "breakpoints": true
     }
   ]
 }

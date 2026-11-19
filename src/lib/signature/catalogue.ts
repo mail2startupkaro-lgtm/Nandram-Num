@@ -62,7 +62,14 @@ export const FEATURES: Feature[] = [
     { id: 'gaps', label: 'Clear gaps between words', meaning: 'Independent thinking and clear boundaries.', impact: 'neutral' },
     { id: 'overlap', label: 'Overlapping / crowded', meaning: 'Over-commitment and difficulty separating roles.', impact: 'watch', fix: 'Leave a small, even space between first name and surname.' },
   ] },
+  { id: 'enclosure', label: 'Enclosure / circle', options: [
+    { id: 'open', label: 'Open (not enclosed)', meaning: 'Open to people, ideas and opportunities.', impact: 'neutral' },
+    { id: 'circled', label: 'Enclosed in a circle or loop', meaning: 'Self-protective and guarded; traditionally believed to keep opportunities and support out.', impact: 'watch', fix: 'Do not draw a circle or loop around the signature – leave it open on all sides.' },
+  ] },
 ];
+
+/** How much each feature counts in the graphology score (signature-correction practice gives most weight to direction, first letter and cutting strokes). */
+export const FEATURE_WEIGHT: Record<string, number> = { baseline: 1.4, first: 1.2, underline: 1.3, ending: 1.0, legibility: 0.9, slant: 0.9, dots: 0.8, enclosure: 0.8, size: 0.6, spacing: 0.5, pressure: 0.5 };
 
 export const featureLabel = (fid: string, oid: string) => {
   const f = FEATURES.find((x) => x.id === fid); const o = f?.options.find((x) => x.id === oid);

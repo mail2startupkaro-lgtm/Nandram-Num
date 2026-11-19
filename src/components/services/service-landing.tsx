@@ -71,7 +71,7 @@ export async function ServiceLanding({ slug, children }: { slug: string; childre
             </div>
           )}
         </div>
-        <BookService svc={svc} className="min-w-[180px]" />
+        <BookService svc={svc} whatsapp={wa} className="min-w-[180px]" />
       </div>
     </div>
   );

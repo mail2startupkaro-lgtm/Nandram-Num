@@ -6,6 +6,7 @@ import { Providers } from '@/components/layout/providers';
 import { Footer, Header } from '@/components/layout/chrome';
 import { CosmicBackground } from '@/components/layout/cosmic-bg';
 import { GoogleAnalytics } from '@/components/analytics/google-analytics';
+import { VisitTracker } from '@/components/analytics/visit-tracker';
 import { SecretAdminLogin } from '@/components/auth/secret-admin-login';
 import { EbookLeadPopup } from '@/components/layout/ebook-lead-popup';
 import { TestimonialsSection } from '@/components/home/testimonials-section';
@@ -75,6 +76,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <Suspense fallback={null}>
             <GoogleAnalytics />
+            <VisitTracker />
           </Suspense>
           <SecretAdminLogin />
           <EbookLeadPopup />
