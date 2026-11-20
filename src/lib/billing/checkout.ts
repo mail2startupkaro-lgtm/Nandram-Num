@@ -6,6 +6,7 @@ import { getSetting } from '@/lib/admin/settings';
 import { financialYear, GSTIN_RE, splitGstInclusive } from './gst';
 import { getPlan } from './plans';
 import { intlPhone, OUTSIDE_INDIA, planPrice, type Currency } from './currency';
+import { getPerson } from '@/lib/db/repo/people';
 import { createServiceOrder, getService, isPayable, isServiceCode, markServiceOrderPaid, parseIntake } from './services';
 import { CASHFREE_ORDER_PREFIX, cashfreeConfig, cashfreePhone, createCashfreeOrder, getCashfreeOrder, getCashfreePayments, isCashfreeOrder, newCashfreeOrderId, toPaise } from './cashfree';
 
@@ -24,7 +25,7 @@ export async function validateCoupon(code: string, plan: Pick<Plan, 'code' | 'pr
   return { coupon: c, discountPaise: Math.max(0, discountPaise) };
 }
 
-export interface CheckoutInput { planCode: string; coupon?: string; billingName?: string; billingState: string; gstin?: string; phone?: string; intake?: unknown; currency?: Currency }
+export interface CheckoutInput { planCode: string; coupon?: string; billingName?: string; billingState: string; gstin?: string; phone?: string; intake?: unknown; currency?: Currency; /** Saved person (self / family member) the service is for. */ profileId?: string }
 
 /** What is being bought: a report plan (credits / Pro) or an expert service (SVC_…). */
 export async function getPurchasable(code: string, db: Db = getDb(), want: Currency = 'INR') {
@@ -63,6 +64,10 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
   if (currency === 'USD') input = { ...input, gstin: undefined }; // GSTIN is for Indian business invoices only
   // Services need the client's details (name, date of birth…) before payment, validated per service.
   const intake = plan.kind === 'service' ? (() => { try { return parseIntake(plan.service, input.intake); } catch { throw new CheckoutError('DETAILS_INVALID'); } })() : null;
+  if (intake && input.profileId) {
+    const person = await getPerson(user.id, input.profileId, db).catch(() => { throw new CheckoutError('PERSON_NOT_FOUND'); });
+    intake.forProfileId = person.id; intake.forRelation = person.relation;
+  }
   const returnPath = plan.kind === 'service' ? '/services' : '/pricing';
   const gstin = input.gstin?.trim().toUpperCase() || undefined;
   if (gstin && !GSTIN_RE.test(gstin)) throw new CheckoutError('GSTIN_INVALID');

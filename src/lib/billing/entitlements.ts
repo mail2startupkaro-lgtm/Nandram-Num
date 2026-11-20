@@ -22,11 +22,16 @@ export async function requireFeature(user: User, feature: keyof Omit<PlanFeature
   return a;
 }
 
+/** Same as FAMILY_LIMIT in db/repo/people.ts. */
+export const CUSTOMER_FAMILY_PROFILES = 20;
+
 export async function assertCanAddProfiles(user: User, adding = 1, db: Db = getDb()) {
   const a = await getAccount(user.id, db);
   if (a.features.maxProfiles === null) return;
+  // Customers keep themselves and their family members (see /api/people), so they always get the family allowance.
+  const max = user.role === 'customer' ? Math.max(a.features.maxProfiles, CUSTOMER_FAMILY_PROFILES) : a.features.maxProfiles;
   const [{ n }] = await db.select({ n: sql<number>`count(*)::int` }).from(clientProfiles).where(eq(clientProfiles.ownerId, user.id));
-  if (n + adding > a.features.maxProfiles) throw new PaymentRequiredError(`max_profiles:${a.features.maxProfiles}`);
+  if (n + adding > max) throw new PaymentRequiredError(`max_profiles:${max}`);
 }
 
 /** Is this report (or an earlier version of the same profile + type) already unlocked? */

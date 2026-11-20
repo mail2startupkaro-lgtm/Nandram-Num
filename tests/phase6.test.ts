@@ -220,7 +220,9 @@ describe.skipIf(!URL)('database-backed', () => {
     expect(await isReportUnlocked(r3.id, db)).toBe(false); // a different report type
 
     for (let i = 0; i < 2; i++) await createProfile(free.id, { ...input, fullName: `Client ${i}` }, db);
-    await expect(assertCanAddProfiles(free, 1, db)).rejects.toBeInstanceOf(PaymentRequiredError); // free plan: 3 profiles
+    await expect(assertCanAddProfiles(free, 1, db)).resolves.toBeUndefined(); // a customer keeps up to 20 family members
+    await expect(assertCanAddProfiles({ ...free, role: 'expert' }, 1, db)).rejects.toBeInstanceOf(PaymentRequiredError); // free consultant plan: 3 profiles
+    await expect(assertCanAddProfiles(free, 18, db)).rejects.toBeInstanceOf(PaymentRequiredError);
 
     const buyer = (await db.select().from(schema.users).where(eq(schema.users.email, 'buyer@example.com')))[0];
     const bp = await createProfile(buyer.id, input, db);

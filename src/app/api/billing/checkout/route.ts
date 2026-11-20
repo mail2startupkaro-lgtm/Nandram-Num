@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { rateLimit, tooMany } from '@/lib/server/rate-limit';
 import { CheckoutError, createCheckout } from '@/lib/billing/checkout';
+import { isServiceCode } from '@/lib/billing/services';
 import { cashfreePhone } from '@/lib/billing/cashfree';
 import { currencyForRequest, intlPhone, OUTSIDE_INDIA } from '@/lib/billing/currency';
 import { INDIAN_STATES } from '@/components/wizard/state';
@@ -27,7 +28,13 @@ export async function POST(req: Request) {
       phone: z.string().max(20).optional(),
       email: z.string().email().optional(),
       intake: z.record(z.string(), z.string().max(2000)).optional(),
+      profileId: z.string().max(64).optional(),
     }).parse(await readJson(req));
+
+    // Readings (services) need a registered account first, so the client's details stay saved for later readings.
+    if (!user && isServiceCode(body.planCode)) {
+      return json({ error: 'LOGIN_REQUIRED', issues: [{ path: 'account', message: 'Please create an account or sign in before paying for a reading.' }] }, 401);
+    }
 
     const { currency } = currencyForRequest(req);
     const ip = clientIp(req);

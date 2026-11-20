@@ -7,6 +7,7 @@ import { buttonVariants, Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/misc';
 import { api, download } from '@/lib/client/api';
 import { SecurityPanel } from '@/components/account/security-panel';
+import { FamilyPanel } from '@/components/account/family-panel';
 import { formatMoney } from '@/lib/billing/currency';
 
 interface Data {
@@ -45,6 +46,7 @@ export default function AccountPage() {
           {d.account.features.whiteLabel && <Link href="/settings/branding" className={buttonVariants({ variant: 'outline', size: 'sm' })}><Palette /> {t.account.branding}</Link>}
         </div>
       </div>
+      <FamilyPanel />
       <section className="glass rounded-lg p-5">
         <h2 className="mb-3 text-xl font-semibold">{t.account.payments}</h2>
         {d.payments.length === 0 ? <p className="text-sm text-muted-foreground">—</p> : (

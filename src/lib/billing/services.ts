@@ -160,7 +160,8 @@ const FIELD: Record<ServiceIntakeField, z.ZodTypeAny> = {
   questions: z.string().trim().max(2000).optional(),
 };
 const OPTIONAL: ServiceIntakeField[] = ['tob', 'pob', 'mobile', 'parents', 'letters', 'businesses', 'questions'];
-export type IntakeDetails = Partial<Record<ServiceIntakeField, string>>;
+/** Booking details; `forProfileId` / `forRelation` link the order to the saved person (self or a family member). */
+export type IntakeDetails = Partial<Record<ServiceIntakeField | 'forProfileId' | 'forRelation', string>>;
 
 /** Validates exactly the fields this service asks for; unknown keys are dropped. Aadhaar-like numbers are masked. */
 export function parseIntake(svc: Service, raw: unknown): IntakeDetails {

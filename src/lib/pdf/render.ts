@@ -236,12 +236,21 @@ export function brandMetadata(out: PDFDocument, branding: Branding, subject: str
   out.setLanguage(language === 'hi' ? 'hi-IN' : 'en-IN');
 }
 
-/** Single-pass render for short documents (Input Sheet, Output Sheet). */
-export async function renderSheetPdf(opts: { html: string; header: string; footer: string; theme: PdfTheme; branding: Branding; title: string; subject: string; isoDate: string; language: string }): Promise<{ pdf: Uint8Array; pageCount: number; ms: number }> {
+/**
+ * Single-pass render for short documents (Input Sheet, Output Sheet, Signature report…).
+ * `coverHtml` (optional) is a full-bleed one-page cover printed first, without header, footer or page frame.
+ */
+export async function renderSheetPdf(opts: { html: string; header: string; footer: string; theme: PdfTheme; branding: Branding; title: string; subject: string; isoDate: string; language: string; coverHtml?: string }): Promise<{ pdf: Uint8Array; pageCount: number; ms: number }> {
   const t0 = Date.now();
   const browser = await getBrowser();
+  const cover = opts.coverHtml ? await htmlToPdf(browser, opts.coverHtml, { margin0: true }) : null;
   const body = await htmlToPdf(browser, opts.html, { header: opts.header, footer: opts.footer });
   const out = await PDFDocument.create();
+  if (cover) {
+    const coverDoc = await PDFDocument.load(cover);
+    const [coverPage] = await out.copyPages(coverDoc, [0]);
+    out.addPage(coverPage);
+  }
   await appendFramedPages(out, body, opts.theme);
   out.setTitle(opts.title, { showInWindowTitleBar: true });
   brandMetadata(out, opts.branding, opts.subject, opts.isoDate, opts.language);

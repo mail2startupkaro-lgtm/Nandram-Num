@@ -15,6 +15,10 @@ const dobString = z
 
 export const LIFE_CONCERNS = ['career', 'business', 'money', 'marriage', 'love', 'health', 'children', 'education', 'foreignTravel', 'property', 'legal'] as const;
 
+/** Who a saved person is to the account holder (family members). */
+export const FAMILY_RELATIONS = ['self', 'spouse', 'son', 'daughter', 'father', 'mother', 'brother', 'sister', 'grandparent', 'relative', 'friend', 'other'] as const;
+export type FamilyRelation = (typeof FAMILY_RELATIONS)[number];
+
 export const PartnerSchema = z.object({
   name: latinName(2),
   gender: z.enum(['male', 'female', 'other']),
@@ -44,6 +48,9 @@ export const ClientInputBase = z.object({
   concerns: z.array(z.enum(LIFE_CONCERNS)).default([]),
   language: z.enum(['en', 'hi', 'hinglish']).default('en'),
   partner: PartnerSchema.optional(),
+  /** Saved-people extras: relation to the account holder and the name exactly as the person signs it. */
+  relation: z.enum(FAMILY_RELATIONS).optional(),
+  signedName: z.string().trim().max(120).optional(),
 });
 
 export const ClientInputSchema = ClientInputBase.refine((v) => !v.aadhaar || v.aadhaarConsent, { message: 'Consent is required to use Aadhaar', path: ['aadhaarConsent'] });

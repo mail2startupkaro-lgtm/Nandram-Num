@@ -16,6 +16,8 @@ import type { NumerologyResult } from '@/lib/numerology';
 import type { Narrative } from '@/lib/narrative/service';
 import { api } from '@/lib/client/api';
 import { safeStorage } from '@/lib/utils';
+import { ReadingPicker } from '@/components/reading/reading-picker';
+import { OrderFlow } from '@/components/reading/order-flow';
 
 const DRAFT_KEY = 'wizardDraft.v1';
 
@@ -141,9 +143,31 @@ function ReadingInner() {
       </>
     );
   }
-  return <Wizard value={form} onChange={update} onSubmit={submit} onImport={importFile} submitting={submitting} serverError={error} />;
+  return (
+    <>
+      {!ctx.profileId && <div className="container max-w-4xl pt-6"><Link href="/reading" className="inline-flex items-center gap-1 text-sm text-gold underline-offset-2 hover:underline">← {lang === 'hi' ? 'दूसरी रीडिंग चुनें' : 'Choose a different reading'}</Link></div>}
+      <Wizard value={form} onChange={update} onSubmit={submit} onImport={importFile} submitting={submitting} serverError={error} />
+    </>
+  );
+}
+
+/**
+ * "Get your reading": first the visitor chooses the type of reading (?type=…), then gives the details that reading needs.
+ * Free reading → the instant wizard; paid readings → details → register / sign in → payment.
+ * Old links (?report=, ?profile=, ?new=1) still open the wizard directly.
+ */
+function ReadingRouter() {
+  const params = useSearchParams();
+  const router = useRouter();
+  const type = params.get('type');
+  const forId = params.get('for'); // a saved family member chosen on My account
+  const keep = forId ? `&for=${encodeURIComponent(forId)}` : '';
+  const go = (url: string) => { router.push(url); window.scrollTo({ top: 0 }); };
+  if (type && type.startsWith('SVC_')) return <OrderFlow key={type} code={type} forId={forId} onChangeReading={() => go(`/reading${forId ? `?for=${encodeURIComponent(forId)}` : ''}`)} />;
+  if (type === 'free' || params.get('report') || params.get('profile') || params.get('new')) return <ReadingInner />;
+  return <ReadingPicker onPick={(code) => go(code === 'free' && forId ? `/reading?profile=${encodeURIComponent(forId)}` : `/reading?type=${encodeURIComponent(code)}${keep}`)} />;
 }
 
 export default function ReadingPage() {
-  return <React.Suspense fallback={null}><ReadingInner /></React.Suspense>;
+  return <React.Suspense fallback={null}><ReadingRouter /></React.Suspense>;
 }

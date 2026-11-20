@@ -8,6 +8,7 @@ import { divider, esc, gaugeSvg, monogram, numberMedallion, ringSvg, scoreColour
 import { baseCss } from '@/lib/pdf/template';
 import { COLOUR_HEX, DEFAULT_BRANDING, resolveTheme, type Branding, type PdfTheme, type ThemeId } from '@/lib/pdf/themes';
 import { renderSheetPdf } from '@/lib/pdf/render';
+import { coverDocument } from '@/lib/pdf/cover';
 import type { AgentResult, SignatureAnalysis } from './agent';
 import type { SignatureNumbers } from './numbers';
 
@@ -222,6 +223,17 @@ export function buildSignatureReportHtml(d: SignatureReportData, t: PdfTheme, b:
   return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${baseCss(t, lang)}${css(t)}</style></head><body>${cover}${s1}${s2}${s3}${s4}${s5}</body></html>`;
 }
 
+/** Full-page cover: report name, client, date of birth, report date, the client's signature and the expert. */
+export function buildSignatureCoverHtml(d: SignatureReportData, t: PdfTheme, b: Branding): string {
+  const lang: 'en' | 'hi' = d.client.language === 'hi' ? 'hi' : 'en';
+  const l = L[lang];
+  return coverDocument({
+    title: l.title, subtitle: l.sub, clientName: d.client.fullName, lang, theme: t, branding: b, preparedBy: d.preparedBy,
+    facts: [[l.dob, dobText(d.client.dob)], [l.date, fmtDate(d.generatedAt, lang)], [l.profession, d.client.profession]],
+    imageDataUrl: d.annotated ?? d.samples?.[0], imageCaption: l.sig,
+  });
+}
+
 export async function renderSignatureReportPdf(d: SignatureReportData, opts: { theme?: ThemeId; branding?: Partial<Branding> } = {}) {
   const branding: Branding = { ...DEFAULT_BRANDING, ...(opts.branding ?? {}) } as Branding;
   const t = resolveTheme(opts.theme, branding);
@@ -229,5 +241,5 @@ export async function renderSignatureReportPdf(d: SignatureReportData, opts: { t
   const font = "font-family:Georgia,'Times New Roman',serif;";
   const header = `<div style="${font}width:100%;font-size:7.5px;color:${t.muted};padding:0 15mm;margin-top:8mm;display:flex;justify-content:space-between;letter-spacing:.12em;text-transform:uppercase"><span style="color:${t.primary}">${esc(branding.brandName)}</span><span>${esc(L[lang].title)} · ${esc(d.client.fullName)}</span></div>`;
   const footer = `<div style="${font}width:100%;font-size:7.4px;color:${t.muted};padding:0 15mm;margin-bottom:10mm;display:flex;justify-content:space-between"><span>${esc(d.preparedBy)} · ${esc(branding.contactLine ?? '')}</span><span style="font-size:9px;color:${t.primary}"><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>`;
-  return renderSheetPdf({ html: buildSignatureReportHtml(d, t, branding), header, footer, theme: t, branding, title: `${d.client.fullName} – ${L[lang].title}`, subject: L[lang].title, isoDate: d.generatedAt.slice(0, 10), language: lang });
+  return renderSheetPdf({ html: buildSignatureReportHtml(d, t, branding), coverHtml: buildSignatureCoverHtml(d, t, branding), header, footer, theme: t, branding, title: `${d.client.fullName} – ${L[lang].title}`, subject: L[lang].title, isoDate: d.generatedAt.slice(0, 10), language: lang });
 }

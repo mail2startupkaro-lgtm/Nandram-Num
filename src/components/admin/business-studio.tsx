@@ -47,7 +47,14 @@ function asText(name: string, r: Result) {
 
 const VERDICT_CSS: Record<string, string> = { excellent: '#1f7a46', good: '#8a6d12', moderate: '#b5651d', weak: '#9b2335' };
 
-function printReport(name: string, r: Result, opts: { by: string; appendix: boolean; meta: { dob: string; place: string; business?: string } }) {
+async function printReport(name: string, r: Result, opts: { by: string; appendix: boolean; meta: { dob: string; place: string; business?: string } }) {
+  // Open the window first (inside the click) so the browser does not block it, then fetch the branded cover page.
+  const w = window.open('', '_blank'); if (!w) return;
+  w.document.write('<p style="font-family:Georgia,serif;padding:40px;color:#7a1f2b">Preparing the report…</p>');
+  const coverPage = await api<{ css: string; html: string }>('/api/admin/report-cover', { method: 'POST', json: {
+    title: 'Business Compatibility Report', subtitle: 'Business & career numerology', clientName: name, preparedBy: opts.by,
+    facts: [['Date of birth', opts.meta.dob], ['Birth place', opts.meta.place], ['Business name', opts.meta.business ?? ''], ['Report date', new Date(r.generatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })]],
+  } }).catch(() => null);
   const d = r.data, p = r.report;
   const date = new Date(r.generatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
   const bars = (xs: { l: string; v: number }[]) => xs.map((x) => `<div class="bar"><span>${esc(x.l)}</span><b>${x.v}</b><i style="width:${x.v}%"></i></div>`).join('');
@@ -55,7 +62,7 @@ function printReport(name: string, r: Result, opts: { by: string; appendix: bool
   const appendix = opts.appendix ? `<section class="pb"><h2>Appendix – Complete Ranking of ${fmt(d.totals.analysed)} Categories</h2><p><small>Every business${d.totals.professions ? ' and profession' : ''} in the catalogue, ranked for ${esc(name)}. Scores: 75+ highly compatible · 62–74 compatible · 48–61 moderate · below 48 not advised.</small></p>
     <table class="app"><thead><tr><th>#</th><th>Category</th><th>Group</th><th>Score</th></tr></thead><tbody>${d.all.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.label)}</td><td>${esc(x.group)}</td><td style="color:${VERDICT_CSS[verdictOf(x.score).key]}"><b>${x.score}</b></td></tr>`).join('')}</tbody></table></section>` : '';
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>Business Compatibility Report – ${esc(name)}</title><style>
-@page{size:A4;margin:16mm 14mm}body{font-family:Georgia,'Noto Serif Devanagari',serif;color:#2a1a10;max-width:860px;margin:0 auto;padding:0 18px;line-height:1.55}
+@page{size:A4;margin:16mm 14mm}${coverPage ? '@page:first{margin:0}' : ''}body{font-family:Georgia,'Noto Serif Devanagari',serif;color:#2a1a10;margin:0;padding:0;line-height:1.55;-webkit-print-color-adjust:exact;print-color-adjust:exact}.doc{max-width:860px;margin:0 auto;padding:0 18px}
 h1{color:#7a1f2b;margin:0;font-size:30px}h2{color:#7a1f2b;border-bottom:2px solid #c9a227;padding-bottom:4px;margin-top:28px;font-size:20px}h3{margin:14px 0 4px;color:#5a2a10}
 .cover{border:3px double #c9a227;border-radius:14px;padding:26px 28px;margin:18px 0 8px;background:linear-gradient(135deg,#fffaf0,#fbf1d9)}.brand{letter-spacing:.3em;text-transform:uppercase;font-size:11px;color:#8a6d12}
 .k{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:16px}.k div{border:1px solid #e5d3a1;border-radius:8px;padding:8px;text-align:center;background:#fff;font-size:11px}.k b{display:block;font-size:22px;color:#7a1f2b}
@@ -65,7 +72,7 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border:1px solid 
 .lo td{width:52px;height:46px;text-align:center;font-size:18px;font-weight:bold;color:#7a1f2b}.lo td.miss{color:#bbb;background:#fafafa}.lo{width:auto}
 .v{display:inline-block;border-radius:99px;padding:1px 9px;color:#fff;font-size:12px}.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .app{font-size:10.5px}.app td,.app th{padding:2px 6px}.pb{break-before:page}.foot{margin-top:30px;border-top:1px solid #e5d3a1;padding-top:8px;font-size:11px;color:#7a6a55}
-@media print{.noprint{display:none}}</style></head><body>
+@media print{.noprint{display:none}}${coverPage?.css ?? ''}</style></head><body>${coverPage?.html ?? ''}<main class="doc">
 <div class="cover"><p class="brand">${esc(SITE_NAME)} · Business Numerology</p><h1>Business Compatibility Report</h1>
 <p style="margin:6px 0 0"><b style="font-size:18px">${esc(name)}</b><br>Date of birth ${esc(opts.meta.dob)}${opts.meta.place ? ` · Birth place ${esc(opts.meta.place)}` : ''}${opts.meta.business ? ` · Business name “${esc(opts.meta.business)}”` : ''}<br><small>Prepared by ${esc(opts.by)} · ${date} · ${fmt(d.totals.analysed)} categories analysed</small></p>
 <div class="k"><div>Moolank<b>${d.person.moolank}</b></div><div>Bhagyank<b>${d.person.bhagyankMaster ? `${d.person.bhagyankMaster}/${d.person.bhagyank}` : d.person.bhagyank}</b></div><div>Name no.<b>${d.person.nameCompound}/${d.person.nameNumber}</b></div><div>Personal year<b>${d.currentYear.personalYear}</b></div><div>Best sector<b>${d.sectorScores[0].score}</b></div><div>Best match<b>${d.top[0].score}</b></div></div></div>
@@ -87,8 +94,8 @@ ${d.checked.length ? `<h2>Businesses You Are Considering</h2><table><thead><tr><
 <p><b>Place & direction:</b> ${esc(p.placeAdvice)}</p><p><b>Partnership:</b> ${esc(p.partnership)}</p>
 <h2>Remedies</h2><ul>${p.remedies.map((x) => `<li>${esc(x)}</li>`).join('')}</ul><h2>Action Plan</h2><ol>${p.actionPlan.map((x) => `<li>${esc(x)}</li>`).join('')}</ol><p><i>${esc(p.closing)}</i></p>
 ${appendix}
-<p class="foot">Prepared by ${esc(opts.by)} · ${esc(SITE_NAME)}. Numerology offers guidance based on traditional methods. It is not financial, investment, tax or legal advice – check market demand, licences and finances with qualified professionals before investing.</p></body></html>`;
-  const w = window.open('', '_blank'); if (!w) return; w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500);
+<p class="foot">Prepared by ${esc(opts.by)} · ${esc(SITE_NAME)}. Numerology offers guidance based on traditional methods. It is not financial, investment, tax or legal advice – check market demand, licences and finances with qualified professionals before investing.</p></main></body></html>`;
+  w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 800);
 }
 
 /** Search across all 1000+ categories and pick the ones the client is considering. */
