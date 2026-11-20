@@ -31,6 +31,7 @@ export const metadata: Metadata = {
     other: {
       ...(process.env.BING_SITE_VERIFICATION ? { 'msvalidate.01': process.env.BING_SITE_VERIFICATION } : {}),
       'p:domain_verify': '933ba6d5cccc2457a68c478bc61d2a85',
+      cryptomus: process.env.CRYPTOMUS_SITE_VERIFICATION || 'cf1f1161',
     },
   },
   category: 'Spirituality',
