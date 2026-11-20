@@ -13,7 +13,7 @@ import { formatMoney } from '@/lib/billing/currency';
 const INTAKE: { k: ServiceIntakeField; label: string }[] = [
   { k: 'clientName', label: 'Full name' }, { k: 'currentName', label: 'Current name spelling' }, { k: 'dob', label: 'Date of birth' }, { k: 'gender', label: 'Gender' },
   { k: 'tob', label: 'Time of birth' }, { k: 'pob', label: 'Place of birth' }, { k: 'mobile', label: 'Mobile to analyse' }, { k: 'parents', label: "Parents' names" },
-  { k: 'letters', label: 'Preferred letters' }, { k: 'partnerName', label: "Partner's name" }, { k: 'partnerDob', label: "Partner's DOB" }, { k: 'businesses', label: 'Businesses considering' }, { k: 'questions', label: 'Questions / notes' },
+  { k: 'letters', label: 'Preferred letters' }, { k: 'partnerName', label: "Partner's name" }, { k: 'partnerDob', label: "Partner's DOB" }, { k: 'businesses', label: 'Businesses considering / type' }, { k: 'businessName', label: 'Business names' }, { k: 'launchDate', label: 'Business opening date' }, { k: 'partners', label: 'Business partners' }, { k: 'brand', label: 'Brand colours / tagline' }, { k: 'questions', label: 'Questions / notes' },
 ];
 const STATUS = ['paid', 'in_progress', 'delivered', 'cancelled'] as const;
 const STATUS_LABEL: Record<string, string> = { awaiting_payment: 'Awaiting payment', paid: 'Paid – to do', in_progress: 'In progress', delivered: 'Delivered', cancelled: 'Cancelled' };

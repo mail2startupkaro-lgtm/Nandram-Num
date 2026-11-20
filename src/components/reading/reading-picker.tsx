@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import Link from 'next/link';
-import { Baby, Briefcase, Building2, CalendarDays, Gift, Grid3x3, Heart, MessageCircle, PenLine, Signature, Smartphone, Sparkles, UserRound, type LucideIcon } from 'lucide-react';
+import { Baby, Briefcase, Building2, CalendarDays, Gift, Grid3x3, Heart, Landmark, MessageCircle, PenLine, Signature, Smartphone, Sparkles, UserRound, type LucideIcon } from 'lucide-react';
 import { useApp } from '@/components/layout/providers';
 import { buttonVariants } from '@/components/ui/button';
 import { api } from '@/lib/client/api';
@@ -13,7 +13,7 @@ import { FLOW } from './labels';
 
 export const SERVICE_ICON: Record<string, LucideIcon> = {
   SVC_PERSONAL_REPORT: UserRound, SVC_NAME_CORRECTION: PenLine, SVC_MOBILE_NUMBER: Smartphone, SVC_BABY_NAME: Baby, SVC_LOSHU: Grid3x3,
-  SVC_COUPLE: Heart, SVC_BUSINESS_NAME: Building2, SVC_BUSINESS_COMPAT: Briefcase, SVC_PERSONAL_YEAR: CalendarDays, SVC_SIGNATURE: Signature,
+  SVC_COUPLE: Heart, SVC_BUSINESS_NAME: Building2, SVC_BUSINESS_COMPAT: Briefcase, SVC_BUSINESS_COMPLETE: Landmark, SVC_PERSONAL_YEAR: CalendarDays, SVC_SIGNATURE: Signature,
 };
 
 export const inr = (p: number) => `₹${(p / 100).toLocaleString('en-IN', { minimumFractionDigits: p % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;
@@ -28,8 +28,8 @@ export function priceOf(s: PublicService, usd: boolean) {
 /** Short "we will ask for" list per reading. */
 function asks(s: PublicService, lang: 'en' | 'hi') {
   const short: Record<string, string> = lang === 'hi'
-    ? { clientName: 'नाम', dob: 'जन्म तिथि', gender: 'लिंग', tob: 'जन्म समय', pob: 'जन्म स्थान', mobile: 'मोबाइल', currentName: s.code === 'SVC_SIGNATURE' ? 'हस्ताक्षर-नाम' : s.code === 'SVC_BUSINESS_NAME' ? 'व्यवसाय नाम' : 'वर्तमान नाम', parents: 'माता-पिता', letters: 'अक्षर', partnerName: 'जीवनसाथी', businesses: 'व्यवसाय', questions: 'प्रश्न' }
-    : { clientName: 'Name', dob: 'Date of birth', gender: 'Gender', tob: 'Birth time', pob: 'Birth place', mobile: 'Mobile', currentName: s.code === 'SVC_SIGNATURE' ? 'Signed name' : s.code === 'SVC_BUSINESS_NAME' ? 'Business names' : 'Current name', parents: 'Parents', letters: 'Letters', partnerName: 'Partner', businesses: 'Businesses', questions: 'Questions' };
+    ? { clientName: 'नाम', dob: 'जन्म तिथि', gender: 'लिंग', tob: 'जन्म समय', pob: 'जन्म स्थान', mobile: 'मोबाइल', currentName: s.code === 'SVC_SIGNATURE' ? 'हस्ताक्षर-नाम' : s.code === 'SVC_BUSINESS_NAME' ? 'व्यवसाय नाम' : 'वर्तमान नाम', parents: 'माता-पिता', letters: 'अक्षर', partnerName: 'जीवनसाथी', businesses: 'व्यवसाय', businessName: 'व्यवसाय नाम', launchDate: 'शुरुआत तिथि', partners: 'साझेदार', brand: 'ब्रांड', questions: 'प्रश्न' }
+    : { clientName: 'Name', dob: 'Date of birth', gender: 'Gender', tob: 'Birth time', pob: 'Birth place', mobile: 'Mobile', currentName: s.code === 'SVC_SIGNATURE' ? 'Signed name' : s.code === 'SVC_BUSINESS_NAME' ? 'Business names' : 'Current name', parents: 'Parents', letters: 'Letters', partnerName: 'Partner', businesses: 'Businesses', businessName: 'Business names', launchDate: 'Opening date', partners: 'Partners', brand: 'Brand', questions: 'Questions' };
   return s.intake.filter((k) => k !== 'partnerDob').map((k) => short[k] ?? k);
 }
 

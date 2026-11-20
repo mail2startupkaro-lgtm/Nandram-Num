@@ -145,6 +145,29 @@ export const SERVICE_PAGES: ServicePage[] = [
     ],
   },
   {
+    slug: 'business-numerology-report', serviceCode: 'SVC_BUSINESS_COMPLETE',
+    menu: { en: 'Complete Business Numerology Report', hi: 'संपूर्ण व्यवसाय अंक ज्योतिष रिपोर्ट' }, menuSub: { en: 'Name, brand, partners, growth cycle, CEO', hi: 'नाम, ब्रांड, साझेदार, विकास चक्र, सीईओ' },
+    title: 'Complete Business Numerology Report – Acharya Nandram',
+    description: 'Business numerology for name selection, brand name correction, startup dates, partner compatibility and entrepreneur numerology. Get your personalised report.',
+    h1: { en: 'Complete Business Numerology Report', hi: 'संपूर्ण व्यवसाय अंक ज्योतिष रिपोर्ट' },
+    intro: {
+      en: ['Discover business numerology services for business name selection, brand name correction, startup dates, partnership compatibility and entrepreneur numerology. Get your personalized business numerology report.', 'One report covers the business and the person running it: Business Name Analysis, Business Name Correction, Brand & Logo Numerology, Business Partner Compatibility, a Business growth cycle forecast and a CEO Numerology Report – with remedies and a 90-day action plan, prepared by Acharya Nandram.'],
+      hi: ['व्यवसाय नाम चयन, ब्रांड नाम सुधार, स्टार्टअप तिथि, साझेदारी अनुकूलता और उद्यमी अंक ज्योतिष के लिए व्यवसाय अंक ज्योतिष सेवाएँ जानें। अपनी व्यक्तिगत व्यवसाय अंक ज्योतिष रिपोर्ट प्राप्त करें।', 'एक ही रिपोर्ट में व्यवसाय और उसे चलाने वाले व्यक्ति, दोनों: व्यवसाय नाम विश्लेषण, व्यवसाय नाम सुधार, ब्रांड और लोगो अंक ज्योतिष, व्यवसाय साझेदार अनुकूलता, व्यवसाय विकास चक्र पूर्वानुमान और सीईओ अंक ज्योतिष रिपोर्ट – उपायों और 90-दिन की कार्य-योजना के साथ, आचार्य नंदराम द्वारा तैयार।'],
+    },
+    forWho: {
+      en: ['Founders choosing a company, shop or brand name', 'Businesses planning a rebrand, new logo or name correction', 'Partners starting or restructuring a partnership', 'Owners planning an expansion, new branch or launch date', 'Entrepreneurs and CEOs who want a numerology view of their leadership'],
+      hi: ['कंपनी, दुकान या ब्रांड का नाम चुन रहे संस्थापक', 'रीब्रांड, नया लोगो या नाम सुधार की योजना बना रहे व्यवसाय', 'साझेदारी शुरू या पुनर्गठित कर रहे साझेदार', 'विस्तार, नई शाखा या लॉन्च तिथि की योजना बना रहे मालिक', 'अपने नेतृत्व का अंक ज्योतिषीय दृष्टिकोण चाहने वाले उद्यमी और सीईओ'],
+    },
+    calculator: { kind: 'name', title: { en: 'Check a business name (free)', hi: 'व्यवसाय का नाम जाँचें (मुफ़्त)' } },
+    related: [{ href: '/business-compatibility-numerology', label: { en: 'Which business suits you – 1000+ categories', hi: 'कौन-सा व्यवसाय शुभ – 1000+ श्रेणियाँ' } }, { href: '/business-name-numerology', label: { en: 'Business name numerology only', hi: 'केवल व्यवसाय नाम अंक ज्योतिष' } }, { href: '/blog/business-name-numerology-guide-lucky-company-name', label: { en: 'Guide: choosing a lucky business name', hi: 'मार्गदर्शिका: शुभ व्यवसाय नाम चुनना' } }],
+    faq: [
+      { en: ['What does the Complete Business Numerology Report include?', 'Business Name Analysis, Business Name Correction, Brand & Logo Numerology, Business Partner Compatibility, a 9-year Business growth cycle forecast and a CEO Numerology Report for the owner, with remedies and a 90-day action plan.'], hi: ['संपूर्ण व्यवसाय अंक ज्योतिष रिपोर्ट में क्या शामिल है?', 'व्यवसाय नाम विश्लेषण, व्यवसाय नाम सुधार, ब्रांड और लोगो अंक ज्योतिष, व्यवसाय साझेदार अनुकूलता, 9 वर्षों का व्यवसाय विकास चक्र पूर्वानुमान और मालिक के लिए सीईओ अंक ज्योतिष रिपोर्ट – उपायों और 90-दिन की कार्य-योजना के साथ।'] },
+      { en: ['How is it different from Business Name Numerology?', 'Business Name Numerology checks names only. The complete report adds brand and logo guidance, every partner\'s compatibility, the business\'s own growth cycle from its opening date and the CEO pages.'], hi: ['यह व्यवसाय नाम अंक ज्योतिष से कैसे अलग है?', 'व्यवसाय नाम अंक ज्योतिष केवल नाम जाँचता है। संपूर्ण रिपोर्ट में ब्रांड और लोगो मार्गदर्शन, हर साझेदार की अनुकूलता, शुरुआत की तिथि से व्यवसाय का अपना विकास चक्र और सीईओ पृष्ठ भी हैं।'] },
+      { en: ['What details do I need?', 'The owner\'s name and date of birth, the business names you use or are considering, and – if you have them – the type of business, the opening date, partners\' names and dates of birth, brand colours or tagline and the business mobile number.'], hi: ['मुझे कौन-से विवरण चाहिए?', 'मालिक का नाम और जन्म तिथि, जिन व्यवसाय नामों का आप उपयोग करते हैं या विचार कर रहे हैं, और – यदि हों तो – व्यवसाय का प्रकार, शुरुआत की तिथि, साझेदारों के नाम और जन्म तिथि, ब्रांड रंग या टैगलाइन और व्यवसायिक मोबाइल नंबर।'] },
+      { en: ['Is this financial or legal advice?', 'No. Numerology guides names, timing and direction. Please check market demand, registration, trademarks and finances with the right professionals.'], hi: ['क्या यह वित्तीय या कानूनी सलाह है?', 'नहीं। अंक ज्योतिष नाम, समय और दिशा में मार्गदर्शन देता है। बाज़ार की माँग, पंजीकरण, ट्रेडमार्क और वित्त की जाँच उपयुक्त विशेषज्ञों से करें।'] },
+    ],
+  },
+  {
     slug: 'business-compatibility-numerology', serviceCode: 'SVC_BUSINESS_COMPAT',
     menu: { en: 'Business Compatibility', hi: 'व्यवसाय अनुकूलता' }, menuSub: { en: 'Which business suits your DOB – 1000+ categories', hi: 'जन्म तिथि से कौन-सा व्यवसाय शुभ – 1000+ श्रेणियाँ' },
     title: 'Business Compatibility by Date of Birth – 1000+ Businesses',

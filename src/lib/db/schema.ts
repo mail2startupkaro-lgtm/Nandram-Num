@@ -421,7 +421,7 @@ export const contactMessages = pgTable('contact_messages', {
 export type ContactMessage = typeof contactMessages.$inferSelect;
 
 // ---------- Expert services (bought online, delivered personally by the numerologist) ----------
-export type ServiceIntakeField = 'clientName' | 'dob' | 'gender' | 'tob' | 'pob' | 'mobile' | 'currentName' | 'parents' | 'letters' | 'partnerName' | 'partnerDob' | 'businesses' | 'questions';
+export type ServiceIntakeField = 'clientName' | 'dob' | 'gender' | 'tob' | 'pob' | 'mobile' | 'currentName' | 'parents' | 'letters' | 'partnerName' | 'partnerDob' | 'businesses' | 'businessName' | 'launchDate' | 'partners' | 'brand' | 'questions';
 export interface ServiceText { name: string; short: string; includes: string[]; delivery: string }
 /** Services shown on /services. Code always starts with "SVC_" so payments can tell a service from a report plan. */
 export const services = pgTable('services', {

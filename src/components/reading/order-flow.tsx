@@ -82,7 +82,8 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
   const has = (k: ServiceIntakeField) => fields.includes(k);
   const sig = svc.code === 'SVC_SIGNATURE';
   const baby = svc.code === 'SVC_BABY_NAME';
-  const label = (k: ServiceIntakeField) => (sig && k === 'currentName' ? L.signedAs : sig && k === 'questions' ? L.sigQuestions : k === 'dob' && has('parents') ? L.dobBaby : k === 'mobile' && svc.code === 'SVC_MOBILE_NUMBER' ? L.mobileMain : k === 'currentName' && svc.code === 'SVC_BUSINESS_NAME' ? L.business : k === 'questions' && has('businesses') ? L.bizQuestions : L[k]);
+  const bizFull = svc.code === 'SVC_BUSINESS_COMPLETE';
+  const label = (k: ServiceIntakeField) => (bizFull && k === 'mobile' ? L.mobileBiz : bizFull && k === 'businesses' ? L.bizType : sig && k === 'currentName' ? L.signedAs : sig && k === 'questions' ? L.sigQuestions : k === 'dob' && has('parents') ? L.dobBaby : k === 'mobile' && svc.code === 'SVC_MOBILE_NUMBER' ? L.mobileMain : k === 'currentName' && svc.code === 'SVC_BUSINESS_NAME' ? L.business : k === 'questions' && has('businesses') ? L.bizQuestions : L[k]);
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setD((x) => ({ ...x, [k]: e.target.value }));
   const spouseCandidates = people.filter((p) => p.id !== pick);
 
@@ -175,7 +176,11 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
               </div>
             )}
             {has('parents') && <Field label={L.parents} htmlFor="of-par"><Input id="of-par" value={d.parents ?? ''} onChange={set('parents')} maxLength={200} /></Field>}
-            {has('businesses') && <Field label={L.businesses} htmlFor="of-biz" hint={lang === 'hi' ? 'जैसे: कैफ़े, कपड़े की दुकान, CA प्रैक्टिस' : 'e.g. café, clothing store, CA practice'}><Input id="of-biz" value={d.businesses ?? ''} onChange={set('businesses')} maxLength={600} /></Field>}
+            {has('businessName') && <Field label={L.businessName} htmlFor="of-bn" required hint={lang === 'hi' ? 'अंग्रेज़ी अक्षरों में, जैसे: Sharma Interiors' : 'In English letters, e.g. Sharma Interiors'}><textarea id="of-bn" rows={3} maxLength={400} value={d.businessName ?? ''} onChange={set('businessName')} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></Field>}
+            {has('launchDate') && <Field label={L.launchDate} htmlFor="of-ld"><Input id="of-ld" type="date" min="1900-01-01" max="2045-12-31" value={d.launchDate ?? ''} onChange={set('launchDate')} /></Field>}
+            {has('partners') && <Field label={L.partners} htmlFor="of-pt" hint={lang === 'hi' ? 'जैसे: Arjun Mehta – 03-01-1990' : 'e.g. Arjun Mehta – 03-01-1990'}><textarea id="of-pt" rows={2} maxLength={800} value={d.partners ?? ''} onChange={set('partners')} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></Field>}
+            {has('brand') && <Field label={L.brand} htmlFor="of-br"><Input id="of-br" value={d.brand ?? ''} onChange={set('brand')} maxLength={400} /></Field>}
+            {has('businesses') && <Field label={label('businesses')} htmlFor="of-biz" hint={lang === 'hi' ? 'जैसे: कैफ़े, कपड़े की दुकान, CA प्रैक्टिस' : 'e.g. café, clothing store, CA practice'}><Input id="of-biz" value={d.businesses ?? ''} onChange={set('businesses')} maxLength={600} /></Field>}
             {sig && <p className="rounded-md border border-gold/40 bg-gold/10 p-2.5 text-xs">{lang === 'hi' ? 'भुगतान के बाद सादे सफ़ेद काग़ज़ पर अपने सामान्य हस्ताक्षर की 2–3 फ़ोटो WhatsApp पर भेजें।' : 'After payment, send 2–3 photos of your normal signature on plain white paper on WhatsApp.'}</p>}
             {has('questions') && <Field label={label('questions')} htmlFor="of-q"><textarea id="of-q" rows={3} maxLength={2000} value={d.questions ?? ''} onChange={set('questions')} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></Field>}
           </fieldset>
@@ -271,7 +276,7 @@ function PayStep({ svc, details, forName, relation, personId, onBack, onDone, si
   const [error, setError] = React.useState<string | null>(null);
   const missing = !bill.state || (!u.phone && !bill.phone.trim());
   const shown = cleanIntake(svc.intake, details);
-  const lab = (k: string) => (k === 'currentName' && sig ? L.signedAs : k === 'currentName' && svc.code === 'SVC_BUSINESS_NAME' ? L.business : k === 'dob' && svc.intake.includes('parents') ? L.dobBaby : (L as Record<string, string>)[k] ?? k).replace(/ \((optional|वैकल्पिक)\)$/, '');
+  const lab = (k: string) => (k === 'mobile' && svc.code === 'SVC_BUSINESS_COMPLETE' ? L.mobileBiz : k === 'businesses' && svc.code === 'SVC_BUSINESS_COMPLETE' ? L.bizType : k === 'currentName' && sig ? L.signedAs : k === 'currentName' && svc.code === 'SVC_BUSINESS_NAME' ? L.business : k === 'dob' && svc.intake.includes('parents') ? L.dobBaby : (L as Record<string, string>)[k] ?? k).replace(/ \((optional|वैकल्पिक)\)$/, '');
   const show = (k: string, v: string) => (k === 'gender' ? (v === 'female' ? L.female : L.male) : /Dob$|^dob$/.test(k) ? v.split('-').reverse().join('-') : v);
 
   async function pay() {
@@ -299,7 +304,7 @@ function PayStep({ svc, details, forName, relation, personId, onBack, onDone, si
       <h2 id="pay-h" className="font-serif text-xl font-semibold">{t.payTitle}</h2>
       <div className="rounded-lg border border-border/60 p-3 text-sm">
         <div className="mb-2 flex items-center justify-between gap-2"><p><span className="text-muted-foreground">{t.readingFor}:</span> <b>{forName || '—'}</b> <span className="text-xs text-muted-foreground">· {RELATION_LABEL[relation][lang]}</span></p><button type="button" onClick={onBack} className="text-xs text-gold underline-offset-2 hover:underline">{t.change2}</button></div>
-        <dl className="grid gap-x-6 gap-y-1 sm:grid-cols-2">{Object.entries(shown).filter(([k]) => k !== 'clientName').map(([k, v]) => <div key={k} className={k === 'questions' || k === 'businesses' ? 'sm:col-span-2' : ''}><dt className="inline text-muted-foreground">{lab(k)}: </dt><dd className="inline whitespace-pre-wrap break-words">{show(k, v)}</dd></div>)}</dl>
+        <dl className="grid gap-x-6 gap-y-1 sm:grid-cols-2">{Object.entries(shown).filter(([k]) => k !== 'clientName').map(([k, v]) => <div key={k} className={['questions', 'businesses', 'businessName', 'partners', 'brand'].includes(k) ? 'sm:col-span-2' : ''}><dt className="inline text-muted-foreground">{lab(k)}: </dt><dd className="inline whitespace-pre-wrap break-words">{show(k, v)}</dd></div>)}</dl>
       </div>
       <p className="text-xs text-muted-foreground">{t.signedInAs} <b>{u.name ?? u.email ?? u.phone}</b></p>
       <div className="grid gap-3 sm:grid-cols-2">

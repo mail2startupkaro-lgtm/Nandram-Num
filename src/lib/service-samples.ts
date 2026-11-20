@@ -150,6 +150,21 @@ export const SERVICE_SAMPLES: ServiceSample[] = [
     ],
   },
   {
+    code: 'SVC_BUSINESS_COMPLETE', open: 2, client: l('Owner: Riya Sharma · Moolank 5 · Bhagyank 7 · opened 10 Apr 2024 · partner Arjun Mehta', 'मालिक: रिया शर्मा · मूलांक 5 · भाग्यांक 7 · शुरुआत 10 अप्रैल 2024 · साझेदार अर्जुन मेहता'),
+    title: l('Complete Business Numerology Report – sample pages', 'संपूर्ण व्यवसाय अंक ज्योतिष रिपोर्ट – नमूना पृष्ठ'),
+    tiles: [{ k: l('Overall score', 'समग्र स्कोर'), v: '84' }, { k: l('Best name', 'सर्वश्रेष्ठ नाम'), v: '46/1' }, { k: l('Partner harmony', 'साझेदार सामंजस्य'), v: '78' }, { k: l('2026 score', '2026 स्कोर'), v: '72' }],
+    sections: [
+      { h: l('1. Business name analysis', '1. व्यवसाय नाम विश्लेषण'), p: { en: ['Each name scored against the owner\'s Bhagyank, Moolank, the compound number and the ruling numbers of interior design (6, 4, 3):'], hi: ['हर नाम का मालिक के भाग्यांक, मूलांक, मिश्रित अंक और इंटीरियर डिज़ाइन के स्वामी अंकों (6, 4, 3) से स्कोर:'] },
+        rows: [{ k: l('Sharma Interiors', 'Sharma Interiors'), v: l('46/1 · favourable · 96/100 – excellent', '46/1 · शुभ · 96/100 – उत्तम') }, { k: l('Riya Interiors', 'Riya Interiors'), v: l('35/8 · unfavourable · 36/100 – correction advised', '35/8 · अशुभ · 36/100 – सुधार उचित') }] },
+      { h: l('2. Business name correction', '2. व्यवसाय नाम सुधार'), p: { en: ['If the owner wants to keep “Riya Interiors”, one small change makes it lucky:'], hi: ['यदि मालिक “Riya Interiors” ही रखना चाहें, तो एक छोटा बदलाव इसे शुभ बना देता है:'] },
+        rows: [{ k: l('Riya Interriors', 'Riya Interriors'), v: l('37/1 · favourable · 96/100 (double “r”)', '37/1 · शुभ · 96/100 (“r” दोहराएँ)') }] },
+      { h: l('3. Partner compatibility', '3. साझेदार अनुकूलता'), p: { en: ['Arjun Mehta (Moolank 3, Bhagyank 5): harmony with the owner 70/100, friendly with the business number 1 – score 78, best role: sales, marketing and expansion.'], hi: ['अर्जुन मेहता (मूलांक 3, भाग्यांक 5): मालिक से सामंजस्य 70/100, व्यवसाय अंक 1 के मित्र – स्कोर 78, उपयुक्त भूमिका: बिक्री, मार्केटिंग और विस्तार।'] } },
+      { h: l('4. Growth cycle forecast', '4. विकास चक्र पूर्वानुमान'), p: { en: ['Business year from the opening date, combined with the owner\'s personal year:'], hi: ['शुरुआत की तिथि से व्यवसाय वर्ष, मालिक के व्यक्तिगत वर्ष के साथ:'] },
+        rows: [{ k: l('2026 · business year 6', '2026 · व्यवसाय वर्ष 6'), v: l('Customers – service, quality, loyalty · 72', 'ग्राहक – सेवा, गुणवत्ता, विश्वास · 72') }, { k: l('2027 · business year 7', '2027 · व्यवसाय वर्ष 7'), v: l('Review – research and planning · 50', 'समीक्षा – शोध और योजना · 50') }, { k: l('2028 · business year 8', '2028 · व्यवसाय वर्ष 8'), v: l('Harvest – profit and investment · 71', 'फ़सल – लाभ और निवेश · 71') }] },
+      { h: l('5. Brand, logo and CEO pages', '5. ब्रांड, लोगो और सीईओ पृष्ठ'), p: { en: ['Brand planet Sun: gold and orange, a circle or sun-burst mark with bold capitals; business mobile totals 1, 2 or 7. The CEO pages cover the owner\'s leadership style, best sectors, lucky days and seating direction.'], hi: ['ब्रांड ग्रह सूर्य: सुनहरा और नारंगी, वृत्त या सूर्य-किरण चिह्न और मोटे बड़े अक्षर; व्यवसायिक मोबाइल योग 1, 2 या 7। सीईओ पृष्ठों में मालिक की नेतृत्व शैली, सर्वोत्तम क्षेत्र, शुभ दिन और बैठने की दिशा है।'] } },
+    ],
+  },
+  {
     code: 'SVC_BUSINESS_COMPAT', open: 2, client: RIYA,
     title: l('Business Compatibility Report – sample pages', 'व्यवसाय अनुकूलता रिपोर्ट – नमूना पृष्ठ'),
     tiles: [{ k: l('Categories checked', 'जाँची गई श्रेणियाँ'), v: '1,335' }, { k: l('Best sector', 'सर्वोत्तम क्षेत्र'), v: '88' }, { k: l('Best match', 'सर्वोत्तम मेल'), v: '89' }, { k: l('Personal year', 'व्यक्तिगत वर्ष'), v: '5' }],

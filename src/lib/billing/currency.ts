@@ -54,7 +54,7 @@ const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v > 0 
  */
 export const STANDARD_USD: Record<string, [number, number]> = {
   // Expert services (PDF reports)
-  SVC_PERSONAL_REPORT: [49_00, 99_00], SVC_COUPLE: [49_00, 99_00], SVC_BUSINESS_COMPAT: [59_00, 119_00], SVC_BUSINESS_NAME: [49_00, 99_00],
+  SVC_PERSONAL_REPORT: [49_00, 99_00], SVC_COUPLE: [49_00, 99_00], SVC_BUSINESS_COMPAT: [59_00, 119_00], SVC_BUSINESS_COMPLETE: [99_00, 199_00], SVC_BUSINESS_NAME: [49_00, 99_00],
   SVC_NAME_CORRECTION: [39_00, 79_00], SVC_BABY_NAME: [39_00, 79_00], SVC_LOSHU: [29_00, 59_00], SVC_PERSONAL_YEAR: [29_00, 59_00],
   SVC_SIGNATURE: [29_00, 59_00], SVC_MOBILE_NUMBER: [19_00, 39_00],
   // Report plans

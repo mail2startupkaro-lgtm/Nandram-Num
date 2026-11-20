@@ -11,7 +11,7 @@ import { decryptJson, encryptJson } from '@/lib/security/crypto';
 
 export const SERVICE_PREFIX = 'SVC_';
 export const isServiceCode = (code: string) => code.startsWith(SERVICE_PREFIX);
-export const INTAKE_FIELDS: ServiceIntakeField[] = ['clientName', 'dob', 'gender', 'tob', 'pob', 'mobile', 'currentName', 'parents', 'letters', 'partnerName', 'partnerDob', 'businesses', 'questions'];
+export const INTAKE_FIELDS: ServiceIntakeField[] = ['clientName', 'dob', 'gender', 'tob', 'pob', 'mobile', 'currentName', 'parents', 'letters', 'partnerName', 'partnerDob', 'businesses', 'businessName', 'launchDate', 'partners', 'brand', 'questions'];
 export const SERVICE_ORDER_STATUSES = ['awaiting_payment', 'paid', 'in_progress', 'delivered', 'cancelled'] as const;
 export type ServiceOrderStatus = (typeof SERVICE_ORDER_STATUSES)[number];
 
@@ -75,6 +75,13 @@ export const DEFAULT_SERVICES: (typeof services.$inferInsert)[] = [
       ['1000+ व्यवसाय श्रेणियों के लिए आपका अनुकूलता स्कोर, क्रम सहित', 'शीर्ष सुझाव – कैसे शुरू करें और किन बातों का ध्यान रखें', 'जिन व्यवसायों पर आप पहले से विचार कर रहे हैं, हर एक पर स्पष्ट निर्णय', 'सर्वोत्तम क्षेत्र और सबसे कम अनुकूल व्यवसाय', 'शुरुआत या विस्तार के शुभ वर्ष, व्यवसाय नाम के योग, शुभ दिशा और उपाय', 'आचार्य नंदराम द्वारा तैयार डाउनलोड योग्य PDF रिपोर्ट'], '2–3 कार्य-दिवसों में'),
   },
   {
+    code: 'SVC_BUSINESS_COMPLETE', sort: 7, featured: true, pricePaise: 5_100_00, mrpPaise: 11_000_00, intake: ['clientName', 'dob', 'gender', 'businessName', 'businesses', 'launchDate', 'partners', 'brand', 'mobile', 'questions'],
+    en: t('Complete Business Numerology Report', 'Business numerology for business name selection, brand name correction, startup dates, partnership compatibility and entrepreneur numerology – one personalised report for the owner and the business.',
+      ['Business Name Analysis – every name you send, scored against the owner\'s numbers', 'Business Name Correction – small spelling changes that make the number lucky', 'Brand & Logo Numerology – brand colours, logo shape, lettering, tagline and lucky launch dates', 'Business Partner Compatibility – each partner matched with the owner and the business, with best roles', 'Business growth cycle forecast – the business\'s year-by-year cycle for the next 9 years', 'CEO Numerology Report – leadership style, best sectors, lucky days and directions for the owner', 'Remedies and a 90-day action plan in a designed PDF by Acharya Nandram'], 'Delivered within 3–4 working days'),
+    hi: t('संपूर्ण व्यवसाय अंक ज्योतिष रिपोर्ट', 'व्यवसाय नाम चयन, ब्रांड नाम सुधार, स्टार्टअप तिथि, साझेदारी अनुकूलता और उद्यमी अंक ज्योतिष – मालिक और व्यवसाय दोनों के लिए एक व्यक्तिगत रिपोर्ट।',
+      ['व्यवसाय नाम विश्लेषण – आपके भेजे हर नाम का मालिक के अंकों से स्कोर', 'व्यवसाय नाम सुधार – वर्तनी में छोटे बदलाव जो अंक को शुभ बनाएँ', 'ब्रांड और लोगो अंक ज्योतिष – ब्रांड रंग, लोगो आकृति, अक्षर शैली, टैगलाइन और लॉन्च की शुभ तिथियाँ', 'व्यवसाय साझेदार अनुकूलता – हर साझेदार का मालिक और व्यवसाय से मिलान, उपयुक्त भूमिकाओं सहित', 'व्यवसाय विकास चक्र पूर्वानुमान – अगले 9 वर्षों का वर्ष-दर-वर्ष चक्र', 'सीईओ अंक ज्योतिष रिपोर्ट – मालिक की नेतृत्व शैली, सर्वोत्तम क्षेत्र, शुभ दिन और दिशाएँ', 'उपाय और 90-दिन की कार्य-योजना – आचार्य नंदराम द्वारा डिज़ाइन की हुई PDF'], '3–4 कार्य-दिवसों में'),
+  },
+  {
     code: 'SVC_PERSONAL_YEAR', sort: 8, featured: false, pricePaise: 1_500_00, mrpPaise: 3_000_00, intake: ['clientName', 'dob', 'gender', 'mobile', 'questions'],
     en: t('Personal Year Consultancy', 'Plan the year ahead with your personal year, month and day numbers – when to start, when to wait and when to act on big decisions.',
       ['Your personal year theme from birthday to birthday', 'Month-by-month guidance for the next 12 months', 'Best dates for important decisions you name', 'Remedies to support the year', 'Personal answers to your questions on call or WhatsApp'], 'Scheduled within 3 working days'),
@@ -99,6 +106,7 @@ const SEED_BATCHES: string[][] = [
   ['SVC_LOSHU', 'SVC_COUPLE', 'SVC_BUSINESS_NAME', 'SVC_PERSONAL_YEAR'],
   ['SVC_BUSINESS_COMPAT'],
   ['SVC_SIGNATURE'],
+  ['SVC_BUSINESS_COMPLETE'],
 ];
 let seeded = false;
 export async function ensureServices(db: Db = getDb()) {
@@ -157,9 +165,12 @@ const FIELD: Record<ServiceIntakeField, z.ZodTypeAny> = {
   tob: z.string().trim().max(10).optional(), pob: z.string().trim().max(120).optional(), mobile: z.string().trim().max(20).optional(),
   currentName: z.string().trim().min(2).max(300), partnerName: z.string().trim().min(2).max(120), partnerDob: isoDate, parents: z.string().trim().max(200).optional(), letters: z.string().trim().max(60).optional(),
   businesses: z.string().trim().max(600).optional(),
+  businessName: z.string().trim().min(2).max(400).regex(/[A-Za-z]/, 'Write the business name in English letters'),
+  launchDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((s) => s >= '1900-01-01' && s <= '2045-12-31', 'Enter a valid date').optional(),
+  partners: z.string().trim().max(800).optional(), brand: z.string().trim().max(400).optional(),
   questions: z.string().trim().max(2000).optional(),
 };
-const OPTIONAL: ServiceIntakeField[] = ['tob', 'pob', 'mobile', 'parents', 'letters', 'businesses', 'questions'];
+const OPTIONAL: ServiceIntakeField[] = ['tob', 'pob', 'mobile', 'parents', 'letters', 'businesses', 'launchDate', 'partners', 'brand', 'questions'];
 /** Booking details; `forProfileId` / `forRelation` link the order to the saved person (self or a family member). */
 export type IntakeDetails = Partial<Record<ServiceIntakeField | 'forProfileId' | 'forRelation', string>>;
 

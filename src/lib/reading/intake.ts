@@ -12,7 +12,7 @@ export interface PersonLite {
   partner?: { name: string; gender: 'male' | 'female' | 'other'; dob: string; mobile?: string };
 }
 
-export const REQUIRED_INTAKE: ServiceIntakeField[] = ['clientName', 'dob', 'gender', 'currentName', 'partnerName', 'partnerDob'];
+export const REQUIRED_INTAKE: ServiceIntakeField[] = ['clientName', 'dob', 'gender', 'currentName', 'partnerName', 'partnerDob', 'businessName'];
 
 /** Services whose "currentName" box is not a person's name (so it is not filled from / saved to the person). */
 const CURRENT_NAME_IS_NOT_PERSON = ['SVC_BUSINESS_NAME'];

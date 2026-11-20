@@ -1,13 +1,14 @@
 'use client';
 import { STANDARD_USD } from '@/lib/billing/currency';
 import * as React from 'react';
-import { Activity, BadgePercent, Globe2, Contact2, MessageSquareQuote, BarChart3, BookOpen, Inbox, Briefcase, Clover, Copy, CreditCard, FileText, LayoutDashboard, Palette, PenLine, Plus, Receipt, Save, ScrollText, Sparkles, Tag, Trash2, UserCheck, Users, Wand2, FileSignature, ListChecks, Building2, IndianRupee } from 'lucide-react';
+import { Activity, BadgePercent, Globe2, Contact2, MessageSquareQuote, BarChart3, BookOpen, Inbox, Briefcase, Clover, Copy, CreditCard, FileText, LayoutDashboard, Palette, PenLine, Plus, Receipt, Save, ScrollText, Sparkles, Tag, Trash2, UserCheck, Users, Wand2, FileSignature, ListChecks, Building2, IndianRupee, Landmark } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { ExpertsTab } from '@/components/admin/experts';
 import { PaymentReport, SalesReport } from '@/components/admin/finance';
 import { ReportStudio } from '@/components/admin/report-studio';
 import { SignatureStudio } from '@/components/admin/signature-studio';
 import { BusinessStudio } from '@/components/admin/business-studio';
+import { BusinessReportStudio } from '@/components/admin/business-report-studio';
 import { MessagesTab } from '@/components/admin/messages';
 import { ServicesAdmin, type Order } from '@/components/admin/services-admin';
 import { ReportQueueAdmin } from '@/components/admin/report-queue-admin';
@@ -42,7 +43,7 @@ const ADMIN_SECTIONS = [
   ] },
   { id: 'reports', label: 'Report Generating', desc: 'Orders to deliver & report generators', icon: FileSignature, groups: [
     { label: 'Orders to deliver', tabs: [{ id: 'services', label: 'Service orders & prices', icon: Briefcase }, { id: 'queue', label: 'Report queue', icon: ListChecks }] },
-    { label: 'Report generators', tabs: [{ id: 'studio', label: 'Numerology report generator', icon: FileText }, { id: 'signature', label: 'Signature analysis', icon: PenLine }, { id: 'business', label: 'Business compatibility', icon: Building2 }, { id: 'angel', label: 'Angel number finder', icon: Sparkles }, { id: 'lucky', label: 'Lucky number finder', icon: Clover }] },
+    { label: 'Report generators', tabs: [{ id: 'studio', label: 'Numerology report generator', icon: FileText }, { id: 'signature', label: 'Signature analysis', icon: PenLine }, { id: 'business', label: 'Business compatibility', icon: Building2 }, { id: 'bizreport', label: 'Complete business report', icon: Landmark }, { id: 'angel', label: 'Angel number finder', icon: Sparkles }, { id: 'lucky', label: 'Lucky number finder', icon: Clover }] },
     { label: 'Report setup', tabs: [{ id: 'knowledge', label: 'Knowledge base', icon: BookOpen }, { id: 'prompts', label: 'Writer prompts', icon: Wand2 }, { id: 'themes', label: 'PDF themes', icon: Palette }] },
   ] },
   { id: 'website', label: 'Website Backoffice', desc: 'Customers, leads, marketing & traffic', icon: Globe2, groups: [
@@ -127,7 +128,7 @@ export default function AdminPage() {
           </nav>
         )}
         <div className="min-w-0">
-          {tab === 'overview' && <><QuickLinks onOpen={setTab} ordersToDo={ordersToDo} newMsgs={newMsgs} /><Overview /></>}{tab === 'visitors' && <VisitorAnalytics />}{tab === 'crm' && <CrmAdmin />}{tab === 'testimonials' && <TestimonialsAdmin />}{tab === 'analytics' && <AnalyticsAdmin />}{tab === 'messages' && <MessagesTab onCounts={setNewMsgs} />}{tab === 'services' && <ServicesAdmin onGenerateReport={(ord) => { setPreloadedOrder(ord); setTab(ord.serviceCode === 'SVC_BUSINESS_COMPAT' ? 'business' : ord.serviceCode === 'SVC_SIGNATURE' ? 'signature' : 'studio'); }} />}{tab === 'queue' && <ReportQueueAdmin />}{tab === 'funnel' && <FunnelAdmin />}{tab === 'studio' && <ReportStudio preloadedOrder={preloadedOrder} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'signature' && <SignatureStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_SIGNATURE' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'business' && <BusinessStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_BUSINESS_COMPAT' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'angel' && <AngelFinderTab />}{tab === 'lucky' && <LuckyFinderTab />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'experts' && <ExpertsTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
+          {tab === 'overview' && <><QuickLinks onOpen={setTab} ordersToDo={ordersToDo} newMsgs={newMsgs} /><Overview /></>}{tab === 'visitors' && <VisitorAnalytics />}{tab === 'crm' && <CrmAdmin />}{tab === 'testimonials' && <TestimonialsAdmin />}{tab === 'analytics' && <AnalyticsAdmin />}{tab === 'messages' && <MessagesTab onCounts={setNewMsgs} />}{tab === 'services' && <ServicesAdmin onGenerateReport={(ord) => { setPreloadedOrder(ord); setTab(ord.serviceCode === 'SVC_BUSINESS_COMPAT' ? 'business' : ord.serviceCode === 'SVC_BUSINESS_COMPLETE' ? 'bizreport' : ord.serviceCode === 'SVC_SIGNATURE' ? 'signature' : 'studio'); }} />}{tab === 'queue' && <ReportQueueAdmin />}{tab === 'funnel' && <FunnelAdmin />}{tab === 'studio' && <ReportStudio preloadedOrder={preloadedOrder} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'signature' && <SignatureStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_SIGNATURE' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'business' && <BusinessStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_BUSINESS_COMPAT' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'bizreport' && <BusinessReportStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_BUSINESS_COMPLETE' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'angel' && <AngelFinderTab />}{tab === 'lucky' && <LuckyFinderTab />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'experts' && <ExpertsTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
           {tab === 'knowledge' && <KnowledgeTab />}{tab === 'themes' && <ThemesTab />}{tab === 'prompts' && <PromptsTab />}{tab === 'seller' && <SellerTab />}{tab === 'payments' && <PaymentReport />}
         </div>
       </div>
