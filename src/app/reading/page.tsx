@@ -16,6 +16,7 @@ import type { NumerologyResult } from '@/lib/numerology';
 import type { Narrative } from '@/lib/narrative/service';
 import { api } from '@/lib/client/api';
 import { safeStorage } from '@/lib/utils';
+import { servicePageByCode } from '@/lib/service-pages';
 import { ReadingPicker } from '@/components/reading/reading-picker';
 import { OrderFlow } from '@/components/reading/order-flow';
 
@@ -165,7 +166,14 @@ function ReadingRouter() {
   const go = (url: string) => { router.push(url); window.scrollTo({ top: 0 }); };
   if (type && type.startsWith('SVC_')) return <OrderFlow key={type} code={type} forId={forId} onChangeReading={() => go(`/reading${forId ? `?for=${encodeURIComponent(forId)}` : ''}`)} />;
   if (type === 'free' || params.get('report') || params.get('profile') || params.get('new')) return <ReadingInner />;
-  return <ReadingPicker onPick={(code) => go(code === 'free' && forId ? `/reading?profile=${encodeURIComponent(forId)}` : `/reading?type=${encodeURIComponent(code)}${keep}`)} />;
+  return <ReadingPicker onPick={(code) => {
+    if (code === 'free') {
+      go(forId ? `/reading?profile=${encodeURIComponent(forId)}` : '/reading?type=free');
+      return;
+    }
+    const page = servicePageByCode(code);
+    go(page ? `/${page.slug}${forId ? `?for=${encodeURIComponent(forId)}` : ''}` : `/reading?type=${encodeURIComponent(code)}${keep}`);
+  }} />;
 }
 
 export default function ReadingPage() {

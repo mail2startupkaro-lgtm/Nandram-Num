@@ -7,6 +7,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { api } from '@/lib/client/api';
 import { formatMoney } from '@/lib/billing/currency';
 import { useDisplayCurrency } from '@/lib/client/currency';
+import { servicePageByCode } from '@/lib/service-pages';
 import type { PublicService } from '@/components/services/book-service';
 import { FLOW } from './labels';
 
@@ -49,31 +50,35 @@ export function ReadingPicker({ onPick }: { onPick: (code: string) => void }) {
       </div>
       <StepBar step={0} />
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <article className="glass relative flex flex-col rounded-xl border border-success/40 p-5">
-          <span className="absolute right-4 top-4 rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-semibold text-success">{t.freeTag}</span>
-          <Gift className="h-8 w-8 text-gold" aria-hidden />
-          <h2 className="mt-3 font-serif text-lg font-semibold">{t.free}</h2>
-          <p className="mt-1 flex-1 text-sm text-muted-foreground">{t.freeShort}</p>
-          <p className="mt-3 font-serif text-2xl font-bold text-success">{lang === 'hi' ? '₹0' : 'Free'}</p>
-          <button type="button" onClick={() => onPick('free')} className={buttonVariants({ variant: 'outline', className: 'mt-4 w-full' })}>{t.freeCta}</button>
+        <article className="glass group relative flex flex-col rounded-xl border border-success/40 p-5 transition hover:border-success/80 hover:shadow-lg">
+          <button type="button" onClick={() => onPick('free')} className="absolute inset-0 z-0 rounded-xl focus:outline-none" aria-label={t.free} tabIndex={-1} />
+          <span className="pointer-events-none absolute right-4 top-4 z-10 rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-semibold text-success">{t.freeTag}</span>
+          <Gift className="relative z-10 h-8 w-8 text-gold transition-transform group-hover:scale-105" aria-hidden />
+          <h2 className="relative z-10 mt-3 font-serif text-lg font-semibold transition-colors group-hover:text-success">{t.free}</h2>
+          <p className="relative z-10 mt-1 flex-1 text-sm text-muted-foreground">{t.freeShort}</p>
+          <p className="relative z-10 mt-3 font-serif text-2xl font-bold text-success">{lang === 'hi' ? '₹0' : 'Free'}</p>
+          <button type="button" onClick={() => onPick('free')} className={buttonVariants({ variant: 'outline', className: 'relative z-10 mt-4 w-full' })}>{t.freeCta}</button>
         </article>
         {list === null && Array.from({ length: 5 }, (_, i) => <div key={i} className="h-64 animate-pulse rounded-xl bg-muted/40" />)}
         {list?.map((s) => {
           const Icon = SERVICE_ICON[s.code] ?? Sparkles;
           const p = priceOf(s, usd);
           const text = s[lang];
+          const page = servicePageByCode(s.code);
+          const href = page ? `/${page.slug}` : `/services#${s.code.toLowerCase()}`;
           return (
-            <article key={s.code} className="glass relative flex flex-col rounded-xl border border-gold/30 p-5 transition hover:border-gold/70">
-              {p?.off ? <span className="absolute right-4 top-4 rounded-full bg-gold px-2.5 py-0.5 text-xs font-bold text-black">{p.off}% {t.off}</span> : null}
-              <Icon className="h-8 w-8 text-gold" aria-hidden />
-              <h2 className="mt-3 pr-14 font-serif text-lg font-semibold leading-snug">{text.name}</h2>
-              <p className="mt-1 flex-1 text-sm text-muted-foreground">{text.short}</p>
-              <p className="mt-3 text-xs text-muted-foreground"><b className="text-foreground/80">{t.needs}:</b> {asks(s, lang).join(' · ')}</p>
-              <p className="mt-1 text-xs text-muted-foreground"><b className="text-foreground/80">{t.delivery}:</b> {text.delivery}</p>
-              <div className="mt-3 flex items-baseline gap-2">{p ? <><span className="font-serif text-2xl font-bold text-gold">{p.fee}</span>{p.mrp && <s className="text-sm text-muted-foreground">{p.mrp}</s>}</> : <span className="text-sm text-muted-foreground">{t.priceSoon}</span>}</div>
+            <article key={s.code} className="glass group relative flex flex-col rounded-xl border border-gold/30 p-5 transition hover:border-gold/70 hover:shadow-lg">
+              <Link href={href} className="absolute inset-0 z-0 rounded-xl focus:outline-none" aria-label={text.name} tabIndex={-1} />
+              {p?.off ? <span className="pointer-events-none absolute right-4 top-4 z-10 rounded-full bg-gold px-2.5 py-0.5 text-xs font-bold text-black">{p.off}% {t.off}</span> : null}
+              <Icon className="relative z-10 h-8 w-8 text-gold transition-transform group-hover:scale-105" aria-hidden />
+              <h2 className="relative z-10 mt-3 pr-14 font-serif text-lg font-semibold leading-snug transition-colors group-hover:text-gold">{text.name}</h2>
+              <p className="relative z-10 mt-1 flex-1 text-sm text-muted-foreground">{text.short}</p>
+              <p className="relative z-10 mt-3 text-xs text-muted-foreground"><b className="text-foreground/80">{t.needs}:</b> {asks(s, lang).join(' · ')}</p>
+              <p className="relative z-10 mt-1 text-xs text-muted-foreground"><b className="text-foreground/80">{t.delivery}:</b> {text.delivery}</p>
+              <div className="relative z-10 mt-3 flex items-baseline gap-2">{p ? <><span className="font-serif text-2xl font-bold text-gold">{p.fee}</span>{p.mrp && <s className="text-sm text-muted-foreground">{p.mrp}</s>}</> : <span className="text-sm text-muted-foreground">{t.priceSoon}</span>}</div>
               {s.payable
-                ? <button type="button" onClick={() => onPick(s.code)} className={buttonVariants({ variant: 'gold', className: 'mt-4 w-full' })}><Sparkles className="h-4 w-4" />{t.choose}</button>
-                : <Link href="/contact?topic=service" className={buttonVariants({ variant: 'outline', className: 'mt-4 w-full' })}><MessageCircle className="h-4 w-4" />{t.enquire}</Link>}
+                ? <Link href={href} className={buttonVariants({ variant: 'gold', className: 'relative z-10 mt-4 w-full' })}><Sparkles className="h-4 w-4" />{t.choose}</Link>
+                : <Link href="/contact?topic=service" className={buttonVariants({ variant: 'outline', className: 'relative z-10 mt-4 w-full' })}><MessageCircle className="h-4 w-4" />{t.enquire}</Link>}
             </article>
           );
         })}
