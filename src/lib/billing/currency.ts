@@ -1,8 +1,7 @@
 /**
  * Display + checkout currency.
  *  - Visitors in India (or whose country is unknown, e.g. local development) see and pay ₹ INR.
- *  - Visitors outside India see and pay $ USD for every plan that has a USD price set in Admin → Plans.
- *    Plans without a USD price stay in ₹ for everyone.
+ *  - Visitors outside India see and pay $ USD: the $ price set in Admin, else the standard $ price (STANDARD_USD).
  * Country comes from the hosting edge (Vercel `x-vercel-ip-country`, Cloudflare `cf-ipcountry`).
  * A visitor can override it with the ₹/$ switch on the pricing page (cookie `mn_cur`).
  * Safe for client and server code (no Node imports).
@@ -47,8 +46,31 @@ type PlanLike = { code: string; pricePaise: number; credits?: number; features?:
 const f = (p: PlanLike) => (p.features ?? {}) as Record<string, unknown>;
 const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? Math.round(v) : null);
 
-/** USD price of a plan in cents, or null if the admin has not set one. */
-export const usdPrice = (p: PlanLike) => n(f(p).usdCents);
+/**
+ * Standard international ($) prices, in cents: [offer price, real (struck-through) price].
+ * Used for visitors outside India whenever the admin has not typed a $ price in Admin → Services / Plan editor.
+ * Set from what international clients pay for comparable work (Nov 2026): automated online reports ≈ $13–70,
+ * expert-written PDF readings ≈ $20–100, live sessions $100+. Positioned as a personal expert report.
+ */
+export const STANDARD_USD: Record<string, [number, number]> = {
+  // Expert services (PDF reports)
+  SVC_PERSONAL_REPORT: [49_00, 99_00], SVC_COUPLE: [49_00, 99_00], SVC_BUSINESS_COMPAT: [59_00, 119_00], SVC_BUSINESS_NAME: [49_00, 99_00],
+  SVC_NAME_CORRECTION: [39_00, 79_00], SVC_BABY_NAME: [39_00, 79_00], SVC_LOSHU: [29_00, 59_00], SVC_PERSONAL_YEAR: [29_00, 59_00],
+  SVC_SIGNATURE: [29_00, 59_00], SVC_MOBILE_NUMBER: [19_00, 39_00],
+  // Report plans
+  SINGLE: [19_00, 39_00], PACK5: [69_00, 129_00], PRO_MONTHLY: [49_00, 79_00], PRO_YEARLY: [490_00, 948_00],
+};
+
+/** $ price of a service: the admin's $ price, else the standard one. `standard` = no admin price was set. */
+export function serviceUsd(s: { code: string; usdCents?: number | null; usdMrpCents?: number | null }): { usd: number | null; usdMrp: number | null; standard: boolean } {
+  const own = n(s.usdCents);
+  if (own) { const m = n(s.usdMrpCents); return { usd: own, usdMrp: m && m > own ? m : null, standard: false }; }
+  const std = STANDARD_USD[s.code];
+  return std ? { usd: std[0], usdMrp: std[1], standard: true } : { usd: null, usdMrp: null, standard: false };
+}
+
+/** USD price of a plan in cents: the admin's $ price, else the standard one (null for plans with neither). */
+export const usdPrice = (p: PlanLike) => n(f(p).usdCents) ?? STANDARD_USD[p.code]?.[0] ?? null;
 
 /** Real (struck-through) INR price: the admin's MRP, else a sensible default. */
 export function inrRealPrice(p: PlanLike): number {
@@ -64,7 +86,7 @@ export function inrRealPrice(p: PlanLike): number {
 export function planPrice(p: PlanLike, want: Currency): PriceView {
   const usd = want === 'USD' ? usdPrice(p) : null;
   if (usd) {
-    const mrp = n(f(p).usdMrpCents);
+    const mrp = n(f(p).usdMrpCents) ?? (n(f(p).usdCents) ? null : STANDARD_USD[p.code]?.[1] ?? null);
     // No USD real price set: keep the same discount ratio as INR, rounded to a .99 price.
     const ratio = inrRealPrice(p) / Math.max(1, p.pricePaise);
     const real = mrp && mrp > usd ? mrp : Math.max(usd, Math.round((usd * ratio) / 100) * 100 - 1);

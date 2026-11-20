@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import type { Block } from '@/lib/blog/generate';
+import Image from 'next/image';
 import { MULANK, mulankFor } from '@/lib/mulank-data';
+import { PostArt } from '@/components/blog/post-art';
 
 /** Renders the article building blocks shared by every blog post (city guides and number guides). */
 export function Blocks({ blocks, lang = 'en' }: { blocks: Block[]; lang?: 'en' | 'hi' }) {
@@ -14,6 +16,8 @@ export function Blocks({ blocks, lang = 'en' }: { blocks: Block[]; lang?: 'en' |
           case 'steps': return <ol key={i} className="grid gap-3 sm:grid-cols-2">{b.items.map((x, n) => <li key={x.title} className="rounded-lg border border-gold/20 bg-background/40 p-4"><span className="gold-text font-serif text-3xl font-bold">{n + 1}</span><p className="font-semibold">{x.title}</p><p className="text-sm text-muted-foreground">{x.text}</p></li>)}</ol>;
           case 'table': return <div key={i} className="overflow-x-auto rounded-lg border border-gold/20"><table className="w-full min-w-[460px] text-sm"><thead><tr className="border-b border-gold/20 bg-gold/5 text-left">{b.head.map((h) => <th key={h} className="p-3 font-semibold">{h}</th>)}</tr></thead><tbody>{b.rows.map((r) => <tr key={r[0]} className="border-b border-border/50 last:border-0 hover:bg-gold/5">{r.map((c, n) => <td key={n} className={n === 0 ? 'p-3 font-serif text-lg font-bold text-gold' : 'p-3 text-muted-foreground'}>{c}</td>)}</tr>)}</tbody></table></div>;
           case 'mulank': return <div key={i} className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9">{MULANK.map((x) => mulankFor(x.n, lang)!).map((m) => <Link key={m.n} href={`/mulank/${m.n}`} className="mk-card rounded-lg border border-gold/25 p-2 text-center"><span className="gold-text font-cinzel text-2xl font-bold">{m.n}</span><span className="block text-[10px] uppercase tracking-wide text-muted-foreground">{m.planet.split(' ')[0]}</span></Link>)}</div>;
+          case 'figure': return <figure key={i} className="overflow-hidden rounded-2xl border border-gold/30 shadow-[0_0_30px_hsl(var(--gold)/0.12)]"><PostArt art={b.art} mode={lang} title={b.caption} /><figcaption className="bg-background/50 px-4 py-2 text-center text-xs text-muted-foreground">{b.caption}</figcaption></figure>;
+          case 'tip': return <aside key={i} className="flex gap-4 rounded-xl border-l-4 border-gold bg-gold/10 p-4"><Image src="/images/acharya-nandram-512.png" alt={lang === 'hi' ? 'आचार्य नंदराम' : 'Acharya Nandram'} width={48} height={48} className="h-12 w-12 shrink-0 rounded-full border border-gold/50 object-cover object-top" /><div><p className="text-xs font-semibold uppercase tracking-widest text-gold">{lang === 'hi' ? 'आचार्य नंदराम की सलाह' : "Acharya Nandram's tip"}</p><p className="mt-1 text-sm leading-relaxed">{b.text}</p></div></aside>;
         }
       })}
     </>

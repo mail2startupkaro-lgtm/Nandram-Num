@@ -1,4 +1,5 @@
 'use client';
+import { STANDARD_USD } from '@/lib/billing/currency';
 import * as React from 'react';
 import { Mail, MessageCircle, Phone, Plus, RefreshCw, Save, Sparkles, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -115,8 +116,8 @@ function Catalogue() {
             <Field label="Code" htmlFor="sv-code"><Input id="sv-code" value={sel.code} onChange={(e) => setSel({ ...sel, code: e.target.value.toUpperCase() })} disabled={!!list?.some((s) => s.code === sel.code)} /></Field>
             <Field label="Fee ₹ (incl. GST)" htmlFor="sv-price"><Input id="sv-price" type="number" min={1} step="1" value={rupees(sel.pricePaise)} onChange={(e) => setSel({ ...sel, pricePaise: toPaise(e.target.value), priceConfirmed: false })} /></Field>
             <Field label="Was ₹ (optional)" htmlFor="sv-mrp"><Input id="sv-mrp" type="number" min={0} value={rupees(sel.mrpPaise)} onChange={(e) => setSel({ ...sel, mrpPaise: e.target.value ? toPaise(e.target.value) : null })} /></Field>
-            <Field label="Fee $ (outside India)" htmlFor="sv-usd" hint="Blank = ₹ only"><Input id="sv-usd" type="number" min={1} step="0.01" value={rupees(sel.usdCents)} placeholder="e.g. 29" onChange={(e) => setSel({ ...sel, usdCents: e.target.value ? toPaise(e.target.value) : null })} /></Field>
-            <Field label="Was $ (optional)" htmlFor="sv-usdmrp"><Input id="sv-usdmrp" type="number" min={0} step="0.01" value={rupees(sel.usdMrpCents)} onChange={(e) => setSel({ ...sel, usdMrpCents: e.target.value ? toPaise(e.target.value) : null })} /></Field>
+            <Field label="Fee $ (outside India)" htmlFor="sv-usd" hint={STANDARD_USD[sel.code] ? `Blank = standard $${STANDARD_USD[sel.code][0] / 100}` : 'Blank = ₹ only'}><Input id="sv-usd" type="number" min={1} step="0.01" value={rupees(sel.usdCents)} placeholder={STANDARD_USD[sel.code] ? String(STANDARD_USD[sel.code][0] / 100) : 'e.g. 29'} onChange={(e) => setSel({ ...sel, usdCents: e.target.value ? toPaise(e.target.value) : null })} /></Field>
+            <Field label="Was $ (optional)" htmlFor="sv-usdmrp" hint={!sel.usdCents && STANDARD_USD[sel.code] ? `Blank = standard $${STANDARD_USD[sel.code][1] / 100}` : undefined}><Input id="sv-usdmrp" type="number" min={0} step="0.01" value={rupees(sel.usdMrpCents)} placeholder={STANDARD_USD[sel.code] ? String(STANDARD_USD[sel.code][1] / 100) : undefined} onChange={(e) => setSel({ ...sel, usdMrpCents: e.target.value ? toPaise(e.target.value) : null })} /></Field>
             <Field label="Order on page" htmlFor="sv-sort"><Input id="sv-sort" type="number" min={0} value={sel.sort} onChange={(e) => setSel({ ...sel, sort: Number(e.target.value) })} /></Field>
           </div>
           <div className="flex flex-wrap gap-4 text-sm">

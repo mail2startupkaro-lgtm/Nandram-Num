@@ -5,6 +5,7 @@ import { NUMBER_POSTS } from '@/lib/blog/numbers';
 import { SERVICE_PAGES } from '@/lib/service-pages';
 import { CITIES, postSlug } from '@/lib/blog/cities';
 import { TOP_ANGEL } from '@/lib/angel/generate';
+import { TOPIC_POSTS } from '@/lib/blog/topics';
 
 import { SITE_URL } from '@/lib/seo/site';
 
@@ -29,6 +30,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base()}/about`, lastModified: now, priority: 0.7 },
     { url: `${base()}/international-numerology`, lastModified: now, priority: 0.7 },
     ...SERVICE_PAGES.map((x) => ({ url: `${base()}/${x.slug}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 })),
+    ...TOPIC_POSTS.map((p) => ({ url: `${base()}/blog/${p.slug}`, lastModified: new Date('2026-11-20'), changeFrequency: 'monthly' as const, priority: p.cat === 'guide' ? 0.8 : 0.7 })),
     ...NUMBER_POSTS.map((p) => ({ url: `${base()}/blog/${p.slug}`, lastModified: c, changeFrequency: 'monthly' as const, priority: 0.7 })),
     ...MULANK.map((m) => ({ url: `${base()}/bhagyank/${m.n}`, lastModified: c, changeFrequency: 'monthly' as const, priority: 0.7 })),
     { url: `${base()}/angel-numbers`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.9 },

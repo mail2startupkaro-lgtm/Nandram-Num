@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { countryFromHeaders, currencyForRequest, formatMoney, intlPhone, planPrice } from '@/lib/billing/currency';
+import { countryFromHeaders, currencyForRequest, formatMoney, intlPhone, planPrice, serviceUsd } from '@/lib/billing/currency';
 import { dollarsInWords } from '@/lib/billing/invoice';
 
 const req = (h: Record<string, string>) => new Request('https://x.test/api', { headers: h });
@@ -16,12 +16,34 @@ describe('currency', () => {
     expect(currencyForRequest(req({ cookie: 'mn_cur=EUR' })).currency).toBe('INR');
   });
 
-  it('prices plans in USD only when a USD price is set', () => {
+  it('prices plans in USD: admin $ price, else the standard $ price, else ₹', () => {
     const single = { code: 'SINGLE', pricePaise: 49_900, credits: 1, features: { usdCents: 999 } };
     expect(planPrice(single, 'INR')).toMatchObject({ currency: 'INR', price: 49_900, real: 99_900, percent: 50 });
     expect(planPrice(single, 'USD')).toMatchObject({ currency: 'USD', price: 999, real: 1999, discount: 1000 });
     expect(planPrice({ ...single, features: { usdCents: 999, usdMrpCents: 2999 } }, 'USD')).toMatchObject({ real: 2999, percent: 67 });
-    expect(planPrice({ ...single, features: {} }, 'USD').currency).toBe('INR');
+    expect(planPrice({ ...single, features: {} }, 'USD')).toMatchObject({ currency: 'USD', price: 19_00, real: 39_00 }); // standard $ price
+    expect(planPrice({ code: 'CUSTOM', pricePaise: 9_900, credits: 1, features: {} }, 'USD').currency).toBe('INR'); // no $ price at all
+    expect(planPrice({ ...single, features: {} }, 'INR')).toMatchObject({ currency: 'INR', price: 49_900 }); // India unchanged
+  });
+
+  it('services: standard $ prices for every service, admin $ price wins', () => {
+    for (const code of ['SVC_PERSONAL_REPORT', 'SVC_NAME_CORRECTION', 'SVC_MOBILE_NUMBER', 'SVC_BABY_NAME', 'SVC_LOSHU', 'SVC_COUPLE', 'SVC_BUSINESS_NAME', 'SVC_BUSINESS_COMPAT', 'SVC_PERSONAL_YEAR', 'SVC_SIGNATURE']) {
+      const v = serviceUsd({ code, usdCents: null, usdMrpCents: null });
+      expect(v.standard).toBe(true);
+      expect(v.usd).toBeGreaterThanOrEqual(19_00);
+      expect(v.usdMrp!).toBeGreaterThan(v.usd!);
+    }
+    expect(serviceUsd({ code: 'SVC_LOSHU', usdCents: 25_00, usdMrpCents: null })).toEqual({ usd: 25_00, usdMrp: null, standard: false });
+    expect(serviceUsd({ code: 'SVC_NEW', usdCents: null })).toEqual({ usd: null, usdMrp: null, standard: false });
+  });
+
+  it('visitor country decides the currency (India = ₹, abroad = $)', () => {
+    const req = (h: Record<string, string>) => new Request('https://x.test/', { headers: h });
+    expect(currencyForRequest(req({ 'x-vercel-ip-country': 'IN' })).currency).toBe('INR');
+    expect(currencyForRequest(req({ 'x-vercel-ip-country': 'US' })).currency).toBe('USD');
+    expect(currencyForRequest(req({ 'cf-ipcountry': 'AE' })).currency).toBe('USD');
+    expect(currencyForRequest(req({})).currency).toBe('INR'); // unknown (local) = ₹
+    expect(currencyForRequest(req({ 'x-vercel-ip-country': 'US', cookie: 'mn_cur=INR' })).currency).toBe('INR'); // visitor's own choice wins
   });
 
   it('formats money and words', () => {

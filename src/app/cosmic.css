@@ -197,3 +197,26 @@ html:not(.dark) .cz-card { background: hsl(0 0% 100% / .72); }
 @media (prefers-reduced-motion: reduce) {
   .cz-nebula, .cz-floaters span { animation: none !important; }
 }
+
+/* ---------- Blog illustrations (components/blog/post-art.tsx) ---------- */
+@keyframes paTw { 0%,100% { opacity: .25 } 50% { opacity: 1 } }
+@keyframes paPulse { 0%,100% { transform: scale(1) } 50% { transform: scale(1.06) } }
+@keyframes paFloat { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
+@keyframes paDraw { to { stroke-dashoffset: 0 } }
+@keyframes paPop { 0% { transform: scale(.4); opacity: 0 } 100% { transform: scale(1); opacity: 1 } }
+@keyframes paGrow { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+@keyframes paGlow { 0%,100% { opacity: .55 } 50% { opacity: 1 } }
+.pa-art .pa-twinkle { animation: paTw 3s ease-in-out infinite; }
+.pa-art .pa-pulse { transform-box: fill-box; transform-origin: center; animation: paPulse 3s ease-in-out infinite; }
+.pa-art .pa-float { animation: paFloat 5s ease-in-out infinite; }
+.pa-art .pa-spin { transform-box: fill-box; transform-origin: center; animation: mkSpin 40s linear infinite; }
+.pa-art .pa-spin-r { transform-box: fill-box; transform-origin: center; animation: mkSpinRev 28s linear infinite; }
+.pa-art .pa-orbit { transform-box: view-box; animation: mkSpin 14s linear infinite; }
+.pa-art .pa-draw { stroke-dasharray: 520; stroke-dashoffset: 520; animation: paDraw 2.2s ease forwards; }
+.pa-art .pa-draw-long { stroke-dasharray: 900; stroke-dashoffset: 900; animation: paDraw 3.5s ease forwards; }
+.pa-art .pa-pop { transform-box: fill-box; transform-origin: center; animation: paPop .6s cubic-bezier(.3,1.6,.5,1) both; }
+.pa-art .pa-grow { transform-box: fill-box; transform-origin: left center; animation: paGrow 1.6s ease-out both; }
+.pa-art .pa-glow { animation: paGlow 3s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .pa-art * { animation: none !important; stroke-dashoffset: 0 !important; opacity: 1; }
+}

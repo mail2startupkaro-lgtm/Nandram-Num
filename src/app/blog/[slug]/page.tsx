@@ -12,14 +12,25 @@ import { cityHi, stateHi, ALIAS_HI } from '@/lib/blog/cities-hi';
 import { Bi, BiBlock } from '@/components/i18n/bi';
 import { NumberPostView } from '@/components/blog/number-post';
 import { NUMBER_POSTS, NUMBER_POST_PUBLISHED, buildNumberPost, numberPostBySlug } from '@/lib/blog/numbers';
+import { TOPIC_POSTS, TOPIC_PUBLISHED, buildTopic, topicBySlug } from '@/lib/blog/topics';
+import { TopicPostView } from '@/components/blog/topic-post';
 
 export const dynamicParams = false;
-export function generateStaticParams() { return [...NUMBER_POSTS.map((p) => ({ slug: p.slug })), ...CITIES.map((c) => ({ slug: postSlug(c) }))]; }
+export function generateStaticParams() { return [...TOPIC_POSTS.map((p) => ({ slug: p.slug })), ...NUMBER_POSTS.map((p) => ({ slug: p.slug })), ...CITIES.map((c) => ({ slug: postSlug(c) }))]; }
 
 const PUBLISHED = '2026-11-09';
 
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const params = await props.params;
+  if (topicBySlug(params.slug)) {
+    const p = buildTopic(params.slug, 'en')!;
+    return {
+      title: { absolute: p.title }, description: p.description, keywords: p.keywords, authors: [{ name: 'Acharya Nandram' }],
+      alternates: { canonical: `/blog/${p.slug}` },
+      openGraph: { title: p.title, description: p.description, url: `/blog/${p.slug}`, siteName: 'myNumerologist.com', locale: 'en_IN', type: 'article', publishedTime: TOPIC_PUBLISHED, authors: ['Acharya Nandram'] },
+      twitter: { card: 'summary_large_image', title: p.title, description: p.description },
+    };
+  }
   const np = numberPostBySlug(params.slug);
   if (np) {
     const p = buildNumberPost(np.kind, np.n, 'en');
@@ -66,6 +77,7 @@ function SectionBody({ s, post, lang }: { s: Post['sections'][number]; post: Pos
 
 export default async function CityPost(props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;
+  if (topicBySlug(params.slug)) return <TopicPostView slug={params.slug} />;
   const np = numberPostBySlug(params.slug);
   if (np) return <NumberPostView kind={np.kind} n={np.n} />;
   const c = cityFromPostSlug(params.slug);

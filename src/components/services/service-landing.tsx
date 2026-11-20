@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { serviceUsd } from '@/lib/billing/currency';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowRight, CheckCircle2, Clock, FileText, LockKeyhole, Send, Users } from 'lucide-react';
@@ -30,7 +31,7 @@ async function loadService(code: string): Promise<PublicService | null> {
   let s: Service | undefined;
   try { s = await getService(code); } catch { const d = DEFAULT_SERVICES.find((x) => x.code === code); s = d ? ({ ...d, mrpPaise: null, usdCents: null, usdMrpCents: null, priceConfirmed: false, active: true, featured: !!d.featured, sort: d.sort ?? 0, updatedAt: new Date() } as Service) : undefined; }
   if (!s || !s.active) return null;
-  return { code: s.code, en: s.en, hi: s.hi, intake: s.intake, payable: isPayable(s), pricePaise: isPayable(s) ? s.pricePaise : null, mrpPaise: isPayable(s) ? s.mrpPaise : null, usdCents: isPayable(s) ? s.usdCents : null, usdMrpCents: isPayable(s) ? s.usdMrpCents : null };
+  return { code: s.code, en: s.en, hi: s.hi, intake: s.intake, payable: isPayable(s), pricePaise: isPayable(s) ? s.pricePaise : null, mrpPaise: isPayable(s) ? s.mrpPaise : null, usdCents: isPayable(s) ? serviceUsd(s).usd : null, usdMrpCents: isPayable(s) ? serviceUsd(s).usdMrp : null };
 }
 
 const STEPS = [

@@ -6,6 +6,7 @@ import { analyseNameSystem } from '@/lib/numerology';
 import { planetOf } from '@/lib/numerology/data/planets';
 import { NUMBER_TRAITS } from '@/lib/i18n/numberMeanings';
 import { CITIES, STATES, postSlug, type City, type Tier } from './cities';
+import type { Art } from './art';
 
 export type Block =
   | { kind: 'p'; text: string }
@@ -13,7 +14,9 @@ export type Block =
   | { kind: 'cards'; items: { title: string; text: string; href?: string }[] }
   | { kind: 'steps'; items: { title: string; text: string }[] }
   | { kind: 'table'; head: string[]; rows: string[][] }
-  | { kind: 'mulank' };
+  | { kind: 'mulank' }
+  | { kind: 'figure'; art: Art; caption: string }
+  | { kind: 'tip'; text: string };
 export interface Section { id: string; title: string; blocks: Block[]; cta?: boolean }
 export interface Post {
   city: City; slug: string; title: string; h1: string; description: string; keywords: string[];

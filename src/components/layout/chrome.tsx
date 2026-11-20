@@ -8,7 +8,7 @@ import { useApp } from './providers';
 import { Button } from '@/components/ui/button';
 import { MulankMenu } from './mulank-menu';
 import { BhagyankMenu } from './bhagyank-menu';
-import { ServicesMenu } from './services-menu';
+import { SERVICE_PAGES } from '@/lib/service-pages';
 import { AngelMenu } from './angel-menu';
 import { Bi } from '@/components/i18n/bi';
 
@@ -94,7 +94,6 @@ export function Header() {
           <BhagyankMenu />
           <AngelMenu />
           <Link href="/calculators" className={`hidden md:inline-flex ${navLinkClass}`}>{t.nav.calculators}</Link>
-          <ServicesMenu />
           <Link href="/pricing" className={`hidden md:inline-flex ${navLinkClass}`}>{t.nav.pricing}</Link>
           <Link href="/contact" className={`hidden md:inline-flex ${navLinkClass}`}>{t.nav.contact}</Link>
 
@@ -191,7 +190,7 @@ export function Header() {
       {nav && (
         <nav id="mobile-nav" aria-label={lang === 'hi' ? 'मुख्य मेन्यू' : 'Main'} className="border-t border-gold/20 bg-background/95 backdrop-blur-md md:hidden">
           <ul className="container grid grid-cols-2 gap-1 py-3 text-sm">
-            {[['/reading', t.nav.reading], ['/angel-numbers', t.nav.angel], ['/mulank', t.nav.mulank], ['/bhagyank', t.nav.bhagyank], ['/calculators', t.nav.calculators], ['/angel-numbers/calculator', lang === 'hi' ? 'एंजेल नंबर कैलकुलेटर' : 'Angel number calculator'], ['/services', t.nav.services], ['/pricing', t.nav.pricing], ['/international-numerology', lang === 'hi' ? 'अंतरराष्ट्रीय क्लाइंट' : 'International clients'], ['/contact', t.nav.contact]].map(([href, label]) => (
+            {[['/reading', t.nav.reading], ['/angel-numbers', t.nav.angel], ['/mulank', t.nav.mulank], ['/bhagyank', t.nav.bhagyank], ['/calculators', t.nav.calculators], ['/angel-numbers/calculator', lang === 'hi' ? 'एंजेल नंबर कैलकुलेटर' : 'Angel number calculator'], ['/pricing', t.nav.pricing], ['/international-numerology', lang === 'hi' ? 'अंतरराष्ट्रीय क्लाइंट' : 'International clients'], ['/contact', t.nav.contact]].map(([href, label]) => (
               <li key={href}><Link href={href} onClick={() => setNav(false)} className="block rounded-md px-3 py-2.5 hover:bg-muted">{label}</Link></li>
             ))}
             <li><button type="button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-left hover:bg-muted">{theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}{lang === 'hi' ? 'थीम बदलें' : 'Switch theme'}</button></li>
@@ -304,17 +303,14 @@ export function Footer() {
           <div className="space-y-3">
             <h4 className="font-cinzel text-xs font-bold uppercase tracking-wider text-gold flex items-center gap-1.5">
               <Sparkles className="h-3.5 w-3.5 text-gold" />
-              <Bi en="Personal Services" hi="व्यक्तिगत सेवाएँ" />
+              <Bi en="Services" hi="सेवाएँ" />
             </h4>
             <ul className="space-y-2 text-[12px]">
               <li><Link href="/pricing" className="hover:text-gold transition-colors font-medium text-foreground/90"><Bi en="Complete Life Report (PDF)" hi="संपूर्ण जीवन रिपोर्ट (PDF)" /></Link></li>
-              <li><Link href="/personal-numerology-report" className="hover:text-gold transition-colors"><Bi en="Personal Reading" hi="व्यक्तिगत अंक विश्लेषण" /></Link></li>
-              <li><Link href="/name-numerology" className="hover:text-gold transition-colors"><Bi en="Name Numerology Correction" hi="नाम व वर्तनी सुधार" /></Link></li>
-              <li><Link href="/mobile-number-numerology" className="hover:text-gold transition-colors"><Bi en="Lucky Mobile Number" hi="शुभ मोबाइल नंबर" /></Link></li>
-              <li><Link href="/couple-compatibility-report" className="hover:text-gold transition-colors"><Bi en="Couple Compatibility" hi="विवाह व जोड़ी अनुकूलता" /></Link></li>
-              <li><Link href="/baby-name-numerology" className="hover:text-gold transition-colors"><Bi en="Baby Name Selection" hi="शिशु नामकरण संस्कार" /></Link></li>
-              <li><Link href="/business-name-numerology" className="hover:text-gold transition-colors"><Bi en="Business Name Numerology" hi="व्यवसाय व कंपनी नाम" /></Link></li>
-              <li><Link href="/personal-year-consultancy" className="hover:text-gold transition-colors"><Bi en="Personal Year Guidance" hi="व्यक्तिगत वर्ष फल" /></Link></li>
+              {SERVICE_PAGES.map((p) => (
+                <li key={p.slug}><Link href={`/${p.slug}`} className="hover:text-gold transition-colors">{p.menu[lang]}</Link></li>
+              ))}
+              <li><Link href="/services" className="hover:text-gold transition-colors font-medium text-gold"><Bi en="All services & fees →" hi="सभी सेवाएँ और शुल्क →" /></Link></li>
               <li><Link href="/international-numerology" className="hover:text-gold transition-colors text-amber-400/90"><Bi en="International Clients (USD)" hi="अंतरराष्ट्रीय सेवाएँ (USD)" /></Link></li>
             </ul>
           </div>

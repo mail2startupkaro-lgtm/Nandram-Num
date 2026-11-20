@@ -291,9 +291,9 @@ describe.skipIf(!URL)('database (Postgres)', () => {
     await expect(createCheckout(buyer, { planCode: 'SINGLE', billingState: 'Outside India', currency: 'USD', coupon: 'FLAT100' }, {}, db)).rejects.toThrow('COUPON_NOT_FOR_CURRENCY');
     const pct = await createCheckout(buyer, { planCode: 'SINGLE', billingState: 'Outside India', currency: 'USD', coupon: 'TEN' }, {}, db);
     expect(pct.amountPaise).toBe(899);
-    // A plan without a USD price stays in ₹ even for a visitor abroad.
-    const inr = await createCheckout(buyer, { planCode: 'PACK5', billingState: 'Outside India', currency: 'USD' }, {}, db);
-    expect(inr.currency).toBe('INR');
+    // A plan without an admin $ price uses the standard $ price for a visitor abroad.
+    const std = await createCheckout(buyer, { planCode: 'PACK5', billingState: 'Outside India', currency: 'USD' }, {}, db);
+    expect(std).toMatchObject({ currency: 'USD', amountPaise: 69_00 });
     const { payment } = await fulfilPayment(usd.orderId, 'pay_usd_1', db);
     expect(payment).toMatchObject({ currency: 'USD', amountPaise: 999, gstin: null, billingState: 'Outside India' });
     expect(payment.taxablePaise + payment.igstPaise).toBe(999);

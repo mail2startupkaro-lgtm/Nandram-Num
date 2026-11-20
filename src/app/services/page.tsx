@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { serviceUsd } from '@/lib/billing/currency';
 import Link from 'next/link';
 import { ArrowRight, Award, BadgePercent, CheckCircle2, Clock, Eye, FileText, Gift, Languages, LockKeyhole, MessageCircle, Send, ShieldCheck, UserCheck } from 'lucide-react';
 import { AcharyaProfile } from '@/components/blog/blog-parts';
@@ -25,7 +26,7 @@ export const revalidate = 300; // prices edited in Admin appear within 5 minutes
 async function load(): Promise<PublicService[]> {
   let rows: Service[];
   try { rows = await listServices(); } catch { rows = DEFAULT_SERVICES.map((s) => ({ ...s, mrpPaise: null, usdCents: null, usdMrpCents: null, priceConfirmed: false, active: true, featured: !!s.featured, sort: s.sort ?? 0, updatedAt: new Date() }) as Service); }
-  return rows.map((s) => ({ code: s.code, en: s.en, hi: s.hi, intake: s.intake, payable: isPayable(s), pricePaise: isPayable(s) ? s.pricePaise : null, mrpPaise: isPayable(s) ? s.mrpPaise : null, usdCents: isPayable(s) ? s.usdCents : null, usdMrpCents: isPayable(s) ? s.usdMrpCents : null }));
+  return rows.map((s) => ({ code: s.code, en: s.en, hi: s.hi, intake: s.intake, payable: isPayable(s), pricePaise: isPayable(s) ? s.pricePaise : null, mrpPaise: isPayable(s) ? s.mrpPaise : null, usdCents: isPayable(s) ? serviceUsd(s).usd : null, usdMrpCents: isPayable(s) ? serviceUsd(s).usdMrp : null }));
 }
 
 const STEPS = [

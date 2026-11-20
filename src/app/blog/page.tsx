@@ -9,10 +9,12 @@ import { Bi } from '@/components/i18n/bi';
 import { numberPostSlug } from '@/lib/blog/numbers';
 import { mulankFor } from '@/lib/mulank-data';
 import { bhagyankFor } from '@/lib/bhagyank-data';
+import { PostArt } from '@/components/blog/post-art';
+import { TOPIC_CATS, TOPIC_POSTS, buildTopic } from '@/lib/blog/topics';
 
 export const metadata: Metadata = {
-  title: 'Numerology Blog: Mulank, Bhagyank & City Guides',
-  description: 'Complete Mulank 1–9 and Bhagyank 1–9 guides with career, marriage, lucky colours and remedies, plus numerology guides for 500+ Indian cities, by Acharya Nandram.',
+  title: 'Numerology Blog: 100+ Guides on Mulank, Compatibility, Lo Shu & More',
+  description: '100+ numerology articles by Acharya Nandram: Mulank compatibility, Lo Shu missing numbers, personal year, name, mobile, house and Kua numbers, plus city guides.',
   alternates: { canonical: '/blog' },
 };
 
@@ -36,6 +38,30 @@ export default function BlogHome() {
         <p className="mt-2 max-w-2xl text-muted-foreground"><Bi en="Career, business, name, mobile number and marriage guidance for Mumbai, explained in plain language, with a free reading to start." hi="मुंबई के लिए करियर, व्यवसाय, नाम, मोबाइल नंबर और विवाह का मार्गदर्शन, सरल भाषा में, मुफ़्त रीडिंग के साथ शुरुआत।" /></p>
         <Link href="/blog/best-numerologist-in-mumbai" className="mk-shine mt-4 inline-flex h-11 items-center gap-2 rounded-md border border-gold/60 px-5 font-medium hover:bg-gold/10"><Bi en="Read the Mumbai guide" hi="मुंबई मार्गदर्शिका पढ़ें" /> <ArrowRight className="h-4 w-4" /></Link>
         <div className="mt-5 flex flex-wrap gap-2">{featured.filter((c) => c.slug !== 'mumbai').map((c) => <Link key={c.slug} href={`/blog/best-numerologist-in-${c.slug}`} className="rounded-full border border-gold/40 px-3 py-1 text-sm hover:bg-gold/10"><Bi en={c.name} hi={cityHi(c.name)} /></Link>)}</div>
+      </section>
+
+      <section aria-labelledby="ta-label" className="space-y-8">
+        <div className="text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold"><Bi en={`${TOPIC_POSTS.length} articles · English & Hindi`} hi={`${TOPIC_POSTS.length} लेख · अंग्रेज़ी और हिंदी`} /></p>
+          <h2 id="ta-label" className="font-cinzel mt-1 text-2xl font-bold sm:text-3xl"><Bi en="Numerology Articles by Acharya Nandram" hi="आचार्य नंदराम के अंक ज्योतिष लेख" /></h2>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {['acharya-nandram-numerologist-profile', 'what-is-numerology-complete-beginners-guide', 'numerology-2027-predictions-universal-year-2'].map((slug) => { const e = buildTopic(slug, 'en')!, h = buildTopic(slug, 'hi')!; return (
+            <Link key={slug} href={`/blog/${slug}`} className="mk-card group overflow-hidden rounded-2xl border border-gold/30 bg-card/60">
+              <PostArt art={e.art} mode="both" title={e.h1} />
+              <div className="p-4"><p className="text-xs uppercase tracking-widest text-gold"><Bi en={e.kicker} hi={h.kicker} /></p><p className="mt-1 font-semibold group-hover:text-gold"><Bi en={e.h1} hi={h.h1} /></p></div>
+            </Link>); })}
+        </div>
+        {TOPIC_CATS.map((c) => (
+          <div key={c.id} id={c.id} className="scroll-mt-24">
+            <h3 className="font-serif text-xl font-semibold"><Bi en={c.en} hi={c.hi} /></h3>
+            <p className="mb-3 text-sm text-muted-foreground"><Bi en={c.enSub} hi={c.hiSub} /></p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {TOPIC_POSTS.filter((t) => t.cat === c.id).map((t) => { const e = buildTopic(t.slug, 'en')!, h = buildTopic(t.slug, 'hi')!; return (
+                <Link key={t.slug} href={`/blog/${t.slug}`} className="mk-card glass rounded-lg border border-gold/20 px-3 py-2 text-sm hover:text-gold"><Bi en={e.h1.split(':')[0]} hi={h.h1.split(':')[0]} /></Link>); })}
+            </div>
+          </div>
+        ))}
       </section>
 
       <section aria-labelledby="ng-label" className="space-y-6">

@@ -5,7 +5,7 @@ import { coupons, creditLedger, invoiceCounters, payments, subscriptions, users,
 import { getSetting } from '@/lib/admin/settings';
 import { financialYear, GSTIN_RE, splitGstInclusive } from './gst';
 import { getPlan } from './plans';
-import { intlPhone, OUTSIDE_INDIA, planPrice, type Currency } from './currency';
+import { intlPhone, OUTSIDE_INDIA, planPrice, serviceUsd, type Currency } from './currency';
 import { getPerson } from '@/lib/db/repo/people';
 import { createServiceOrder, getService, isPayable, isServiceCode, markServiceOrderPaid, parseIntake } from './services';
 import { CASHFREE_ORDER_PREFIX, cashfreeConfig, cashfreePhone, createCashfreeOrder, getCashfreeOrder, getCashfreePayments, isCashfreeOrder, newCashfreeOrderId, toPaise } from './cashfree';
@@ -32,7 +32,7 @@ export async function getPurchasable(code: string, db: Db = getDb(), want: Curre
   if (isServiceCode(code)) {
     const s = await getService(code, db);
     if (!s || !isPayable(s)) return null;
-    const usd = want === 'USD' && s.usdCents && s.usdCents >= 100 ? s.usdCents : null; // $ only when the admin set a $ fee
+    const usd = want === 'USD' ? serviceUsd(s).usd : null; // admin's $ fee, else the standard $ fee
     return { kind: 'service' as const, code: s.code, name: s.en.name, pricePaise: usd ?? s.pricePaise, currency: (usd ? 'USD' : 'INR') as Currency, service: s };
   }
   const plan = await getPlan(code, db);
