@@ -12,6 +12,7 @@ import { SITE_NAME } from '@/lib/seo/site';
 import type { Order } from '@/components/admin/services-admin';
 import type { BizReport } from '@/lib/business/agent';
 import { cn } from '@/lib/utils';
+import { tr } from '@/lib/i18n/hi-terms';
 
 interface Result { data: BizAnalytics; report: BizReport; source: 'ai' | 'rules'; model?: string; note?: string; generatedAt: string }
 const LOSHU = [[4, 9, 2], [3, 5, 7], [8, 1, 6]];
@@ -47,21 +48,42 @@ function asText(name: string, r: Result) {
 
 const VERDICT_CSS: Record<string, string> = { excellent: '#1f7a46', good: '#8a6d12', moderate: '#b5651d', weak: '#9b2335' };
 
-async function printReport(name: string, r: Result, opts: { by: string; appendix: boolean; meta: { dob: string; place: string; business?: string } }) {
+/** Print labels for the Business compatibility report (category and business names stay as written). */
+const PL = {
+  en: { preparing: 'Preparing the report…', title: 'Business Compatibility Report', subtitle: 'Business & career numerology', brandLine: 'Business Numerology', dob: 'Date of birth', place: 'Birth place', bizName: 'Business name', reportDate: 'Report date', by: 'Prepared by',
+    analysed: (n: string) => `${n} categories analysed`, appendix: (n: string) => `Appendix – Complete Ranking of ${n} Categories`, appendixNote: (name: string) => `Every business and profession in the catalogue, ranked for ${name}. Scores: 75+ highly compatible · 62–74 compatible · 48–61 moderate · below 48 not advised.`,
+    category: 'Category', group: 'Group', score: 'Score', moolank: 'Moolank', bhagyank: 'Bhagyank', nameNo: 'Name no.', py: 'Personal year', bestSector: 'Best sector', bestMatch: 'Best match', loshu: 'Lo Shu grid', missing: 'Missing', none: 'none',
+    friendlyH: 'Friendly & difficult numbers', friendlyTo: (b: number) => `Friendly to Bhagyank ${b}`, difficult: 'Difficult', planet: 'Ruling planet', day: 'lucky day', colours: 'Colours',
+    considering: 'Businesses You Are Considering', business: 'Business', rank: 'Rank', verdict: 'Verdict', numbers: 'numbers', rankOf: (r: string, n: string) => `${r} of ${n}`,
+    top: 'Top Recommendations', howStart: 'How to start', watch: 'Watch', yourTop: (k: number, n: string) => `Your Top ${k} of ${n}`, sectors: 'Sector Analysis', bestInSector: 'Best businesses in each sector', groups: 'Strongest business groups', categories: 'categories',
+    least: 'Least Suited', timingH: 'Timing, Name, Place & Partnership', timing: 'Timing', goodTotals: 'Good Chaldean totals', placeDir: 'Place & direction', partner: 'Partnership', remedies: 'Remedies', plan: 'Action Plan',
+    disclaimer: 'Numerology offers guidance based on traditional methods. It is not financial, investment, tax or legal advice – check market demand, licences and finances with qualified professionals before investing.' },
+  hi: { preparing: 'रिपोर्ट तैयार हो रही है…', title: 'व्यवसाय अनुकूलता रिपोर्ट', subtitle: 'व्यवसाय एवं करियर अंक ज्योतिष', brandLine: 'व्यवसाय अंक ज्योतिष', dob: 'जन्म तिथि', place: 'जन्म स्थान', bizName: 'व्यवसाय का नाम', reportDate: 'रिपोर्ट तिथि', by: 'द्वारा तैयार:',
+    analysed: (n: string) => `${n} श्रेणियों का विश्लेषण`, appendix: (n: string) => `परिशिष्ट – सभी ${n} श्रेणियों की पूरी रैंकिंग`, appendixNote: (name: string) => `सूची के हर व्यवसाय और पेशे की ${name} के लिए रैंकिंग। स्कोर: 75+ अत्यंत अनुकूल · 62–74 अनुकूल · 48–61 सामान्य · 48 से कम अनुशंसित नहीं।`,
+    category: 'श्रेणी', group: 'समूह', score: 'स्कोर', moolank: 'मूलांक', bhagyank: 'भाग्यांक', nameNo: 'नामांक', py: 'व्यक्तिगत वर्ष', bestSector: 'सर्वश्रेष्ठ क्षेत्र', bestMatch: 'सर्वश्रेष्ठ मेल', loshu: 'लो शू ग्रिड', missing: 'अनुपस्थित', none: 'कोई नहीं',
+    friendlyH: 'मित्र और कठिन अंक', friendlyTo: (b: number) => `भाग्यांक ${b} के मित्र अंक`, difficult: 'कठिन', planet: 'स्वामी ग्रह', day: 'शुभ दिन', colours: 'रंग',
+    considering: 'जिन व्यवसायों पर आप विचार कर रहे हैं', business: 'व्यवसाय', rank: 'रैंक', verdict: 'निर्णय', numbers: 'अंक', rankOf: (r: string, n: string) => `${n} में ${r}`,
+    top: 'शीर्ष सुझाव', howStart: 'कैसे शुरू करें', watch: 'ध्यान रखें', yourTop: (k: number, n: string) => `${n} में से आपके शीर्ष ${k}`, sectors: 'क्षेत्र विश्लेषण', bestInSector: 'हर क्षेत्र के सर्वश्रेष्ठ व्यवसाय', groups: 'सबसे मज़बूत व्यवसाय समूह', categories: 'श्रेणियाँ',
+    least: 'सबसे कम अनुकूल', timingH: 'समय, नाम, स्थान और साझेदारी', timing: 'समय', goodTotals: 'शुभ कैल्डियन योग', placeDir: 'स्थान और दिशा', partner: 'साझेदारी', remedies: 'उपाय', plan: 'कार्य योजना',
+    disclaimer: 'अंक ज्योतिष पारंपरिक पद्धतियों पर आधारित मार्गदर्शन है। यह वित्तीय, निवेश, कर या कानूनी सलाह नहीं है – निवेश से पहले बाज़ार की माँग, लाइसेंस और वित्त की जाँच योग्य विशेषज्ञों से करें।' },
+};
+
+async function printReport(name: string, r: Result, opts: { by: string; appendix: boolean; lang?: 'en' | 'hi'; meta: { dob: string; place: string; business?: string } }) {
+  const L = opts.lang === 'hi' ? 'hi' : 'en'; const B = PL[L]; const loc = L === 'hi' ? 'hi-IN' : 'en-IN';
   // Open the window first (inside the click) so the browser does not block it, then fetch the branded cover page.
   const w = window.open('', '_blank'); if (!w) return;
-  w.document.write('<p style="font-family:Georgia,serif;padding:40px;color:#7a1f2b">Preparing the report…</p>');
+  w.document.write(`<p style="font-family:Georgia,serif;padding:40px;color:#7a1f2b">${B.preparing}</p>`);
   const coverPage = await api<{ css: string; html: string }>('/api/admin/report-cover', { method: 'POST', json: {
-    title: 'Business Compatibility Report', subtitle: 'Business & career numerology', clientName: name, preparedBy: opts.by,
-    facts: [['Date of birth', opts.meta.dob], ['Birth place', opts.meta.place], ['Business name', opts.meta.business ?? ''], ['Report date', new Date(r.generatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })]],
+    title: B.title, subtitle: B.subtitle, clientName: name, preparedBy: opts.by, lang: L,
+    facts: [[B.dob, opts.meta.dob], [B.place, opts.meta.place], [B.bizName, opts.meta.business ?? ''], [B.reportDate, new Date(r.generatedAt).toLocaleDateString(loc, { day: 'numeric', month: 'long', year: 'numeric' })]],
   } }).catch(() => null);
   const d = r.data, p = r.report;
-  const date = new Date(r.generatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+  const date = new Date(r.generatedAt).toLocaleDateString(loc, { day: 'numeric', month: 'long', year: 'numeric' });
   const bars = (xs: { l: string; v: number }[]) => xs.map((x) => `<div class="bar"><span>${esc(x.l)}</span><b>${x.v}</b><i style="width:${x.v}%"></i></div>`).join('');
   const grid = LOSHU.map((row) => `<tr>${row.map((n) => `<td class="${d.grid.counts[n] ? '' : 'miss'}">${d.grid.counts[n] ? String(n).repeat(d.grid.counts[n]) : '–'}</td>`).join('')}</tr>`).join('');
-  const appendix = opts.appendix ? `<section class="pb"><h2>Appendix – Complete Ranking of ${fmt(d.totals.analysed)} Categories</h2><p><small>Every business${d.totals.professions ? ' and profession' : ''} in the catalogue, ranked for ${esc(name)}. Scores: 75+ highly compatible · 62–74 compatible · 48–61 moderate · below 48 not advised.</small></p>
-    <table class="app"><thead><tr><th>#</th><th>Category</th><th>Group</th><th>Score</th></tr></thead><tbody>${d.all.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.label)}</td><td>${esc(x.group)}</td><td style="color:${VERDICT_CSS[verdictOf(x.score).key]}"><b>${x.score}</b></td></tr>`).join('')}</tbody></table></section>` : '';
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Business Compatibility Report – ${esc(name)}</title><style>
+  const appendix = opts.appendix ? `<section class="pb"><h2>${B.appendix(fmt(d.totals.analysed))}</h2><p><small>${B.appendixNote(esc(name))}</small></p>
+    <table class="app"><thead><tr><th>#</th><th>${B.category}</th><th>${B.group}</th><th>${B.score}</th></tr></thead><tbody>${d.all.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.label)}</td><td>${esc(x.group)}</td><td style="color:${VERDICT_CSS[verdictOf(x.score).key]}"><b>${x.score}</b></td></tr>`).join('')}</tbody></table></section>` : '';
+  const html = `<!doctype html><html lang="${L}"><head><meta charset="utf-8"><title>${B.title} – ${esc(name)}</title><style>
 @page{size:A4;margin:16mm 14mm}${coverPage ? '@page:first{margin:0}' : ''}body{font-family:Georgia,'Noto Serif Devanagari',serif;color:#2a1a10;margin:0;padding:0;line-height:1.55;-webkit-print-color-adjust:exact;print-color-adjust:exact}.doc{max-width:860px;margin:0 auto;padding:0 18px}
 h1{color:#7a1f2b;margin:0;font-size:30px}h2{color:#7a1f2b;border-bottom:2px solid #c9a227;padding-bottom:4px;margin-top:28px;font-size:20px}h3{margin:14px 0 4px;color:#5a2a10}
 .cover{border:3px double #c9a227;border-radius:14px;padding:26px 28px;margin:18px 0 8px;background:linear-gradient(135deg,#fffaf0,#fbf1d9)}.brand{letter-spacing:.3em;text-transform:uppercase;font-size:11px;color:#8a6d12}
@@ -73,28 +95,28 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border:1px solid 
 .v{display:inline-block;border-radius:99px;padding:1px 9px;color:#fff;font-size:12px}.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .app{font-size:10.5px}.app td,.app th{padding:2px 6px}.pb{break-before:page}.foot{margin-top:30px;border-top:1px solid #e5d3a1;padding-top:8px;font-size:11px;color:#7a6a55}
 @media print{.noprint{display:none}}${coverPage?.css ?? ''}</style></head><body>${coverPage?.html ?? ''}<main class="doc">
-<div class="cover"><p class="brand">${esc(SITE_NAME)} · Business Numerology</p><h1>Business Compatibility Report</h1>
-<p style="margin:6px 0 0"><b style="font-size:18px">${esc(name)}</b><br>Date of birth ${esc(opts.meta.dob)}${opts.meta.place ? ` · Birth place ${esc(opts.meta.place)}` : ''}${opts.meta.business ? ` · Business name “${esc(opts.meta.business)}”` : ''}<br><small>Prepared by ${esc(opts.by)} · ${date} · ${fmt(d.totals.analysed)} categories analysed</small></p>
-<div class="k"><div>Moolank<b>${d.person.moolank}</b></div><div>Bhagyank<b>${d.person.bhagyankMaster ? `${d.person.bhagyankMaster}/${d.person.bhagyank}` : d.person.bhagyank}</b></div><div>Name no.<b>${d.person.nameCompound}/${d.person.nameNumber}</b></div><div>Personal year<b>${d.currentYear.personalYear}</b></div><div>Best sector<b>${d.sectorScores[0].score}</b></div><div>Best match<b>${d.top[0].score}</b></div></div></div>
+<div class="cover"><p class="brand">${esc(SITE_NAME)} · ${B.brandLine}</p><h1>${B.title}</h1>
+<p style="margin:6px 0 0"><b style="font-size:18px">${esc(name)}</b><br>${B.dob} ${esc(opts.meta.dob)}${opts.meta.place ? ` · ${B.place} ${esc(opts.meta.place)}` : ''}${opts.meta.business ? ` · ${B.bizName} “${esc(opts.meta.business)}”` : ''}<br><small>${B.by} ${esc(opts.by)} · ${date} · ${B.analysed(fmt(d.totals.analysed))}</small></p>
+<div class="k"><div>${B.moolank}<b>${d.person.moolank}</b></div><div>${B.bhagyank}<b>${d.person.bhagyankMaster ? `${d.person.bhagyankMaster}/${d.person.bhagyank}` : d.person.bhagyank}</b></div><div>${B.nameNo}<b>${d.person.nameCompound}/${d.person.nameNumber}</b></div><div>${B.py}<b>${d.currentYear.personalYear}</b></div><div>${B.bestSector}<b>${d.sectorScores[0].score}</b></div><div>${B.bestMatch}<b>${d.top[0].score}</b></div></div></div>
 
 <h2>${esc(p.headline)}</h2><p>${esc(p.summary)}</p><ul>${p.businessPersonality.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
-<div class="two"><div><h3>Lo Shu grid</h3><table class="lo">${grid}</table><p><small>Missing: ${d.grid.missing.join(', ') || 'none'}${d.grid.yogs.length ? ` · ${esc(d.grid.yogs.join(', '))}` : ''}</small></p></div>
-<div><h3>Friendly & difficult numbers</h3><p>Friendly to Bhagyank ${d.person.bhagyank}: <b>${d.person.friendly.join(', ')}</b><br>Difficult: <b>${d.person.avoid.join(', ') || 'none'}</b><br>Ruling planet: ${esc(d.person.planet.name)} · lucky day ${esc(d.person.planet.weekday)}<br>Colours: ${esc(d.person.planet.colours.join(', '))}</p></div></div>
+<div class="two"><div><h3>${B.loshu}</h3><table class="lo">${grid}</table><p><small>${B.missing}: ${d.grid.missing.join(', ') || B.none}${d.grid.yogs.length ? ` · ${esc(d.grid.yogs.join(', '))}` : ''}</small></p></div>
+<div><h3>${B.friendlyH}</h3><p>${B.friendlyTo(d.person.bhagyank)}: <b>${d.person.friendly.join(', ')}</b><br>${B.difficult}: <b>${d.person.avoid.join(', ') || B.none}</b><br>${B.planet}: ${esc(tr(L, d.person.planet.name))} · ${B.day} ${esc(tr(L, d.person.planet.weekday))}<br>${B.colours}: ${esc(d.person.planet.colours.map((x) => tr(L, x)).join(', '))}</p></div></div>
 
-${d.checked.length ? `<h2>Businesses You Are Considering</h2><table><thead><tr><th>Business</th><th>Score</th><th>Rank</th><th>Verdict</th></tr></thead><tbody>${d.checked.map((c) => `<tr><td>${esc(c.label)}<br><small>${esc(c.group)} · numbers ${c.numbers.join(', ')}${c.factors.length ? ` · ${esc(c.factors.join('; '))}` : ''}</small></td><td><b>${c.score}</b>/100</td><td>${fmt(c.rank)} of ${fmt(d.totals.analysed)}</td><td><span class="v" style="background:${VERDICT_CSS[c.verdict.key]}">${c.verdict.en}</span></td></tr>`).join('')}</tbody></table>${p.shortlistAdvice ? `<p>${esc(p.shortlistAdvice)}</p>` : ''}` : ''}
+${d.checked.length ? `<h2>${B.considering}</h2><table><thead><tr><th>${B.business}</th><th>${B.score}</th><th>${B.rank}</th><th>${B.verdict}</th></tr></thead><tbody>${d.checked.map((c) => `<tr><td>${esc(c.label)}<br><small>${esc(c.group)} · ${B.numbers} ${c.numbers.join(', ')}${c.factors.length ? ` · ${esc(c.factors.join('; '))}` : ''}</small></td><td><b>${c.score}</b>/100</td><td>${B.rankOf(fmt(c.rank), fmt(d.totals.analysed))}</td><td><span class="v" style="background:${VERDICT_CSS[c.verdict.key]}">${c.verdict[L]}</span></td></tr>`).join('')}</tbody></table>${p.shortlistAdvice ? `<p>${esc(p.shortlistAdvice)}</p>` : ''}` : ''}
 
-<h2>Top Recommendations</h2>${p.topPicks.map((t, i) => `<div class="pick"><b>${i + 1}. ${esc(label(d, t.id))} – ${score(d, t.id)}/100</b><p>${esc(t.why)}</p><p><b>How to start:</b> ${esc(t.howToStart)}</p><p><b>Watch:</b> ${esc(t.watch)}</p></div>`).join('')}
-<h2>Your Top ${d.top.length} of ${fmt(d.totals.analysed)}</h2>${bars(d.top.map((x) => ({ l: `${x.label} · ${x.group}`, v: x.score })))}
-<h2>Sector Analysis</h2>${bars(d.sectorScores.map((x) => ({ l: x.sector, v: x.score })))}
-<h3>Best businesses in each sector</h3><table><tbody>${d.bestBySector.map((s) => `<tr><td><b>${esc(s.sector)}</b> (${s.score})</td><td>${s.items.map((x) => `${esc(x.label)} <small>${x.score}</small>`).join(' · ')}</td></tr>`).join('')}</tbody></table>
-<h3>Strongest business groups</h3>${bars(d.groupScores.slice(0, 10).map((x) => ({ l: `${x.group} (${x.count} categories)`, v: x.score })))}
-<h2>Least Suited</h2><p>${esc(p.avoidNote)}</p><p><small>${d.avoid.map((x) => `${esc(x.label)} (${x.score})`).join(' · ')}</small></p>
-<h2>Timing, Name, Place & Partnership</h2><p><b>Timing:</b> ${esc(p.timingAdvice)}</p>${bars(d.timing.map((t) => ({ l: `${t.year} – personal year ${t.personalYear}: ${t.theme}`, v: t.score })))}
-<p><b>Business name:</b> ${esc(p.nameAdvice)}</p><p><small>Good Chaldean totals: ${d.nameTargets.map((t) => `${t.single} (${t.compounds.join(', ')})`).join(' · ')}</small></p>
-<p><b>Place & direction:</b> ${esc(p.placeAdvice)}</p><p><b>Partnership:</b> ${esc(p.partnership)}</p>
-<h2>Remedies</h2><ul>${p.remedies.map((x) => `<li>${esc(x)}</li>`).join('')}</ul><h2>Action Plan</h2><ol>${p.actionPlan.map((x) => `<li>${esc(x)}</li>`).join('')}</ol><p><i>${esc(p.closing)}</i></p>
+<h2>${B.top}</h2>${p.topPicks.map((t, i) => `<div class="pick"><b>${i + 1}. ${esc(label(d, t.id))} – ${score(d, t.id)}/100</b><p>${esc(t.why)}</p><p><b>${B.howStart}:</b> ${esc(t.howToStart)}</p><p><b>${B.watch}:</b> ${esc(t.watch)}</p></div>`).join('')}
+<h2>${B.yourTop(d.top.length, fmt(d.totals.analysed))}</h2>${bars(d.top.map((x) => ({ l: `${x.label} · ${x.group}`, v: x.score })))}
+<h2>${B.sectors}</h2>${bars(d.sectorScores.map((x) => ({ l: x.sector, v: x.score })))}
+<h3>${B.bestInSector}</h3><table><tbody>${d.bestBySector.map((s) => `<tr><td><b>${esc(s.sector)}</b> (${s.score})</td><td>${s.items.map((x) => `${esc(x.label)} <small>${x.score}</small>`).join(' · ')}</td></tr>`).join('')}</tbody></table>
+<h3>${B.groups}</h3>${bars(d.groupScores.slice(0, 10).map((x) => ({ l: `${x.group} (${x.count} ${B.categories})`, v: x.score })))}
+<h2>${B.least}</h2><p>${esc(p.avoidNote)}</p><p><small>${d.avoid.map((x) => `${esc(x.label)} (${x.score})`).join(' · ')}</small></p>
+<h2>${B.timingH}</h2><p><b>${B.timing}:</b> ${esc(p.timingAdvice)}</p>${bars(d.timing.map((t) => ({ l: L === 'hi' ? `${t.year} – ${B.py} ${t.personalYear}` : `${t.year} – personal year ${t.personalYear}: ${t.theme}`, v: t.score })))}
+<p><b>${B.bizName}:</b> ${esc(p.nameAdvice)}</p><p><small>${B.goodTotals}: ${d.nameTargets.map((t) => `${t.single} (${t.compounds.join(', ')})`).join(' · ')}</small></p>
+<p><b>${B.placeDir}:</b> ${esc(p.placeAdvice)}</p><p><b>${B.partner}:</b> ${esc(p.partnership)}</p>
+<h2>${B.remedies}</h2><ul>${p.remedies.map((x) => `<li>${esc(x)}</li>`).join('')}</ul><h2>${B.plan}</h2><ol>${p.actionPlan.map((x) => `<li>${esc(x)}</li>`).join('')}</ol><p><i>${esc(p.closing)}</i></p>
 ${appendix}
-<p class="foot">Prepared by ${esc(opts.by)} · ${esc(SITE_NAME)}. Numerology offers guidance based on traditional methods. It is not financial, investment, tax or legal advice – check market demand, licences and finances with qualified professionals before investing.</p></main></body></html>`;
+<p class="foot">${B.by} ${esc(opts.by)} · ${esc(SITE_NAME)}. ${B.disclaimer}</p></main></body></html>`;
   w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 800);
 }
 
@@ -235,7 +257,7 @@ export function BusinessStudio({ preloadedOrder, onClearPreloadedOrder }: { prel
             <Badge tone={res.source === 'ai' ? 'gold' : 'default'}><Bot className="mr-1 inline h-3 w-3" />{res.source === 'ai' ? `AI agent${res.model ? ` · ${res.model}` : ''}` : 'Built-in analyst'}</Badge>
             {res.note && <span className="text-muted-foreground">{res.note}</span>}
             <div className="ml-auto flex gap-2"><Button type="button" variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(asText(f.fullName, res))}><Copy className="mr-1 h-4 w-4" />Copy text</Button>
-              <Button type="button" size="sm" onClick={() => printReport(f.fullName, res, { by: f.preparedBy || 'Acharya Nandram', appendix, meta: { dob: f.dob ? new Date(`${f.dob}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : '', place: f.birthPlace, business: f.businessName || undefined } })}><Printer className="mr-1 h-4 w-4" />Print / Save PDF</Button></div>
+              <Button type="button" size="sm" onClick={() => printReport(f.fullName, res, { by: f.preparedBy || 'Acharya Nandram', appendix, lang: f.language === 'hi' ? 'hi' : 'en', meta: { dob: f.dob ? new Date(`${f.dob}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : '', place: f.birthPlace, business: f.businessName || undefined } })}><Printer className="mr-1 h-4 w-4" />Print / Save PDF</Button></div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">

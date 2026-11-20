@@ -128,15 +128,15 @@ export type LuckyFinderResult = ReturnType<typeof findLuckyNumbers>;
 
 // ---------------- Client summaries (copy / WhatsApp / email) ----------------
 
-const HI_REL: Record<Relation, string> = { friend: 'मित्र', neutral: 'सम', enemy: 'शत्रु' };
-const HI_DAY: Record<string, string> = { Sunday: 'रविवार', Monday: 'सोमवार', Tuesday: 'मंगलवार', Wednesday: 'बुधवार', Thursday: 'गुरुवार', Friday: 'शुक्रवार', Saturday: 'शनिवार' };
+export const HI_REL: Record<Relation, string> = { friend: 'मित्र', neutral: 'सम', enemy: 'शत्रु' };
+export const HI_DAY: Record<string, string> = { Sunday: 'रविवार', Monday: 'सोमवार', Tuesday: 'मंगलवार', Wednesday: 'बुधवार', Thursday: 'गुरुवार', Friday: 'शुक्रवार', Saturday: 'शनिवार' };
 const HI_COLOUR: Record<string, string> = {
   Golden: 'सुनहरा', Orange: 'नारंगी', Saffron: 'केसरिया', Yellow: 'पीला', White: 'सफ़ेद', Cream: 'क्रीम', Silver: 'चाँदी', 'Light green': 'हल्का हरा', Green: 'हरा',
   Red: 'लाल', Pink: 'गुलाबी', Blue: 'नीला', 'Light blue': 'हल्का नीला', 'Dark blue': 'गहरा नीला', Black: 'काला', Grey: 'स्लेटी', Brown: 'भूरा', Purple: 'बैंगनी', Violet: 'बैंगनी', Maroon: 'मैरून', 'Sky blue': 'आसमानी',
   'Light orange': 'हल्का नारंगी', 'Electric blue': 'चमकीला नीला', 'Smoky shades': 'धुएँ जैसे रंग', Turquoise: 'फ़िरोज़ी', Pastels: 'हल्के (पेस्टल) रंग',
   'Smoky grey': 'धुएँ जैसा स्लेटी', 'Light yellow': 'हल्का पीला', Multicolour: 'बहुरंगी', 'Navy blue': 'नेवी नीला', Coral: 'मूँगिया',
 };
-const hiColour = (c: string) => HI_COLOUR[c] ?? c;
+export const hiColour = (c: string) => HI_COLOUR[c] ?? c;
 const SIGN = 'Acharya Nandram · myNumerologist.com';
 
 export function angelSummary(r: AngelFinderResult, lang: 'en' | 'hi', preparedBy = SIGN): string {

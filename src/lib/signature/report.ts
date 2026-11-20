@@ -9,6 +9,8 @@ import { baseCss } from '@/lib/pdf/template';
 import { COLOUR_HEX, DEFAULT_BRANDING, resolveTheme, type Branding, type PdfTheme, type ThemeId } from '@/lib/pdf/themes';
 import { renderSheetPdf } from '@/lib/pdf/render';
 import { coverDocument } from '@/lib/pdf/cover';
+import { compoundMeaningHi, dayHi, optionLabelHi, professionHi } from './hindi';
+import { tr } from '@/lib/i18n/hi-terms';
 import type { AgentResult, SignatureAnalysis } from './agent';
 import type { SignatureNumbers } from './numbers';
 
@@ -41,7 +43,7 @@ const L = {
     s5: 'Your ideal signature – blueprint', steps: 'How to sign', do: 'Do', dont: 'Avoid', start: 'When to start', ink: 'Ink colour', practice: 'Practice', dates: 'Suggested start dates', luckyCol: 'Lucky colours',
     tracker: '21-day practice tracker', trackerD: 'Tick a box each day after practising the new signature (traditionally 108 times). Keep the old signature only for existing documents and bank records until they are updated.',
     expertNote: 'Note from your numerologist', closing: 'Closing', sig: 'Signature', disclaimer: 'Signature analysis offers guidance based on graphology and numerology traditions. It is not a substitute for medical, psychological, legal or financial advice. Results depend on effort and circumstances; no outcome is guaranteed. Update bank and legal signatures only through the proper process.',
-    ai: 'AI-assisted reading verified against image measurements', rules: 'Reading built from image measurements and numerology', none: 'None significant', day: 'Day',
+    madeLine: (by: string) => `Prepared by ${by} from your signature samples, their measurements and your numerology chart`, none: 'None significant', day: 'Day',
   },
   hi: {
     title: 'हस्ताक्षर विश्लेषण रिपोर्ट', sub: 'हस्तलेख विज्ञान × अंक ज्योतिष', client: 'क्लाइंट', dob: 'जन्म तिथि', profession: 'पेशा', goals: 'लक्ष्य', date: 'रिपोर्ट तिथि', by: 'तैयारकर्ता',
@@ -59,7 +61,7 @@ const L = {
     s5: 'आपका आदर्श हस्ताक्षर – ब्लूप्रिंट', steps: 'कैसे हस्ताक्षर करें', do: 'करें', dont: 'न करें', start: 'कब शुरू करें', ink: 'स्याही का रंग', practice: 'अभ्यास', dates: 'शुरुआत की शुभ तिथियाँ', luckyCol: 'शुभ रंग',
     tracker: '21 दिन का अभ्यास चार्ट', trackerD: 'नए हस्ताक्षर का अभ्यास (परंपरागत रूप से 108 बार) करने के बाद हर दिन एक बॉक्स पर निशान लगाएँ। पुराने दस्तावेज़ और बैंक रिकॉर्ड अपडेट होने तक वहाँ पुराना हस्ताक्षर ही रखें।',
     expertNote: 'अंक ज्योतिषी का संदेश', closing: 'समापन', sig: 'हस्ताक्षर', disclaimer: 'हस्ताक्षर विश्लेषण हस्तलेख विज्ञान और अंक ज्योतिष परंपराओं पर आधारित मार्गदर्शन है। यह चिकित्सा, मनोवैज्ञानिक, कानूनी या वित्तीय सलाह का विकल्प नहीं है। परिणाम प्रयास और परिस्थितियों पर निर्भर करते हैं; किसी परिणाम की गारंटी नहीं है। बैंक और कानूनी हस्ताक्षर उचित प्रक्रिया से ही बदलें।',
-    ai: 'चित्र माप से जाँची गई AI-सहायता प्राप्त रीडिंग', rules: 'चित्र माप और अंक ज्योतिष से बनी रीडिंग', none: 'कोई विशेष नहीं', day: 'दिन',
+    madeLine: (by: string) => `${by} द्वारा आपके हस्ताक्षर के नमूनों, उनके माप और आपके अंक ज्योतिष चार्ट से तैयार`, none: 'कोई विशेष नहीं', day: 'दिन',
   },
 };
 type Lab = typeof L.en;
@@ -143,10 +145,20 @@ function bar(label: string, v: number | null, t: PdfTheme) {
 }
 const secHead = (n: number, title: string) => `<div class="sec-h"><div class="no">${n}</div><h2>${esc(title)}</h2></div>`;
 
+/** Hindi reason for a suggested start date (simple words). */
+function startReasonHi(x: { weekday: string; dayNumber: number; dateNumber: number }, friendly: number[], b: number) {
+  const day = friendly.includes(x.dayNumber), date = friendly.includes(x.dateNumber);
+  return `${dayHi(x.weekday)}; ${day && date ? `दिन का अंक ${x.dayNumber} और तारीख़ का जोड़ ${x.dateNumber}, दोनों भाग्यांक ${b} के मित्र हैं` : day ? `दिन का अंक ${x.dayNumber} भाग्यांक ${b} का मित्र है` : `तारीख़ का जोड़ ${x.dateNumber} भाग्यांक ${b} का मित्र है`}`;
+}
+
 export function buildSignatureReportHtml(d: SignatureReportData, t: PdfTheme, b: Branding): string {
   const lang: 'en' | 'hi' = d.client.language === 'hi' ? 'hi' : 'en';
   const l = L[lang];
   const a: SignatureAnalysis = d.result.analysis; const n = d.numbers; const s = d.result.scores;
+  // Hindi reports: number meanings, planet names and option labels in Hindi too.
+  const mean = (compound: number, en: string) => (lang === 'hi' ? compoundMeaningHi(compound) : en);
+  const pl = (x: string) => tr(lang, x);
+  const optLabel = (x: string) => (lang === 'hi' ? optionLabelHi(x) : x);
   const logo = b.logoDataUrl ? `<img src="${esc(b.logoDataUrl)}" style="height:16mm">` : monogram(b.brandName, t, 58);
   const main = d.annotated ?? d.samples?.[0];
   const bySource = new Map(d.result.features.map((f) => [f.id, f]));
@@ -168,7 +180,7 @@ export function buildSignatureReportHtml(d: SignatureReportData, t: PdfTheme, b:
     <div>${numberMedallion(`${n.fullName.compound}/${n.fullName.single}`, t, 70)}<div class="k">${esc(l.full)}</div></div>
     <div>${numberMedallion(`${n.firstLetter.letter}=${n.firstLetter.value}`, t, 70)}<div class="k">${esc(l.letter)}</div></div>
   </div>
-  <p class="small muted" style="text-align:center;margin-top:3mm">${esc(d.result.source === 'ai' ? l.ai : l.rules)}</p>`;
+  <p class="small muted" style="text-align:center;margin-top:3mm">${esc(l.madeLine(d.preparedBy))}</p>`;
 
   const s1 = `<section class="page">${secHead(1, l.s1)}<p class="intro">${esc(l.s1d)}</p>
     ${d.samples && d.samples.length > 1 ? `<div class="small muted" style="margin-bottom:1mm">${esc(l.samples)}: ${d.samples.length}</div><div class="samples">${d.samples.map((x) => `<img src="${esc(x)}" alt="">`).join('')}</div>` : ''}
@@ -177,11 +189,11 @@ export function buildSignatureReportHtml(d: SignatureReportData, t: PdfTheme, b:
     </tbody></table></section>`;
 
   const rows: [string, string, string, string, string, string][] = [
-    [l.moolank, String(n.moolank), n.moolankPlanet.name, '—', '—', ''],
-    [l.bhagyank, String(n.bhagyank), n.planet.name, '—', '—', ''],
-    [l.full, `${n.fullName.compound}/${n.fullName.single}`, '', relPill(n.nameToBhagyank, l), relPill(n.nameToMoolank, l), `${catPill(n.fullName.category, l)} <span class="small">${esc(n.fullName.meaning)}</span>`],
-    [l.signed, `${n.signName.compound}/${n.signName.single}`, '', relPill(n.signToBhagyank, l), relPill(n.signToMoolank, l), `${catPill(n.signName.category, l)} <span class="small">${esc(n.signName.meaning)}</span>`],
-    [`${l.letter} (${n.firstLetter.letter})`, String(n.firstLetter.value), n.firstLetter.planet, relPill(n.firstLetter.toBhagyank, l), relPill(n.firstLetter.toMoolank, l), ''],
+    [l.moolank, String(n.moolank), pl(n.moolankPlanet.name), '—', '—', ''],
+    [l.bhagyank, String(n.bhagyank), pl(n.planet.name), '—', '—', ''],
+    [l.full, `${n.fullName.compound}/${n.fullName.single}`, '', relPill(n.nameToBhagyank, l), relPill(n.nameToMoolank, l), `${catPill(n.fullName.category, l)} <span class="small">${esc(mean(n.fullName.compound, n.fullName.meaning))}</span>`],
+    [l.signed, `${n.signName.compound}/${n.signName.single}`, '', relPill(n.signToBhagyank, l), relPill(n.signToMoolank, l), `${catPill(n.signName.category, l)} <span class="small">${esc(mean(n.signName.compound, n.signName.meaning))}</span>`],
+    [`${l.letter} (${n.firstLetter.letter})`, String(n.firstLetter.value), pl(n.firstLetter.planet), relPill(n.firstLetter.toBhagyank, l), relPill(n.firstLetter.toMoolank, l), ''],
   ];
   const s2 = `<section class="page">${secHead(2, l.s2)}
     <table><thead><tr><th>${esc(l.number)}</th><th>${esc(l.value)}</th><th>${esc(l.planet)}</th><th>${esc(l.toB)}</th><th>${esc(l.toM)}</th><th>${esc(l.nature)}</th></tr></thead><tbody>
@@ -191,13 +203,13 @@ export function buildSignatureReportHtml(d: SignatureReportData, t: PdfTheme, b:
       <div class="panel"><b class="small">${esc(l.avoid)}</b><div class="chips" style="margin-top:1.5mm">${(n.avoid.length ? n.avoid : ['—']).map((x) => `<span class="chip bad">${x}</span>`).join('')}</div></div></div>
     <h3 style="font-size:13pt;margin:5mm 0 1mm">${esc(l.options)}</h3><p class="intro">${esc(l.optionsD)}</p>
     <table class="flow"><thead><tr><th>${esc(l.form)}</th><th>${esc(l.number)}</th><th>${esc(l.toB)}</th><th>${esc(l.toM)}</th><th>${esc(l.nature)}</th><th>${esc(l.score)}</th></tr></thead><tbody>
-    ${n.nameOptions.map((o) => `<tr${n.bestOption?.text === o.text ? ` style="background:${t.accent}1a"` : ''}><td><b>${esc(o.text)}</b> ${o.current ? `<span class="pill cur">${esc(l.current)}</span>` : ''}${n.bestOption?.text === o.text ? ` <span class="pill rec">${esc(l.recommended)}</span>` : ''}<span class="src">${esc(o.label)}</span></td>
-      <td>${o.compound}/${o.single}</td><td>${relPill(o.toBhagyank, l)}</td><td>${relPill(o.toMoolank, l)}</td><td>${catPill(o.category, l)}<span class="src">${esc(o.meaning)}</span></td><td><b style="color:${scoreColour(o.score, t)}">${o.score}</b></td></tr>`).join('')}
+    ${n.nameOptions.map((o) => `<tr${n.bestOption?.text === o.text ? ` style="background:${t.accent}1a"` : ''}><td><b>${esc(o.text)}</b> ${o.current ? `<span class="pill cur">${esc(l.current)}</span>` : ''}${n.bestOption?.text === o.text ? ` <span class="pill rec">${esc(l.recommended)}</span>` : ''}<span class="src">${esc(optLabel(o.label))}</span></td>
+      <td>${o.compound}/${o.single}</td><td>${relPill(o.toBhagyank, l)}</td><td>${relPill(o.toMoolank, l)}</td><td>${catPill(o.category, l)}<span class="src">${esc(mean(o.compound, o.meaning))}</span></td><td><b style="color:${scoreColour(o.score, t)}">${o.score}</b></td></tr>`).join('')}
     </tbody></table></section>`;
 
   const s3 = `<section class="page">${secHead(3, l.s3)}
     <div class="box advice"><div class="bt">${esc(l.personality)}</div>${list(a.personality)}</div>
-    <div class="two"><div class="box remedy"><div class="bt">${esc(l.career)} – ${esc(n.profession.label)}</div><p>${esc(a.career.fit)}</p><p style="margin-top:2mm">${esc(a.career.advice)}</p></div>
+    <div class="two"><div class="box remedy"><div class="bt">${esc(l.career)} – ${esc(lang === 'hi' ? professionHi(n.profession.label) : n.profession.label)}</div><p>${esc(a.career.fit)}</p><p style="margin-top:2mm">${esc(a.career.advice)}</p></div>
       <div>${a.finance ? `<div class="box advice"><div class="bt">${esc(l.finance)}</div><p>${esc(a.finance)}</p></div>` : ''}${a.relationships ? `<div class="box advice"><div class="bt">${esc(l.relationships)}</div><p>${esc(a.relationships)}</p></div>` : ''}
       ${!a.finance && !a.relationships ? `<div style="display:flex;justify-content:center">${gaugeSvg(n.profession.fitScore, t, l.prof, 210)}</div>` : ''}</div></div>
     <div class="two"><div class="box strength"><div class="bt">${esc(l.strengths)}</div>${list(a.strengths, 'good', l)}</div><div class="box watch"><div class="bt">${esc(l.watchouts)}</div>${list(a.watchouts, 'warn', l)}</div></div></section>`;
@@ -208,13 +220,13 @@ export function buildSignatureReportHtml(d: SignatureReportData, t: PdfTheme, b:
     ${fixes.map((c, i) => `<div class="fix ${pri(c.priority)}"><div class="n">${i + 1}</div><div><h4>${esc(c.title)} <span class="pill ${pri(c.priority) === 'high' ? 'watch' : 'neutral'}">${esc(l.priority[pri(c.priority)])}</span></h4><p>${esc(c.detail)}</p></div></div>`).join('')}
     ${d.expertNote ? `<div class="note"><b>${esc(l.expertNote)}:</b> ${esc(d.expertNote)}</div>` : ''}</section>`;
 
-  const sw = (c: string) => { const h = COLOUR_HEX[c.toLowerCase()] ?? '#ccc'; return `<span class="sw"><i style="background:${h}"></i>${esc(c)}</span>`; };
+  const sw = (c: string) => { const h = COLOUR_HEX[c.toLowerCase()] ?? '#ccc'; return `<span class="sw"><i style="background:${h}"></i>${esc(tr(lang, c))}</span>`; };
   const ideal = a.idealSignature;
   const s5 = `<section class="${fixes.length > 3 ? 'page' : ''}" style="${fixes.length > 3 ? '' : 'margin-top:7mm'}">${secHead(5, l.s5)}
     <div class="blue"><b class="serif" style="font-size:11pt">${esc(l.steps)}</b><ol class="steps" style="margin-top:2mm">${ideal.steps.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></div>
     ${ideal.do?.length || ideal.dont?.length ? `<div class="two"><div class="box strength"><div class="bt">${esc(l.do)}</div>${list(ideal.do, 'good', l)}</div><div class="box watch"><div class="bt">${esc(l.dont)}</div>${list(ideal.dont, 'bad', l)}</div></div>` : ''}
     <div class="facts"><div class="f"><b>${esc(l.start)}</b>${esc(ideal.startDay)}</div><div class="f"><b>${esc(l.ink)}</b>${esc(ideal.inkColour)}<div style="margin-top:1.5mm">${n.planet.colours.slice(0, 3).map(sw).join('')}</div></div><div class="f"><b>${esc(l.practice)}</b>${esc(ideal.practice)}</div></div>
-    ${n.startDates.length ? `<h3 style="font-size:12pt;margin:5mm 0 2mm">${esc(l.dates)}</h3><table><tbody>${n.startDates.map((x) => `<tr><td style="width:45mm"><b>${esc(fmtDate(x.iso, lang))}</b></td><td>${esc(x.reason)}</td></tr>`).join('')}</tbody></table>` : ''}
+    ${n.startDates.length ? `<h3 style="font-size:12pt;margin:5mm 0 2mm">${esc(l.dates)}</h3><table><tbody>${n.startDates.map((x) => `<tr><td style="width:45mm"><b>${esc(fmtDate(x.iso, lang))}</b></td><td>${esc(lang === 'hi' ? startReasonHi(x, n.friendly, n.bhagyank) : x.reason)}</td></tr>`).join('')}</tbody></table>` : ''}
     <div style="break-inside:avoid"><h3 style="font-size:12pt;margin:5mm 0 1mm">${esc(l.tracker)}</h3><p class="intro">${esc(l.trackerD)}</p>
     <div class="grid21">${Array.from({ length: 21 }, (_, i) => `<div><span>${esc(l.day)} ${i + 1}</span></div>`).join('')}</div></div>
     <div class="close"><div class="q">“${esc(a.closing)}”</div><div class="sgn">${b.signatureDataUrl ? `<img src="${esc(b.signatureDataUrl)}" style="max-height:14mm;display:block;margin:0 auto -10mm">` : ''}<div class="ln">${esc(d.preparedBy)}<br><span class="muted">${esc(b.brandName)}</span></div></div></div>

@@ -116,6 +116,29 @@ export function postProcess(raw: string, opts: FilterOptions = {}): string {
   return varyParagraphs(tidy(text));
 }
 
+/**
+ * Light clean-up for short client-facing strings (signature and business reports, list items): removes emojis,
+ * tool self-references and stock phrases, tidies spacing. Unlike postProcess it never reflows paragraphs.
+ */
+export function scrubText(raw: string): string {
+  let text = raw.replace(EMOJI, '');
+  for (const [re, rep] of PHRASE_RULES) text = text.replace(re, rep);
+  text = text.replace(/\s{2,}/g, ' ').replace(/\s+([,.;:!?])/g, '$1').replace(/^[,;:\s]+/, '').trim();
+  // Re-capitalise only when a leading phrase was removed ("As an AI, your…" → "Your…").
+  return text && text !== raw.trim() && /^[a-z]/.test(text) && /^[A-Z]/.test(raw.trim()) ? text[0].toUpperCase() + text.slice(1) : text;
+}
+
+/** Keys that hold codes, not prose – never rewritten. */
+const CODE_KEYS = new Set(['id', 'featureId', 'priority', 'impact', 'confidence', 'category', 'source', 'model']);
+
+/** Applies scrubText to every string inside an object or array (keys untouched). */
+export function scrubDeep<T>(v: T): T {
+  if (typeof v === 'string') return scrubText(v) as unknown as T;
+  if (Array.isArray(v)) return v.map((x) => scrubDeep(x)) as unknown as T;
+  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, x]) => [k, CODE_KEYS.has(k) ? x : scrubDeep(x)])) as T;
+  return v;
+}
+
 /** Terms that must never appear in client-facing text (self-reference or fear-inducing predictions). */
 const FORBIDDEN = [
   /\b(ai|a\.i\.|artificial intelligence|language model|algorithm|generated|chatbot|gpt|claude)\b/i,

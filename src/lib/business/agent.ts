@@ -4,9 +4,12 @@
  * Falls back to a deterministic writer when no LLM is configured or the reply is invalid.
  * Model: BUSINESS_LLM_MODEL (optional) or LLM_MODEL.
  */
+import { scrubDeep } from '@/lib/narrative/filter';
+import { PLAIN_LANGUAGE } from '@/lib/narrative/prompts';
 import { z } from 'zod';
 import { configFromEnv, providerFromConfig } from '@/lib/narrative/providers/llm';
 import { planetOf } from '@/lib/numerology/data/planets';
+import { tr } from '@/lib/i18n/hi-terms';
 import type { BizAnalytics } from './engine';
 
 export type BizLanguage = 'en' | 'hi' | 'hinglish';
@@ -46,6 +49,9 @@ Rules:
 - Remedies must be traditional and safe (lucky day to start, colours, name spelling correction, daan, mantra). Never prescribe gemstones without "after expert check".
 - Never guarantee profit, never give investment, tax or legal advice, never predict loss, bankruptcy, illness or death. Use "tends to", "suits", "may".
 - Write all text values in ${LANG[lang]}.
+- Never mention AI, models, software or that the text was generated – you write as Acharya Nandram's analyst.
+
+${PLAIN_LANGUAGE}
 
 Reply with ONE JSON object and nothing else:
 {"headline":"…","summary":"4–6 sentences","businessPersonality":["…"],"topPicks":[{"id":"exact id","why":"…","howToStart":"…","watch":"…"}],"avoidNote":"…","shortlistAdvice":"verdict on each shortlisted business, or empty","partnership":"which partner numbers suit and why","nameAdvice":"…","placeAdvice":"…","timingAdvice":"…","remedies":["…"],"actionPlan":["step 1…"],"closing":"…"}`;
@@ -101,6 +107,7 @@ Good name totals: ${a.nameTargets.map((t) => `${t.single} (${t.compounds.join(',
 }
 
 export function ruleReport(c: BizContext, a: BizAnalytics): BizReport {
+  if (c.language === 'hi') return ruleReportHi(c, a);
   const P = a.person; const picks = a.top.slice(0, 4);
   const best = a.timing.filter((t) => t.score >= 80).map((t) => t.year);
   return {
@@ -120,6 +127,48 @@ export function ruleReport(c: BizContext, a: BizAnalytics): BizReport {
   };
 }
 
+const HI_RELN = { friend: 'मित्र', neutral: 'सम', enemy: 'शत्रु' } as const;
+const HI_WEEKDAY: Record<string, string> = { Sunday: 'रविवार', Monday: 'सोमवार', Tuesday: 'मंगलवार', Wednesday: 'बुधवार', Thursday: 'गुरुवार', Friday: 'शुक्रवार', Saturday: 'शनिवार' };
+
+/** Hindi version of the built-in analyst's report (business and category names stay as written). */
+export function ruleReportHi(c: BizContext, a: BizAnalytics): BizReport {
+  const P = a.person; const picks = a.top.slice(0, 4);
+  const best = a.timing.filter((t) => t.score >= 80).map((t) => t.year);
+  const bPlanet = planetOf(P.bhagyank);
+  const dir = (s: string) => tr('hi', s);
+  return {
+    headline: `सबसे अनुकूल: ${picks.slice(0, 2).map((p) => p.label).join(' या ')}`,
+    summary: `${c.fullName} का भाग्यांक ${P.bhagyank} (${bPlanet.devanagari}) और मूलांक ${P.moolank} है। चार्ट के सबसे मज़बूत अंक ${[...a.numberStrength].sort((x, y) => y.score - x.score).slice(0, 3).map((x) => x.n).join(', ')} हैं, जो ${a.sectorScores.slice(0, 2).map((s) => s.sector).join(' और ')} की ओर संकेत करते हैं। सबसे अच्छे विकल्प का स्कोर ${picks[0].score}/100 है। अभी व्यक्तिगत वर्ष ${a.currentYear.personalYear} चल रहा है।`,
+    businessPersonality: [
+      `भाग्यांक ${P.bhagyank} का स्वामी ${bPlanet.devanagari} है, जो परंपरागत रूप से इन कार्यों को सहारा देता है: ${P.planet.careers.map((x) => tr('hi', x)).join(', ')}।`,
+      `मूलांक और भाग्यांक आपस में ${HI_RELN[P.moolankBhagyank]} हैं${P.moolankBhagyank === 'enemy' ? ' – भीतरी प्रेरणा और भाग्य अलग दिशा में खींचते हैं, इसलिए ऐसा काम चुनें जिसमें दोनों का उपयोग हो' : ''}।`,
+      a.grid.missing.length ? `अनुपस्थित अंक ${a.grid.missing.join(', ')} उन कौशलों को दिखाते हैं जिन्हें विकसित करना है या किसी और को सौंपना है।` : 'कोई अंक अनुपस्थित नहीं – संतुलित ग्रिड।',
+      ...(a.grid.yogs.length ? [`उपस्थित योग: ${a.grid.yogs.join(', ')}।`] : []),
+    ],
+    topPicks: picks.map((p) => ({
+      id: p.id,
+      why: `स्कोर ${p.score}/100। अंक ${p.numbers.join(', ')} इसका साथ देते हैं।`,
+      howToStart: p.kind === 'business' ? (p.capital === 3 ? 'पूरा निवेश करने से पहले छोटे पायलट, साझेदारी या फ़्रैंचाइज़ी से शुरुआत करें।' : 'कम पूँजी से शुरू करें, स्थानीय माँग जाँचें और धीरे-धीरे बढ़ाएँ।') : 'इस क्षेत्र में योग्यता और अनुभव बढ़ाएँ; बाद में परामर्श या साइड प्रैक्टिस पर विचार करें।',
+      watch: 'वित्तीय अनुशासन रखें और हर तिमाही प्रगति की समीक्षा करें।',
+    })),
+    shortlistAdvice: a.checked.length ? a.checked.map((r) => `${r.label}: ${r.score}/100, ${a.totals.analysed} में ${r.rank}वाँ स्थान – ${r.verdict.hi}।`).join(' ') : undefined,
+    avoidNote: `अभी सबसे कम अनुकूल: ${a.avoid.slice(0, 3).map((x) => x.label).join(', ')}। इनके मुख्य अंक भाग्यांक ${P.bhagyank} का उतना साथ नहीं देते।`,
+    partnership: `जिन साझेदारों का भाग्यांक या मूलांक ${P.friendly.filter((x) => x !== P.bhagyank).join(', ')} हो, वे प्रायः सहयोगी रहते हैं। ${P.avoid.length ? `अंक ${P.avoid.join(', ')} वालों के साथ सावधानी रखें।` : ''}`,
+    nameAdvice: a.businessName
+      ? `"${a.businessName.text}" का योग ${a.businessName.compound}/${a.businessName.single} है और यह भाग्यांक से ${HI_RELN[a.businessName.toBhagyank as keyof typeof HI_RELN] ?? a.businessName.toBhagyank} है। ${a.businessName.score >= 70 ? 'यह नाम मालिक का साथ देता है।' : `ऐसी वर्तनी पर विचार करें जिसका योग ${a.nameTargets.map((t) => t.compounds[0]).filter(Boolean).join(', ')} हो।`}`
+      : `ऐसा व्यवसाय नाम चुनें जिसका कैल्डियन योग ${a.nameTargets.map((t) => t.compounds.join('/')).join(', ')} हो।`,
+    placeAdvice: `काम करते समय ${dir(a.directions.success)} दिशा की ओर मुख रखें या संभव हो तो मुख्य द्वार उसी दिशा में रखें; ${dir(a.directions.avoid)} दिशा से बचें।`,
+    timingAdvice: `शुरुआत या विस्तार के लिए शुभ वर्ष: ${best.join(', ') || a.timing[0].year}।`,
+    remedies: [
+      `महत्वपूर्ण काम ${HI_WEEKDAY[P.planet.weekday] ?? P.planet.weekday} को शुरू करें।`,
+      `ब्रांडिंग या कार्यस्थल में ${P.planet.colours.slice(0, 2).map((x) => tr('hi', x)).join(' और ')} रंग का उपयोग करें।`,
+      ...(a.grid.missing.length ? [`अनुपस्थित अंक ${a.grid.missing[0]} को उसके ग्रह के उपायों से मज़बूत करें (पूरी उपाय रिपोर्ट के लिए पूछें)।`] : []),
+    ],
+    actionPlan: ['सबसे अच्छे 2 विकल्प चुनें और स्थानीय बाज़ार का अध्ययन करें।', 'अपनी पूँजी के भीतर एक सरल बजट बनाएँ।', 'पंजीकरण से पहले व्यवसाय नाम का अंक जाँचें।', `अनुकूल व्यक्तिगत वर्ष (${best[0] ?? a.timing[0].year}) में ${HI_WEEKDAY[P.planet.weekday] ?? P.planet.weekday} को शुरुआत करें।`],
+    closing: 'अंक स्वाभाविक दिशा दिखाते हैं; अनुशासित प्रयास उसे साकार करता है।',
+  };
+}
+
 export async function runBusinessAgent(c: BizContext, a: BizAnalytics, opts: { env?: Record<string, string | undefined>; fetchImpl?: typeof fetch } = {}): Promise<BizAgentResult> {
   const env = opts.env ?? process.env;
   const cfg = configFromEnv(env);
@@ -135,7 +184,7 @@ export async function runBusinessAgent(c: BizContext, a: BizAnalytics, opts: { e
       const parsed = ReportSchema.safeParse(JSON.parse(raw.slice(s, e + 1)));
       if (parsed.success) {
         const picks = parsed.data.topPicks.filter((p) => allowed.has(p.id));
-        if (picks.length) return { report: { ...parsed.data, topPicks: picks }, source: 'ai', model };
+        if (picks.length) return { report: scrubDeep({ ...parsed.data, topPicks: picks.map((x) => ({ ...x })) }), source: 'ai', model };
         last = 'topPicks ids not in TOP RANKED list';
       } else last = parsed.error.issues.slice(0, 5).map((x) => `${x.path.join('.')}: ${x.message}`).join('; ');
       msg = `${dataText(c, a)}\n\nYour previous reply was invalid (${last}). Reply again with ONLY the JSON object; topPicks ids must come from TOP RANKED.`;

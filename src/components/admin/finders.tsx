@@ -6,7 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/form';
 import { Badge } from '@/components/ui/misc';
 import { todayIST, type Gender, type Relation } from '@/lib/numerology';
-import { angelSummary, findAngelNumbers, findLuckyNumbers, luckySummary, type AngelFinderResult, type LuckyFinderResult } from '@/lib/finders';
+import { angelSummary, findAngelNumbers, findLuckyNumbers, hiColour, HI_DAY, HI_REL, luckySummary, type AngelFinderResult, type LuckyFinderResult } from '@/lib/finders';
+import { DIGITS } from '@/lib/angel/digits';
+import { tr } from '@/lib/i18n/hi-terms';
+
+const HI_ANGEL_LABEL: Record<string, string> = { life: 'जीवन-पथ एंजेल नंबर', mulank: 'मूलांक एंजेल नंबर', birthday: 'जन्मदिन एंजेल नंबर', year: 'व्यक्तिगत वर्ष एंजेल नंबर', name: 'नाम एंजेल नंबर', soul: 'आत्मा (सोल अर्ज) एंजेल नंबर', destiny: 'नाम + भाग्य एंजेल नंबर' };
 import { cn } from '@/lib/utils';
 
 const REL: Record<Relation, { label: string; tone: 'good' | 'default' | 'bad' }> = {
@@ -57,7 +61,7 @@ function ShareBar({ text, onPrint, lang, setLang }: { text: string; onPrint: () 
   }
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="inline-flex overflow-hidden rounded-md border border-border text-sm" role="group" aria-label="Summary language">
+      <div className="inline-flex overflow-hidden rounded-md border border-border text-sm" role="group" aria-label="Report language">
         {(['en', 'hi'] as const).map((l) => <button key={l} type="button" onClick={() => setLang(l)} className={cn('px-3 py-1.5', lang === l ? 'bg-gold/25 font-semibold' : 'hover:bg-muted')}>{l === 'en' ? 'English' : 'हिंदी'}</button>)}
       </div>
       <Button type="button" variant="outline" size="sm" onClick={copy}>{copied ? <Check className="mr-1 h-4 w-4" /> : <Copy className="mr-1 h-4 w-4" />}{copied ? 'Copied' : 'Copy for WhatsApp / email'}</Button>
@@ -66,8 +70,8 @@ function ShareBar({ text, onPrint, lang, setLang }: { text: string; onPrint: () 
   );
 }
 
-function printHtml(title: string, body: string) {
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title><style>
+function printHtml(title: string, body: string, lang: 'en' | 'hi' = 'en') {
+  const html = `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><title>${esc(title)}</title><style>
 body{font-family:Georgia,'Noto Sans Devanagari',serif;color:#2a1a10;max-width:820px;margin:28px auto;padding:0 20px;line-height:1.55}
 h1{color:#7a1f2b;margin:0 0 4px}h2{color:#7a1f2b;border-bottom:2px solid #c9a227;padding-bottom:3px;margin-top:24px;font-size:18px}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.cell{border:1px solid #e5d3a1;border-radius:10px;padding:10px}.cell small{color:#7a6a55;display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em}
@@ -97,15 +101,24 @@ export function AngelFinderTab() {
   }
 
   function print(r: AngelFinderResult) {
+    const hi = lang === 'hi';
     const top = r.list.find((x) => x.key === r.strongest)!;
-    const rows = (g: 'dob' | 'name') => r.list.filter((x) => x.group === g).map((x) => `<tr><td><b>${esc(x.label)}</b></td><td class="big" style="font-size:22px">${x.n}</td><td>${esc(x.theme)}<br><span class="muted">${esc(x.why)}</span></td><td>${x.score}%<br><span class="muted">${esc(x.verdict)}</span></td></tr>`).join('');
-    printHtml(`Angel Number Report – ${r.name}`, `<h1>Angel Number Report</h1><p><b>${esc(r.name)}</b> · DOB ${r.dob}<br><span class="muted">Prepared by ${esc(f.preparedBy)} · ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span></p>
-<div class="grid"><div class="cell"><small>Mulank</small><span class="big">${r.moolank}</span></div><div class="cell"><small>Bhagyank</small><span class="big">${r.bhagyankMaster ? `${r.bhagyankMaster}/${r.bhagyank}` : r.bhagyank}</span></div><div class="cell"><small>Name number</small><span class="big">${r.nameNumber.compound}/${r.nameNumber.single}</span></div></div>
-<div class="top"><small class="muted">STRONGEST ANGEL NUMBER</small><div class="big" style="font-size:44px">${top.n}</div><b>${esc(top.label)} – ${esc(top.theme)}</b> (${top.score}% aligned)<p>${esc(top.summary)}</p></div>
-<h2>From the date of birth</h2><table><tr><th>Angel number</th><th></th><th>Meaning</th><th>Alignment</th></tr>${rows('dob')}</table>
-<h2>From the name</h2><table><tr><th>Angel number</th><th></th><th>Meaning</th><th>Alignment</th></tr>${rows('name')}</table>
-<p>Current Personal Year <b>${r.personalYear.value}</b> (${esc(r.personalYear.period)}).</p>
-<p class="muted">Alignment compares each angel number with the Mulank and Bhagyank using the friendly-number table. When these numbers keep appearing on clocks, tickets or bills, pause and notice what you were thinking – that is the message. Guidance only.</p>`);
+    const date = new Date().toLocaleDateString(hi ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    const lab = (x: { key: string; label: string }) => (hi ? HI_ANGEL_LABEL[x.key] ?? x.label : x.label);
+    const meaning = (x: (typeof r.list)[number]) => (hi ? `${DIGITS[Number(x.n[0])].hiWord} – ${DIGITS[Number(x.n[0])].hiCore}` : `${esc(x.theme)}<br><span class="muted">${esc(x.why)}</span>`);
+    const align = (x: (typeof r.list)[number]) => (hi ? `${x.score}%<br><span class="muted">भाग्यांक से ${HI_REL[x.relB]}, मूलांक से ${HI_REL[x.relM]}</span>` : `${x.score}%<br><span class="muted">${esc(x.verdict)}</span>`);
+    const rows = (g: 'dob' | 'name') => r.list.filter((x) => x.group === g).map((x) => `<tr><td><b>${esc(lab(x))}</b></td><td class="big" style="font-size:22px">${x.n}</td><td>${meaning(x)}</td><td>${align(x)}</td></tr>`).join('');
+    const H = hi
+      ? { title: 'एंजेल नंबर रिपोर्ट', dob: 'जन्म तिथि', by: 'द्वारा तैयार:', m: 'मूलांक', b: 'भाग्यांक', nn: 'नामांक', strongest: 'सबसे शुभ एंजेल नंबर', aligned: 'अनुकूलता', fromDob: 'जन्म तिथि से', fromName: 'नाम से', th: ['एंजेल नंबर', '', 'अर्थ', 'अनुकूलता'], py: 'वर्तमान व्यक्तिगत वर्ष', note: 'अनुकूलता हर एंजेल नंबर की मूलांक और भाग्यांक से मित्र-अंक तालिका के अनुसार तुलना है। जब ये अंक घड़ी, टिकट, बिल या गाड़ी नंबर पर बार-बार दिखें, तो रुककर अपने विचार पर ध्यान दें – यही संदेश है। केवल मार्गदर्शन हेतु।' }
+      : { title: 'Angel Number Report', dob: 'DOB', by: 'Prepared by', m: 'Mulank', b: 'Bhagyank', nn: 'Name number', strongest: 'STRONGEST ANGEL NUMBER', aligned: 'aligned', fromDob: 'From the date of birth', fromName: 'From the name', th: ['Angel number', '', 'Meaning', 'Alignment'], py: 'Current Personal Year', note: 'Alignment compares each angel number with the Mulank and Bhagyank using the friendly-number table. When these numbers keep appearing on clocks, tickets or bills, pause and notice what you were thinking – that is the message. Guidance only.' };
+    const head = `<tr>${H.th.map((x) => `<th>${x}</th>`).join('')}</tr>`;
+    printHtml(`${H.title} – ${r.name}`, `<h1>${H.title}</h1><p><b>${esc(r.name)}</b> · ${H.dob} ${r.dob.split('-').reverse().join('-')}<br><span class="muted">${H.by} ${esc(f.preparedBy)} · ${date}</span></p>
+<div class="grid"><div class="cell"><small>${H.m}</small><span class="big">${r.moolank}</span></div><div class="cell"><small>${H.b}</small><span class="big">${r.bhagyankMaster ? `${r.bhagyankMaster}/${r.bhagyank}` : r.bhagyank}</span></div><div class="cell"><small>${H.nn}</small><span class="big">${r.nameNumber.compound}/${r.nameNumber.single}</span></div></div>
+<div class="top"><small class="muted">${H.strongest}</small><div class="big" style="font-size:44px">${top.n}</div><b>${esc(lab(top))}${hi ? ` – ${DIGITS[Number(top.n[0])].hiWord}` : ` – ${esc(top.theme)}`}</b> (${top.score}% ${H.aligned})<p>${hi ? DIGITS[Number(top.n[0])].hiCore : esc(top.summary)}</p></div>
+<h2>${H.fromDob}</h2><table>${head}${rows('dob')}</table>
+<h2>${H.fromName}</h2><table>${head}${rows('name')}</table>
+<p>${H.py} <b>${r.personalYear.value}</b> (${esc(tr(lang, r.personalYear.period))}).</p>
+<p class="muted">${H.note}</p>`, lang);
   }
 
   return (
@@ -177,14 +190,26 @@ export function LuckyFinderTab() {
   }
 
   function print(r: LuckyFinderResult) {
+    const hi = lang === 'hi';
     const n = r.nameNumber;
+    const date = new Date().toLocaleDateString(hi ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
     const row = (k: string, v: string) => `<tr><th style="width:34%">${esc(k)}</th><td>${esc(v)}</td></tr>`;
-    printHtml(`Lucky Number Report – ${r.name}`, `<h1>Lucky Number Report</h1><p><b>${esc(r.name)}</b> · DOB ${r.dob}<br><span class="muted">Prepared by ${esc(f.preparedBy)} · ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</span></p>
-<div class="grid"><div class="cell"><small>Primary lucky number (Mulank)</small><span class="big">${r.primary.number}</span><br>${esc(r.primary.planet)}</div><div class="cell"><small>Destiny number (Bhagyank)</small><span class="big">${r.destiny.master ? `${r.destiny.master}/${r.destiny.number}` : r.destiny.number}</span><br>${esc(r.destiny.planet)}</div><div class="cell"><small>Name number</small><span class="big">${n.compound}/${n.single}</span><br>score ${n.score}/100</div></div>
-<h2>Lucky profile</h2><table>${row('Lucky numbers', r.luckyNumbers.join(', '))}${row('Neutral numbers', r.neutralNumbers.join(', ') || '–')}${row('Numbers to avoid', r.avoidNumbers.join(', ') || '–')}${row('Lucky dates', r.luckyDates.join(', '))}${row('Lucky days', r.luckyDays.join(', '))}${row('Lucky colours', r.luckyColours.join(', '))}${r.avoidColours.length ? row('Colours to avoid', r.avoidColours.join(', ')) : ''}${row(`Best direction (Kua ${r.kua})`, `${r.directions.success} (success) · ${r.directions.health} (health)`)}${row('Mobile number totals that suit', `${r.mobile.idealTotals.join(', ')} · compounds ${r.mobile.idealCompounds.join(', ')}`)}${row('Gemstone', `${r.gemstone.name} (${r.gemstone.hindi}) – ${r.gemstone.caution}`)}${row('Current personal year', `${r.personalYear.value} (${r.personalYear.period})`)}</table>
-<h2>Name check</h2><p>Name number ${n.compound}/${n.single} (${esc(n.category)}) is <b>${n.relationWithBhagyank}</b> to the Bhagyank and <b>${n.relationWithMoolank}</b> to the Mulank – score ${n.score}/100.${n.needsCorrection && n.suggestion ? ` Suggested spelling: <b>${esc(n.suggestion.spelling)}</b> (${n.suggestion.compound}/${n.suggestion.single}, score ${n.suggestion.score}).` : n.needsCorrection ? ' A correction is advised – discuss spelling options in consultation.' : ' No change needed.'}</p>
-<h2>Favourable years</h2><table>${Object.entries(r.favourableYears).map(([k, ys]) => row(({ marriage: 'Marriage', jobChange: 'Job change', businessStart: 'Start a business', propertyPurchase: 'Buy property' } as Record<string, string>)[k] ?? k, ys.map((y) => `${y.year} (PY ${y.personalYear})`).join(', ') || '–')).join('')}</table>
-<p class="muted">Lucky numbers are friendly to both the Mulank and the Bhagyank (house friendship table); 4 and 8 are included only when they are the person's own numbers. Personal years run from birthday to birthday. Consult an expert before wearing a gemstone.</p>`);
+    const rel = (x: string) => (hi ? HI_REL[x as keyof typeof HI_REL] ?? x : x);
+    const H = hi
+      ? { title: 'शुभ अंक रिपोर्ट', dob: 'जन्म तिथि', by: 'द्वारा तैयार:', primary: 'मुख्य शुभ अंक (मूलांक)', destiny: 'भाग्य अंक (भाग्यांक)', nameNo: 'नामांक', profile: 'शुभ प्रोफ़ाइल', lucky: 'शुभ अंक', neutral: 'सम अंक', avoid: 'बचने योग्य अंक', dates: 'शुभ तारीखें', days: 'शुभ दिन', colours: 'शुभ रंग', avoidColours: 'बचने योग्य रंग', dir: 'शुभ दिशा', mobile: 'मोबाइल नंबर का शुभ योग', gem: 'रत्न', py: 'व्यक्तिगत वर्ष', nameCheck: 'नाम की जाँच', years: 'शुभ वर्ष',
+          nameLine: `नामांक ${n.compound}/${n.single} (${tr('hi', n.category)}) भाग्यांक से <b>${rel(n.relationWithBhagyank)}</b> और मूलांक से <b>${rel(n.relationWithMoolank)}</b> है – स्कोर ${n.score}/100।${n.needsCorrection && n.suggestion ? ` सुझाई गई वर्तनी: <b>${esc(n.suggestion.spelling)}</b> (${n.suggestion.compound}/${n.suggestion.single}, स्कोर ${n.suggestion.score})।` : ''}`,
+          note: 'शुभ अंक वे हैं जो मूलांक और भाग्यांक दोनों के मित्र हैं; 4 और 8 केवल तभी शामिल हैं जब वे व्यक्ति के अपने अंक हों। व्यक्तिगत वर्ष जन्मदिन से जन्मदिन तक चलता है। रत्न पहनने से पहले विशेषज्ञ से परामर्श करें।' }
+      : { title: 'Lucky Number Report', dob: 'DOB', by: 'Prepared by', primary: 'Primary lucky number (Mulank)', destiny: 'Destiny number (Bhagyank)', nameNo: 'Name number', profile: 'Lucky profile', lucky: 'Lucky numbers', neutral: 'Neutral numbers', avoid: 'Numbers to avoid', dates: 'Lucky dates', days: 'Lucky days', colours: 'Lucky colours', avoidColours: 'Colours to avoid', dir: 'Best direction', mobile: 'Mobile number totals', gem: 'Gemstone', py: 'Personal year', nameCheck: 'Name check', years: 'Favourable years',
+          nameLine: `Name number ${n.compound}/${n.single} (${esc(n.category)}) is <b>${n.relationWithBhagyank}</b> to the Bhagyank and <b>${n.relationWithMoolank}</b> to the Mulank – score ${n.score}/100.${n.needsCorrection && n.suggestion ? ` Suggested spelling: <b>${esc(n.suggestion.spelling)}</b> (${n.suggestion.compound}/${n.suggestion.single}, score ${n.suggestion.score}).` : ''}`,
+          note: "Lucky numbers are friendly to both the Mulank and the Bhagyank (house friendship table); 4 and 8 are included only when they are the person's own numbers. Personal years run from birthday to birthday. Consult an expert before wearing a gemstone." };
+    const day = (x: string) => (hi ? HI_DAY[x] ?? x : x); const col = (x: string) => (hi ? hiColour(x) : x);
+    const YR: Record<string, [string, string]> = { marriage: ['Marriage', 'विवाह'], jobChange: ['Job change', 'नौकरी बदलना'], businessStart: ['Start a business', 'व्यवसाय शुरू करना'], propertyPurchase: ['Buy property', 'संपत्ति ख़रीदना'] };
+    printHtml(`${H.title} – ${r.name}`, `<h1>${H.title}</h1><p><b>${esc(r.name)}</b> · ${H.dob} ${r.dob.split('-').reverse().join('-')}<br><span class="muted">${H.by} ${esc(f.preparedBy)} · ${date}</span></p>
+<div class="grid"><div class="cell"><small>${H.primary}</small><span class="big">${r.primary.number}</span><br>${esc(hi ? tr('hi', r.primary.planet) : r.primary.planet)}</div><div class="cell"><small>${H.destiny}</small><span class="big">${r.destiny.master ? `${r.destiny.master}/${r.destiny.number}` : r.destiny.number}</span><br>${esc(hi ? tr('hi', r.destiny.planet) : r.destiny.planet)}</div><div class="cell"><small>${H.nameNo}</small><span class="big">${n.compound}/${n.single}</span><br>${n.score}/100</div></div>
+<h2>${H.profile}</h2><table>${row(H.lucky, r.luckyNumbers.join(', '))}${row(H.neutral, r.neutralNumbers.join(', ') || '–')}${row(H.avoid, r.avoidNumbers.join(', ') || '–')}${row(H.dates, r.luckyDates.join(', '))}${row(H.days, r.luckyDays.map(day).join(', '))}${row(H.colours, r.luckyColours.map(col).join(', '))}${r.avoidColours.length ? row(H.avoidColours, r.avoidColours.map(col).join(', ')) : ''}${row(`${H.dir} (${hi ? 'कुआ' : 'Kua'} ${r.kua})`, tr(lang, r.directions.success))}${row(H.mobile, r.mobile.idealTotals.join(', '))}${row(H.gem, hi ? `${r.gemstone.hindi} (${r.gemstone.name})` : `${r.gemstone.name} (${r.gemstone.hindi}) – ${r.gemstone.caution}`)}${row(H.py, `${r.personalYear.value} (${tr(lang, r.personalYear.period)})`)}</table>
+<h2>${H.nameCheck}</h2><p>${H.nameLine}</p>
+<h2>${H.years}</h2><table>${Object.entries(r.favourableYears).map(([k, ys]) => row((YR[k] ?? [k, k])[hi ? 1 : 0], ys.map((y) => `${y.year} (${hi ? 'व्यक्तिगत वर्ष' : 'PY'} ${y.personalYear})`).join(', ') || '–')).join('')}</table>
+<p class="muted">${H.note}</p>`, lang);
   }
 
   const Chips = ({ xs, tone }: { xs: (number | string)[]; tone: 'good' | 'default' | 'bad' | 'gold' }) => (

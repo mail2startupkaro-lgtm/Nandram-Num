@@ -121,6 +121,19 @@ export const HI_TERMS: Record<string, string> = {
 };
 delete (HI_TERMS as Record<string, string>).Silver_;
 
+
+/** Planet career phrases (planets.ts) – used by signature and business reports in Hindi. Existing terms win. */
+const CAREER_HI: Record<string, string> = {
+  Accounting: 'लेखा (अकाउंटिंग)', Administration: 'प्रशासन', 'Arts & design': 'कला और डिज़ाइन', Aviation: 'विमानन', 'Business & trading': 'व्यवसाय और व्यापार', Communication: 'संचार',
+  Consulting: 'परामर्श', Counselling: 'काउंसलिंग', 'Creative arts': 'रचनात्मक कला', 'Dairy / liquids business': 'डेयरी / तरल पदार्थों का व्यवसाय', 'Defence & police': 'रक्षा और पुलिस', Engineering: 'इंजीनियरिंग',
+  Entertainment: 'मनोरंजन', 'Fashion & beauty': 'फ़ैशन और सौंदर्य', 'Financial advisory': 'वित्तीय सलाह', 'Foreign trade': 'विदेश व्यापार', 'Government service': 'सरकारी नौकरी', Healing: 'उपचार (हीलिंग)',
+  Hospitality: 'होटल और आतिथ्य', IT: 'आईटी', Investigation: 'जाँच-पड़ताल', Law: 'क़ानून', 'Law & judiciary': 'क़ानून और न्यायपालिका', 'Leadership roles': 'नेतृत्व वाले पद', 'Luxury retail': 'लग्ज़री रिटेल',
+  Manufacturing: 'निर्माण उद्योग', 'Marketing & sales': 'मार्केटिंग और सेल्स', 'Media & digital': 'मीडिया और डिजिटल', Medicine: 'चिकित्सा', 'Mining & oil': 'खनन और तेल', 'Nursing & care': 'नर्सिंग और देखभाल',
+  Politics: 'राजनीति', Programming: 'प्रोग्रामिंग', 'Real estate': 'रियल एस्टेट', 'Religious / spiritual work': 'धार्मिक / आध्यात्मिक कार्य', Research: 'शोध', 'Spiritual guidance': 'आध्यात्मिक मार्गदर्शन',
+  Sports: 'खेल', Surgery: 'सर्जरी', Teaching: 'शिक्षण', 'Technology & IT': 'टेक्नोलॉजी और आईटी',
+};
+for (const [k, v] of Object.entries(CAREER_HI)) if (!(k in HI_TERMS)) (HI_TERMS as Record<string, string>)[k] = v;
+
 /** Translate a data term for display. English (or an unknown term) is returned unchanged. */
 export function tr(lang: Lang | 'en' | 'hi', s: string | null | undefined): string {
   if (!s) return s ?? '';

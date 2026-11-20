@@ -11,6 +11,9 @@
  * Priority of evidence: expert observation > high-confidence measurement > AI visual reading > low-confidence measurement.
  * Nothing is stored; images are only sent to the configured provider.
  */
+import { scrubDeep } from '@/lib/narrative/filter';
+import { PLAIN_LANGUAGE } from '@/lib/narrative/prompts';
+import { featureHi, hindiParts } from './hindi';
 import { z } from 'zod';
 import { configFromEnv, type LlmConfig } from '@/lib/narrative/providers/llm';
 import { FEATURE_WEIGHT, FEATURES, featureLabel, type Impact } from './catalogue';
@@ -108,6 +111,9 @@ Write for this specific person: connect the signature to their profession, goals
 - Never diagnose illness or mental-health conditions, never predict death, accidents, divorce or disasters, never promise money or results, never shame the person. Use "tends to", "may", "suggests".
 - overallScore (0–100) rates how well the CURRENT signature supports the person's goals.
 - Write all text values in ${LANG[lang]}.
+- Never mention AI, models, software or that the text was generated – you write as Acharya Nandram's analyst.
+
+${PLAIN_LANGUAGE}
 
 Reply with ONE JSON object and nothing else, exactly in this shape:
 {"overallScore":72,"headline":"…","summary":"4–6 sentences","observations":[{"featureId":"baseline","feature":"Baseline","observed":"what you see (with the measured value)","meaning":"what it indicates for this person","impact":"positive|neutral|watch","confidence":"high|medium|low"}],"personality":["…"],"career":{"fit":"…","advice":"…"},"finance":"…","relationships":"…","strengths":["…"],"watchouts":["…"],"corrections":[{"title":"…","detail":"…","priority":"high|medium|low"}],"idealSignature":{"steps":["…"],"do":["…"],"dont":["…"],"startDay":"…","inkColour":"…","practice":"…"},"closing":"one encouraging line"}`;
@@ -226,8 +232,9 @@ export function ruleBasedAnalysis(i: SignatureInput, n: SignatureNumbers, fs: Ef
   const rel = (r: string) => (r === 'friend' ? 'supports' : r === 'neutral' ? 'is neutral to' : 'does not naturally support');
   const conf = (c: number): 'high' | 'medium' | 'low' => (c >= 0.7 ? 'high' : c >= 0.45 ? 'medium' : 'low');
   const watch = fs.filter((c) => c.impact === 'watch' && c.fix && (c.by === 'expert' || c.confidence >= 0.45)).sort((a, b) => (FEATURE_WEIGHT[b.id] ?? 0) - (FEATURE_WEIGHT[a.id] ?? 0));
+  if (i.language === 'hi') return ruleBasedAnalysisHi(i, n, fs, total, watch, count);
   const fixes: SignatureAnalysis['corrections'] = watch.map((c, k) => ({ title: FIX_TITLE[`${c.id}:${c.option}`] ?? FIX_TITLE[c.id] ?? `Correct the ${c.feature.toLowerCase()}`, detail: c.fix!, priority: k < 2 && (FEATURE_WEIGHT[c.id] ?? 0) >= 1 ? 'high' : 'medium' }));
-  if (n.bestOption) fixes.unshift({ title: `Sign as “${n.bestOption.text}”`, detail: `Your current signed name vibrates to ${n.signName.compound}/${n.signName.single} (${n.signToBhagyank} to Bhagyank ${n.bhagyank}). “${n.bestOption.text}” gives ${n.bestOption.compound}/${n.bestOption.single} – ${n.bestOption.toBhagyank} to Bhagyank and ${n.bestOption.category} – a better match for your numbers.`, priority: 'high' });
+  if (n.bestOption) fixes.unshift({ title: `Sign as “${n.bestOption.text}”`, detail: `The name you sign now adds up to number ${n.signName.single}. Writing “${n.bestOption.text}” instead gives number ${n.bestOption.single}, which matches your Bhagyank ${n.bhagyank} (destiny number) much better.`, priority: 'high' });
   else if (n.signToBhagyank === 'enemy') fixes.unshift({ title: 'Adjust the signed name', detail: `Your signature-name number ${n.signName.single} is not friendly to your Bhagyank ${n.bhagyank}. Sign a form of your name whose number is one of ${n.friendly.join(', ')} – Acharya Nandram can suggest exact spellings.`, priority: 'high' });
   if (n.firstLetter.toBhagyank !== 'enemy' && !fs.some((f) => f.id === 'first' && f.option === 'bold')) fixes.push({ title: `Strengthen the first letter “${n.firstLetter.letter}”`, detail: `${n.firstLetter.letter} carries ${n.firstLetter.value} (${n.firstLetter.planet}), ${n.firstLetter.toBhagyank} to your Bhagyank – write it clearly and about 1.5× taller than the other letters.`, priority: 'medium' });
   if (!fixes.length) fixes.push({ title: 'Keep the strengths', detail: 'Keep the signature rising, readable and free of strokes that cut through the name.', priority: 'low' });
@@ -237,7 +244,7 @@ export function ruleBasedAnalysis(i: SignatureInput, n: SignatureNumbers, fs: Ef
   return {
     overallScore: total,
     headline: total >= 75 ? 'A supportive signature with small refinements' : total >= 55 ? 'A workable signature that can be strengthened' : 'A signature that needs correction to support your goals',
-    summary: `${i.fullName}'s Bhagyank is ${n.bhagyank} (${n.planet.name}) and Moolank ${n.moolank}. The signed name “${n.signName.text}” vibrates to ${n.signName.compound}/${n.signName.single} (${n.signName.meaning.toLowerCase()}), which ${rel(n.signToBhagyank)} the Bhagyank. ${fs.length ? `Of the ${fs.length} signature features read, ${count('positive')} support growth, ${count('neutral')} are neutral and ${count('watch')} need attention.` : 'No signature features could be read, so this assessment is based on numerology only; add a clear signature image for a complete reading.'}${i.consistency != null ? ` Consistency across samples is ${i.consistency}/100.` : ''}`,
+    summary: `${i.fullName}'s Bhagyank (destiny number, from the full date of birth) is ${n.bhagyank}, ruled by ${n.planet.name}. The Moolank (birth-day number) is ${n.moolank}. The name in the signature, “${n.signName.text}”, adds up to number ${n.signName.single}, which ${rel(n.signToBhagyank)} the Bhagyank. ${fs.length ? `We looked at ${fs.length} things in the signature: ${count('positive')} are good, ${count('neutral')} are fine and ${count('watch')} need a small change.` : 'No signature features could be read, so this assessment is based on numerology only; add a clear signature image for a complete reading.'}${i.consistency != null ? ` Consistency across samples is ${i.consistency}/100.` : ''}`,
     observations: fs.length ? fs.map((c) => ({ featureId: c.id, feature: c.feature, observed: c.value ? `${c.label} (${c.value})` : c.label, meaning: c.meaning, impact: c.impact, confidence: conf(c.confidence) })) : [{ feature: 'Signature features', observed: 'Not provided', meaning: 'Upload a signature or mark observations to analyse slant, baseline, size and strokes.', impact: 'neutral' }],
     personality: pers,
     career: { fit: `${n.profession.note} Fit score: ${n.profession.fitScore}/100.`, advice: `Careers traditionally favoured by ${n.planet.name}: ${n.planet.careers.join(', ')}. ${n.planet.signatureTip}` },
@@ -253,6 +260,33 @@ export function ruleBasedAnalysis(i: SignatureInput, n: SignatureNumbers, fs: Ef
       practice: 'Traditionally the new signature is practised daily (for example 108 times a day for 21 days) until it becomes natural, then used on all new documents.',
     },
     closing: 'A signature is a daily affirmation – small, consistent corrections help it support your goals.',
+  };
+}
+
+/** Hindi version of the built-in analyst (simple, everyday Hindi). */
+function ruleBasedAnalysisHi(i: SignatureInput, n: SignatureNumbers, fsEn: EffectiveFeature[], total: number, watchEn: EffectiveFeature[], count: (k: Impact) => number): SignatureAnalysis {
+  const fs = fsEn.map((f) => featureHi(f));
+  const H = hindiParts(i.fullName, n, total, { positive: count('positive'), neutral: count('neutral'), watch: count('watch'), all: fs.length }, fs);
+  const conf = (c: number): 'high' | 'medium' | 'low' => (c >= 0.7 ? 'high' : c >= 0.45 ? 'medium' : 'low');
+  const fixes: SignatureAnalysis['corrections'] = watchEn.map((c, k) => ({ title: H.fixTitle(c.id, c.option), detail: featureHi(c).fix ?? '', priority: k < 2 && (FEATURE_WEIGHT[c.id] ?? 0) >= 1 ? 'high' : 'medium' }));
+  if (n.bestOption) fixes.unshift({ ...H.signAs(n.bestOption.text, `${n.signName.compound}/${n.signName.single}`, `${n.bestOption.compound}/${n.bestOption.single}`), priority: 'high' });
+  else if (n.signToBhagyank === 'enemy') fixes.unshift({ title: 'हस्ताक्षर-नाम बदलें', detail: H.adjustName, priority: 'high' });
+  if (n.firstLetter.toBhagyank !== 'enemy' && !fs.some((f) => f.id === 'first' && f.option === 'bold')) fixes.push({ title: `पहला अक्षर "${n.firstLetter.letter}" मज़बूत करें`, detail: H.firstLetter, priority: 'medium' });
+  if (!fixes.length) fixes.push({ ...H.keep, priority: 'low' });
+  const dates = n.startDates.map((d) => new Date(`${d.iso}T12:00:00Z`).toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', year: 'numeric' }));
+  const byWeight = (a: EffectiveFeature, b: EffectiveFeature) => (FEATURE_WEIGHT[b.id] ?? 0) - (FEATURE_WEIGHT[a.id] ?? 0);
+  return {
+    overallScore: total,
+    headline: H.headline,
+    summary: H.summary,
+    observations: fs.length ? fs.map((c) => ({ featureId: c.id, feature: c.feature, observed: c.value ? `${c.label} (${c.value})` : c.label, meaning: c.meaning, impact: c.impact, confidence: conf(c.confidence) })) : [{ ...H.noFeatures, impact: 'neutral' }],
+    personality: H.personality,
+    career: { fit: H.careerFit, advice: H.careerAdvice },
+    strengths: fs.filter((c) => c.impact === 'positive').sort(byWeight).slice(0, 6).map((c) => `${c.feature}: ${c.meaning}`),
+    watchouts: fs.filter((c) => c.impact === 'watch').sort(byWeight).slice(0, 6).map((c) => `${c.feature}: ${c.meaning}`),
+    corrections: fixes.slice(0, 8),
+    idealSignature: { steps: H.steps, do: H.do, dont: H.dont, startDay: H.startDay(dates), inkColour: H.ink, practice: H.practice },
+    closing: H.closing,
   };
 }
 
@@ -274,7 +308,7 @@ export async function runSignatureAgent(i: SignatureInput, n: SignatureNumbers, 
       const parsed = AnalysisSchema.safeParse(extractJson(raw));
       if (parsed.success) {
         const scores = engineScores(i, n, fs, Math.round(parsed.data.overallScore));
-        return { analysis: { ...parsed.data, overallScore: scores.overall }, source: 'ai', model, scores, features: fs };
+        return { analysis: { ...scrubDeep(parsed.data), overallScore: scores.overall }, source: 'ai', model, scores, features: fs };
       }
       lastErr = parsed.error.issues.slice(0, 5).map((x) => `${x.path.join('.')}: ${x.message}`).join('; ');
       text = `${factsText(i, n)}\n\nYour previous reply was invalid (${lastErr}). Reply again with ONLY the JSON object in the required shape.`;
