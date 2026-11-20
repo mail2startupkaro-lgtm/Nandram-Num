@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { Activity, BadgePercent, Globe2, Contact2, MessageSquareQuote, BarChart3, BookOpen, Inbox, Briefcase, Clover, Copy, CreditCard, FileText, LayoutDashboard, Palette, PenLine, Plus, Receipt, Save, ScrollText, Sparkles, Tag, Trash2, UserCheck, Users, Wand2 } from 'lucide-react';
+import { Activity, BadgePercent, Globe2, Contact2, MessageSquareQuote, BarChart3, BookOpen, Inbox, Briefcase, Clover, Copy, CreditCard, FileText, LayoutDashboard, Palette, PenLine, Plus, Receipt, Save, ScrollText, Sparkles, Tag, Trash2, UserCheck, Users, Wand2, FileSignature, ListChecks, Building2, IndianRupee } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { ExpertsTab } from '@/components/admin/experts';
 import { PaymentReport, SalesReport } from '@/components/admin/finance';
@@ -30,16 +30,36 @@ import { formatMoney, planPrice } from '@/lib/billing/currency';
 const inr = (p: number) => `₹${(p / 100).toLocaleString('en-IN', { minimumFractionDigits: p % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;
 const THEMES = ['royal-gold-maroon', 'cosmic-blue', 'saffron-cream', 'minimal-white'];
 const SECTIONS = ['intro', 'moolank', 'bhagyank', 'combination', 'loshu', 'missing', 'kua', 'forecast', 'lifePeriods', 'career', 'relationships', 'wellbeing', 'name', 'mobile', 'aadhaar', 'couple', 'remedies', 'closing'];
-const TABS = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard }, { id: 'visitors', label: 'Visitor analytics', icon: Globe2 }, { id: 'crm', label: 'CRM', icon: Contact2 }, { id: 'analytics', label: 'Google Analytics', icon: Activity }, { id: 'messages', label: 'Messages', icon: Inbox }, { id: 'queue', label: 'Report queue', icon: FileText }, { id: 'services', label: 'Services & orders', icon: Briefcase }, { id: 'funnel', label: 'Limited-time offer', icon: BadgePercent }, { id: 'testimonials', label: 'Testimonials', icon: MessageSquareQuote }, { id: 'studio', label: 'Report generator', icon: FileText },
-  { id: 'signature', label: 'Signature analysis', icon: PenLine },
-  { id: 'business', label: 'Business compatibility', icon: Briefcase },
-  { id: 'angel', label: 'Angel number finder', icon: Sparkles }, { id: 'lucky', label: 'Lucky number finder', icon: Clover },
-  { id: 'sales', label: 'Sales report', icon: BarChart3 }, { id: 'payments', label: 'Payment report', icon: Receipt },
-  { id: 'users', label: 'Users', icon: Users }, { id: 'experts', label: 'Experts', icon: UserCheck }, { id: 'plans', label: 'Plan editor', icon: CreditCard },
-  { id: 'coupons', label: 'Coupons', icon: Tag }, { id: 'knowledge', label: 'Knowledge base', icon: BookOpen }, { id: 'themes', label: 'PDF themes', icon: Palette },
-  { id: 'prompts', label: 'Writer prompts', icon: Wand2 }, { id: 'seller', label: 'Invoice settings', icon: ScrollText },
+/**
+ * Admin is split into sections, each with its own grouped menu:
+ * Dashboard · Report Generating (orders, generators, report setup) · Website Backoffice (customers, marketing, traffic)
+ * · Sales & Accounts (reports, pricing, invoicing). Tab ids are unchanged, so "Generate Report" links keep working.
+ */
+const ADMIN_SECTIONS = [
+  { id: 'dashboard', label: 'Dashboard', desc: 'Business at a glance', icon: LayoutDashboard, groups: [
+    { label: 'Overview', tabs: [{ id: 'overview', label: 'Overview', icon: LayoutDashboard }] },
+  ] },
+  { id: 'reports', label: 'Report Generating', desc: 'Orders to deliver & report generators', icon: FileSignature, groups: [
+    { label: 'Orders to deliver', tabs: [{ id: 'services', label: 'Service orders & prices', icon: Briefcase }, { id: 'queue', label: 'Report queue', icon: ListChecks }] },
+    { label: 'Report generators', tabs: [{ id: 'studio', label: 'Numerology report generator', icon: FileText }, { id: 'signature', label: 'Signature analysis', icon: PenLine }, { id: 'business', label: 'Business compatibility', icon: Building2 }, { id: 'angel', label: 'Angel number finder', icon: Sparkles }, { id: 'lucky', label: 'Lucky number finder', icon: Clover }] },
+    { label: 'Report setup', tabs: [{ id: 'knowledge', label: 'Knowledge base', icon: BookOpen }, { id: 'prompts', label: 'Writer prompts', icon: Wand2 }, { id: 'themes', label: 'PDF themes', icon: Palette }] },
+  ] },
+  { id: 'website', label: 'Website Backoffice', desc: 'Customers, leads, marketing & traffic', icon: Globe2, groups: [
+    { label: 'Customers & leads', tabs: [{ id: 'messages', label: 'Messages', icon: Inbox }, { id: 'crm', label: 'CRM & leads', icon: Contact2 }, { id: 'users', label: 'Users', icon: Users }, { id: 'experts', label: 'Experts', icon: UserCheck }] },
+    { label: 'Marketing', tabs: [{ id: 'funnel', label: 'Limited-time offer', icon: BadgePercent }, { id: 'testimonials', label: 'Testimonials', icon: MessageSquareQuote }] },
+    { label: 'Traffic', tabs: [{ id: 'visitors', label: 'Visitor analytics', icon: Globe2 }, { id: 'analytics', label: 'Google Analytics', icon: Activity }] },
+  ] },
+  { id: 'accounts', label: 'Sales & Accounts', desc: 'Sales, payments, plans & GST invoices', icon: IndianRupee, groups: [
+    { label: 'Reports', tabs: [{ id: 'sales', label: 'Sales report', icon: BarChart3 }, { id: 'payments', label: 'Payment report', icon: Receipt }] },
+    { label: 'Pricing', tabs: [{ id: 'plans', label: 'Plan editor', icon: CreditCard }, { id: 'coupons', label: 'Coupons', icon: Tag }] },
+    { label: 'Invoicing', tabs: [{ id: 'seller', label: 'Invoice settings', icon: ScrollText }] },
+  ] },
 ] as const;
+type SectionId = (typeof ADMIN_SECTIONS)[number]['id'];
+type TabId = (typeof ADMIN_SECTIONS)[number]['groups'][number]['tabs'][number]['id'];
+const sectionOf = (tab: TabId): SectionId => ADMIN_SECTIONS.find((s) => s.groups.some((g) => g.tabs.some((x) => x.id === tab)))!.id;
+const firstTab = (sec: SectionId): TabId => ADMIN_SECTIONS.find((s) => s.id === sec)!.groups[0].tabs[0].id;
+const isTab = (x: string): x is TabId => ADMIN_SECTIONS.some((s) => s.groups.some((g) => g.tabs.some((t) => t.id === x)));
 
 const ADMIN_ERRORS: Record<string, string> = {
   PLAN_CODE_EXISTS: 'A plan with this code already exists.', PLAN_IN_USE: 'This plan has orders or subscribers – deactivate it instead of deleting.', PLAN_NOT_FOUND: 'Plan not found.',
@@ -55,28 +75,81 @@ function useMsg() {
 
 export default function AdminPage() {
   const { me } = useApp();
-  const [tab, setTab] = React.useState<(typeof TABS)[number]['id']>('overview');
+  const [tab, setTabState] = React.useState<TabId>('overview');
   const [preloadedOrder, setPreloadedOrder] = React.useState<Order | null>(null);
   const [newMsgs, setNewMsgs] = React.useState(0);
-  React.useEffect(() => { if (me?.user?.role === 'super_admin') api<{ counts: { new: number } }>('/api/admin/messages?status=new').then((r) => setNewMsgs(r.counts.new)).catch(() => {}); }, [me?.user?.role]);
+  const [ordersToDo, setOrdersToDo] = React.useState(0);
+  const section = sectionOf(tab);
+  // The open tab is kept in the address (#signature, #sales…) so a refresh or a bookmark returns to it.
+  const setTab = React.useCallback((t: TabId) => { setTabState(t); if (window.location.hash !== `#${t}`) window.history.replaceState(null, '', `#${t}`); }, []);
+  React.useEffect(() => {
+    const read = () => { const h = window.location.hash.slice(1); if (isTab(h)) setTabState(h); };
+    read(); window.addEventListener('hashchange', read);
+    return () => window.removeEventListener('hashchange', read);
+  }, []);
+  React.useEffect(() => {
+    if (me?.user?.role !== 'super_admin') return;
+    api<{ counts: { new: number } }>('/api/admin/messages?status=new').then((r) => setNewMsgs(r.counts.new)).catch(() => {});
+    api<{ orders: unknown[] }>('/api/admin/service-orders?status=paid').then((r) => setOrdersToDo(r.orders.length)).catch(() => {});
+  }, [me?.user?.role, tab]);
   React.useEffect(() => { if (me && (!me.user || me.user.role !== 'super_admin')) window.location.replace('/'); }, [me]);
   if (!me?.user || me.user.role !== 'super_admin') return null;
+  const badge = (id: string) => (id === 'messages' ? newMsgs : id === 'services' ? ordersToDo : 0);
+  const sectionBadge = (id: SectionId) => (id === 'reports' ? ordersToDo : id === 'website' ? newMsgs : 0);
+  const Pill = ({ n }: { n: number }) => (n > 0 ? <span className="ml-auto rounded-full bg-gold px-1.5 text-[11px] font-bold text-[hsl(250_45%_10%)]">{n}</span> : null);
+  const current = ADMIN_SECTIONS.find((s) => s.id === section)!;
   return (
     <div className="container py-8">
-      <h1 className="mb-6 text-3xl font-bold">Admin</h1>
-      <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
-        <nav className="glass flex gap-1 overflow-x-auto rounded-lg p-2 lg:flex-col">
-          {TABS.map((x) => (
-            <button key={x.id} onClick={() => setTab(x.id)} className={cn('flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-left text-sm', tab === x.id ? 'bg-gold/20 font-semibold' : 'hover:bg-muted')}>
-              <x.icon className="h-4 w-4 text-gold" />{x.label}{x.id === 'messages' && newMsgs > 0 && <span className="ml-auto rounded-full bg-gold px-1.5 text-[11px] font-bold text-[hsl(250_45%_10%)]">{newMsgs}</span>}
-            </button>
-          ))}
-        </nav>
+      <h1 className="mb-4 text-3xl font-bold">Admin</h1>
+      <nav aria-label="Admin sections" className="mb-6 grid grid-cols-2 gap-2 lg:grid-cols-4">
+        {ADMIN_SECTIONS.map((s) => (
+          <button key={s.id} type="button" onClick={() => setTab(firstTab(s.id))} aria-current={section === s.id ? 'page' : undefined}
+            className={cn('glass flex items-start gap-3 rounded-lg border p-3 text-left transition', section === s.id ? 'border-gold bg-gold/15' : 'border-transparent hover:border-gold/40')}>
+            <s.icon className="mt-0.5 h-6 w-6 shrink-0 text-gold" />
+            <span className="min-w-0 flex-1"><span className="flex items-center gap-2 font-semibold">{s.label}<Pill n={sectionBadge(s.id)} /></span><span className="hidden text-xs text-muted-foreground sm:block">{s.desc}</span></span>
+          </button>
+        ))}
+      </nav>
+      <div className={cn('grid gap-6', current.groups.length > 1 || current.groups[0].tabs.length > 1 ? 'lg:grid-cols-[230px_1fr]' : '')}>
+        {(current.groups.length > 1 || current.groups[0].tabs.length > 1) && (
+          <nav aria-label={`${current.label} menu`} className="glass flex gap-1 overflow-x-auto rounded-lg p-2 lg:flex-col lg:self-start">
+            {current.groups.map((g) => (
+              <div key={g.label} className="flex gap-1 lg:mb-2 lg:flex-col">
+                <p className="hidden px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground lg:block">{g.label}</p>
+                {g.tabs.map((x) => (
+                  <button key={x.id} type="button" onClick={() => setTab(x.id)} aria-current={tab === x.id ? 'page' : undefined} className={cn('flex items-center gap-2 whitespace-nowrap rounded-md px-3 py-2 text-left text-sm', tab === x.id ? 'bg-gold/20 font-semibold' : 'hover:bg-muted')}>
+                    <x.icon className="h-4 w-4 text-gold" />{x.label}<Pill n={badge(x.id)} />
+                  </button>
+                ))}
+              </div>
+            ))}
+          </nav>
+        )}
         <div className="min-w-0">
-          {tab === 'overview' && <Overview />}{tab === 'visitors' && <VisitorAnalytics />}{tab === 'crm' && <CrmAdmin />}{tab === 'testimonials' && <TestimonialsAdmin />}{tab === 'analytics' && <AnalyticsAdmin />}{tab === 'messages' && <MessagesTab onCounts={setNewMsgs} />}{tab === 'services' && <ServicesAdmin onGenerateReport={(ord) => { setPreloadedOrder(ord); setTab(ord.serviceCode === 'SVC_BUSINESS_COMPAT' ? 'business' : ord.serviceCode === 'SVC_SIGNATURE' ? 'signature' : 'studio'); }} />}{tab === 'queue' && <ReportQueueAdmin />}{tab === 'funnel' && <FunnelAdmin />}{tab === 'studio' && <ReportStudio preloadedOrder={preloadedOrder} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'signature' && <SignatureStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_SIGNATURE' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'business' && <BusinessStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_BUSINESS_COMPAT' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'angel' && <AngelFinderTab />}{tab === 'lucky' && <LuckyFinderTab />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'experts' && <ExpertsTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
+          {tab === 'overview' && <><QuickLinks onOpen={setTab} ordersToDo={ordersToDo} newMsgs={newMsgs} /><Overview /></>}{tab === 'visitors' && <VisitorAnalytics />}{tab === 'crm' && <CrmAdmin />}{tab === 'testimonials' && <TestimonialsAdmin />}{tab === 'analytics' && <AnalyticsAdmin />}{tab === 'messages' && <MessagesTab onCounts={setNewMsgs} />}{tab === 'services' && <ServicesAdmin onGenerateReport={(ord) => { setPreloadedOrder(ord); setTab(ord.serviceCode === 'SVC_BUSINESS_COMPAT' ? 'business' : ord.serviceCode === 'SVC_SIGNATURE' ? 'signature' : 'studio'); }} />}{tab === 'queue' && <ReportQueueAdmin />}{tab === 'funnel' && <FunnelAdmin />}{tab === 'studio' && <ReportStudio preloadedOrder={preloadedOrder} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'signature' && <SignatureStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_SIGNATURE' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'business' && <BusinessStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_BUSINESS_COMPAT' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'angel' && <AngelFinderTab />}{tab === 'lucky' && <LuckyFinderTab />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'experts' && <ExpertsTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
           {tab === 'knowledge' && <KnowledgeTab />}{tab === 'themes' && <ThemesTab />}{tab === 'prompts' && <PromptsTab />}{tab === 'seller' && <SellerTab />}{tab === 'payments' && <PaymentReport />}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Dashboard shortcuts to the jobs the owner does most often. */
+function QuickLinks({ onOpen, ordersToDo, newMsgs }: { onOpen: (t: TabId) => void; ordersToDo: number; newMsgs: number }) {
+  const items: { id: TabId; label: string; note: string; icon: typeof FileText; n?: number }[] = [
+    { id: 'services', label: 'Orders to deliver', note: ordersToDo ? `${ordersToDo} paid order${ordersToDo === 1 ? '' : 's'} waiting` : 'No paid orders waiting', icon: Briefcase, n: ordersToDo },
+    { id: 'studio', label: 'Generate a report', note: 'Complete, DOB, name, mobile, couple', icon: FileText },
+    { id: 'signature', label: 'Signature analysis', note: 'Photo → analysis → PDF', icon: PenLine },
+    { id: 'messages', label: 'Messages', note: newMsgs ? `${newMsgs} new` : 'No new messages', icon: Inbox, n: newMsgs },
+    { id: 'sales', label: 'Sales report', note: 'Revenue, GST, top customers', icon: BarChart3 },
+  ];
+  return (
+    <div className="mb-6 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+      {items.map((x) => (
+        <button key={x.id} type="button" onClick={() => onOpen(x.id)} className={cn('glass flex items-start gap-3 rounded-lg border p-3 text-left hover:border-gold/60', x.n ? 'border-gold/60' : 'border-transparent')}>
+          <x.icon className="mt-0.5 h-5 w-5 shrink-0 text-gold" /><span><span className="block text-sm font-semibold">{x.label}</span><span className="text-xs text-muted-foreground">{x.note}</span></span>
+        </button>
+      ))}
     </div>
   );
 }
