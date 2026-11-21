@@ -19,6 +19,7 @@ import { LeadForm, OfferCountdown, SampleReports, StickyCta } from '@/components
 import { formatOfferEnd, funnelWhatsapp, getLiveOffer } from '@/lib/funnel/offer';
 import { sampleFor } from '@/lib/service-samples';
 import { HeroActionCard } from '@/components/services/hero-action-card';
+import { HeroArt } from '@/components/services/hero-art';
 import { heroFor, type HeroIcon } from '@/lib/service-hero';
 import { getPublishedTestimonials } from '@/lib/testimonials-server';
 import type { Testimonial } from '@/lib/testimonials';
@@ -101,14 +102,16 @@ export async function ServiceLanding({ slug, children }: { slug: string; childre
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toLd(ld) }} />
       <nav aria-labelledby="bc-label" className="text-xs text-muted-foreground"><span id="bc-label" className="sr-only"><Bi en="Breadcrumb" hi="पथ" /></span><Link href="/" className="hover:text-foreground"><Bi en="Home" hi="होम" /></Link> / <Link href="/services" className="hover:text-foreground"><Bi en="Services" hi="सेवाएँ" /></Link> / <Bi en={page.h1.en} hi={page.h1.hi} /></nav>
       <section aria-labelledby="sh-h1" className="sh-hero relative -mx-4 overflow-hidden rounded-none px-4 py-8 sm:mx-0 sm:rounded-3xl sm:px-8 sm:py-10 lg:px-10 lg:py-12">
-        <div aria-hidden className="sh-ring"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div>
+        <div aria-hidden className="sh-ring hidden lg:block"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div>
         <div className="relative grid items-start gap-8 lg:grid-cols-[1fr_400px] lg:gap-x-10 lg:gap-y-6">
           <header className="mk-rise space-y-5 lg:col-start-1 lg:row-start-1">
+            <div className="space-y-5 pr-28 sm:pr-40 lg:pr-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs font-semibold text-gold"><span className="cz-eyebrow-dot" /><HeroIc className="h-3.5 w-3.5" /><Bi en={hero.tag.en} hi={hero.tag.hi} /></span>
               {offerOn && <span className="inline-flex items-center gap-1 rounded-full bg-danger/15 px-3 py-1 text-xs font-semibold text-danger"><Sparkles className="h-3.5 w-3.5" /><Bi en={offerOn.label.en} hi={offerOn.label.hi} /></span>}
             </div>
             <h1 id="sh-h1" className="font-cinzel text-4xl font-bold leading-tight sm:text-5xl"><span className="gold-text"><Bi en={page.h1.en} hi={page.h1.hi} /></span></h1>
+            </div>
             <p className="max-w-xl text-lg leading-relaxed text-foreground/90 sm:text-xl"><Bi en={hero.hook.en} hi={hero.hook.hi} /></p>
             {svc && svc.en.includes.length > 0 && (
               <BiBlock en={<HeroPoints items={svc.en.includes} />} hi={<HeroPoints items={svc.hi.includes} />} />
@@ -118,8 +121,9 @@ export async function ServiceLanding({ slug, children }: { slug: string; childre
               <a href={`https://wa.me/${wa}?text=${encodeURIComponent(`Namaste Acharya ji, I want to know about ${page.h1.en}.`)}`} target="_blank" rel="noopener noreferrer" className="cz-btn cz-btn-ghost h-12 px-5 text-base"><MessageCircle className="h-4 w-4 text-success" /><Bi en="Ask on WhatsApp" hi="WhatsApp पर पूछें" /></a>
             </div>
           </header>
-          <div id="book" className="scroll-mt-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
+          <div id="book" className="scroll-mt-24 lg:relative lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
             <span id="free" className="sr-only" />
+            <div aria-hidden className="pointer-events-none absolute right-0 top-0 h-24 w-28 sm:h-32 sm:w-40 lg:static lg:mx-auto lg:-mb-4 lg:h-44 lg:w-56"><HeroArt kind={hero.icon} /></div>
             <HeroActionCard
               freeTitle={hero.freeTitle}
               free={<LeadForm services={funnelServices} defaultService={svc?.code ?? ''} whatsapp={wa} compact bookHref="#book" />}

@@ -249,3 +249,76 @@ html:not(.dark) .cz-card { background: hsl(0 0% 100% / .72); }
   background: linear-gradient(135deg, hsl(var(--gold) / .6), transparent 40%, transparent 60%, hsl(var(--saffron) / .5)); filter: blur(10px); opacity: .45; }
 @media (prefers-reduced-motion: reduce) { .sh-ring { animation: none; } }
 @media print { .sh-ring, .sh-hero::before { display: none; } }
+
+/* ---------- service hero illustrations (hero-art.tsx) ---------- */
+.ha { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 10px 24px hsl(var(--saffron) / .25)); }
+.ha .s { fill: none; stroke: hsl(var(--gold)); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ha .sd { stroke: hsl(var(--gold) / .35); }
+.ha .ha-dash { stroke-dasharray: 4 4; }
+.ha .f { fill: hsl(var(--gold)); }
+.ha .fd { fill: hsl(var(--gold) / .12); }
+.ha .tk { fill: hsl(250 45% 10%); }
+.ha .ts { fill: hsl(var(--gold)); }
+.ha .ha-ring { stroke: hsl(var(--gold) / .6); stroke-width: 1.5; }
+.ha .ha-paper { fill: hsl(var(--card) / .85); stroke: hsl(var(--gold) / .4); stroke-width: 1.5; }
+.ha .ha-body { fill: hsl(var(--card) / .6); }
+.ha .ha-chip { fill: hsl(var(--card)); stroke: hsl(var(--gold) / .5); stroke-width: 1.2; }
+.ha .ha-glow { fill: none; stroke: hsl(var(--saffron)); stroke-width: 3; opacity: .85; filter: drop-shadow(0 0 6px hsl(var(--saffron))); }
+.ha .ha-heart { fill: hsl(var(--maroon)); stroke: hsl(var(--gold)); stroke-width: 1; }
+.ha .ha-arc { fill: none; stroke-width: 12; stroke-linecap: round; }
+.ha .ha-bad { stroke: hsl(var(--danger) / .7); } .ha .ha-mid { stroke: hsl(var(--warning) / .75); } .ha .ha-good { stroke: hsl(var(--success) / .85); }
+.ha .ha-num { font-family: var(--font-cinzel), Georgia, serif; font-weight: 700; font-size: 15px; }
+.ha .ha-letter { font-family: var(--font-cinzel), Georgia, serif; font-weight: 900; font-size: 34px; fill: hsl(var(--foreground)); }
+.ha .ha-small { font-size: 11px; letter-spacing: .12em; fill: hsl(var(--muted-foreground)); font-weight: 600; }
+.ha :is([class^="a-"], [class*=" a-"]) { transform-box: fill-box; transform-origin: center; animation-duration: var(--t, 5s); animation-delay: var(--d, 0s); animation-iteration-count: infinite; animation-fill-mode: both; animation-timing-function: ease-out; }
+.ha .a-pop { animation-name: ha-pop; }
+@keyframes ha-pop { 0% { transform: scale(0); opacity: 0 } 8% { transform: scale(1.15); opacity: 1 } 13%, 62% { transform: scale(1); opacity: 1 } 75%, 100% { transform: scale(.6); opacity: 0 } }
+.ha .a-fade { animation-name: ha-fade; }
+@keyframes ha-fade { 0% { opacity: 0 } 10%, 65% { opacity: 1 } 80%, 100% { opacity: 0 } }
+.ha .a-drop { animation-name: ha-drop; }
+@keyframes ha-drop { 0% { transform: translateY(-22px); opacity: 0 } 10%, 68% { transform: none; opacity: 1 } 82%, 100% { opacity: 0 } }
+.ha .a-dig { animation-name: ha-dig; fill: hsl(var(--foreground)); }
+@keyframes ha-dig { 0% { opacity: .15 } 6% { opacity: 1; fill: hsl(var(--saffron)) } 14%, 62% { opacity: 1 } 80%, 100% { opacity: .15 } }
+.ha .a-draw { stroke-dasharray: 1; animation-name: ha-draw; }
+@keyframes ha-draw { 0% { stroke-dashoffset: 1 } 25%, 70% { stroke-dashoffset: 0; opacity: 1 } 85%, 100% { stroke-dashoffset: 0; opacity: 0 } }
+.ha .a-wave { animation-name: ha-wave; --t: 2.2s; }
+@keyframes ha-wave { 0%, 100% { opacity: .1 } 40% { opacity: 1 } }
+.ha .a-pulse { animation-name: ha-pulse; --t: 1.8s; }
+@keyframes ha-pulse { 0%, 100% { opacity: .35; transform: scale(.9) } 50% { opacity: 1; transform: scale(1.15) } }
+.ha .a-twinkle { animation-name: ha-twinkle; --t: 2.4s; }
+@keyframes ha-twinkle { 0%, 100% { opacity: .2; transform: scale(.6) rotate(0) } 50% { opacity: 1; transform: scale(1.1) rotate(45deg) } }
+.ha .a-bounce { animation-name: ha-bounce; --t: 1.6s; animation-timing-function: ease-in-out; }
+@keyframes ha-bounce { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-12px) } }
+.ha .a-rock { animation-name: ha-rock; --t: 4s; animation-timing-function: ease-in-out; }
+@keyframes ha-rock { 0%, 100% { transform: rotate(-8deg) } 50% { transform: rotate(8deg) } }
+.ha .a-spin { animation-name: ha-spin; --t: 8s; animation-timing-function: linear; }
+@keyframes ha-spin { to { transform: rotate(360deg) } }
+.ha .a-orbit { animation-name: ha-spin; --t: 9s; animation-timing-function: linear; transform-box: view-box; transform-origin: 110px 90px; }
+.ha .a-flip { animation-name: ha-flip; --t: 3s; animation-timing-function: ease-in-out; }
+@keyframes ha-flip { 0%, 70%, 100% { transform: none } 80% { transform: scaleY(.1) } 90% { transform: scaleY(1.05) } }
+.ha .a-beat { animation-name: ha-beat; --t: 1.4s; }
+@keyframes ha-beat { 0%, 40%, 100% { transform: scale(1) } 15% { transform: scale(1.25) } 28% { transform: scale(1.05) } }
+.ha .a-up { animation-name: ha-up; --t: 3.6s; animation-timing-function: ease-in; }
+@keyframes ha-up { 0% { transform: translateY(0) scale(.6); opacity: 0 } 20% { opacity: 1 } 100% { transform: translateY(-120px) scale(1); opacity: 0 } }
+.ha .a-nearL { animation-name: ha-nearL; --t: 3s; animation-timing-function: ease-in-out; }
+.ha .a-nearR { animation-name: ha-nearR; --t: 3s; animation-timing-function: ease-in-out; }
+@keyframes ha-nearL { 0%, 100% { transform: translateX(-6px) } 50% { transform: translateX(10px) } }
+@keyframes ha-nearR { 0%, 100% { transform: translateX(6px) } 50% { transform: translateX(-10px) } }
+.ha .a-neon { animation-name: ha-neon; fill: hsl(var(--gold)); }
+@keyframes ha-neon { 0%, 4% { opacity: .15 } 5% { opacity: 1 } 7% { opacity: .3 } 9%, 75% { opacity: 1; filter: drop-shadow(0 0 4px hsl(var(--saffron))) } 90%, 100% { opacity: .15 } }
+.ha .a-grow { animation-name: ha-grow; transform-origin: bottom; }
+@keyframes ha-grow { 0% { transform: scaleY(0) } 18%, 75% { transform: scaleY(1) } 92%, 100% { transform: scaleY(0) } }
+.ha .a-needle { animation-name: ha-needle; transform-box: view-box; transform-origin: 110px 120px; animation-timing-function: ease-in-out; }
+@keyframes ha-needle { 0%, 100% { transform: rotate(-75deg) } 25% { transform: rotate(40deg) } 35% { transform: rotate(-10deg) } 48%, 85% { transform: rotate(58deg) } }
+/* signature: pen writes (0–50%), underline (50–62%), dot (64%), hold, fade */
+.ha .a-sig { animation-name: ha-sigfade; }
+@keyframes ha-sigfade { 0% { opacity: 0 } 3%, 88% { opacity: 1 } 97%, 100% { opacity: 0 } }
+.ha .a-draw-sig { stroke-dasharray: 1; animation-name: ha-sig; animation-timing-function: linear; }
+@keyframes ha-sig { 0% { stroke-dashoffset: 1 } 50%, 100% { stroke-dashoffset: 0 } }
+.ha .a-draw-ul { stroke-dasharray: 1; animation-name: ha-ul; animation-timing-function: linear; }
+@keyframes ha-ul { 0%, 50% { stroke-dashoffset: 1 } 62%, 100% { stroke-dashoffset: 0 } }
+.ha .a-dot { animation-name: ha-dot; }
+@keyframes ha-dot { 0%, 63% { transform: scale(0) } 67% { transform: scale(1.6) } 71%, 100% { transform: scale(1) } }
+.ha .a-pen { animation-name: ha-pen; animation-timing-function: linear; transform: none; }
+@keyframes ha-pen { 0%, 50% { opacity: 1 } 56%, 97% { opacity: 0 } 100% { opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { .ha :is([class^="a-"], [class*=" a-"]) { animation: none !important; opacity: 1 !important; transform: none !important; stroke-dashoffset: 0 !important; } .ha .a-pen { display: none; } }
