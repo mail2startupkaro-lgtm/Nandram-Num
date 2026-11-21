@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import { serviceUsd } from '@/lib/billing/currency';
 import type { ReactNode } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, CheckCircle2, Clock, FileText, LockKeyhole, Send, Users } from 'lucide-react';
+import { ArrowRight, Baby, BriefcaseBusiness, Building2, CalendarDays, CheckCircle2, Clock, FileText, Grid3x3, HeartHandshake, Languages, LockKeyhole, MessageCircle, PenLine, Quote, Send, ShieldCheck, Smartphone, Sparkles, Store, Type, UserRound, Users } from 'lucide-react';
 import { AcharyaProfile } from '@/components/blog/blog-parts';
 import { Calculator } from '@/components/calculators/calculator';
 import { Bi, BiBlock } from '@/components/i18n/bi';
@@ -17,6 +18,22 @@ import { ServicePrice } from '@/components/services/service-price';
 import { LeadForm, OfferCountdown, SampleReports, StickyCta } from '@/components/services/funnel';
 import { formatOfferEnd, funnelWhatsapp, getLiveOffer } from '@/lib/funnel/offer';
 import { sampleFor } from '@/lib/service-samples';
+import { HeroActionCard } from '@/components/services/hero-action-card';
+import { heroFor, type HeroIcon } from '@/lib/service-hero';
+import { getPublishedTestimonials } from '@/lib/testimonials-server';
+import type { Testimonial } from '@/lib/testimonials';
+
+const HERO_ICONS: Record<HeroIcon, typeof UserRound> = { user: UserRound, type: Type, grid: Grid3x3, phone: Smartphone, baby: Baby, heart: HeartHandshake, store: Store, building: Building2, briefcase: BriefcaseBusiness, calendar: CalendarDays, pen: PenLine };
+
+/** One real, published review for this service (else a general one), shortened at a word boundary for the hero. */
+async function heroReview(code: string): Promise<(Testimonial & { short: string }) | null> {
+  const all = await getPublishedTestimonials().catch(() => [] as Testimonial[]);
+  const t = all.find((x) => x.service === code) ?? all.find((x) => x.service === 'general') ?? all[0];
+  if (!t) return null;
+  const q = t.quoteEn.trim();
+  const short = q.length <= 150 ? q : q.slice(0, q.lastIndexOf(' ', 145)).replace(/[,;:.!\s]+$/, '') + '…';
+  return { ...t, short };
+}
 
 export function serviceMetadata(slug: string): Metadata {
   const p = servicePageBySlug(slug)!;
@@ -43,7 +60,9 @@ const STEPS = [
 
 export async function ServiceLanding({ slug, children }: { slug: string; children?: ReactNode }) {
   const page = servicePageBySlug(slug)!;
-  const [svc, liveOffer] = await Promise.all([loadService(page.serviceCode), getLiveOffer()]);
+  const [svc, liveOffer, review] = await Promise.all([loadService(page.serviceCode), getLiveOffer(), heroReview(page.serviceCode)]);
+  const hero = heroFor(slug);
+  const HeroIc = HERO_ICONS[hero.icon];
   const offerOn = liveOffer && svc?.pricePaise ? liveOffer : null;
   const endText = offerOn ? { en: formatOfferEnd(offerOn.endsAt, 'en'), hi: formatOfferEnd(offerOn.endsAt, 'hi') } : null;
   const wa = funnelWhatsapp();
@@ -77,18 +96,64 @@ export async function ServiceLanding({ slug, children }: { slug: string; childre
     </div>
   );
   return (
-    <div className="container max-w-6xl space-y-12 pb-24 pt-10 sm:pt-14 md:pb-14">
+    <div className="container max-w-6xl space-y-12 pb-24 pt-6 sm:pt-10 md:pb-14">
       {offerOn && endText && <OfferCountdown endsAt={offerOn.endsAt} label={offerOn.label} endText={endText} />}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: toLd(ld) }} />
       <nav aria-labelledby="bc-label" className="text-xs text-muted-foreground"><span id="bc-label" className="sr-only"><Bi en="Breadcrumb" hi="पथ" /></span><Link href="/" className="hover:text-foreground"><Bi en="Home" hi="होम" /></Link> / <Link href="/services" className="hover:text-foreground"><Bi en="Services" hi="सेवाएँ" /></Link> / <Bi en={page.h1.en} hi={page.h1.hi} /></nav>
-      <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
-        <header className="mk-rise space-y-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold"><Bi en={`By ${EXPERT.name} · 15+ years`} hi="आचार्य नंदराम द्वारा · 15+ वर्ष" /></p>
-          <h1 className="font-cinzel text-4xl font-bold sm:text-5xl"><span className="gold-text"><Bi en={page.h1.en} hi={page.h1.hi} /></span></h1>
-          <BiBlock className="space-y-3" en={page.intro.en.map((x) => <p key={x} className="text-lg text-muted-foreground">{x}</p>)} hi={page.intro.hi.map((x) => <p key={x} className="text-lg text-muted-foreground">{x}</p>)} />
-        </header>
-        <div id="book" className="scroll-mt-24 lg:sticky lg:top-24 lg:self-start">{offer}{sample && <a href="#sample" className="mt-3 flex items-center justify-center gap-1.5 text-sm text-gold hover:underline"><Bi en="See a sample report first →" hi="पहले नमूना रिपोर्ट देखें →" /></a>}</div>
-      </div>
+      <section aria-labelledby="sh-h1" className="sh-hero relative -mx-4 overflow-hidden rounded-none px-4 py-8 sm:mx-0 sm:rounded-3xl sm:px-8 sm:py-10 lg:px-10 lg:py-12">
+        <div aria-hidden className="sh-ring"><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span></div>
+        <div className="relative grid items-start gap-8 lg:grid-cols-[1fr_400px] lg:gap-x-10 lg:gap-y-6">
+          <header className="mk-rise space-y-5 lg:col-start-1 lg:row-start-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs font-semibold text-gold"><span className="cz-eyebrow-dot" /><HeroIc className="h-3.5 w-3.5" /><Bi en={hero.tag.en} hi={hero.tag.hi} /></span>
+              {offerOn && <span className="inline-flex items-center gap-1 rounded-full bg-danger/15 px-3 py-1 text-xs font-semibold text-danger"><Sparkles className="h-3.5 w-3.5" /><Bi en={offerOn.label.en} hi={offerOn.label.hi} /></span>}
+            </div>
+            <h1 id="sh-h1" className="font-cinzel text-4xl font-bold leading-tight sm:text-5xl"><span className="gold-text"><Bi en={page.h1.en} hi={page.h1.hi} /></span></h1>
+            <p className="max-w-xl text-lg leading-relaxed text-foreground/90 sm:text-xl"><Bi en={hero.hook.en} hi={hero.hook.hi} /></p>
+            {svc && svc.en.includes.length > 0 && (
+              <BiBlock en={<HeroPoints items={svc.en.includes} />} hi={<HeroPoints items={svc.hi.includes} />} />
+            )}
+            <div className="flex flex-wrap gap-3 pt-1">
+              <a href="#book" className="cz-btn cz-btn-primary h-12 px-6 text-base"><Sparkles className="h-4 w-4" /><Bi en={svc?.payable ? 'Book my report' : 'Send an enquiry'} hi={svc?.payable ? 'मेरी रिपोर्ट बुक करें' : 'पूछताछ भेजें'} /></a>
+              <a href={`https://wa.me/${wa}?text=${encodeURIComponent(`Namaste Acharya ji, I want to know about ${page.h1.en}.`)}`} target="_blank" rel="noopener noreferrer" className="cz-btn cz-btn-ghost h-12 px-5 text-base"><MessageCircle className="h-4 w-4 text-success" /><Bi en="Ask on WhatsApp" hi="WhatsApp पर पूछें" /></a>
+            </div>
+          </header>
+          <div id="book" className="scroll-mt-24 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
+            <span id="free" className="sr-only" />
+            <HeroActionCard
+              freeTitle={hero.freeTitle}
+              free={<LeadForm services={funnelServices} defaultService={svc?.code ?? ''} whatsapp={wa} compact bookHref="#book" />}
+              book={offer || null}
+            />
+          </div>
+          <div className="space-y-5 lg:col-start-1 lg:row-start-2">
+              <div className="flex items-center gap-3 border-t border-gold/15 pt-5">
+                <Image src="/images/acharya-nandram-512.png" alt={EXPERT.name} width={56} height={56} className="h-14 w-14 shrink-0 rounded-full border-2 border-gold/60 object-cover shadow-[0_0_18px_hsl(var(--gold)/0.35)]" />
+                <div className="text-sm leading-snug">
+                  <p className="font-semibold"><Bi en={`Prepared personally by ${EXPERT.name}`} hi="आचार्य नंदराम द्वारा स्वयं तैयार" /></p>
+                  <p className="text-muted-foreground"><Bi en="15+ years · Vedic, Chaldean & Lo Shu numerology" hi="15+ वर्ष · वैदिक, कैल्डियन और लो शू अंक ज्योतिष" /></p>
+                </div>
+              </div>
+              <ul className="grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:flex sm:flex-wrap sm:gap-x-5">
+                <li className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-success" /><Bi en="Secure payment · Cashfree" hi="सुरक्षित भुगतान · Cashfree" /></li>
+                <li className="flex items-center gap-1.5"><Languages className="h-4 w-4 text-gold" /><Bi en="English & हिंदी" hi="हिंदी और English" /></li>
+                <li className="flex items-center gap-1.5"><Send className="h-4 w-4 text-gold" /><Bi en="Email & WhatsApp delivery" hi="ईमेल और WhatsApp डिलीवरी" /></li>
+                {sample && <li><a href="#sample" className="flex items-center gap-1.5 text-gold hover:underline"><FileText className="h-4 w-4" /><Bi en="See a sample first" hi="पहले नमूना देखें" /></a></li>}
+              </ul>
+              {review && (
+                <figure className="glass relative max-w-xl rounded-xl border border-gold/20 p-4 pl-11">
+                  <Quote aria-hidden className="absolute left-3 top-4 h-5 w-5 text-gold/70" />
+                  <blockquote className="text-sm italic text-foreground/85">“{review.short}”</blockquote>
+                  <figcaption className="mt-2 text-xs text-muted-foreground">— <span className="font-semibold text-foreground">{review.name}</span>{review.location ? `, ${review.location}` : ''}{review.rating ? ` · ${'★'.repeat(review.rating)}` : ''}</figcaption>
+                </figure>
+              )}
+          </div>
+        </div>
+      </section>
+
+      <section aria-label={page.h1.en} className="mx-auto max-w-3xl">
+        <BiBlock className="space-y-3" en={page.intro.en.map((x) => <p key={x} className="text-lg text-muted-foreground">{x}</p>)} hi={page.intro.hi.map((x) => <p key={x} className="text-lg text-muted-foreground">{x}</p>)} />
+      </section>
       <ServiceReturnBanner />
 
       {page.calculator && (
@@ -140,6 +205,10 @@ export async function ServiceLanding({ slug, children }: { slug: string; childre
       <StickyCta whatsapp={wa} bookHref="#book" />
     </div>
   );
+}
+
+function HeroPoints({ items }: { items: string[] }) {
+  return <ul className="grid gap-2 sm:grid-cols-2">{items.slice(0, 4).map((x) => <li key={x} className="flex gap-2 text-sm sm:text-[15px]"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />{x}</li>)}</ul>;
 }
 
 function OfferText({ t }: { t: { name: string; includes: string[]; delivery: string } }) {

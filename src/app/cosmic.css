@@ -220,3 +220,32 @@ html:not(.dark) .cz-card { background: hsl(0 0% 100% / .72); }
 @media (prefers-reduced-motion: reduce) {
   .pa-art * { animation: none !important; stroke-dashoffset: 0 !important; opacity: 1; }
 }
+
+/* ---------- service landing hero (service-landing.tsx) ---------- */
+.sh-hero { isolation: isolate; border: 1px solid hsl(var(--gold) / .22);
+  background:
+    radial-gradient(ellipse 60% 70% at 85% 30%, hsl(var(--saffron) / .16), transparent 70%),
+    radial-gradient(ellipse 50% 60% at 10% 0%, hsl(var(--gold) / .14), transparent 70%),
+    radial-gradient(ellipse 70% 60% at 50% 110%, hsl(var(--maroon) / .30), transparent 70%),
+    hsl(var(--card) / .35);
+  box-shadow: inset 0 1px 0 hsl(var(--gold) / .15), 0 40px 80px -50px hsl(var(--saffron) / .45); }
+.sh-hero::before { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: .35;
+  background-image: radial-gradient(hsl(var(--gold) / .5) 1px, transparent 1px); background-size: 26px 26px;
+  mask-image: radial-gradient(ellipse at 70% 40%, #000, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at 70% 40%, #000, transparent 70%); }
+.sh-ring { position: absolute; z-index: -1; pointer-events: none; width: 560px; height: 560px; right: -140px; top: -120px; border-radius: 50%;
+  border: 1px dashed hsl(var(--gold) / .28); animation: cz-spin 120s linear infinite; }
+.sh-ring::after { content: ""; position: absolute; inset: 70px; border-radius: 50%; border: 1px solid hsl(var(--gold) / .14); }
+.sh-ring span { position: absolute; left: 50%; top: 50%; width: 40px; height: 40px; margin: -20px; display: grid; place-items: center;
+  font-family: var(--font-cinzel), var(--font-deva-serif), serif; font-size: 20px; font-weight: 700; color: hsl(var(--gold) / .45);
+  transform: rotate(calc(var(--i) * 40deg)) translateY(-280px) rotate(calc(var(--i) * -40deg)); }
+.sh-ring span:nth-child(1) { --i: 0 } .sh-ring span:nth-child(2) { --i: 1 } .sh-ring span:nth-child(3) { --i: 2 }
+.sh-ring span:nth-child(4) { --i: 3 } .sh-ring span:nth-child(5) { --i: 4 } .sh-ring span:nth-child(6) { --i: 5 }
+.sh-ring span:nth-child(7) { --i: 6 } .sh-ring span:nth-child(8) { --i: 7 } .sh-ring span:nth-child(9) { --i: 8 }
+@media (max-width: 1023px) { .sh-ring { width: 380px; height: 380px; right: -170px; top: -150px; opacity: .7; }
+  .sh-ring span { transform: rotate(calc(var(--i) * 40deg)) translateY(-190px) rotate(calc(var(--i) * -40deg)); font-size: 16px; } }
+.sh-card { background: hsl(var(--glass) / var(--glass-alpha)); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--gold) / .45); box-shadow: 0 0 0 4px hsl(var(--gold) / .06), 0 30px 60px -30px hsl(var(--saffron) / .55); }
+.sh-card::before { content: ""; position: absolute; inset: -1px; z-index: -1; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(135deg, hsl(var(--gold) / .6), transparent 40%, transparent 60%, hsl(var(--saffron) / .5)); filter: blur(10px); opacity: .45; }
+@media (prefers-reduced-motion: reduce) { .sh-ring { animation: none; } }
+@media print { .sh-ring, .sh-hero::before { display: none; } }
