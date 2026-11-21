@@ -94,7 +94,6 @@ export function Header() {
           <BhagyankMenu />
           <AngelMenu />
           <Link href="/calculators" className={`hidden md:inline-flex ${navLinkClass}`}>{t.nav.calculators}</Link>
-          <Link href="/pricing" className={`hidden md:inline-flex ${navLinkClass}`}>{t.nav.pricing}</Link>
           <Link href="/contact" className={`hidden md:inline-flex ${navLinkClass}`}>{t.nav.contact}</Link>
 
           {user?.role === 'super_admin' && (
@@ -190,7 +189,7 @@ export function Header() {
       {nav && (
         <nav id="mobile-nav" aria-label={lang === 'hi' ? 'मुख्य मेन्यू' : 'Main'} className="border-t border-gold/20 bg-background/95 backdrop-blur-md md:hidden">
           <ul className="container grid grid-cols-2 gap-1 py-3 text-sm">
-            {[['/reading', t.nav.reading], ['/angel-numbers', t.nav.angel], ['/mulank', t.nav.mulank], ['/bhagyank', t.nav.bhagyank], ['/calculators', t.nav.calculators], ['/angel-numbers/calculator', lang === 'hi' ? 'एंजेल नंबर कैलकुलेटर' : 'Angel number calculator'], ['/pricing', t.nav.pricing], ['/international-numerology', lang === 'hi' ? 'अंतरराष्ट्रीय क्लाइंट' : 'International clients'], ['/contact', t.nav.contact]].map(([href, label]) => (
+            {[['/reading', t.nav.reading], ['/angel-numbers', t.nav.angel], ['/mulank', t.nav.mulank], ['/bhagyank', t.nav.bhagyank], ['/calculators', t.nav.calculators], ['/angel-numbers/calculator', lang === 'hi' ? 'एंजेल नंबर कैलकुलेटर' : 'Angel number calculator'], ['/international-numerology', lang === 'hi' ? 'अंतरराष्ट्रीय क्लाइंट' : 'International clients'], ['/contact', t.nav.contact]].map(([href, label]) => (
               <li key={href}><Link href={href} onClick={() => setNav(false)} className="block rounded-md px-3 py-2.5 hover:bg-muted">{label}</Link></li>
             ))}
             <li><button type="button" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="flex w-full items-center gap-2 rounded-md px-3 py-2.5 text-left hover:bg-muted">{theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}{lang === 'hi' ? 'थीम बदलें' : 'Switch theme'}</button></li>
