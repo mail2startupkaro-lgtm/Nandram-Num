@@ -18,6 +18,7 @@ import { ServicePrice } from '@/components/services/service-price';
 import { LeadForm, OfferCountdown, SampleReports, StickyCta } from '@/components/services/funnel';
 import { formatOfferEnd, funnelWhatsapp, getLiveOffer } from '@/lib/funnel/offer';
 import { sampleFor } from '@/lib/service-samples';
+import { InsideReportSection } from '@/components/services/inside-report';
 import { HeroActionCard } from '@/components/services/hero-action-card';
 import { HeroArt } from '@/components/services/hero-art';
 import { heroFor, type HeroIcon } from '@/lib/service-hero';
@@ -53,11 +54,74 @@ async function loadService(code: string): Promise<PublicService | null> {
 }
 
 const STEPS = [
-  { icon: FileText, en: 'Book and share the details', hi: 'बुक करें और विवरण दें' },
-  { icon: LockKeyhole, en: 'Pay securely online', hi: 'सुरक्षित ऑनलाइन भुगतान करें' },
-  { icon: Clock, en: 'Acharya Nandram prepares it personally', hi: 'आचार्य नंदराम स्वयं तैयार करते हैं' },
-  { icon: Send, en: 'Delivered on email & WhatsApp', hi: 'ईमेल और WhatsApp पर डिलीवरी' },
+  {
+    step: 1,
+    icon: FileText,
+    title: { en: 'Book & share details', hi: 'विवरण साझा करें' },
+    sub: { en: 'Name, DOB, gender & your 3 personal questions', hi: 'नाम, जन्म तिथि और अपने 3 व्यक्तिगत प्रश्न' },
+  },
+  {
+    step: 2,
+    icon: LockKeyhole,
+    title: { en: 'Pay securely online', hi: 'सुरक्षित ऑनलाइन भुगतान' },
+    sub: { en: 'Instant UPI, GPay, PhonePe, Cards or NetBanking', hi: 'UPI, Google Pay, कार्ड या नेटबैंकिंग द्वारा सुरक्षित' },
+  },
+  {
+    step: 3,
+    icon: Clock,
+    title: { en: 'Acharya Nandram prepares it personally', hi: 'आचार्य नंदराम स्वयं तैयार करते हैं' },
+    sub: { en: 'Deep Vedic & Chaldean chart reading (15+ yrs exp)', hi: 'वैदिक व कैल्डियन अंक ज्योतिष से हस्तलिखित गणना' },
+  },
+  {
+    step: 4,
+    icon: Send,
+    title: { en: 'Delivered on email & WhatsApp', hi: 'ईमेल और WhatsApp पर डिलीवरी' },
+    sub: { en: 'High-res designed PDF delivered within 3 hours', hi: '3 घंटे के भीतर सुंदर PDF ईमेल और WhatsApp पर प्राप्त करें' },
+  },
 ];
+
+function AnimatedHowItWorks() {
+  return (
+    <div className="glass relative overflow-hidden rounded-2xl border border-gold/30 p-5 sm:p-6 shadow-xl">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gold"><Bi en="Simple 4-Step Process" hi="सरल 4-चरणीय प्रक्रिया" /></p>
+          <h2 className="font-cinzel text-2xl font-bold"><Bi en="How It Works" hi="प्रक्रिया" /></h2>
+        </div>
+        <span className="inline-flex items-center gap-1 rounded-full bg-gold/10 px-2.5 py-1 text-[11px] font-semibold text-gold border border-gold/30">
+          <Sparkles className="h-3 w-3 animate-spin text-gold" style={{ animationDuration: '4s' }} />
+          <Bi en="3-hr delivery" hi="3 घंटे में डिलीवरी" />
+        </span>
+      </div>
+
+      <div className="relative space-y-3.5">
+        {/* Animated glowing vertical connector line */}
+        <div aria-hidden className="cz-step-line pointer-events-none absolute left-[19px] top-4 bottom-4 w-0.5 bg-gradient-to-b from-gold/70 via-gold/40 to-gold/20" />
+
+        {STEPS.map((s) => (
+          <div key={s.step} className="cz-step-card group relative flex items-start gap-3 rounded-xl border border-gold/15 bg-background/50 p-2.5 sm:p-3 hover:border-gold/50 hover:bg-gold/5 transition-all">
+            <div className="cz-step-badge cz-step-pulse h-10 w-10 shrink-0 font-cinzel text-sm font-bold text-gold">
+              <span className="relative z-10">{s.step}</span>
+            </div>
+            <div className="min-w-0 flex-1 pt-0.5">
+              <div className="flex items-center gap-2">
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded bg-gold/15 text-gold group-hover:scale-110 group-hover:rotate-6 transition-transform">
+                  <s.icon className="h-3.5 w-3.5" />
+                </span>
+                <p className="font-semibold text-sm sm:text-base text-foreground group-hover:text-gold transition-colors leading-snug">
+                  <Bi en={s.title.en} hi={s.title.hi} />
+                </p>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground leading-normal pl-8">
+                <Bi en={s.sub.en} hi={s.sub.hi} />
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export async function ServiceLanding({ slug, children }: { slug: string; children?: ReactNode }) {
   const page = servicePageBySlug(slug)!;
@@ -169,6 +233,8 @@ export async function ServiceLanding({ slug, children }: { slug: string; childre
 
       {children}
 
+      <InsideReportSection slug={slug} />
+
       {sample && (
         <section id="sample" aria-labelledby="smp-h" className="scroll-mt-20 space-y-4">
           <div className="text-center"><p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold"><Bi en="See before you pay" hi="भुगतान से पहले देखें" /></p>
@@ -180,8 +246,7 @@ export async function ServiceLanding({ slug, children }: { slug: string; childre
       <section aria-labelledby="who-h" className="grid gap-6 md:grid-cols-2">
         <div className="glass rounded-2xl border border-gold/20 p-6"><h2 id="who-h" className="mb-3 flex items-center gap-2 font-cinzel text-2xl font-bold"><Users className="h-5 w-5 text-gold" /><Bi en="Who It Is For" hi="यह किनके लिए है" /></h2>
           <BiBlock en={<ul className="space-y-2">{page.forWho.en.map((x) => <li key={x} className="flex gap-2 text-muted-foreground"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />{x}</li>)}</ul>} hi={<ul className="space-y-2">{page.forWho.hi.map((x) => <li key={x} className="flex gap-2 text-muted-foreground"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />{x}</li>)}</ul>} /></div>
-        <div className="glass rounded-2xl border border-gold/20 p-6"><h2 className="mb-3 font-cinzel text-2xl font-bold"><Bi en="How It Works" hi="प्रक्रिया" /></h2>
-          <ol className="space-y-3">{STEPS.map((s, i) => <li key={s.en} className="flex items-center gap-3"><span className="gold-text w-6 font-cinzel text-2xl font-bold">{i + 1}</span><s.icon className="h-4 w-4 text-gold" /><Bi en={s.en} hi={s.hi} /></li>)}</ol></div>
+        <AnimatedHowItWorks />
       </section>
 
       <section aria-labelledby="faq-h" className="mx-auto max-w-3xl space-y-3">

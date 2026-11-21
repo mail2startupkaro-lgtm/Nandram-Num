@@ -15,18 +15,41 @@ export function serviceReal(s: PricedService, cur: Currency): number {
 
 function Block({ price, real, cur, note }: { price: number; real: number; cur: Currency; note: { en: string; hi: string } }) {
   const pct = real ? Math.round(((real - price) / real) * 100) : 0;
+  const savings = real && real > price ? real - price : 0;
   return (
-    <div className="space-y-1">
-      <div className="flex items-center gap-1.5 text-xs">
-        <span className="font-medium text-muted-foreground">1 · <Bi en="Real Price" hi="वास्तविक मूल्य" />:</span>
-        <span className="text-muted-foreground line-through decoration-danger decoration-[1.5px]">{formatMoney(real, cur)}</span>
-        <span className="rounded bg-danger/15 px-1.5 text-[10px] font-bold text-danger">{pct}% <Bi en="OFF" hi="छूट" /></span>
+    <div className="space-y-2">
+      {/* Big discount badge and struck-through real price */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        {pct > 0 && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-red-600 via-rose-600 to-amber-600 px-3 py-1 text-xs sm:text-sm font-black uppercase tracking-wider text-white shadow-lg shadow-red-500/30 ring-1 ring-white/30 animate-pulse">
+            🔥 {pct}% <Bi en="OFF" hi="छूट" />
+          </span>
+        )}
+        {real > price && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <span className="text-[11px] font-medium uppercase tracking-wider"><Bi en="Real Price" hi="वास्तविक मूल्य" />:</span>
+            <span className="font-semibold line-through decoration-red-500 decoration-2 text-muted-foreground/80">{formatMoney(real, cur)}</span>
+          </div>
+        )}
       </div>
-      <div className="flex items-baseline gap-2">
-        <span className="text-xs font-bold uppercase tracking-wider text-gold">2 · <Bi en="Offer Price" hi="ऑफ़र मूल्य" />:</span>
-        <span className="font-serif text-3xl font-bold"><span className="gold-text">{formatMoney(price, cur)}</span></span>
+
+      {/* Offer Price with large Cinzel font and savings badge */}
+      <div className="flex flex-wrap items-baseline gap-2.5">
+        <span className="font-cinzel text-3xl sm:text-4xl font-extrabold tracking-tight">
+          <span className="gold-text drop-shadow-[0_2px_14px_rgba(234,179,8,0.4)]">{formatMoney(price, cur)}</span>
+        </span>
+        {savings > 0 && (
+          <span className="inline-flex items-center rounded-md bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[11px] font-bold text-emerald-400">
+            <Bi en={`Save ${formatMoney(savings, cur)}`} hi={`बचत ${formatMoney(savings, cur)}`} />
+          </span>
+        )}
       </div>
-      <p className="text-[11px] text-muted-foreground"><Bi en={note.en} hi={note.hi} /></p>
+
+      {/* Trust note */}
+      <p className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+        <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+        <Bi en={note.en} hi={note.hi} />
+      </p>
     </div>
   );
 }

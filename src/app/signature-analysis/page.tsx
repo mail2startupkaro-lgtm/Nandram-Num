@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import { ArrowDownRight, Circle, Eye, Feather, Gauge, Minus, MoveUpRight, PenLine, Ruler, Scaling, Space, Type } from 'lucide-react';
 import { Bi } from '@/components/i18n/bi';
 import { ServiceLanding, serviceMetadata } from '@/components/services/service-landing';
@@ -23,13 +22,6 @@ const FEATURES = [
   { icon: Space, en: ['Spacing & flow', 'Connected or separated parts of the name.'], hi: ['दूरी और प्रवाह', 'नाम के हिस्से जुड़े हुए या अलग।'] },
   { icon: Ruler, en: ['Enclosure & consistency', 'A circle around the signature, and how alike your samples are.'], hi: ['घेरा और एकरूपता', 'हस्ताक्षर के चारों ओर घेरा, और आपके नमूने कितने एक जैसे हैं।'] },
   { icon: PenLine, en: ['Numerology of the signed name', 'Its number, the first letter and both with your Moolank & Bhagyank.'], hi: ['हस्ताक्षर-नाम का अंक ज्योतिष', 'उसका अंक, पहला अक्षर और दोनों का मूलांक व भाग्यांक से मेल।'] },
-];
-
-const PAGES = [
-  { src: '/images/signature-report/cover.webp', en: 'Cover – your signature, score and key numbers', hi: 'मुखपृष्ठ – आपका हस्ताक्षर, स्कोर और मुख्य अंक' },
-  { src: '/images/signature-report/features.webp', en: 'What your signature shows – feature by feature', hi: 'आपका हस्ताक्षर क्या दर्शाता है – हर विशेषता' },
-  { src: '/images/signature-report/numerology.webp', en: 'Numerology & the best way to sign your name', hi: 'अंक ज्योतिष और नाम लिखने का सबसे अच्छा तरीका' },
-  { src: '/images/signature-report/blueprint.webp', en: 'Your ideal signature, start dates & 21-day chart', hi: 'आपका आदर्श हस्ताक्षर, आरंभ तिथियाँ और 21 दिन का चार्ट' },
 ];
 
 async function priceText() {
@@ -61,22 +53,6 @@ export default async function Page() {
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gold/15 text-gold"><x.icon className="h-5 w-5" /></span>
               <div><p className="font-semibold"><Bi en={x.en[0]} hi={x.hi[0]} /></p><p className="text-sm text-muted-foreground"><Bi en={x.en[1]} hi={x.hi[1]} /></p></div>
             </div>
-          ))}
-        </div>
-      </section>
-
-      <section aria-labelledby="pdf-h" className="space-y-5">
-        <div className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold"><Bi en="6–7 page designed PDF" hi="6–7 पृष्ठ की डिज़ाइन की हुई PDF" /></p>
-          <h2 id="pdf-h" className="font-cinzel text-2xl font-bold sm:text-3xl"><Bi en="Inside Your Signature Report" hi="आपकी हस्ताक्षर रिपोर्ट के अंदर" /></h2>
-          <p className="mx-auto mt-1 max-w-2xl text-muted-foreground"><Bi en="Pages from a sample report for a fictional client. Your report is prepared for your own signature, name and date of birth." hi="एक काल्पनिक क्लाइंट की नमूना रिपोर्ट के पृष्ठ। आपकी रिपोर्ट आपके अपने हस्ताक्षर, नाम और जन्म तिथि के लिए तैयार होती है।" /></p>
-        </div>
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {PAGES.map((p) => (
-            <figure key={p.src} className="space-y-2">
-              <div className="overflow-hidden rounded-lg border border-gold/30 shadow-lg shadow-black/20"><Image src={p.src} alt={p.en} width={600} height={849} className="h-auto w-full" sizes="(min-width:1024px) 25vw, 50vw" /></div>
-              <figcaption className="text-center text-xs text-muted-foreground"><Bi en={p.en} hi={p.hi} /></figcaption>
-            </figure>
           ))}
         </div>
       </section>
