@@ -14,7 +14,7 @@ const COMPOUND_KEYWORDS: Record<number, string> = {
   26: 'Partnership warnings – losses through others', 27: 'The Sceptre – authority, creative command', 28: 'Contradiction – gains that may be lost, needs safeguards', 29: 'Uncertainty – deception and trials in relationships',
   30: 'Thoughtful deduction – mental power, may be solitary', 31: 'The recluse – self-contained, isolated', 32: 'Magic of words – popularity and communication', 33: 'Love and favour (as 24)',
   34: 'Strength through experience (as 25)', 35: 'Partnership warnings (as 26)', 36: 'The Sceptre (as 27)', 37: 'Good fortune in love and partnerships',
-  38: 'Contradiction (as 29)', 39: 'Thoughtful but solitary (as 30)', 40: 'The recluse (as 31)', 41: 'Magic of words (as 32)', 42: 'Love and favour (as 24)', 43: 'Revolution and upheaval – unsettled conditions',
+  38: 'Uncertainty (as 29)', 39: 'Thoughtful but solitary (as 30)', 40: 'The recluse (as 31)', 41: 'Magic of words (as 32)', 42: 'Love and favour (as 24)', 43: 'Revolution and upheaval – unsettled conditions',
   44: 'Partnership warnings (as 26)', 45: 'The Sceptre (as 27)', 46: 'Good fortune in partnerships (as 37)', 47: 'Uncertainty (as 29)', 48: 'Thoughtful but solitary (as 30)', 49: 'The recluse (as 31)',
   50: 'Magic of words (as 32)', 51: 'The Warrior – sudden rise and power, guard against enemies', 52: 'Revolution and upheaval (as 43)',
 };

@@ -123,9 +123,13 @@ export function analyseCompleteBusiness(i: CompleteBizInput) {
     const dn = red(dp.day), full = red(dsum(iso(dp)));
     if (relationOf(N, dn) === 'friend' && relationOf(B, dn) === 'friend' && relationOf(B, full) !== 'enemy' && relationOf(N, full) !== 'enemy') dates.push(iso(dp));
   }
-  const mobileTotals = NUMS.filter((n) => relationOf(B, n) === 'friend' && relationOf(N, n) !== 'enemy' && n !== 4 && n !== 8);
-  const mobile = i.businessMobile?.replace(/\D/g, '').length && i.businessMobile.replace(/\D/g, '').length >= 10
-    ? analyseMobile(i.businessMobile, { moolank: M, bhagyank: B, missingNumbers: dob.loShu.missing }) : null;
+  // 4 and 8 are heavy totals: suggest them only when they are the owner's own Moolank or Bhagyank (same rule as the mobile report).
+  const mobileTotals = NUMS.filter((n) => relationOf(B, n) === 'friend' && relationOf(N, n) !== 'enemy' && ((n !== 4 && n !== 8) || n === B || n === M));
+  // A landline or non-Indian business number must not stop the whole report: it is simply skipped.
+  let mobile: ReturnType<typeof analyseMobile> | null = null;
+  if ((i.businessMobile?.replace(/\D/g, '').length ?? 0) >= 10) {
+    try { mobile = analyseMobile(i.businessMobile!, { moolank: M, bhagyank: B, missingNumbers: dob.loShu.missing }); } catch { mobile = null; }
+  }
   const tagline = i.tagline?.trim() && /[A-Za-z]/.test(i.tagline) ? scoreName(i.tagline.trim(), B, M, null) : null;
   const avoidNums = NUMS.filter((n) => relationOf(B, n) === 'enemy' || relationOf(N, n) === 'enemy');
 

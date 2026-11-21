@@ -111,8 +111,8 @@ export function TestimonialsSlider({ items }: { items: Testimonial[] }) {
         </div>
 
         {pages > 1 && (<>
-          <button type="button" onClick={() => go(index - 1)} aria-label="Previous testimonials" className="absolute -left-2 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-gold/50 bg-card/90 shadow-lg backdrop-blur transition hover:scale-110 hover:bg-gold/20 sm:flex lg:-left-5"><ChevronLeft className="h-5 w-5" /></button>
-          <button type="button" onClick={() => go(index + 1)} aria-label="Next testimonials" className="absolute -right-2 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-gold/50 bg-card/90 shadow-lg backdrop-blur transition hover:scale-110 hover:bg-gold/20 sm:flex lg:-right-5"><ChevronRight className="h-5 w-5" /></button>
+          <button type="button" onClick={() => go(index - 1)} aria-label="Previous testimonials" className="absolute -left-2 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-gold/50 bg-card/90 shadow-lg backdrop-blur transition hover:scale-110 hover:bg-gold/20 sm:flex lg:-left-4"><ChevronLeft className="h-5 w-5" /></button>
+          <button type="button" onClick={() => go(index + 1)} aria-label="Next testimonials" className="absolute -right-2 top-1/2 hidden h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-gold/50 bg-card/90 shadow-lg backdrop-blur transition hover:scale-110 hover:bg-gold/20 sm:flex lg:-right-4"><ChevronRight className="h-5 w-5" /></button>
         </>)}
       </div>
 

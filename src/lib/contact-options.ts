@@ -13,6 +13,7 @@ export const CONTACT_SUBJECTS: Record<ContactTopic, { id: string; en: string; hi
     { id: 'baby_name', en: 'Baby name', hi: 'शिशु का नाम' },
     { id: 'signature', en: 'Signature analysis', hi: 'हस्ताक्षर विश्लेषण' },
     { id: 'pro_plan', en: 'Pro plan for consultants', hi: 'परामर्शदाताओं के लिए प्रो प्लान' },
+    { id: 'white_label', en: 'White-label / customized reports for professionals', hi: 'पेशेवरों के लिए व्हाइट-लेबल / कस्टमाइज़्ड रिपोर्ट' },
   ],
   support: [
     { id: 'payment', en: 'Payment / order issue', hi: 'भुगतान / ऑर्डर की समस्या' },

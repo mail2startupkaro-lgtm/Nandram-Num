@@ -219,7 +219,75 @@ function YearArt() {
   );
 }
 
+/* White-label (professionals page) – the report cover takes on "your" brand: logo stamps in, brand colour cycles */
+function WhiteLabelArt() {
+  return (
+    <>
+      <rect x="40" y="16" width="112" height="150" rx="10" className="ha-paper" />
+      <rect x="40" y="16" width="112" height="40" rx="10" className="a-brand" />
+      <rect x="40" y="44" width="112" height="12" className="a-brand" />
+      <circle cx="96" cy="56" r="20" className="s sd ha-dash" style={{ fill: 'hsl(var(--card))' }} />
+      <g className="a-pop" style={d(0.6)}>
+        <circle cx="96" cy="56" r="20" className="f" />
+        <path d="M96 44 l3.5 8 8.5 .8 -6.5 5.6 2 8.4 -7.5 -4.5 -7.5 4.5 2 -8.4 -6.5 -5.6 8.5 -.8 z" className="tk" />
+      </g>
+      <text x="96" y="96" textAnchor="middle" className="ha-small a-fade" style={{ ...d(1), fill: 'hsl(var(--foreground))', letterSpacing: '.2em' }}>YOUR BRAND</text>
+      {[110, 122, 134, 146].map((y, i) => <path key={y} d={`M58 ${y} H${i % 2 ? 118 : 134}`} pathLength={1} className="s sd a-draw" style={d(1.2 + i * 0.2)} />)}
+      <g className="a-pop" style={d(2.2)}>
+        <rect x="146" y="118" width="46" height="24" rx="6" className="f" />
+        <text x="169" y="135" textAnchor="middle" className="ha-num tk" style={{ fontSize: 12 }}>PDF</text>
+      </g>
+      {[[178, 34, 0.3], [24, 70, 1.1], [186, 82, 1.9]].map(([x, y, t]) => <path key={x} d={`M${x} ${y - 6} L${x + 2} ${y - 2} L${x + 6} ${y} L${x + 2} ${y + 2} L${x} ${y + 6} L${x - 2} ${y + 2} L${x - 6} ${y} L${x - 2} ${y - 2} Z`} className="f a-twinkle" style={d(t)} />)}
+    </>
+  );
+}
+
+/* Destiny Matrix – the eight-pointed star draws itself, the arcana pop in around it and the centre glows */
+function MatrixArt() {
+  const C = [110, 90], R = 72;
+  const pt = (deg: number, r = R) => [C[0] + r * Math.cos((deg * Math.PI) / 180), C[1] + r * Math.sin((deg * Math.PI) / 180)];
+  const sq = (a: number[]) => a.map((d) => pt(d).map((v) => v.toFixed(1)).join(',')).join(' ');
+  const outer: [number, number][] = [[180, 14], [270, 8], [0, 21], [90, 7], [225, 22], [315, 11], [45, 10], [135, 21]];
+  return (
+    <>
+      <circle cx={C[0]} cy={C[1]} r="86" className="s sd ha-dash a-spin" style={{ ['--t' as string]: '24s' } as CSSProperties} />
+      <polygon points={sq([180, 270, 0, 90])} pathLength={1} className="s a-draw" />
+      <polygon points={sq([225, 315, 45, 135])} pathLength={1} className="s a-draw" style={d(0.4)} />
+      {outer.map(([deg, n], i) => { const [x, y] = pt(deg); const main = i < 4; return (
+        <g key={deg} className="a-pop" style={d(0.8 + i * 0.15)}>
+          <circle cx={x} cy={y} r={main ? 13 : 11} className={main ? 'f' : 'fd ha-ring'} />
+          <text x={x} y={y + 4.5} textAnchor="middle" className={`ha-num ${main ? 'tk' : 'ts'}`} style={{ fontSize: main ? 13 : 11 }}>{n}</text>
+        </g>); })}
+      <g className="a-pop" style={d(2.2)}><circle cx={C[0]} cy={C[1]} r="17" className="f" /><text x={C[0]} y={C[1] + 5.5} textAnchor="middle" className="ha-num tk" style={{ fontSize: 16 }}>5</text></g>
+      <circle cx={C[0]} cy={C[1]} r="24" className="ha-glow a-pulse" style={d(2.6)} />
+    </>
+  );
+}
+
+/* Pythagorean birth chart – the 3×3 Pythagoras square fills digit by digit, the line totals light up */
+function SquareArt() {
+  const cells = ['11', '44', '7', '22', '5', '8', '33', '', '99'];
+  return (
+    <>
+      {cells.map((t, i) => {
+        const x = 47 + (i % 3) * 42, y = 18 + Math.floor(i / 3) * 42;
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width="40" height="40" rx="5" className={t ? 's sd' : 's sd ha-dash'} />
+            {t ? <text x={x + 20} y={y + 26} textAnchor="middle" className="ha-num ts a-fade" style={{ ...d(0.25 * i), fontSize: 15 }}>{t}</text>
+              : <text x={x + 20} y={y + 26} textAnchor="middle" className="ha-num ts a-pulse" style={d(2.4)}>?</text>}
+          </g>
+        );
+      })}
+      {[0, 1, 2].map((r) => <g key={`r${r}`} className="a-pop" style={d(2.4 + r * 0.2)}><circle cx="186" cy={38 + r * 42} r="10" className="f" /><text x="186" y={42 + r * 42} textAnchor="middle" className="ha-num tk" style={{ fontSize: 10 }}>{[5, 4, 4][r]}</text></g>)}
+      {[0, 1, 2].map((c) => <g key={`c${c}`} className="a-pop" style={d(3 + c * 0.2)}><circle cx={68 + c * 42} cy="160" r="10" className="f" /><text x={68 + c * 42} y="164" textAnchor="middle" className="ha-num tk" style={{ fontSize: 10 }}>{[6, 3, 4][c]}</text></g>)}
+    </>
+  );
+}
+
 const ARTS: Record<HeroIcon, () => JSX.Element> = {
+  matrix: MatrixArt, square: SquareArt,
+  label: WhiteLabelArt,
   pen: SignatureArt, phone: PhoneArt, grid: LoShuArt, type: NameArt, user: PersonalArt, baby: BabyArt,
   heart: CoupleArt, store: StoreArt, building: BusinessArt, briefcase: CompatArt, calendar: YearArt,
 };

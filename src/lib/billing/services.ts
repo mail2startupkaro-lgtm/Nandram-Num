@@ -95,6 +95,20 @@ export const DEFAULT_SERVICES: (typeof services.$inferInsert)[] = [
     hi: t('हस्ताक्षर विश्लेषण और सुधार', 'हस्तलेख विज्ञान और अंक ज्योतिष से आपके हस्ताक्षर की रीडिंग – यह क्या दर्शाता है, क्या आपको रोक रहा हो सकता है, और अभ्यास के लिए सुधारा हुआ हस्ताक्षर।',
       ['हस्ताक्षर की 11 विशेषताओं की जाँच: आधार रेखा, झुकाव, आकार, पहला अक्षर, काटती रेखाएँ, अंत, बिंदु और अधिक', 'आपके हस्ताक्षर-नाम और पहले अक्षर का अंक ज्योतिष, मूलांक और भाग्यांक के साथ', 'नाम लिखने का सबसे अच्छा तरीका – क्रमवार विकल्प', 'हस्ताक्षर से व्यक्तित्व, करियर और धन के संकेत', 'करें और न करें सहित आदर्श हस्ताक्षर चरण-दर-चरण', 'शुभ आरंभ तिथियाँ, स्याही का रंग और 21 दिन का अभ्यास चार्ट', 'आचार्य नंदराम द्वारा तैयार डिज़ाइन की हुई PDF रिपोर्ट'], 'हस्ताक्षर की फ़ोटो मिलने के 1–2 कार्य-दिवसों में PDF'),
   },
+  {
+    code: 'SVC_DESTINY_MATRIX', sort: 11, featured: true, pricePaise: 2_100_00, mrpPaise: 4_200_00, intake: ['clientName', 'dob', 'gender', 'questions'],
+    en: t('Destiny Matrix Analysis', 'Your complete Destiny Matrix (22 arcana) read in plain language – personality, talents, money and love channels, karmic tail, life purposes, chakra health map and your life timeline year by year.',
+      ['Your full Destiny Matrix chart, drawn and explained point by point', 'Personality, talents and comfort zone – your strengths in the plus and the minus', 'Money channel and love channel – where money and the right partner come from', 'Karmic tail – the lesson you carry and how to free yourself from it', 'Four life purposes: personal, social, spiritual and planetary', 'Chakra health map and family (ancestral) lines', 'Life timeline 0–80 years with your current and next 10 years', 'Personal answers to your questions'], 'Delivered within 2–3 working days'),
+    hi: t('डेस्टिनी मैट्रिक्स विश्लेषण', 'आपकी पूरी डेस्टिनी मैट्रिक्स (22 आर्काना) सरल भाषा में – व्यक्तित्व, प्रतिभा, धन और प्रेम चैनल, कर्म-पूँछ, जीवन के उद्देश्य, चक्र स्वास्थ्य मानचित्र और वर्ष-दर-वर्ष जीवन समयरेखा।',
+      ['आपकी पूरी डेस्टिनी मैट्रिक्स चार्ट, हर बिंदु की व्याख्या के साथ', 'व्यक्तित्व, प्रतिभा और सहज क्षेत्र – प्लस और माइनस में आपकी ताक़त', 'धन चैनल और प्रेम चैनल – धन और सही साथी कहाँ से आते हैं', 'कर्म-पूँछ – आपकी सीख और उससे मुक्त होने का तरीका', 'चार जीवन उद्देश्य: व्यक्तिगत, सामाजिक, आध्यात्मिक और ग्रहीय', 'चक्र स्वास्थ्य मानचित्र और पारिवारिक (पूर्वज) रेखाएँ', '0–80 वर्ष की जीवन समयरेखा, आपके वर्तमान और अगले 10 वर्षों के साथ', 'आपके प्रश्नों के व्यक्तिगत उत्तर'], '2–3 कार्य-दिवसों में'),
+  },
+  {
+    code: 'SVC_BIRTH_CHART', sort: 12, featured: false, pricePaise: 501_00, mrpPaise: 1_001_00, intake: ['clientName', 'dob', 'gender', 'questions'],
+    en: t('Pythagorean Birth Chart Analysis', 'Your Pythagoras Square (Psychomatrix) from your date of birth – character, energy, health, logic, talent, duty and memory, with the life lines that shape purpose, family, money and talent.',
+      ['Your Pythagoras Square drawn with the four working numbers', 'All nine qualities read with their strength – character, energy, interest, health, logic, work, luck, duty, memory', 'Eight life lines: purpose, family, habits, self-esteem, money & home, talent, spirituality, temperament', 'Your strengths and what to develop, with simple practices', 'Personal answers to your questions'], 'Delivered within 1–2 working days'),
+    hi: t('पाइथागोरस जन्म चार्ट विश्लेषण', 'आपकी जन्म तिथि से पाइथागोरस वर्ग (साइकोमैट्रिक्स) – चरित्र, ऊर्जा, स्वास्थ्य, तर्क, प्रतिभा, कर्तव्य और स्मृति, साथ में उद्देश्य, परिवार, धन और प्रतिभा की जीवन रेखाएँ।',
+      ['चार कार्य-अंकों के साथ बना आपका पाइथागोरस वर्ग', 'सभी नौ गुण उनकी शक्ति के साथ – चरित्र, ऊर्जा, रुचि, स्वास्थ्य, तर्क, श्रम, भाग्य, कर्तव्य, स्मृति', 'आठ जीवन रेखाएँ: उद्देश्य, परिवार, आदतें, आत्म-सम्मान, धन व घर, प्रतिभा, आध्यात्मिकता, स्वभाव', 'आपकी ताक़त और विकसित करने योग्य बातें, सरल अभ्यासों के साथ', 'आपके प्रश्नों के व्यक्तिगत उत्तर'], '1–2 कार्य-दिवसों में'),
+  },
 ];
 
 /**
@@ -107,6 +121,7 @@ const SEED_BATCHES: string[][] = [
   ['SVC_BUSINESS_COMPAT'],
   ['SVC_SIGNATURE'],
   ['SVC_BUSINESS_COMPLETE'],
+  ['SVC_DESTINY_MATRIX', 'SVC_BIRTH_CHART'],
 ];
 let seeded = false;
 export async function ensureServices(db: Db = getDb()) {

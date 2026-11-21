@@ -89,12 +89,12 @@ export function Header() {
           <BrandLogo />
         </Link>
         <nav className="flex items-center gap-0.5 sm:gap-1 ml-auto">
-          <Link href="/reading" className={`hidden md:inline-flex ${navLinkClass}`}>{t.nav.reading}</Link>
+          <Link href="/reading" className={`hidden xl:inline-flex ${navLinkClass}`}>{t.nav.reading}</Link>
           <MulankMenu />
           <BhagyankMenu />
           <AngelMenu />
-          <Link href="/calculators" className={`hidden md:inline-flex ${navLinkClass}`}>{t.nav.calculators}</Link>
-          <Link href="/contact" className={`hidden md:inline-flex ${navLinkClass}`}>{t.nav.contact}</Link>
+          <Link href="/calculators" className={`hidden xl:inline-flex ${navLinkClass}`}>{t.nav.calculators}</Link>
+          <Link href="/contact" className={`hidden xl:inline-flex ${navLinkClass}`}>{t.nav.contact}</Link>
 
           {user?.role === 'super_admin' && (
             <Link href="/admin" className="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-md px-2 text-[12.5px] font-semibold text-gold hover:bg-gold/10">
@@ -109,18 +109,18 @@ export function Header() {
           )}
 
           {/* Vertical Separator */}
-          <span className="hidden md:inline-block h-4 w-px bg-gold/25 mx-0.5 sm:mx-1" />
+          <span className="hidden xl:inline-block h-4 w-px bg-gold/25 mx-0.5 sm:mx-1" />
 
           {/* Language Switcher */}
           <button
             type="button"
             onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
             aria-label={lang === 'en' ? 'हिंदी में देखें' : 'View in English'}
-            className="rounded-md border border-gold/40 px-2 py-1 text-xs md:hidden"
+            className="rounded-md border border-gold/40 px-2 py-1 text-xs xl:hidden"
           >
             {lang === 'en' ? 'हिं' : 'EN'}
           </button>
-          <div className="hidden rounded-md border border-gold/30 p-0.5 text-[11px] md:inline-flex items-center" role="group" aria-label={lang === 'hi' ? 'भाषा' : 'Language'}>
+          <div className="hidden rounded-md border border-gold/30 p-0.5 text-[11px] xl:inline-flex items-center" role="group" aria-label={lang === 'hi' ? 'भाषा' : 'Language'}>
             {(['en', 'hi'] as const).map((l) => (
               <button
                 key={l}
@@ -176,7 +176,7 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 md:hidden"
+            className="h-8 w-8 xl:hidden"
             aria-label={lang === 'hi' ? 'मेन्यू' : 'Menu'}
             aria-expanded={nav}
             aria-controls="mobile-nav"
@@ -187,8 +187,8 @@ export function Header() {
         </nav>
       </div>
       {nav && (
-        <nav id="mobile-nav" aria-label={lang === 'hi' ? 'मुख्य मेन्यू' : 'Main'} className="border-t border-gold/20 bg-background/95 backdrop-blur-md md:hidden">
-          <ul className="container grid grid-cols-2 gap-1 py-3 text-sm">
+        <nav id="mobile-nav" aria-label={lang === 'hi' ? 'मुख्य मेन्यू' : 'Main'} className="border-t border-gold/20 bg-background/95 backdrop-blur-md xl:hidden">
+          <ul className="container grid grid-cols-2 gap-1 py-3 text-sm md:grid-cols-4">
             {[['/reading', t.nav.reading], ['/angel-numbers', t.nav.angel], ['/mulank', t.nav.mulank], ['/bhagyank', t.nav.bhagyank], ['/calculators', t.nav.calculators], ['/angel-numbers/calculator', lang === 'hi' ? 'एंजेल नंबर कैलकुलेटर' : 'Angel number calculator'], ['/international-numerology', lang === 'hi' ? 'अंतरराष्ट्रीय क्लाइंट' : 'International clients'], ['/contact', t.nav.contact]].map(([href, label]) => (
               <li key={href}><Link href={href} onClick={() => setNav(false)} className="block rounded-md px-3 py-2.5 hover:bg-muted">{label}</Link></li>
             ))}
@@ -311,6 +311,7 @@ export function Footer() {
               ))}
               <li><Link href="/services" className="hover:text-gold transition-colors font-medium text-gold"><Bi en="All services & fees →" hi="सभी सेवाएँ और शुल्क →" /></Link></li>
               <li><Link href="/international-numerology" className="hover:text-gold transition-colors text-amber-400/90"><Bi en="International Clients (USD)" hi="अंतरराष्ट्रीय सेवाएँ (USD)" /></Link></li>
+              <li><Link href="/white-label-numerology-reports" className="group inline-flex items-center gap-1.5 hover:text-gold transition-colors font-semibold text-foreground/90"><span className="rounded bg-gold/15 px-1 text-[9.5px] font-bold uppercase tracking-wider text-gold">Pro</span><Bi en="For Numerologists – White-Label Reports" hi="अंक ज्योतिषियों के लिए – व्हाइट-लेबल रिपोर्ट" /></Link></li>
             </ul>
           </div>
 
@@ -402,6 +403,8 @@ export function Footer() {
             <Link href="/disclaimer" className="hover:text-gold transition-colors"><Bi en="Disclaimer" hi="अस्वीकरण" /></Link>
             <span className="text-gold/30">·</span>
             <Link href="/contact" className="hover:text-gold transition-colors"><Bi en="Support" hi="सहायता" /></Link>
+            <span className="text-gold/30">·</span>
+            <Link href="/white-label-numerology-reports" className="hover:text-gold transition-colors"><Bi en="For Professionals" hi="पेशेवरों के लिए" /></Link>
           </div>
         </div>
       </div>

@@ -2,6 +2,10 @@ import * as React from 'react';
 import Image from 'next/image';
 import { Bi, ForLang } from '@/components/i18n/bi';
 import { CheckCircle2, ShieldAlert, Sparkles, Star } from 'lucide-react';
+import { ageRange, destinyMatrix } from '@/lib/destiny/matrix';
+import { destinySvg } from '@/lib/destiny/svg';
+import { psychomatrix } from '@/lib/psychomatrix/engine';
+import { psychomatrixSvg } from '@/lib/psychomatrix/report';
 
 interface ReportPage {
   src?: string;
@@ -33,7 +37,62 @@ const PERSONAL_PAGES: ReportPage[] = [
   { src: '/images/personal-report/remedies.webp', caption: { en: 'Personal remedies – colours, days, mantra & daan', hi: 'व्यक्तिगत उपाय – रंग, दिन, मंत्र और दान' } },
 ];
 
+
+/* ---------- Destiny Matrix & Pythagorean birth chart: page previews drawn from the real sample (Riya, 14-08-1992) ---------- */
+const RIYA_DM = destinyMatrix('1992-08-14');
+const RIYA_PM = psychomatrix('1992-08-14');
+function MiniPage({ head, page, total, title, children }: { head: string; page: number; total: number; title: string; children: React.ReactNode }) {
+  return (
+    <div className="flex h-full flex-col justify-between p-3.5 text-stone-800 sm:p-4">
+      <div>
+        <div className="flex items-center justify-between border-b border-amber-900/20 pb-2 text-[9px] text-amber-900/80">
+          <span className="font-semibold uppercase tracking-wider">{head}</span>
+          <span className="rounded bg-amber-900/10 px-1.5 py-0.5 font-mono text-[8px]">{page} / {total}</span>
+        </div>
+        <h4 className="mt-2 font-serif text-xs font-bold text-stone-900 sm:text-sm">{title}</h4>
+        <div className="mt-2">{children}</div>
+      </div>
+      <div className="flex items-center justify-between border-t border-amber-900/20 pt-2 text-[8px] text-stone-500"><span className="font-semibold text-amber-900">myNumerologist.com</span><span>{page} / {total}</span></div>
+    </div>
+  );
+}
+const Rows = ({ rows }: { rows: [string, string][] }) => (
+  <div className="space-y-1 text-[8.5px]">{rows.map(([k, v]) => <div key={k} className="flex justify-between gap-2 rounded border border-stone-200 bg-white/70 px-1.5 py-1"><span className="text-stone-600">{k}</span><b className="text-right text-amber-900">{v}</b></div>)}</div>
+);
+const DESTINY_PAGES: ReportPage[] = [
+  { caption: { en: 'Your Destiny Matrix chart – all 22-arcana points', hi: 'आपका डेस्टिनी मैट्रिक्स चार्ट – सभी 22-आर्काना बिंदु' },
+    renderDoc: (hi) => <MiniPage head="Destiny Matrix" page={2} total={10} title={hi ? 'आपकी डेस्टिनी मैट्रिक्स' : 'Your Destiny Matrix'}><div dangerouslySetInnerHTML={{ __html: destinySvg(RIYA_DM, { ages: false }) }} /><p className="mt-1 text-center text-[8px] text-stone-600">Riya Sharma · 14.08.1992</p></MiniPage> },
+  { caption: { en: 'Money & love channels – where money and the right partner come from', hi: 'धन और प्रेम चैनल – धन और सही साथी कहाँ से आते हैं' },
+    renderDoc: (hi) => <MiniPage head={hi ? 'धन और प्रेम' : 'Money & love'} page={5} total={10} title={hi ? 'धन चैनल और प्रेम चैनल' : 'Money channel & love channel'}><Rows rows={[[hi ? 'धन-बिंदु ($)' : 'Money point ($)', `${RIYA_DM.money}`], [hi ? 'धन प्रवेश' : 'Money entry', `${RIYA_DM.c1}`], [hi ? 'प्रेम-बिंदु (♥)' : 'Love point (♥)', `${RIYA_DM.love}`], [hi ? 'संतुलन बिंदु' : 'Balance point', `${RIYA_DM.x}`], [hi ? 'कर्म-पूँछ' : 'Karmic tail', RIYA_DM.karmicTail.join('-')]]} /></MiniPage> },
+  { caption: { en: 'Chakra health map – body, energy and emotions', hi: 'चक्र स्वास्थ्य मानचित्र – शरीर, ऊर्जा और भावनाएँ' },
+    renderDoc: (hi) => <MiniPage head={hi ? 'स्वास्थ्य' : 'Health map'} page={7} total={10} title={hi ? 'चक्र स्वास्थ्य मानचित्र' : 'Chakra health map'}><table className="w-full border-collapse text-[8px]"><thead><tr className="bg-amber-100">{(hi ? ['चक्र', 'शरीर', 'ऊर्जा', 'भाव'] : ['Chakra', 'Body', 'Energy', 'Emotion']).map((h) => <th key={h} className="border border-stone-300 px-1 py-0.5 text-left">{h}</th>)}</tr></thead><tbody>{RIYA_DM.health.map((h) => <tr key={h.id}><td className="border border-stone-300 px-1 capitalize">{h.id}</td><td className="border border-stone-300 px-1 text-center">{h.body}</td><td className="border border-stone-300 px-1 text-center">{h.energy}</td><td className="border border-stone-300 px-1 text-center">{h.emotion}</td></tr>)}</tbody></table></MiniPage> },
+  { caption: { en: 'Life timeline 0–80 – your current period and the next 10 years', hi: 'जीवन समयरेखा 0–80 – आपकी वर्तमान अवधि और अगले 10 वर्ष' },
+    renderDoc: (hi) => <MiniPage head={hi ? 'समयरेखा' : 'Timeline'} page={8} total={10} title={hi ? 'अभी और अगले दस वर्ष' : 'Now and the next ten years'}><Rows rows={RIYA_DM.ages.filter((a) => a.age >= 33.75 && a.age < 43).map((a) => [ageRange(a.age), `${a.value}`] as [string, string])} /></MiniPage> },
+];
+const PYTH_PAGES: ReportPage[] = [
+  { caption: { en: 'Your Pythagoras Square with the four working numbers', hi: 'चार कार्य-अंकों के साथ आपका पाइथागोरस वर्ग' },
+    renderDoc: (hi) => <MiniPage head="Pythagoras Square" page={2} total={5} title={hi ? 'आपका पाइथागोरस वर्ग' : 'Your Pythagoras Square'}><div dangerouslySetInnerHTML={{ __html: psychomatrixSvg(RIYA_PM, hi ? 'hi' : 'en') }} /><p className="mt-1 text-center text-[8px] text-stone-600">{RIYA_PM.working.join(' · ')}</p></MiniPage> },
+  { caption: { en: 'The nine qualities – with their strength', hi: 'नौ गुण – उनकी शक्ति के साथ' },
+    renderDoc: (hi) => <MiniPage head={hi ? 'नौ गुण' : 'Nine qualities'} page={3} total={5} title={hi ? 'आपके गुण' : 'Your qualities'}><Rows rows={([1, 2, 3, 4, 5, 6, 7, 8, 9] as const).map((d) => [`${d}`, RIYA_PM.counts[d] ? String(d).repeat(RIYA_PM.counts[d]) : '—'] as [string, string])} /></MiniPage> },
+  { caption: { en: 'Eight life lines – purpose, family, money, talent…', hi: 'आठ जीवन रेखाएँ – उद्देश्य, परिवार, धन, प्रतिभा…' },
+    renderDoc: (hi) => <MiniPage head={hi ? 'रेखाएँ' : 'Life lines'} page={4} total={5} title={hi ? 'पंक्तियाँ, स्तंभ, विकर्ण' : 'Rows, columns, diagonals'}><Rows rows={RIYA_PM.lines.map((l) => [l.id, `${l.total}`] as [string, string])} /></MiniPage> },
+  { caption: { en: 'Strengths and what to develop – simple practices', hi: 'ताक़त और विकसित करने योग्य बातें – सरल अभ्यास' },
+    renderDoc: (hi) => <MiniPage head={hi ? 'सारांश' : 'Summary'} page={5} total={5} title={hi ? 'ताक़त और विकास' : 'Strengths & growth'}><p className="text-[8.5px] leading-snug">{hi ? 'मज़बूत: चरित्र, ऊर्जा, रुचि, स्वास्थ्य, स्मृति। विकसित करें: श्रम (खाना 6) – हर सप्ताह हाथों से कुछ करें।' : 'Strong: character, energy, interest, health, memory. To develop: work (cell 6) – do something with your hands every week.'}</p></MiniPage> },
+];
+
 export const SERVICE_REPORTS: Record<string, ServiceReportMeta> = {
+  'destiny-matrix-analysis': {
+    kicker: { en: '10-page designed PDF with cover', hi: 'कवर के साथ 10 पृष्ठ की डिज़ाइन की हुई PDF' },
+    h2: { en: 'Inside Your Destiny Matrix Analysis', hi: 'आपके डेस्टिनी मैट्रिक्स विश्लेषण के अंदर' },
+    desc: { en: 'Pages from a sample report for a fictional client (Riya, 14 Aug 1992). Every number is calculated by the same engine that prepares your report.', hi: 'एक काल्पनिक क्लाइंट (रिया, 14 अगस्त 1992) की नमूना रिपोर्ट के पृष्ठ। हर अंक उसी इंजन से निकला है जो आपकी रिपोर्ट बनाता है।' },
+    pages: DESTINY_PAGES,
+  },
+  'pythagorean-birth-chart': {
+    kicker: { en: '5-page designed PDF with cover', hi: 'कवर के साथ 5 पृष्ठ की डिज़ाइन की हुई PDF' },
+    h2: { en: 'Inside Your Pythagorean Birth Chart', hi: 'आपके पाइथागोरस जन्म चार्ट के अंदर' },
+    desc: { en: 'Pages from a sample report for a fictional client (Riya, 14 Aug 1992), calculated by the same engine as your report.', hi: 'एक काल्पनिक क्लाइंट (रिया, 14 अगस्त 1992) की नमूना रिपोर्ट के पृष्ठ, उसी इंजन से जो आपकी रिपोर्ट बनाता है।' },
+    pages: PYTH_PAGES,
+  },
   'personal-numerology-report': {
     kicker: { en: '15+ page designed PDF', hi: '15+ पृष्ठ की डिज़ाइन की हुई PDF' },
     h2: { en: 'Inside Your Personal Numerology Report', hi: 'आपकी व्यक्तिगत अंक ज्योतिष रिपोर्ट के अंदर' },

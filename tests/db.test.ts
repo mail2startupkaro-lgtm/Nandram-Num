@@ -250,7 +250,7 @@ describe.skipIf(!URL)('database (Postgres)', () => {
     const svcLib = await import('@/lib/billing/services');
     const { createCheckout, fulfilPayment, CheckoutError } = await import('@/lib/billing/checkout');
     const list = await svcLib.listServices({}, db);
-    expect(list.map((x) => x.code)).toEqual(['SVC_PERSONAL_REPORT', 'SVC_NAME_CORRECTION', 'SVC_LOSHU', 'SVC_MOBILE_NUMBER', 'SVC_BABY_NAME', 'SVC_COUPLE', 'SVC_BUSINESS_NAME', 'SVC_BUSINESS_COMPLETE', 'SVC_PERSONAL_YEAR', 'SVC_BUSINESS_COMPAT', 'SVC_SIGNATURE']);
+    expect(list.map((x) => x.code)).toEqual(['SVC_PERSONAL_REPORT', 'SVC_NAME_CORRECTION', 'SVC_LOSHU', 'SVC_MOBILE_NUMBER', 'SVC_BABY_NAME', 'SVC_COUPLE', 'SVC_BUSINESS_NAME', 'SVC_BUSINESS_COMPLETE', 'SVC_PERSONAL_YEAR', 'SVC_BUSINESS_COMPAT', 'SVC_SIGNATURE', 'SVC_DESTINY_MATRIX', 'SVC_BIRTH_CHART']);
     expect(list.filter((x) => x.code !== 'SVC_SIGNATURE').every((x) => !svcLib.isPayable(x))).toBe(true); // seeded with draft prices
     const sig = list.find((x) => x.code === 'SVC_SIGNATURE')!; // price confirmed by the owner on 2026-11-19
     expect([svcLib.isPayable(sig), sig.pricePaise, sig.mrpPaise]).toEqual([true, 475_00, 2_475_00]);
@@ -320,7 +320,7 @@ describe.skipIf(!URL)('database (Postgres)', () => {
     expect(await svcLib.deleteService('SVC_BABY_NAME', db)).toBe('deleted');
     // On a cold start ensureServices reads this marker: every batch is done, so nothing is re-inserted.
     const marker = (await db.execute(sql`select value from app_settings where key = 'servicesSeed'`)).rows[0] as { value: number };
-    expect(marker.value).toBe(5);
+    expect(marker.value).toBe(6);
     expect((await svcLib.listServices({ includeInactive: true }, db)).some((x) => x.code === 'SVC_BABY_NAME')).toBe(false);
   });
 });

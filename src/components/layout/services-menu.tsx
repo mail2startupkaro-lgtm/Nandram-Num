@@ -1,13 +1,13 @@
 'use client';
 import * as React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Landmark, Baby, Briefcase, Building2, CalendarDays, ChevronDown, FileText, Grid3x3, Heart, PenLine, Smartphone, Type } from 'lucide-react';
+import { ArrowRight, Landmark, Orbit, Sigma, Baby, Briefcase, Building2, CalendarDays, ChevronDown, FileText, Grid3x3, Heart, PenLine, Smartphone, Type } from 'lucide-react';
 import { SERVICE_PAGES } from '@/lib/service-pages';
 import { useApp } from './providers';
 
 const ICONS: Record<string, typeof FileText> = {
   'personal-numerology-report': FileText, 'name-numerology': Type, 'lo-shu-grid': Grid3x3, 'mobile-number-numerology': Smartphone,
-  'baby-name-numerology': Baby, 'couple-compatibility-report': Heart, 'business-name-numerology': Briefcase, 'personal-year-consultancy': CalendarDays, 'business-compatibility-numerology': Building2, 'business-numerology-report': Landmark, 'signature-analysis': PenLine,
+  'baby-name-numerology': Baby, 'couple-compatibility-report': Heart, 'business-name-numerology': Briefcase, 'personal-year-consultancy': CalendarDays, 'business-compatibility-numerology': Building2, 'business-numerology-report': Landmark, 'signature-analysis': PenLine, 'destiny-matrix-analysis': Orbit, 'pythagorean-birth-chart': Sigma,
 };
 
 /** Header "Services" dropdown: the service pages + all services & fees. */
@@ -27,7 +27,7 @@ export function ServicesMenu() {
     return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('mousedown', onDown); };
   }, [open]);
   return (
-    <div ref={wrap} className="relative hidden md:block" onMouseEnter={show} onMouseLeave={hide}>
+    <div ref={wrap} className="relative hidden xl:block" onMouseEnter={show} onMouseLeave={hide}>
       <button type="button" aria-haspopup="true" aria-expanded={open} onClick={() => setOpen(!open)}
         className="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-md px-2 text-[12.5px] font-medium text-foreground/85 hover:bg-gold/10 hover:text-gold transition-colors">
         {t.nav.services}<ChevronDown className={`h-3 w-3 text-gold/70 transition-transform ${open ? 'rotate-180' : ''}`} />

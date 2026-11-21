@@ -33,6 +33,9 @@ export const SAMPLE_NUMBERS = {
     shortlist: [['digital-marketing-agency', 77, 190], ['interior-design-firm', 68, 642], ['petrol-pump', 39, 1325]] as [string, number, number][], launchYears: [2026, 2029] },
   signature: { signedAs: 'Riya S', signCompound: 8, signSingle: 8, fullCompound: 21, fullSingle: 3, letter: 'R', letterValue: 2, weekday: 'Tuesday',
     options: [['Riya Sharma', 21, 3, 90], ['Riya', 5, 5, 84], ['R. S.', 5, 5, 84], ['Riya S.', 8, 8, 12]] as [string, number, number, number][], dates: ['2026-12-01', '2026-12-15'] },
+  destiny: { A: 14, B: 8, C: 21, D: 7, E: 5, money: 10, love: 5, x: 20, c1: 8, d1: 12, tail: [12, 19, 7] as [number, number, number], personal: 5, social: 10, spiritual: 15, planetary: 7,
+    F: 22, G: 11, H: 10, I: 21, familyForce: 10, now: [33.75, 21] as [number, number], next: [[35, 5], [36.25, 13], [37.5, 8], [38.75, 11], [40, 21]] as [number, number][] },
+  pyth: { working: [34, 7, 32, 5] as [number, number, number, number], counts: { 1: 2, 2: 2, 3: 2, 4: 2, 5: 1, 6: 0, 7: 1, 8: 1, 9: 2 }, lines: { purpose: 5, family: 4, stability: 4, selfEsteem: 6, money: 3, talent: 4, spirituality: 5, temperament: 4 } },
   months: [[11, 2026, 7], [12, 2026, 8], [1, 2027, 6], [2, 2027, 7], [3, 2027, 8], [4, 2027, 9], [5, 2027, 1], [6, 2027, 2], [7, 2027, 3]] as [number, number, number][],
 };
 
@@ -223,6 +226,40 @@ export const SERVICE_SAMPLES: ServiceSample[] = [
       { h: l('5. Ideal signature, start dates & 21-day chart', '5. आदर्श हस्ताक्षर, आरंभ तिथियाँ और 21 दिन का चार्ट'), p: {
         en: ['Start on a Tuesday – suggested dates 1 Dec and 15 Dec 2026 – and practise daily for 21 days with the tick-box chart in the report. Blue or black ink for documents.'],
         hi: ['मंगलवार से शुरू करें – सुझाई गई तिथियाँ 1 दिसंबर और 15 दिसंबर 2026 – और रिपोर्ट के चार्ट के साथ 21 दिन रोज़ अभ्यास करें। दस्तावेज़ों के लिए नीली या काली स्याही।'] } },
+    ],
+  },
+  {
+    code: 'SVC_DESTINY_MATRIX', open: 2, client: RIYA,
+    title: l('Destiny Matrix Analysis – sample pages', 'डेस्टिनी मैट्रिक्स विश्लेषण – नमूना पृष्ठ'),
+    tiles: [{ k: l('Centre', 'केंद्र'), v: '5', note: l('The Hierophant', 'गुरु') }, { k: l('Personality', 'व्यक्तित्व'), v: '14', note: l('Temperance', 'संयम') }, { k: l('Money point', 'धन-बिंदु'), v: '10', note: l('Wheel of Fortune', 'भाग्य चक्र') }, { k: l('Karmic tail', 'कर्म-पूँछ'), v: '12-19-7' }],
+    sections: [
+      { h: l('1. Your matrix at a glance', '1. एक नज़र में आपकी मैट्रिक्स'), p: { en: ['Day 14, month 8 and year 1992 (1+9+9+2 = 21) give the four outer points; their sum 43 → 7 is the bottom point and 14+8+21+7 = 50 → 5 is the centre.'], hi: ['दिन 14, माह 8 और वर्ष 1992 (1+9+9+2 = 21) चार बाहरी बिंदु देते हैं; इनका योग 43 → 7 नीचे का बिंदु है और 14+8+21+7 = 50 → 5 केंद्र है।'] },
+        rows: [
+          { k: l('Personality (A)', 'व्यक्तित्व (A)'), v: l('14 – Temperance: calm, patient, finds the middle path', '14 – संयम: शांत, धैर्यवान, मध्य मार्ग खोजने वाली') },
+          { k: l('Talents (B)', 'प्रतिभा (B)'), v: l('8 – Justice: fairness, order, law and accounts', '8 – न्याय: निष्पक्षता, व्यवस्था, क़ानून और लेखा') },
+          { k: l('Comfort zone (E)', 'सहज क्षेत्र (E)'), v: l('5 – The Hierophant: a born teacher and mentor', '5 – गुरु: जन्मजात शिक्षक और मार्गदर्शक') },
+          { k: l('Now (age 33¾–35)', 'अभी (33¾–35 वर्ष)'), v: l('21 – The World: expansion, travel, wider horizons', '21 – विश्व: विस्तार, यात्रा, व्यापक क्षितिज') },
+        ] },
+      { h: l('2. Money channel', '2. धन चैनल'), p: { en: ['Year energy 21 (The World) → 11 → 8 opens at the money point 10 – Wheel of Fortune: money comes in waves through trade, travel and networking. Save in the good phases; the balance point 20 links money to family.'], hi: ['वर्ष ऊर्जा 21 (विश्व) → 11 → 8 धन-बिंदु 10 – भाग्य चक्र पर खुलती है: धन व्यापार, यात्रा और नेटवर्किंग से लहरों में आता है। अच्छे दौर में बचत करें; संतुलन बिंदु 20 धन को परिवार से जोड़ता है।'] } },
+      { h: l('3. Love channel & karmic tail', '3. प्रेम चैनल और कर्म-पूँछ'), p: { en: ['Love point 5 – values-based, committed love. Karmic tail 12-19-7: serve from love, shine without ego and set the right goal before racing ahead.'], hi: ['प्रेम-बिंदु 5 – मूल्यों पर आधारित, प्रतिबद्ध प्रेम। कर्म-पूँछ 12-19-7: प्रेम से सेवा करें, अहंकार के बिना चमकें और दौड़ने से पहले सही लक्ष्य तय करें।'] } },
+      { h: l('4. Life purposes', '4. जीवन उद्देश्य'), p: { en: ['Personal (20–40): 5 – to teach and pass on wisdom. Social (40–60): 10 – to live in the flow and help others trust change. Spiritual: 15. Planetary: 7.'], hi: ['व्यक्तिगत (20–40): 5 – सिखाना और ज्ञान आगे देना। सामाजिक (40–60): 10 – जीवन के प्रवाह में जीना और दूसरों को परिवर्तन पर भरोसा करना सिखाना। आध्यात्मिक: 15। ग्रहीय: 7।'] } },
+      { h: l('5. Next ten years', '5. अगले दस वर्ष'), p: { en: ['35: 5 Hierophant · 36¼: 13 Transformation · 37½: 8 Justice · 38¾: 11 Strength · 40: 21 The World – a decade of teaching, renewal and widening horizons.'], hi: ['35: 5 गुरु · 36¼: 13 परिवर्तन · 37½: 8 न्याय · 38¾: 11 शक्ति · 40: 21 विश्व – सिखाने, नवीनीकरण और क्षितिज बढ़ाने का दशक।'] } },
+    ],
+  },
+  {
+    code: 'SVC_BIRTH_CHART', open: 2, client: RIYA,
+    title: l('Pythagorean Birth Chart – sample pages', 'पाइथागोरस जन्म चार्ट – नमूना पृष्ठ'),
+    tiles: [{ k: l('Working numbers', 'कार्य-अंक'), v: '34·7·32·5' }, { k: l('Character', 'चरित्र'), v: '11' }, { k: l('Health', 'स्वास्थ्य'), v: '44' }, { k: l('Empty cell', 'खाली खाना'), v: '6' }],
+    sections: [
+      { h: l('1. How the square is built', '1. वर्ग कैसे बनता है'), p: { en: ['Digits of 14.08.1992 add up to 34 (1st working number); 3+4 = 7 (2nd); 34 − 2×1 = 32 (3rd); 3+2 = 5 (4th). All digits except zeros go into the nine cells.'], hi: ['14.08.1992 के अंकों का योग 34 (पहला कार्य-अंक); 3+4 = 7 (दूसरा); 34 − 2×1 = 32 (तीसरा); 3+2 = 5 (चौथा)। शून्य छोड़कर सभी अंक नौ खानों में जाते हैं।'] },
+        rows: [
+          { k: l('Character (11)', 'चरित्र (11)'), v: l('Soft, friendly will – likes harmony', 'कोमल, मित्रवत इच्छाशक्ति – सामंजस्य पसंद') },
+          { k: l('Energy (22)', 'ऊर्जा (22)'), v: l('Good, healthy energy that recovers quickly', 'अच्छी, स्वस्थ ऊर्जा जो जल्दी लौटती है') },
+          { k: l('Health (44)', 'स्वास्थ्य (44)'), v: l('Good health and stamina', 'अच्छा स्वास्थ्य और सहनशक्ति') },
+          { k: l('Memory (99)', 'स्मृति (99)'), v: l('Learns quickly, good intelligence', 'जल्दी सीखती है, अच्छी बुद्धि') },
+        ] },
+      { h: l('2. Life lines', '2. जीवन रेखाएँ'), p: { en: ['Purpose 5 (strong), self-esteem 6 (strong), spirituality 5 (strong); family, habits, talent and temperament 4 (normal); money & home 3 (normal).'], hi: ['उद्देश्य 5 (मज़बूत), आत्म-सम्मान 6 (मज़बूत), आध्यात्मिकता 5 (मज़बूत); परिवार, आदतें, प्रतिभा और स्वभाव 4 (सामान्य); धन व घर 3 (सामान्य)।'] } },
+      { h: l('3. To develop', '3. विकसित करें'), p: { en: ['Cell 6 (work & practical skill) is empty: doing something with the hands every week grounds the mind and builds practical skill.'], hi: ['खाना 6 (श्रम और व्यावहारिक कौशल) खाली है: हर सप्ताह हाथों से कुछ करना मन को स्थिर करता है और व्यावहारिक कौशल बढ़ाता है।'] } },
     ],
   },
 ];

@@ -93,7 +93,11 @@ export async function readJson<T = unknown>(req: Request, maxBytes = 2_000_000):
   let text: string;
   try { text = await req.text(); } catch { throw new ZodError([{ code: 'custom', path: [], message: 'Invalid JSON body' }]); }
   if (text.length > maxBytes) throw new ZodError([{ code: 'custom', path: [], message: 'Request body is too large' }]);
-  try { return JSON.parse(text) as T; } catch { throw new ZodError([{ code: 'custom', path: [], message: 'Invalid JSON body' }]); }
+  let parsed: unknown;
+  try { parsed = JSON.parse(text); } catch { throw new ZodError([{ code: 'custom', path: [], message: 'Invalid JSON body' }]); }
+  // Every endpoint expects a JSON object; null, arrays, numbers and strings are rejected here so no route can crash on them.
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) throw new ZodError([{ code: 'custom', path: [], message: 'Request body must be a JSON object' }]);
+  return parsed as T;
 }
 
 export const pdfResponse = (pdf: Uint8Array, filename: string, extra: Record<string, string> = {}) =>

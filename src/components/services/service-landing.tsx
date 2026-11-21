@@ -3,7 +3,7 @@ import { serviceUsd } from '@/lib/billing/currency';
 import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, Baby, BriefcaseBusiness, Building2, CalendarDays, CheckCircle2, Clock, Compass, FileCheck, FileText, Grid3x3, HeartHandshake, Languages, LockKeyhole, MessageCircle, PenLine, Quote, Send, ShieldCheck, Smartphone, Sparkles, Store, Target, Type, UserRound, Users } from 'lucide-react';
+import { ArrowRight, Baby, BriefcaseBusiness, Building2, CalendarDays, CheckCircle2, Clock, Compass, FileCheck, FileText, Grid3x3, HeartHandshake, Languages, LockKeyhole, MessageCircle, PenLine, Quote, Send, ShieldCheck, Smartphone, Sparkles, Store, Target, Type, UserRound, Users, BadgeCheck, Orbit, Sigma } from 'lucide-react';
 import { AcharyaProfile } from '@/components/blog/blog-parts';
 import { Calculator } from '@/components/calculators/calculator';
 import { Bi, BiBlock, ForLang } from '@/components/i18n/bi';
@@ -24,7 +24,7 @@ import { heroFor, type HeroIcon } from '@/lib/service-hero';
 import { getPublishedTestimonials } from '@/lib/testimonials-server';
 import type { Testimonial } from '@/lib/testimonials';
 
-const HERO_ICONS: Record<HeroIcon, typeof UserRound> = { user: UserRound, type: Type, grid: Grid3x3, phone: Smartphone, baby: Baby, heart: HeartHandshake, store: Store, building: Building2, briefcase: BriefcaseBusiness, calendar: CalendarDays, pen: PenLine };
+const HERO_ICONS: Record<HeroIcon, typeof UserRound> = { user: UserRound, type: Type, grid: Grid3x3, phone: Smartphone, baby: Baby, heart: HeartHandshake, store: Store, building: Building2, briefcase: BriefcaseBusiness, calendar: CalendarDays, pen: PenLine, label: BadgeCheck, matrix: Orbit, square: Sigma };
 
 /** One real, published review for this service (else a general one). Full testimonial shown without truncation. */
 async function heroReview(code: string): Promise<Testimonial | null> {
@@ -402,7 +402,7 @@ export async function ServiceLanding({ slug, children }: { slug: string; childre
         </div>
       </section>
 
-      <section aria-labelledby="lead-h" className="grid items-center gap-6 rounded-2xl border-2 border-gold/40 bg-gradient-to-br from-gold/10 via-card/70 to-maroon/25 p-6 sm:p-8 lg:grid-cols-[1fr_1.1fr]">
+      <section aria-labelledby="lead-h" className="grid items-center gap-6 rounded-2xl border-2 border-gold/40 bg-gradient-to-br from-gold/10 via-card/70 to-maroon/25 p-6 grid-cols-[minmax(0,1fr)] sm:p-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
         <div><p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold"><Bi en="Free · 30 seconds" hi="मुफ़्त · 30 सेकंड" /></p>
           <h2 id="lead-h" className="mt-1 font-cinzel text-2xl font-bold sm:text-3xl"><Bi en="Get Your Free Mini-Reading" hi="अपनी मुफ़्त मिनी-रीडिंग पाएँ" /></h2>
           <p className="mt-2 text-muted-foreground"><Bi en="See your Moolank and Bhagyank instantly, understand your core numbers, and get a direct WhatsApp line to Acharya Nandram." hi="अपना मूलांक और भाग्यांक तुरंत देखें, अपने मूल अंकों को समझें और आचार्य नंदराम से सीधे WhatsApp पर जुड़ें।" /></p></div>

@@ -233,6 +233,50 @@ export const SERVICE_PAGES: ServicePage[] = [
       { en: ['Is my signature kept private?', 'Yes. Your photos are used only to prepare your report and are not published or shared. The free check on this page runs entirely in your browser – the image is not uploaded.'], hi: ['क्या मेरा हस्ताक्षर निजी रहता है?', 'हाँ। आपकी फ़ोटो केवल आपकी रिपोर्ट तैयार करने के लिए उपयोग होती हैं, न प्रकाशित होती हैं न साझा। इस पृष्ठ की मुफ़्त जाँच पूरी तरह आपके ब्राउज़र में चलती है – चित्र अपलोड नहीं होता।'] },
     ],
   },
+  {
+    slug: 'destiny-matrix-analysis', serviceCode: 'SVC_DESTINY_MATRIX',
+    menu: { en: 'Destiny Matrix Analysis', hi: 'डेस्टिनी मैट्रिक्स विश्लेषण' }, menuSub: { en: '22 arcana – purpose, money, love, karma', hi: '22 आर्काना – उद्देश्य, धन, प्रेम, कर्म' },
+    title: 'Destiny Matrix Analysis by Date of Birth – Full Report',
+    description: 'Destiny Matrix analysis by date of birth: free chart, then a full report on personality, talents, money and love channels, karmic tail, life purposes and timeline.',
+    h1: { en: 'Destiny Matrix Analysis', hi: 'डेस्टिनी मैट्रिक्स विश्लेषण' },
+    intro: {
+      en: ['The Destiny Matrix turns your date of birth into 22 energies – the Major Arcana – placed on an eight-pointed star. Each point answers a real question: who you are, what you are good at, where money and love come from, which lesson you carry and what you are here to do.', 'See your chart free below. The full analysis reads every point in plain language, shows each energy in its bright and shadow form, and maps your life year by year from birth to 80 – with your current period and the next ten years.'],
+      hi: ['डेस्टिनी मैट्रिक्स आपकी जन्म तिथि को 22 ऊर्जाओं – मेजर आर्काना – में बदलकर आठ-कोणीय तारे पर रखती है। हर बिंदु एक वास्तविक प्रश्न का उत्तर देता है: आप कौन हैं, आप किसमें अच्छे हैं, धन और प्रेम कहाँ से आते हैं, आप कौन-सी सीख लेकर आए हैं और आपका जीवन-कार्य क्या है।', 'नीचे अपना चार्ट मुफ़्त देखें। पूरा विश्लेषण हर बिंदु को सरल भाषा में पढ़ता है, हर ऊर्जा का उज्ज्वल और छाया रूप दिखाता है, और जन्म से 80 वर्ष तक आपका जीवन वर्ष-दर-वर्ष दिखाता है – आपकी वर्तमान अवधि और अगले दस वर्षों के साथ।'],
+    },
+    forWho: {
+      en: ['You want to understand your purpose and natural talents', 'Money or relationships keep repeating the same pattern', 'You are at a turning point and want to know what this period of life is about', 'You enjoy Tarot or numerology and want the complete matrix explained', 'You want a deep, written report for yourself or a loved one'],
+      hi: ['आप अपना उद्देश्य और स्वाभाविक प्रतिभा समझना चाहते हैं', 'धन या रिश्तों में एक ही पैटर्न बार-बार दोहराता है', 'आप जीवन के मोड़ पर हैं और जानना चाहते हैं कि यह अवधि किस बारे में है', 'आपको टैरो या अंक ज्योतिष पसंद है और आप पूरी मैट्रिक्स की व्याख्या चाहते हैं', 'आप अपने या किसी प्रियजन के लिए गहरी, लिखित रिपोर्ट चाहते हैं'],
+    },
+    related: [{ href: '/pythagorean-birth-chart', label: { en: 'Pythagorean birth chart', hi: 'पाइथागोरस जन्म चार्ट' } }, { href: '/personal-numerology-report', label: { en: 'Personal numerology report', hi: 'व्यक्तिगत अंक ज्योतिष रिपोर्ट' } }, { href: '/couple-compatibility-report', label: { en: 'Couple compatibility', hi: 'दंपति अनुकूलता' } }],
+    faq: [
+      { en: ['What is the Destiny Matrix?', 'A method created by Natalia Ladini that combines numerology with the 22 Major Arcana of the Tarot. Your day, month and year of birth become points on an eight-pointed star; every other point is a sum of two points, reduced to a number from 1 to 22.'], hi: ['डेस्टिनी मैट्रिक्स क्या है?', 'नतालिया लादिनी द्वारा बनाई गई पद्धति जो अंक ज्योतिष को टैरो के 22 मेजर आर्काना से जोड़ती है। आपका जन्म दिन, माह और वर्ष आठ-कोणीय तारे के बिंदु बनते हैं; हर दूसरा बिंदु दो बिंदुओं का योग है, जिसे 1 से 22 के बीच लाया जाता है।'] },
+      { en: ['How accurate is your calculation?', 'We follow the original Ladini rules: numbers above 22 are reduced by adding their digits (not by subtracting 22, which some free calculators do and which gives a different chart). Our engine is checked against published worked examples for every point, the purposes, the health map and the life timeline.'], hi: ['आपकी गणना कितनी सटीक है?', 'हम मूल लादिनी नियमों का पालन करते हैं: 22 से बड़े अंकों को उनके अंक जोड़कर घटाया जाता है (22 घटाकर नहीं, जैसा कुछ मुफ़्त कैलकुलेटर करते हैं और जिससे चार्ट बदल जाता है)। हमारा इंजन हर बिंदु, उद्देश्य, स्वास्थ्य मानचित्र और जीवन समयरेखा के लिए प्रकाशित उदाहरणों से जाँचा गया है।'] },
+      { en: ['Do I need my time or place of birth?', 'No. The Destiny Matrix uses only your date of birth.'], hi: ['क्या जन्म समय या स्थान चाहिए?', 'नहीं। डेस्टिनी मैट्रिक्स केवल आपकी जन्म तिथि का उपयोग करती है।'] },
+      { en: ['What is the karmic tail?', 'The three numbers at the bottom of the chart. They describe a pattern you are here to work through – repeating its shadow side brings the same problems back, living its bright side frees you. The report explains yours and what to do.'], hi: ['कर्म-पूँछ क्या है?', 'चार्ट के नीचे के तीन अंक। ये वह पैटर्न बताते हैं जिस पर आपको काम करना है – इसका छाया पक्ष दोहराने से वही समस्याएँ लौटती हैं, उज्ज्वल पक्ष जीने से मुक्ति मिलती है। रिपोर्ट आपकी कर्म-पूँछ और उपाय बताती है।'] },
+      { en: ['Is the health map medical advice?', 'No. It is traditional guidance about energy balance. For any health concern please see a qualified doctor.'], hi: ['क्या स्वास्थ्य मानचित्र चिकित्सा सलाह है?', 'नहीं। यह ऊर्जा संतुलन पर पारंपरिक मार्गदर्शन है। किसी भी स्वास्थ्य समस्या के लिए योग्य डॉक्टर से मिलें।'] },
+    ],
+  },
+  {
+    slug: 'pythagorean-birth-chart', serviceCode: 'SVC_BIRTH_CHART',
+    menu: { en: 'Pythagorean Birth Chart', hi: 'पाइथागोरस जन्म चार्ट' }, menuSub: { en: 'Pythagoras Square – 9 qualities, 8 lines', hi: 'पाइथागोरस वर्ग – 9 गुण, 8 रेखाएँ' },
+    title: 'Pythagorean Birth Chart (Pythagoras Square) Analysis',
+    description: 'Pythagorean birth chart by date of birth: free Pythagoras Square, then a full analysis of your 9 qualities and 8 life lines – character, energy, health, talent and more.',
+    h1: { en: 'Pythagorean Birth Chart Analysis', hi: 'पाइथागोरस जन्म चार्ट विश्लेषण' },
+    intro: {
+      en: ['The Pythagoras Square – also called the Psychomatrix – is a 3×3 birth chart built from your date of birth and four working numbers. How often each digit appears shows how strongly a quality lives in you: will, energy, interest, health, logic, practical skill, luck, duty and memory.', 'Build your square free below. The full analysis explains every cell and the eight life lines (purpose, family, habits, self-esteem, money, talent, spirituality and temperament), and gives simple practices for the qualities to develop.'],
+      hi: ['पाइथागोरस वर्ग – जिसे साइकोमैट्रिक्स भी कहते हैं – आपकी जन्म तिथि और चार कार्य-अंकों से बना 3×3 जन्म चार्ट है। कोई अंक कितनी बार आता है, उससे पता चलता है कि कौन-सा गुण आपमें कितना मज़बूत है: इच्छाशक्ति, ऊर्जा, रुचि, स्वास्थ्य, तर्क, व्यावहारिक कौशल, भाग्य, कर्तव्य और स्मृति।', 'नीचे अपना वर्ग मुफ़्त बनाएँ। पूरा विश्लेषण हर खाने और आठ जीवन रेखाओं (उद्देश्य, परिवार, आदतें, आत्म-सम्मान, धन, प्रतिभा, आध्यात्मिकता और स्वभाव) की व्याख्या करता है और विकसित करने योग्य गुणों के लिए सरल अभ्यास देता है।'],
+    },
+    forWho: {
+      en: ['You want a clear picture of your character and natural abilities', 'Parents who want to understand a child’s talents early', 'Choosing a career or study direction', 'You already know your Lo Shu grid and want a second, detailed view'],
+      hi: ['आप अपने चरित्र और स्वाभाविक क्षमताओं की स्पष्ट तस्वीर चाहते हैं', 'माता-पिता जो बच्चे की प्रतिभा जल्दी समझना चाहते हैं', 'करियर या पढ़ाई की दिशा चुनना', 'आप अपनी लो शू ग्रिड जानते हैं और दूसरी, विस्तृत दृष्टि चाहते हैं'],
+    },
+    related: [{ href: '/destiny-matrix-analysis', label: { en: 'Destiny Matrix analysis', hi: 'डेस्टिनी मैट्रिक्स विश्लेषण' } }, { href: '/lo-shu-grid', label: { en: 'Lo Shu grid analysis', hi: 'लो शू ग्रिड विश्लेषण' } }, { href: '/personal-numerology-report', label: { en: 'Personal numerology report', hi: 'व्यक्तिगत अंक ज्योतिष रिपोर्ट' } }],
+    faq: [
+      { en: ['How is the Pythagoras Square different from the Lo Shu grid?', 'The Lo Shu grid places only the digits of your date of birth (plus Moolank and Bhagyank) in a magic-square layout. The Pythagoras Square adds four working numbers calculated from the date and reads each cell by how many times the digit appears, plus eight lines.'], hi: ['पाइथागोरस वर्ग लो शू ग्रिड से कैसे अलग है?', 'लो शू ग्रिड जादुई वर्ग के क्रम में केवल जन्म तिथि के अंक (और मूलांक, भाग्यांक) रखती है। पाइथागोरस वर्ग तिथि से निकले चार कार्य-अंक जोड़ता है, हर खाने को अंक कितनी बार आया उससे पढ़ता है, और आठ रेखाएँ भी देखता है।'] },
+      { en: ['How are the working numbers calculated?', '1st = sum of all digits of the date; 2nd = sum of the digits of the 1st; 3rd = 1st minus twice the first digit of the day; 4th = sum of the digits of the 3rd. Zeros are not placed in the square.'], hi: ['कार्य-अंक कैसे निकलते हैं?', 'पहला = तिथि के सभी अंकों का योग; दूसरा = पहले के अंकों का योग; तीसरा = पहला घटा जन्म दिन के पहले अंक का दोगुना; चौथा = तीसरे के अंकों का योग। शून्य वर्ग में नहीं रखे जाते।'] },
+      { en: ['I was born after 2000 and my square has many empty cells. Is that bad?', 'No. Dates of this century contain more zeros, so squares naturally have fewer digits. Empty cells show qualities to build through life – the report explains how.'], hi: ['मेरा जन्म 2000 के बाद हुआ और मेरे वर्ग में कई खाने खाली हैं। क्या यह बुरा है?', 'नहीं। इस शताब्दी की तिथियों में शून्य अधिक होते हैं, इसलिए वर्ग में स्वाभाविक रूप से कम अंक होते हैं। खाली खाने जीवन में विकसित करने वाले गुण दिखाते हैं – रिपोर्ट इसका तरीका बताती है।'] },
+    ],
+  },
 ];
 
 export const servicePageBySlug = (slug: string) => SERVICE_PAGES.find((p) => p.slug === slug);

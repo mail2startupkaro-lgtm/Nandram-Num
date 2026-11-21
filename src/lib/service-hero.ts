@@ -4,7 +4,7 @@
  * The bullet points under it come from Admin → Services ("What's included"), so they always match what is sold.
  */
 type L = { en: string; hi: string };
-export type HeroIcon = 'user' | 'type' | 'grid' | 'phone' | 'baby' | 'heart' | 'store' | 'building' | 'briefcase' | 'calendar' | 'pen';
+export type HeroIcon = 'user' | 'type' | 'grid' | 'phone' | 'baby' | 'heart' | 'store' | 'building' | 'briefcase' | 'calendar' | 'pen' | 'label' | 'matrix' | 'square';
 export interface ServiceHero { icon: HeroIcon; tag: L; hook: L; freeTitle: L }
 
 const FREE_DOB: L = { en: 'See your Moolank & Bhagyank in 30 seconds', hi: '30 सेकंड में अपना मूलांक और भाग्यांक देखें' };
@@ -63,6 +63,16 @@ export const SERVICE_HERO: Record<string, ServiceHero> = {
   'signature-analysis': {
     icon: 'pen', tag: { en: 'Graphology × Numerology', hi: 'हस्तलेख विज्ञान × अंक ज्योतिष' },
     hook: { en: 'You sign your name on cheques, contracts and forms all your life. Find out what your signature reveals – and how to make it work for you.', hi: 'आप जीवन भर चेक, अनुबंध और फ़ॉर्म पर हस्ताक्षर करते हैं। जानिए आपका हस्ताक्षर क्या बताता है – और उसे अपने पक्ष में कैसे करें।' },
+    freeTitle: FREE_DOB,
+  },
+  'destiny-matrix-analysis': {
+    icon: 'matrix', tag: { en: '22 arcana · Ladini method', hi: '22 आर्काना · लादिनी पद्धति' },
+    hook: { en: 'Your date of birth holds a map of your life – your talents, where money and love come from, the lesson you carry and what this year is about.', hi: 'आपकी जन्म तिथि में आपके जीवन का नक्शा है – आपकी प्रतिभा, धन और प्रेम कहाँ से आते हैं, आप कौन-सी सीख लेकर आए हैं और यह वर्ष किस बारे में है।' },
+    freeTitle: FREE_DOB,
+  },
+  'pythagorean-birth-chart': {
+    icon: 'square', tag: { en: 'Pythagoras Square · Psychomatrix', hi: 'पाइथागोरस वर्ग · साइकोमैट्रिक्स' },
+    hook: { en: 'Nine qualities, eight life lines, one square from your date of birth – see what comes naturally to you and what to build.', hi: 'नौ गुण, आठ जीवन रेखाएँ, आपकी जन्म तिथि से एक वर्ग – देखें क्या आपको स्वाभाविक रूप से आता है और क्या विकसित करना है।' },
     freeTitle: FREE_DOB,
   },
 };

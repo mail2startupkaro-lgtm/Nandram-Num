@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import Link from 'next/link';
-import { Baby, Briefcase, Building2, CalendarDays, Gift, Grid3x3, Heart, Landmark, MessageCircle, PenLine, Signature, Smartphone, Sparkles, UserRound, type LucideIcon } from 'lucide-react';
+import { Baby, Briefcase, Orbit, Sigma, Building2, CalendarDays, Gift, Grid3x3, Heart, Landmark, MessageCircle, PenLine, Signature, Smartphone, Sparkles, UserRound, type LucideIcon } from 'lucide-react';
 import { useApp } from '@/components/layout/providers';
 import { buttonVariants } from '@/components/ui/button';
 import { api } from '@/lib/client/api';
@@ -13,7 +13,7 @@ import { FLOW } from './labels';
 
 export const SERVICE_ICON: Record<string, LucideIcon> = {
   SVC_PERSONAL_REPORT: UserRound, SVC_NAME_CORRECTION: PenLine, SVC_MOBILE_NUMBER: Smartphone, SVC_BABY_NAME: Baby, SVC_LOSHU: Grid3x3,
-  SVC_COUPLE: Heart, SVC_BUSINESS_NAME: Building2, SVC_BUSINESS_COMPAT: Briefcase, SVC_BUSINESS_COMPLETE: Landmark, SVC_PERSONAL_YEAR: CalendarDays, SVC_SIGNATURE: Signature,
+  SVC_COUPLE: Heart, SVC_BUSINESS_NAME: Building2, SVC_BUSINESS_COMPAT: Briefcase, SVC_BUSINESS_COMPLETE: Landmark, SVC_PERSONAL_YEAR: CalendarDays, SVC_SIGNATURE: Signature, SVC_DESTINY_MATRIX: Orbit, SVC_BIRTH_CHART: Sigma,
 };
 
 export const inr = (p: number) => `₹${(p / 100).toLocaleString('en-IN', { minimumFractionDigits: p % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;

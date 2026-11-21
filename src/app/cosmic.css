@@ -321,6 +321,8 @@ html:not(.dark) .cz-card { background: hsl(0 0% 100% / .72); }
 @keyframes ha-dot { 0%, 63% { transform: scale(0) } 67% { transform: scale(1.6) } 71%, 100% { transform: scale(1) } }
 .ha .a-pen { animation-name: ha-pen; animation-timing-function: linear; transform: none; }
 @keyframes ha-pen { 0%, 50% { opacity: 1 } 56%, 97% { opacity: 0 } 100% { opacity: 1 } }
+.ha .a-brand { animation-name: ha-brand; --t: 6s; animation-timing-function: ease-in-out; fill: hsl(var(--gold)); }
+@keyframes ha-brand { 0%, 25% { fill: hsl(var(--gold)) } 33%, 58% { fill: hsl(var(--maroon)) } 66%, 92% { fill: hsl(200 70% 45%) } 100% { fill: hsl(var(--gold)) } }
 @media (prefers-reduced-motion: reduce) { .ha :is([class^="a-"], [class*=" a-"]) { animation: none !important; opacity: 1 !important; transform: none !important; stroke-dashoffset: 0 !important; } .ha .a-pen { display: none; } }
 
 /* ---------- Animated How It Works step pipeline ---------- */
