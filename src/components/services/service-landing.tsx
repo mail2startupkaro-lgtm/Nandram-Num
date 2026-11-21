@@ -3,10 +3,10 @@ import { serviceUsd } from '@/lib/billing/currency';
 import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, Baby, BriefcaseBusiness, Building2, CalendarDays, CheckCircle2, Clock, FileText, Grid3x3, HeartHandshake, Languages, LockKeyhole, MessageCircle, PenLine, Quote, Send, ShieldCheck, Smartphone, Sparkles, Store, Type, UserRound, Users } from 'lucide-react';
+import { ArrowRight, Baby, BriefcaseBusiness, Building2, CalendarDays, CheckCircle2, Clock, Compass, FileCheck, FileText, Grid3x3, HeartHandshake, Languages, LockKeyhole, MessageCircle, PenLine, Quote, Send, ShieldCheck, Smartphone, Sparkles, Store, Target, Type, UserRound, Users } from 'lucide-react';
 import { AcharyaProfile } from '@/components/blog/blog-parts';
 import { Calculator } from '@/components/calculators/calculator';
-import { Bi, BiBlock } from '@/components/i18n/bi';
+import { Bi, BiBlock, ForLang } from '@/components/i18n/bi';
 import { BookService, ServiceReturnBanner, type PublicService } from '@/components/services/book-service';
 import { DEFAULT_SERVICES, getService, isPayable } from '@/lib/billing/services';
 import { formatInr as inr } from '@/lib/billing/plans';
@@ -15,9 +15,8 @@ import { SERVICE_PAGES, servicePageBySlug } from '@/lib/service-pages';
 import { abs, EXPERT, jsonLd as toLd } from '@/lib/seo/site';
 import { DisclaimerNote } from '@/components/legal/disclaimer-note';
 import { ServicePrice } from '@/components/services/service-price';
-import { LeadForm, OfferCountdown, SampleReports, StickyCta } from '@/components/services/funnel';
+import { LeadForm, OfferCountdown, StickyCta } from '@/components/services/funnel';
 import { formatOfferEnd, funnelWhatsapp, getLiveOffer } from '@/lib/funnel/offer';
-import { sampleFor } from '@/lib/service-samples';
 import { InsideReportSection } from '@/components/services/inside-report';
 import { HeroActionCard } from '@/components/services/hero-action-card';
 import { HeroArt } from '@/components/services/hero-art';
@@ -27,14 +26,11 @@ import type { Testimonial } from '@/lib/testimonials';
 
 const HERO_ICONS: Record<HeroIcon, typeof UserRound> = { user: UserRound, type: Type, grid: Grid3x3, phone: Smartphone, baby: Baby, heart: HeartHandshake, store: Store, building: Building2, briefcase: BriefcaseBusiness, calendar: CalendarDays, pen: PenLine };
 
-/** One real, published review for this service (else a general one), shortened at a word boundary for the hero. */
-async function heroReview(code: string): Promise<(Testimonial & { short: string }) | null> {
+/** One real, published review for this service (else a general one). Full testimonial shown without truncation. */
+async function heroReview(code: string): Promise<Testimonial | null> {
   const all = await getPublishedTestimonials().catch(() => [] as Testimonial[]);
   const t = all.find((x) => x.service === code) ?? all.find((x) => x.service === 'general') ?? all[0];
-  if (!t) return null;
-  const q = t.quoteEn.trim();
-  const short = q.length <= 150 ? q : q.slice(0, q.lastIndexOf(' ', 145)).replace(/[,;:.!\s]+$/, '') + '…';
-  return { ...t, short };
+  return t ?? null;
 }
 
 export function serviceMetadata(slug: string): Metadata {
@@ -75,10 +71,147 @@ const STEPS = [
   {
     step: 4,
     icon: Send,
-    title: { en: 'Delivered on email & WhatsApp', hi: 'ईमेल और WhatsApp पर डिलीवरी' },
-    sub: { en: 'High-res designed PDF delivered within 3 hours', hi: '3 घंटे के भीतर सुंदर PDF ईमेल और WhatsApp पर प्राप्त करें' },
+    title: { en: 'Instant Download · Email & WhatsApp', hi: 'तुरंत डाउनलोड · ईमेल और WhatsApp' },
+    sub: { en: 'High-res designed PDF delivered within 3 hours + instant dashboard download', hi: '3 घंटे के भीतर सुंदर PDF ईमेल, WhatsApp और सीधे डाउनलोड करें' },
   },
 ];
+
+const COMMON_FAQS: { en: [string, string]; hi: [string, string] }[] = [
+  {
+    en: [
+      'When and how will I receive my report?',
+      'Your high-resolution PDF report is delivered to your WhatsApp and Email within 3 hours of order confirmation. You can also view and download it directly anytime from your secure account dashboard.',
+    ],
+    hi: [
+      'मुझे मेरी रिपोर्ट कब और कैसे मिलेगी?',
+      'ऑर्डर की पुष्टि के 3 घंटे के भीतर आपकी उच्च-गुणवत्ता वाली PDF रिपोर्ट आपके WhatsApp और ईमेल पर भेज दी जाती है। आप इसे अपने खाते से भी कभी भी सीधे डाउनलोड कर सकते हैं।',
+    ],
+  },
+  {
+    en: [
+      'Can I ask personal questions to Acharya Nandram?',
+      'Yes! You can include up to 3 personal questions (career, business, marriage, relationship, or health) while booking. Acharya Nandram analyzes them personally and provides direct answers in your report.',
+    ],
+    hi: [
+      'क्या मैं आचार्य नंदराम से अपने व्यक्तिगत प्रश्न पूछ सकता हूँ?',
+      'हाँ! बुकिंग के समय आप करियर, व्यवसाय, विवाह, रिश्ते या स्वास्थ्य से जुड़े अधिकतम 3 व्यक्तिगत प्रश्न पूछ सकते हैं। आचार्य नंदराम स्वयं इनका विश्लेषण कर रिपोर्ट में उत्तर देते हैं।',
+    ],
+  },
+  {
+    en: [
+      'Are the remedies practical and easy to follow?',
+      'Absolutely. There are no expensive rituals, mandatory gemstones, or difficult poojas. Acharya Nandram provides 100% practical, zero-cost daily remedies: lucky colors, days, daily mantras, charity (daan), and basic vastu directions.',
+    ],
+    hi: [
+      'क्या उपाय व्यावहारिक और अपनाने में आसान हैं?',
+      'बिल्कुल। कोई महँगे अनुष्ठान, अनिवार्य रत्न या कठिन पूजा नहीं है। आचार्य नंदराम 100% व्यावहारिक और आसान उपाय बताते हैं: शुभ रंग, शुभ दिन, दैनिक मंत्र, दान और सरल वास्तु दिशाएँ।',
+    ],
+  },
+  {
+    en: [
+      'Will my personal details and birth information remain confidential?',
+      'Yes, 100% private and confidential. Your personal data is encrypted and used exclusively by Acharya Nandram to prepare your consultation report. We never share or sell personal information.',
+    ],
+    hi: [
+      'क्या मेरी जानकारी और जन्म विवरण गोपनीय रहेंगे?',
+      'हाँ, 100% निजी और गोपनीय। आपकी जानकारी पूरी तरह सुरक्षित रहती है और इसका उपयोग केवल आचार्य नंदराम द्वारा आपकी रिपोर्ट तैयार करने के लिए किया जाता है।',
+    ],
+  },
+  {
+    en: [
+      'In which languages can I get the report?',
+      'You can choose English, Hindi, or Hinglish (English script with conversational Hindi) based on your comfort when booking your consultation.',
+    ],
+    hi: [
+      'मुझे रिपोर्ट किन भाषाओं में मिल सकती है?',
+      'आप अपनी सुविधानुसार हिंदी, अंग्रेज़ी या हिंग्लिश (अंग्रेज़ी लिपि में हिंदी) में से किसी भी भाषा का चयन कर सकते हैं।',
+    ],
+  },
+];
+
+function AnimatedWhoItIsFor({ items }: { items: { en: string[]; hi: string[] } }) {
+  const enrichments = [
+    {
+      icon: Compass,
+      sub: { en: 'Get clarity on career crossroads, new business decisions, or relationship compatibility.', hi: 'करियर बदलाव, नए व्यवसाय के निर्णय या रिश्तों की अनुकूलता पर पूर्ण स्पष्टता पाएँ।' },
+    },
+    {
+      icon: FileCheck,
+      sub: { en: 'A comprehensive, permanent reference PDF with verified core numbers and remedies.', hi: 'प्रमाणित मूल अंकों और उपायों के साथ एक विस्तृत, स्थायी संदर्भ दस्तावेज़।' },
+    },
+    {
+      icon: Sparkles,
+      sub: { en: 'Move beyond generic automated tools to deep, expert-level hand-analyzed guidance.', hi: 'सामान्य ऑटोमेटेड टूल से आगे बढ़कर विशेषज्ञ स्तर के व्यक्तिगत मार्गदर्शन का लाभ लें।' },
+    },
+    {
+      icon: Languages,
+      sub: { en: 'Clear, compassionate advice written naturally in your preferred language.', hi: 'आपकी पसंदीदा भाषा में सहज और स्पष्ट रूप से लिखा गया व्यक्तिगत परामर्श।' },
+    },
+    {
+      icon: Target,
+      sub: { en: 'Overcome repeating hurdles, delays, or financial roadblocks with targeted remedies.', hi: 'लक्षित उपायों द्वारा बार-बार आने वाली बाधाओं, देरी या वित्तीय रुकावटों से मुक्ति पाएँ।' },
+    },
+    {
+      icon: ShieldCheck,
+      sub: { en: '100% confidential consultation prepared directly by Acharya Nandram.', hi: 'आचार्य नंदराम द्वारा स्वयं तैयार किया गया 100% गोपनीय एवं प्रमाणित परामर्श।' },
+    },
+  ];
+
+  return (
+    <div className="glass relative overflow-hidden rounded-2xl border border-gold/30 p-5 sm:p-6 shadow-xl flex flex-col justify-between">
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-gold"><Bi en="Tailored For You" hi="आपके लिए विशेष" /></p>
+            <h2 id="who-h" className="font-cinzel text-2xl font-bold flex items-center gap-2">
+              <Users className="h-5 w-5 text-gold" /><Bi en="Who It Is For" hi="यह किनके लिए है" />
+            </h2>
+          </div>
+          <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success border border-success/30">
+            <CheckCircle2 className="h-3 w-3" />
+            <Bi en="High Accuracy" hi="सटीक मार्गदर्शन" />
+          </span>
+        </div>
+
+        <div className="space-y-2.5">
+          <ForLang>
+            {(lang) => (
+              <>
+                {items[lang].map((title, i) => {
+                  const extra = enrichments[i] ?? enrichments[0];
+                  const Icon = extra.icon;
+                  return (
+                    <div
+                      key={title}
+                      className="group relative flex items-start gap-3 rounded-xl border border-gold/15 bg-background/50 p-2.5 sm:p-3 hover:border-gold/50 hover:bg-gold/5 hover:translate-x-1 transition-all duration-300"
+                    >
+                      <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gold/15 text-gold ring-1 ring-gold/30 group-hover:scale-110 group-hover:rotate-6 transition-transform mt-0.5">
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-sm sm:text-[15px] text-foreground group-hover:text-gold transition-colors leading-snug">
+                          {title}
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground leading-normal">
+                          {extra.sub[lang]}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            )}
+          </ForLang>
+        </div>
+      </div>
+
+      <div className="mt-4 pt-3 border-t border-gold/15 flex items-center justify-between text-xs text-muted-foreground">
+        <span className="flex items-center gap-1"><Sparkles className="h-3.5 w-3.5 text-gold" /><Bi en="Zero guesswork · 100% authentic" hi="कोई अटकलें नहीं · 100% प्रामाणिक" /></span>
+        <span className="text-gold font-semibold font-serif"><Bi en="15+ Yrs Experience" hi="15+ वर्ष अनुभव" /></span>
+      </div>
+    </div>
+  );
+}
 
 function AnimatedHowItWorks() {
   return (
@@ -131,7 +264,6 @@ export async function ServiceLanding({ slug, children }: { slug: string; childre
   const offerOn = liveOffer && svc?.pricePaise ? liveOffer : null;
   const endText = offerOn ? { en: formatOfferEnd(offerOn.endsAt, 'en'), hi: formatOfferEnd(offerOn.endsAt, 'hi') } : null;
   const wa = funnelWhatsapp();
-  const sample = sampleFor(page.serviceCode);
   const funnelServices = svc ? [{ code: svc.code, name: { en: svc.en.name, hi: svc.hi.name } }] : [];
   const others = SERVICE_PAGES.filter((x) => x.slug !== slug);
   const ld = [
@@ -195,23 +327,29 @@ export async function ServiceLanding({ slug, children }: { slug: string; childre
             />
           </div>
           <div className="space-y-5 lg:col-start-1 lg:row-start-2">
-              <div className="flex items-center gap-3 border-t border-gold/15 pt-5">
-                <Image src="/images/acharya-nandram-512.png" alt={EXPERT.name} width={56} height={56} className="h-14 w-14 shrink-0 rounded-full border-2 border-gold/60 object-cover shadow-[0_0_18px_hsl(var(--gold)/0.35)]" />
-                <div className="text-sm leading-snug">
-                  <p className="font-semibold"><Bi en={`Prepared personally by ${EXPERT.name}`} hi="आचार्य नंदराम द्वारा स्वयं तैयार" /></p>
-                  <p className="text-muted-foreground"><Bi en="15+ years · Vedic, Chaldean & Lo Shu numerology" hi="15+ वर्ष · वैदिक, कैल्डियन और लो शू अंक ज्योतिष" /></p>
+              <div className="flex items-center gap-3.5 border-t border-gold/15 pt-5">
+                <Image src="/images/acharya-nandram-512.png" alt={EXPERT.name} width={64} height={64} className="h-16 w-16 shrink-0 rounded-full border-2 border-gold/60 object-cover shadow-[0_0_20px_hsl(var(--gold)/0.4)]" />
+                <div className="space-y-0.5 leading-snug">
+                  <p className="font-serif text-lg sm:text-xl font-bold text-foreground">
+                    <Bi en={`Prepared personally by ${EXPERT.name}`} hi="आचार्य नंदराम द्वारा स्वयं तैयार" />
+                  </p>
+                  <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+                    <Bi en="15+ years · Vedic, Chaldean & Lo Shu numerology" hi="15+ वर्ष · वैदिक, कैल्डियन और लो शू अंक ज्योतिष" />
+                  </p>
                 </div>
               </div>
               <ul className="grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:flex sm:flex-wrap sm:gap-x-5">
                 <li className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-success" /><Bi en="Secure payment · Cashfree" hi="सुरक्षित भुगतान · Cashfree" /></li>
                 <li className="flex items-center gap-1.5"><Languages className="h-4 w-4 text-gold" /><Bi en="English & हिंदी" hi="हिंदी और English" /></li>
-                <li className="flex items-center gap-1.5"><Send className="h-4 w-4 text-gold" /><Bi en="Email & WhatsApp delivery" hi="ईमेल और WhatsApp डिलीवरी" /></li>
-                {sample && <li><a href="#sample" className="flex items-center gap-1.5 text-gold hover:underline"><FileText className="h-4 w-4" /><Bi en="See a sample first" hi="पहले नमूना देखें" /></a></li>}
+                <li className="flex items-center gap-1.5"><Send className="h-4 w-4 text-gold" /><Bi en="Download · Email & WhatsApp" hi="डाउनलोड · ईमेल और WhatsApp" /></li>
+                <li><a href="#inside-report" className="flex items-center gap-1.5 text-gold hover:underline"><FileText className="h-4 w-4" /><Bi en="See sample report pages" hi="नमूना रिपोर्ट पृष्ठ देखें" /></a></li>
               </ul>
               {review && (
-                <figure className="glass relative max-w-xl rounded-xl border border-gold/20 p-4 pl-11">
+                <figure className="glass relative max-w-xl rounded-xl border border-gold/25 p-4 pl-11 shadow-md">
                   <Quote aria-hidden className="absolute left-3 top-4 h-5 w-5 text-gold/70" />
-                  <blockquote className="text-sm italic text-foreground/85">“{review.short}”</blockquote>
+                  <blockquote className="text-sm italic text-foreground/90 leading-relaxed">
+                    “<Bi en={review.quoteEn} hi={review.quoteHi} />”
+                  </blockquote>
                   <figcaption className="mt-2 text-xs text-muted-foreground">— <span className="font-semibold text-foreground">{review.name}</span>{review.location ? `, ${review.location}` : ''}{review.rating ? ` · ${'★'.repeat(review.rating)}` : ''}</figcaption>
                 </figure>
               )}
@@ -235,29 +373,39 @@ export async function ServiceLanding({ slug, children }: { slug: string; childre
 
       <InsideReportSection slug={slug} />
 
-      {sample && (
-        <section id="sample" aria-labelledby="smp-h" className="scroll-mt-20 space-y-4">
-          <div className="text-center"><p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold"><Bi en="See before you pay" hi="भुगतान से पहले देखें" /></p>
-            <h2 id="smp-h" className="font-cinzel text-2xl font-bold sm:text-3xl"><Bi en="Sample Report" hi="नमूना रिपोर्ट" /></h2></div>
-          <SampleReports samples={[sample]} services={funnelServices} whatsapp={wa} bookHref="#book" />
-        </section>
-      )}
-
-      <section aria-labelledby="who-h" className="grid gap-6 md:grid-cols-2">
-        <div className="glass rounded-2xl border border-gold/20 p-6"><h2 id="who-h" className="mb-3 flex items-center gap-2 font-cinzel text-2xl font-bold"><Users className="h-5 w-5 text-gold" /><Bi en="Who It Is For" hi="यह किनके लिए है" /></h2>
-          <BiBlock en={<ul className="space-y-2">{page.forWho.en.map((x) => <li key={x} className="flex gap-2 text-muted-foreground"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />{x}</li>)}</ul>} hi={<ul className="space-y-2">{page.forWho.hi.map((x) => <li key={x} className="flex gap-2 text-muted-foreground"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />{x}</li>)}</ul>} /></div>
+      <section aria-labelledby="who-h" className="grid gap-6 md:grid-cols-2 items-stretch">
+        <AnimatedWhoItIsFor items={page.forWho} />
         <AnimatedHowItWorks />
       </section>
 
-      <section aria-labelledby="faq-h" className="mx-auto max-w-3xl space-y-3">
-        <h2 id="faq-h" className="text-center font-cinzel text-3xl font-bold"><Bi en="Frequently Asked Questions" hi="अक्सर पूछे जाने वाले प्रश्न" /></h2>
-        {page.faq.map((f) => <details key={f.en[0]} className="glass rounded-lg p-4"><summary className="cursor-pointer font-medium"><Bi en={f.en[0]} hi={f.hi[0]} /></summary><p className="mt-2 text-sm text-muted-foreground"><Bi en={f.en[1]} hi={f.hi[1]} /></p></details>)}
+      <section aria-labelledby="faq-h" className="mx-auto max-w-3xl space-y-4">
+        <div className="text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold"><Bi en="Got Questions?" hi="प्रश्न हैं?" /></p>
+          <h2 id="faq-h" className="mt-1 font-cinzel text-3xl font-bold"><Bi en="Frequently Asked Questions" hi="अक्सर पूछे जाने वाले प्रश्न" /></h2>
+          <p className="text-sm text-muted-foreground mt-1"><Bi en="Everything you need to know about your consultation, delivery and remedies." hi="आपकी रिपोर्ट, परामर्श, डिलीवरी और उपायों के बारे में सभी जानकारी।" /></p>
+        </div>
+        <div className="space-y-2.5 pt-2">
+          {[...page.faq, ...COMMON_FAQS].map((f) => (
+            <details key={f.en[0]} className="group glass rounded-xl border border-gold/20 p-4 transition-all hover:border-gold/45">
+              <summary className="cursor-pointer font-semibold text-foreground flex items-center justify-between gap-3 list-none">
+                <span className="flex items-center gap-2.5">
+                  <span className="h-2 w-2 rounded-full bg-gold/60 shrink-0 group-open:bg-gold group-open:scale-125 transition-transform" />
+                  <span className="group-hover:text-gold transition-colors text-sm sm:text-base"><Bi en={f.en[0]} hi={f.hi[0]} /></span>
+                </span>
+                <span className="font-mono text-xs text-gold/70 group-open:rotate-180 transition-transform shrink-0">▼</span>
+              </summary>
+              <p className="mt-3 text-sm text-muted-foreground pl-4 border-l-2 border-gold/30 leading-relaxed">
+                <Bi en={f.en[1]} hi={f.hi[1]} />
+              </p>
+            </details>
+          ))}
+        </div>
       </section>
 
       <section aria-labelledby="lead-h" className="grid items-center gap-6 rounded-2xl border-2 border-gold/40 bg-gradient-to-br from-gold/10 via-card/70 to-maroon/25 p-6 sm:p-8 lg:grid-cols-[1fr_1.1fr]">
         <div><p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold"><Bi en="Free · 30 seconds" hi="मुफ़्त · 30 सेकंड" /></p>
           <h2 id="lead-h" className="mt-1 font-cinzel text-2xl font-bold sm:text-3xl"><Bi en="Get Your Free Mini-Reading" hi="अपनी मुफ़्त मिनी-रीडिंग पाएँ" /></h2>
-          <p className="mt-2 text-muted-foreground"><Bi en="See your Moolank and Bhagyank instantly, unlock the full sample above, and get a direct WhatsApp line to Acharya Nandram." hi="अपना मूलांक और भाग्यांक तुरंत देखें, ऊपर की पूरी नमूना रिपोर्ट खोलें और आचार्य नंदराम से सीधे WhatsApp पर जुड़ें।" /></p></div>
+          <p className="mt-2 text-muted-foreground"><Bi en="See your Moolank and Bhagyank instantly, understand your core numbers, and get a direct WhatsApp line to Acharya Nandram." hi="अपना मूलांक और भाग्यांक तुरंत देखें, अपने मूल अंकों को समझें और आचार्य नंदराम से सीधे WhatsApp पर जुड़ें।" /></p></div>
         <div className="glass rounded-xl p-5"><LeadForm services={funnelServices} defaultService={svc?.code ?? ''} whatsapp={wa} compact bookHref="#book" /></div>
       </section>
 

@@ -26,6 +26,13 @@ const SIGNATURE_PAGES: ReportPage[] = [
   { src: '/images/signature-report/blueprint.webp', caption: { en: 'Your ideal signature, start dates & 21-day chart', hi: 'आपका आदर्श हस्ताक्षर, आरंभ तिथियाँ और 21 दिन का चार्ट' } },
 ];
 
+const PERSONAL_PAGES: ReportPage[] = [
+  { src: '/images/personal-report/cover.webp', caption: { en: 'Cover – your profile, core numbers & destiny chart', hi: 'मुखपृष्ठ – आपकी प्रोफ़ाइल, मूल अंक और भाग्य चार्ट' } },
+  { src: '/images/personal-report/grid.webp', caption: { en: 'Lo Shu 3×3 Grid – energy planes, missing & repeated numbers', hi: 'लो शू ग्रिड – ऊर्जा तल, अनुपस्थित और दोहराए गए अंक' } },
+  { src: '/images/personal-report/forecast.webp', caption: { en: 'Career, money & answers to your 3 personal questions', hi: 'करियर, धन और आपके 3 व्यक्तिगत प्रश्नों के उत्तर' } },
+  { src: '/images/personal-report/remedies.webp', caption: { en: 'Personal remedies – colours, days, mantra & daan', hi: 'व्यक्तिगत उपाय – रंग, दिन, मंत्र और दान' } },
+];
+
 export const SERVICE_REPORTS: Record<string, ServiceReportMeta> = {
   'personal-numerology-report': {
     kicker: { en: '15+ page designed PDF', hi: '15+ पृष्ठ की डिज़ाइन की हुई PDF' },
@@ -34,187 +41,7 @@ export const SERVICE_REPORTS: Record<string, ServiceReportMeta> = {
       en: 'Pages from a sample report for a fictional client. Your report is prepared personally for your own date of birth, name and questions.',
       hi: 'काल्पनिक क्लाइंट की नमूना रिपोर्ट के पृष्ठ। आपकी रिपोर्ट आपकी जन्म तिथि, नाम और प्रश्नों के लिए स्वयं तैयार होती है।',
     },
-    pages: [
-      {
-        caption: { en: 'Cover – your profile, core numbers & destiny chart', hi: 'मुखपृष्ठ – आपकी प्रोफ़ाइल, मूल अंक और भाग्य चार्ट' },
-        renderDoc: (hi) => (
-          <div className="flex h-full flex-col justify-between p-3.5 sm:p-4 text-stone-800">
-            <div>
-              <div className="flex items-center justify-between border-b border-amber-900/20 pb-2 text-[9px] sm:text-[10px] text-amber-900/80">
-                <span className="font-semibold tracking-wider uppercase">Acharya Nandram Numerology</span>
-                <span className="rounded bg-amber-900/10 px-1.5 py-0.5 font-mono text-[8px]">Page 1 / 15</span>
-              </div>
-              <div className="mt-3 text-center">
-                <p className="text-[9px] uppercase tracking-[0.25em] text-amber-800 font-semibold">{hi ? 'वैदिक और कैल्डियन विश्लेषण' : 'Vedic & Chaldean Analysis'}</p>
-                <h4 className="font-serif text-sm sm:text-base font-bold text-stone-900 mt-0.5">{hi ? 'व्यक्तिगत अंक ज्योतिष रिपोर्ट' : 'Personal Numerology Report'}</h4>
-                <p className="text-[10px] text-stone-600 mt-0.5">{hi ? 'क्लाइंट: रिया शर्मा · जन्म तिथि: 14 अगस्त 1992' : 'Client: Riya Sharma · DOB: 14 Aug 1992'}</p>
-              </div>
-
-              <div className="mt-3 grid grid-cols-4 gap-1.5 text-center">
-                <div className="rounded-md border border-amber-800/30 bg-amber-500/10 p-1.5">
-                  <div className="text-[8px] uppercase text-stone-600">{hi ? 'मूलांक' : 'Moolank'}</div>
-                  <div className="font-serif text-base sm:text-lg font-bold text-amber-900">5</div>
-                  <div className="text-[7px] text-stone-500">{hi ? 'बुध' : 'Mercury'}</div>
-                </div>
-                <div className="rounded-md border border-amber-800/30 bg-amber-500/10 p-1.5">
-                  <div className="text-[8px] uppercase text-stone-600">{hi ? 'भाग्यांक' : 'Bhagyank'}</div>
-                  <div className="font-serif text-base sm:text-lg font-bold text-amber-900">7</div>
-                  <div className="text-[7px] text-stone-500">{hi ? 'केतु' : 'Ketu'}</div>
-                </div>
-                <div className="rounded-md border border-amber-800/30 bg-amber-500/10 p-1.5">
-                  <div className="text-[8px] uppercase text-stone-600">{hi ? 'कुआ' : 'Kua'}</div>
-                  <div className="font-serif text-base sm:text-lg font-bold text-amber-900">7</div>
-                  <div className="text-[7px] text-stone-500">{hi ? 'पश्चिम' : 'West'}</div>
-                </div>
-                <div className="rounded-md border border-amber-800/30 bg-amber-500/10 p-1.5">
-                  <div className="text-[8px] uppercase text-stone-600">{hi ? 'नामांक' : 'Name'}</div>
-                  <div className="font-serif text-base sm:text-lg font-bold text-amber-900">21/3</div>
-                  <div className="text-[7px] text-stone-500">{hi ? 'शुभ' : 'Good'}</div>
-                </div>
-              </div>
-
-              <div className="mt-3 rounded border border-stone-200/80 bg-white/60 p-2 text-[9px] leading-relaxed">
-                <p className="font-semibold text-amber-900">{hi ? 'मूल अंकों का सार:' : 'Core Number Synthesis:'}</p>
-                <p className="text-stone-700 mt-0.5 line-clamp-3">
-                  {hi
-                    ? 'रिया, आपका मूलांक 5 आपको तीव्र बुद्धि, जिज्ञासु स्वभाव और संचार कौशल देता है। भाग्यांक 7 गहराई और शोध जोड़ता है।'
-                    : 'Riya, your Moolank 5 gives curiosity and swift communication, while Bhagyank 7 draws you toward depth and research.'}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between border-t border-amber-900/20 pt-2 text-[8px] text-stone-500">
-              <span className="flex items-center gap-1 font-semibold text-amber-900">
-                <Sparkles className="h-2.5 w-2.5 text-amber-600" /> {hi ? 'आचार्य नंदराम द्वारा सत्यापित' : 'Verified by Acharya Nandram'}
-              </span>
-              <span>www.mynumerologist.com</span>
-            </div>
-          </div>
-        ),
-      },
-      {
-        caption: { en: 'Lo Shu 3×3 Grid – energy planes, missing & repeated numbers', hi: 'लो शू ग्रिड – ऊर्जा तल, अनुपस्थित और दोहराए गए अंक' },
-        renderDoc: (hi) => (
-          <div className="flex h-full flex-col justify-between p-3.5 sm:p-4 text-stone-800">
-            <div>
-              <div className="flex items-center justify-between border-b border-amber-900/20 pb-2 text-[9px] sm:text-[10px] text-amber-900/80">
-                <span className="font-semibold tracking-wider uppercase">Lo Shu Grid Analysis</span>
-                <span className="rounded bg-amber-900/10 px-1.5 py-0.5 font-mono text-[8px]">Page 3 / 15</span>
-              </div>
-              <h4 className="font-serif text-xs sm:text-sm font-bold text-stone-900 mt-2">{hi ? '3×3 लो शू कॉस्मिक ऊर्जा ग्रिड' : '3×3 Lo Shu Cosmic Energy Grid'}</h4>
-
-              {/* Lo Shu Grid visual */}
-              <div className="mx-auto mt-2 grid w-32 grid-cols-3 gap-1 rounded border-2 border-amber-800/50 bg-amber-900/10 p-1 text-center font-serif text-xs font-bold text-stone-900">
-                <div className="rounded bg-amber-100/90 py-1.5 shadow-sm">4</div>
-                <div className="rounded bg-amber-200/90 py-1.5 shadow-sm text-amber-900">9 9</div>
-                <div className="rounded bg-amber-100/90 py-1.5 shadow-sm">2</div>
-                <div className="rounded bg-stone-100/40 py-1.5 text-stone-400 opacity-60">-</div>
-                <div className="rounded bg-amber-200/90 py-1.5 shadow-sm text-amber-900">5</div>
-                <div className="rounded bg-amber-200/90 py-1.5 shadow-sm text-amber-900">7 7</div>
-                <div className="rounded bg-amber-100/90 py-1.5 shadow-sm">8</div>
-                <div className="rounded bg-amber-200/90 py-1.5 shadow-sm text-amber-900">1 1</div>
-                <div className="rounded bg-stone-100/40 py-1.5 text-stone-400 opacity-60">-</div>
-              </div>
-
-              <div className="mt-2.5 space-y-1.5 text-[8.5px] sm:text-[9px]">
-                <div className="flex items-center justify-between rounded bg-emerald-500/10 px-2 py-1 text-emerald-900 border border-emerald-500/20">
-                  <span className="font-semibold">✓ {hi ? 'बुद्धि का तीर (4-9-2)' : 'Arrow of Intellect (4-9-2)'}</span>
-                  <span className="text-[7.5px]">{hi ? 'तीव्र स्मरण शक्ति' : 'Sharp Memory'}</span>
-                </div>
-                <div className="flex items-center justify-between rounded bg-emerald-500/10 px-2 py-1 text-emerald-900 border border-emerald-500/20">
-                  <span className="font-semibold">✓ {hi ? 'दृढ़ संकल्प का तीर (9-5-1)' : 'Determination Arrow (9-5-1)'}</span>
-                  <span className="text-[7.5px]">{hi ? 'अटूट संकल्प' : 'Strong Will'}</span>
-                </div>
-                <div className="flex items-center justify-between rounded bg-rose-500/10 px-2 py-1 text-rose-900 border border-rose-500/20">
-                  <span className="font-semibold">⚠ {hi ? 'अनुपस्थित अंक: 3, 6' : 'Missing: 3, 6'}</span>
-                  <span className="text-[7.5px]">{hi ? 'उपाय आवश्यक' : 'Remedy needed'}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between border-t border-amber-900/20 pt-2 text-[8px] text-stone-500">
-              <span>{hi ? 'सिल्वर योग: 2-5-8 उपस्थित' : 'Silver Yog: 2-5-8 present'}</span>
-              <span>Page 3 / 15</span>
-            </div>
-          </div>
-        ),
-      },
-      {
-        caption: { en: 'Career, money & answers to your 3 questions', hi: 'करियर, धन और आपके 3 प्रश्नों के उत्तर' },
-        renderDoc: (hi) => (
-          <div className="flex h-full flex-col justify-between p-3.5 sm:p-4 text-stone-800">
-            <div>
-              <div className="flex items-center justify-between border-b border-amber-900/20 pb-2 text-[9px] sm:text-[10px] text-amber-900/80">
-                <span className="font-semibold tracking-wider uppercase">Career & Questions</span>
-                <span className="rounded bg-amber-900/10 px-1.5 py-0.5 font-mono text-[8px]">Page 7 / 15</span>
-              </div>
-              <h4 className="font-serif text-xs sm:text-sm font-bold text-stone-900 mt-2">{hi ? 'करियर, वित्तीय पूर्वानुमान व प्रश्न' : 'Career, Finance & Query Analysis'}</h4>
-
-              <div className="mt-2 rounded border border-amber-900/15 bg-white/70 p-2 text-[8.5px] sm:text-[9px]">
-                <p className="font-semibold text-amber-900">{hi ? 'प्रश्न 1: "क्या मुझे डिज़ाइन स्टूडियो शुरू करना चाहिए?"' : 'Q1: "Should I launch my design studio?"'}</p>
-                <p className="text-stone-700 mt-1 line-clamp-3">
-                  {hi
-                    ? 'निर्णय: हाँ। आपका व्यक्तिगत वर्ष 5 (2026-27) नए उद्यम और विस्तार के अनुकूल है। 1 या 5 योग वाली तिथि पर आरंभ करें।'
-                    : 'Verdict: Favourable. Personal year 5 (2026-27) supports new ventures. Launch on a date adding to 1 or 5.'}
-                </p>
-              </div>
-
-              <div className="mt-2 rounded border border-stone-200 bg-white/60 p-2 text-[8.5px] sm:text-[9px]">
-                <p className="font-semibold text-stone-900">{hi ? 'अनुकूल कार्यक्षेत्र (बुध 5 + केतु 7):' : 'Best Career Sectors (5 + 7):'}</p>
-                <div className="mt-1 flex flex-wrap gap-1">
-                  <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[8px] font-medium text-amber-900">{hi ? 'आर्किटेक्चर व डिज़ाइन' : 'Design & Architecture'}</span>
-                  <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[8px] font-medium text-amber-900">{hi ? 'अनुसंधान व परामर्श' : 'Consulting & Research'}</span>
-                  <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[8px] font-medium text-amber-900">{hi ? 'मीडिया' : 'Digital Media'}</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between border-t border-amber-900/20 pt-2 text-[8px] text-stone-500">
-              <span className="text-emerald-700 font-semibold">{hi ? '✓ 3 प्रश्नों के व्यक्तिगत उत्तर' : '✓ 3 Personal queries answered'}</span>
-              <span>Page 7 / 15</span>
-            </div>
-          </div>
-        ),
-      },
-      {
-        caption: { en: 'Personal remedies – colours, days, mantra & daan', hi: 'व्यक्तिगत उपाय – रंग, दिन, मंत्र और दान' },
-        renderDoc: (hi) => (
-          <div className="flex h-full flex-col justify-between p-3.5 sm:p-4 text-stone-800">
-            <div>
-              <div className="flex items-center justify-between border-b border-amber-900/20 pb-2 text-[9px] sm:text-[10px] text-amber-900/80">
-                <span className="font-semibold tracking-wider uppercase">Remedial Blueprint</span>
-                <span className="rounded bg-amber-900/10 px-1.5 py-0.5 font-mono text-[8px]">Page 12 / 15</span>
-              </div>
-              <h4 className="font-serif text-xs sm:text-sm font-bold text-stone-900 mt-2">{hi ? 'दैनिक जीवन में अपनाने योग्य उपाय' : 'Practical Daily Remedial Guide'}</h4>
-
-              <div className="mt-2 space-y-1.5 text-[8.5px] sm:text-[9px]">
-                <div className="rounded border border-amber-800/20 bg-white/70 p-1.5 flex items-center justify-between">
-                  <span className="font-semibold text-stone-900">{hi ? 'शुभ रंग (Lucky Colors):' : 'Lucky Colors:'}</span>
-                  <span className="font-medium text-emerald-800">{hi ? 'हरा, सुनहरा, पीला' : 'Green, Gold, Yellow'}</span>
-                </div>
-                <div className="rounded border border-amber-800/20 bg-white/70 p-1.5 flex items-center justify-between">
-                  <span className="font-semibold text-stone-900">{hi ? 'शुभ दिन (Lucky Days):' : 'Lucky Days:'}</span>
-                  <span className="font-medium text-emerald-800">{hi ? 'बुधवार और शुक्रवार' : 'Wednesday, Friday'}</span>
-                </div>
-                <div className="rounded border border-amber-800/20 bg-white/70 p-1.5 flex items-center justify-between">
-                  <span className="font-semibold text-stone-900">{hi ? 'शुभ दिशा (Vastu):' : 'Vastu Direction:'}</span>
-                  <span className="font-medium text-emerald-800">{hi ? 'उत्तर-पश्चिम (North-West)' : 'North-West (Success)'}</span>
-                </div>
-                <div className="rounded border border-amber-800/20 bg-white/70 p-1.5">
-                  <span className="font-semibold text-stone-900 block">{hi ? 'दैनिक बीज मंत्र:' : 'Daily Beej Mantra:'}</span>
-                  <span className="font-mono text-[8px] text-amber-900 italic">"ॐ बुं बुधाय नमः" (108 times)</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between border-t border-amber-900/20 pt-2 text-[8px] text-stone-500">
-              <span className="font-semibold text-amber-900">{hi ? 'आचार्य नंदराम हस्तलिखित परामर्श' : 'Acharya Nandram Certified'}</span>
-              <span>Page 12 / 15</span>
-            </div>
-          </div>
-        ),
-      },
-    ],
+    pages: PERSONAL_PAGES,
   },
 
   'name-numerology': {
@@ -1438,7 +1265,7 @@ export function InsideReportSection({ slug }: { slug: string }) {
   const meta = SERVICE_REPORTS[slug] ?? SERVICE_REPORTS['personal-numerology-report'];
 
   return (
-    <section aria-labelledby="inside-report-h" className="scroll-mt-20 space-y-5">
+    <section id="inside-report" aria-labelledby="inside-report-h" className="scroll-mt-20 space-y-5">
       <div className="text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold">
           <Bi en={meta.kicker.en} hi={meta.kicker.hi} />
@@ -1454,7 +1281,7 @@ export function InsideReportSection({ slug }: { slug: string }) {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {meta.pages.map((p, idx) => (
           <figure key={idx} className="space-y-2 group">
-            <div className="cz-report-page relative aspect-[1/1.414] overflow-hidden rounded-xl border border-gold/30 bg-gradient-to-b from-[#faf7f0] via-[#f7f2e4] to-[#f3ece0] dark:from-[#211c29] dark:via-[#191522] dark:to-[#13101c] transition-all">
+            <div className="cz-report-page relative aspect-[1/1.414] overflow-hidden rounded-xl border border-gold/40 bg-[#fdfbf7] text-stone-900 shadow-xl transition-all">
               {p.src ? (
                 <Image
                   src={p.src}
