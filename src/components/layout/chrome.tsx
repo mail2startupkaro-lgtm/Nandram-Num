@@ -97,8 +97,8 @@ export function Header() {
           <Link href="/contact" className={`hidden xl:inline-flex ${navLinkClass}`}>{t.nav.contact}</Link>
 
           {user?.role === 'super_admin' && (
-            <Link href="/admin" className="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-md px-2 text-[12.5px] font-semibold text-gold hover:bg-gold/10">
-              <Shield className="h-3.5 w-3.5" />{t.auth.admin}
+            <Link href="/admin" aria-label={t.auth.admin} className="inline-flex h-8 items-center gap-1 whitespace-nowrap rounded-md px-1.5 text-[12.5px] font-semibold text-gold hover:bg-gold/10 sm:px-2">
+              <Shield className="h-3.5 w-3.5" /><span className="hidden sm:inline">{t.auth.admin}</span>
             </Link>
           )}
 
