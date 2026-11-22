@@ -11,9 +11,17 @@ import { celebNumbers, celebSlug, numbersText, type CelebNumbers } from './numbe
 type Env = Record<string, string | undefined>;
 export interface CelebAgentOpts { env?: Env; fetchImpl?: typeof fetch }
 
+const CANDIDATE_MODELS = [
+  'gemini-3.5-flash',
+  'gemini-3.1-flash-lite',
+  'gemini-flash-lite-latest',
+  'gemini-3-flash-preview',
+];
+
 export function geminiConfig(env: Env = process.env) {
   const apiKey = env.GEMINI_API_KEY || env.GOOGLE_API_KEY || '';
-  const model = env.CELEBRITY_LLM_MODEL?.trim() || ((env.LLM_PROVIDER ?? 'gemini') === 'gemini' && env.LLM_MODEL?.trim()) || 'gemini-3-flash-preview';
+  const configured = env.CELEBRITY_LLM_MODEL?.trim() || ((env.LLM_PROVIDER ?? 'gemini') === 'gemini' && env.LLM_MODEL?.trim()) || '';
+  const model = (configured && configured !== 'gemini-3-flash-preview') ? configured : 'gemini-3.5-flash';
   return { apiKey, model, grounding: !/^(off|0|false|no)$/i.test(env.CELEBRITY_GROUNDING ?? ''), baseUrl: env.LLM_BASE_URL?.trim() || 'https://generativelanguage.googleapis.com', timeoutMs: Number(env.CELEBRITY_TIMEOUT_MS ?? 100_000) };
 }
 
@@ -149,24 +157,47 @@ export interface CelebGenResult { post: CelebPost; warnings: string[] }
 async function writeWithGemini(n: CelebNumbers, lang: Lang, english: CelebContent | undefined, opts: CelebAgentOpts): Promise<{ content: CelebContent; profile?: CelebProfile; sources: CelebSource[]; model: string }> {
   const cfg = geminiConfig(opts.env);
   const fetchImpl = opts.fetchImpl ?? fetch;
+  const models = [cfg.model, ...CANDIDATE_MODELS.filter((m) => m !== cfg.model)];
+  let modelIdx = 0;
   let grounding = cfg.grounding && lang === 'en';
   let user = prompt(n, lang, english);
   let last = '';
   for (let attempt = 0; attempt < 3; attempt++) {
+    const currentCfg = { ...cfg, model: models[modelIdx] };
     try {
-      const r = await callGemini(cfg, RULES, user, grounding, fetchImpl);
+      const r = await callGemini(currentCfg, RULES, user, grounding, fetchImpl);
       const raw = extractJson(r.text);
       const content = ContentSchema.safeParse(raw.content ?? raw);
-      if (!content.success) { last = content.error.issues.slice(0, 3).map((i) => `${i.path.join('.')}: ${i.message}`).join('; '); user = `${prompt(n, lang, english)}\n\nYour previous reply was invalid (${last}). Reply again with ONLY the JSON object.`; continue; }
+      if (!content.success) {
+        last = content.error.issues.slice(0, 3).map((i) => `${i.path.join('.')}: ${i.message}`).join('; ');
+        user = `${prompt(n, lang, english)}\n\nYour previous reply was invalid (${last}). Reply again with ONLY the JSON object.`;
+        continue;
+      }
       const profile = raw.profile ? ProfileSchema.safeParse(raw.profile) : null;
-      return { content: tidy(content.data), profile: profile?.success ? profile.data : undefined, sources: r.sources, model: cfg.model };
+      return { content: tidy(content.data), profile: profile?.success ? profile.data : undefined, sources: r.sources, model: currentCfg.model };
     } catch (e) {
       const status = (e as { status?: number }).status;
       last = e instanceof Error ? e.message : 'error';
-      // Some models / keys do not allow the Google Search tool – try again without it.
-      if (grounding && status && status >= 400 && status < 500 && status !== 429) { grounding = false; continue; }
-      if (status && status >= 400 && status < 500 && status !== 429) throw Object.assign(new Error(`${last}${(e as { detail?: string }).detail ? ` – ${(e as { detail?: string }).detail}` : ''}`), { code: 'AI_REJECTED' });
-      if (e instanceof SyntaxError || /no JSON/.test(last)) { user = `${prompt(n, lang, english)}\n\nYour previous reply was not valid JSON. Reply again with ONLY the JSON object.`; continue; }
+      // If Google Search grounding caused quota exhaustion (HTTP 429) or 4xx rejection, disable grounding immediately and retry!
+      if (grounding && ((status && status >= 400 && status < 500) || /429|quota/i.test(last))) {
+        grounding = false;
+        continue;
+      }
+      // If rate limited (429) or high demand / server overload (503 / 500), try fallback model and wait with backoff
+      if (status === 429 || status === 503 || status === 500) {
+        if (modelIdx + 1 < models.length) {
+          modelIdx++;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)));
+        continue;
+      }
+      if (status && status >= 400 && status < 500 && status !== 429) {
+        throw Object.assign(new Error(`${last}${(e as { detail?: string }).detail ? ` – ${(e as { detail?: string }).detail}` : ''}`), { code: 'AI_REJECTED' });
+      }
+      if (e instanceof SyntaxError || /no JSON/.test(last)) {
+        user = `${prompt(n, lang, english)}\n\nYour previous reply was not valid JSON. Reply again with ONLY the JSON object.`;
+        continue;
+      }
     }
   }
   throw Object.assign(new Error(`The AI writer did not return a usable post (${last}).`), { code: 'AI_FAILED' });
@@ -183,7 +214,16 @@ export async function generateCelebPost(name: string, dob: string, opts: CelebAg
       warnings: ['GEMINI_API_KEY is not set, so the offline writer prepared this draft. Add the celebrity background in the "Who is" section before publishing.'],
     };
   }
-  const r = await writeWithGemini(n, 'en', undefined, opts);
+  let r: { content: CelebContent; profile?: CelebProfile; sources: CelebSource[]; model: string };
+  try {
+    r = await writeWithGemini(n, 'en', undefined, opts);
+  } catch (err) {
+    if (opts.fetchImpl) throw err;
+    return {
+      post: { ...base, profile: { identified: false, profession: '', knownFor: '', nationality: '' }, en: templateContent(n, 'en'), hi: templateContent(n, 'hi'), sources: [], writer: 'template' },
+      warnings: [`AI generation could not complete (${err instanceof Error ? err.message : 'rate limit'}). A complete structured offline draft with exact numerology calculations has been prepared for you. You can review and edit it below.`]
+    };
+  }
   const warnings: string[] = [];
   const profile = r.profile ?? { identified: true, profession: '', knownFor: '', nationality: '' };
   if (!profile.identified) warnings.push(`Gemini could not confirm a well-known person named "${n.name}" born on ${n.dob}. Check the name and date, and add the background yourself.`);
@@ -197,7 +237,16 @@ export async function generateCelebPost(name: string, dob: string, opts: CelebAg
 export async function translateCelebPost(post: CelebPost, opts: CelebAgentOpts = {}): Promise<{ hi: CelebContent; warnings: string[] }> {
   const n = celebNumbers(post.name, post.dob);
   if (!geminiConfig(opts.env).apiKey) return { hi: templateContent(n, 'hi'), warnings: ['GEMINI_API_KEY is not set – the offline Hindi draft was used.'] };
-  const r = await writeWithGemini(n, 'hi', post.en, opts);
+  let r: { content: CelebContent; profile?: CelebProfile; sources: CelebSource[]; model: string };
+  try {
+    r = await writeWithGemini(n, 'hi', post.en, opts);
+  } catch (err) {
+    if (opts.fetchImpl) throw err;
+    return {
+      hi: templateContent(n, 'hi'),
+      warnings: [`AI Hindi translation could not complete (${err instanceof Error ? err.message : 'rate limit'}). An offline Hindi structured draft has been loaded instead.`]
+    };
+  }
   const bad = numberIssues(r.content, n);
   return { hi: r.content, warnings: bad.length ? [`Hindi numbers that differ from the calculation: ${bad.join(', ')}.`] : [] };
 }
