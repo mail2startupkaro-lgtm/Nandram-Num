@@ -78,6 +78,13 @@
       "when": 1795080000000,
       "tag": "0010_site_analytics",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1795166400000,
+      "tag": "0011_celebrity_posts",
+      "breakpoints": true
     }
   ]
 }

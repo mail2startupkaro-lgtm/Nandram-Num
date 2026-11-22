@@ -11,6 +11,10 @@ import { mulankFor } from '@/lib/mulank-data';
 import { bhagyankFor } from '@/lib/bhagyank-data';
 import { PostArt } from '@/components/blog/post-art';
 import { TOPIC_CATS, TOPIC_POSTS, buildTopic } from '@/lib/blog/topics';
+import { publishedCelebPosts } from '@/lib/celebrity/public';
+
+// Re-built hourly and whenever a celebrity post is published from the admin panel.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'Numerology Blog: 100+ Guides on Mulank, Compatibility, Lo Shu & More',
@@ -18,7 +22,8 @@ export const metadata: Metadata = {
   alternates: { canonical: '/blog' },
 };
 
-export default function BlogHome() {
+export default async function BlogHome() {
+  const celebs = (await publishedCelebPosts()).slice(0, 6);
   const lite = CITIES.map(({ slug, name, state, tier, alias }) => ({ slug, name, state, tier, alias, nameHi: cityHi(name), stateHi: stateHi(state), aliasHi: alias ? ALIAS_HI[alias] : undefined }));
   const t = [1, 2, 3].map((n) => CITIES.filter((c) => c.tier === n).length);
   const featured = ['mumbai', 'delhi', 'bengaluru', 'pune', 'hyderabad', 'chennai', 'kolkata', 'ahmedabad'].map((s) => CITIES.find((c) => c.slug === s)!).filter(Boolean);
@@ -39,6 +44,24 @@ export default function BlogHome() {
         <Link href="/blog/best-numerologist-in-mumbai" className="mk-shine mt-4 inline-flex h-11 items-center gap-2 rounded-md border border-gold/60 px-5 font-medium hover:bg-gold/10"><Bi en="Read the Mumbai guide" hi="मुंबई मार्गदर्शिका पढ़ें" /> <ArrowRight className="h-4 w-4" /></Link>
         <div className="mt-5 flex flex-wrap gap-2">{featured.filter((c) => c.slug !== 'mumbai').map((c) => <Link key={c.slug} href={`/blog/best-numerologist-in-${c.slug}`} className="rounded-full border border-gold/40 px-3 py-1 text-sm hover:bg-gold/10"><Bi en={c.name} hi={cityHi(c.name)} /></Link>)}</div>
       </section>
+
+      {celebs.length > 0 && (
+        <section aria-labelledby="cel-label" className="space-y-4">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <div><p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold"><Bi en="New · Celebrity numerology" hi="नया · सेलिब्रिटी अंक ज्योतिष" /></p>
+              <h2 id="cel-label" className="font-cinzel mt-1 text-2xl font-bold sm:text-3xl"><Bi en="Numerology of Famous People" hi="प्रसिद्ध लोगों की अंक ज्योतिष" /></h2></div>
+            <Link href="/blog/celebrity" className="text-sm text-gold hover:underline"><Bi en="All celebrity readings →" hi="सभी सेलिब्रिटी रीडिंग →" /></Link>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {celebs.map((p) => (
+              <Link key={p.slug} href={`/blog/celebrity/${p.slug}`} className="mk-card group glass flex items-center gap-3 rounded-xl border border-gold/25 p-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#2a0e1b] to-[#24130a] font-cinzel text-xl font-bold gold-text">{p.moolank}</span>
+                <span className="min-w-0"><span className="block font-semibold group-hover:text-gold">{p.name} <Bi en="Numerology" hi="अंक ज्योतिष" /></span><span className="block truncate text-xs text-muted-foreground">{p.profession ? `${p.profession} · ` : ''}Mulank {p.moolank} · Bhagyank {p.bhagyank}</span></span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section aria-labelledby="ta-label" className="space-y-8">
         <div className="text-center">

@@ -6,6 +6,7 @@ import { SERVICE_PAGES } from '@/lib/service-pages';
 import { CITIES, postSlug } from '@/lib/blog/cities';
 import { TOP_ANGEL } from '@/lib/angel/generate';
 import { TOPIC_POSTS } from '@/lib/blog/topics';
+import { publishedCelebPosts } from '@/lib/celebrity/public';
 
 import { SITE_URL } from '@/lib/seo/site';
 
@@ -13,8 +14,12 @@ const base = () => SITE_URL;
 /** Date the static guides were last revised – keeps lastmod stable between deploys. */
 const CONTENT_DATE = new Date('2026-11-09');
 
-export default function sitemap(): MetadataRoute.Sitemap {
+// Built per request (the post list itself is cached and cleared on publish), so new celebrity posts appear at once.
+export const dynamic = 'force-dynamic';
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
+  const celebs = await publishedCelebPosts();
   const c = CONTENT_DATE;
   return [
     { url: `${base()}/`, lastModified: now, changeFrequency: 'weekly', priority: 1 },
@@ -38,6 +43,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base()}/angel-numbers/calculator`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 },
     ...TOP_ANGEL.map((n, i) => ({ url: `${base()}/angel-numbers/${n}`, lastModified: c, changeFrequency: 'monthly' as const, priority: i < 50 ? 0.8 : i < 300 ? 0.6 : 0.4 })),
     { url: `${base()}/blog`, lastModified: now, changeFrequency: 'weekly' as const, priority: 0.8 },
+    { url: `${base()}/blog/celebrity`, lastModified: celebs[0] ? new Date(celebs[0].publishedAt ?? celebs[0].updatedAt) : now, changeFrequency: 'weekly' as const, priority: 0.7 },
+    ...celebs.map((p) => ({ url: `${base()}/blog/celebrity/${p.slug}`, lastModified: new Date(p.updatedAt), changeFrequency: 'monthly' as const, priority: 0.7 })),
     ...CITIES.map((x) => ({ url: `${base()}/blog/${postSlug(x)}`, lastModified: c, changeFrequency: 'monthly' as const, priority: x.tier === 1 ? 0.8 : x.tier === 2 ? 0.6 : 0.5 })),
     ...['terms', 'privacy', 'refund', 'disclaimer'].map((p) => ({ url: `${base()}/${p}`, lastModified: now, priority: 0.2 })),
   ];
