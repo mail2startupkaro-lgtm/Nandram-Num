@@ -54,7 +54,9 @@ export async function requestOtp(channel: 'email' | 'sms', raw: string, opts: { 
   await send({ channel, to: ident, code, brand: opts.brand ?? process.env.BRAND_NAME ?? 'Numerology' });
   // SECURITY: the code is only ever shown on screen on a development machine – never on a live site,
   // otherwise anyone could reset anyone's password (including the super admin's) from "Forgot password".
-  const providerMissing = channel === 'email' ? !process.env.RESEND_API_KEY : !process.env.MSG91_AUTH_KEY;
+  const providerMissing = channel === 'email'
+    ? !(process.env.HOSTINGER_MAIL_API_TOKEN || process.env.HOSTINGER_API_TOKEN || process.env.RESEND_API_KEY)
+    : !(process.env.FAST2SMS_API_KEY || process.env.MSG91_AUTH_KEY);
   const exposeForDev = process.env.NODE_ENV !== 'production' && (process.env.AUTH_DEV_SHOW_OTP === '1' || providerMissing);
   return { identifier: ident, ...(exposeForDev ? { devCode: code } : {}) };
 }

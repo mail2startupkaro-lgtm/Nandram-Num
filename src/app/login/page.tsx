@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, Eye, EyeOff, KeyRound, LogIn, Shield, UserPlus } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Eye, EyeOff, KeyRound, LogIn, Shield, Smartphone, UserPlus } from 'lucide-react';
 import { useApp } from '@/components/layout/providers';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/form';
@@ -26,12 +26,15 @@ function PasswordInput({ id, value, onChange, autoComplete, show, setShow }: {
 }
 
 function LoginInner() {
-  const { t, me, refreshMe } = useApp();
+  const { t, lang, me, refreshMe } = useApp();
+  const hi = lang === 'hi';
   const router = useRouter();
   const params = useSearchParams();
   const rawNext = params.get('next') ?? '';
   const next = /^\/(?![/\\])/.test(rawNext) && !rawNext.startsWith('/admin') ? rawNext : '/dashboard'; // same-site paths only (blocks //evil.com and keeps admin separated)
   const [mode, setMode] = React.useState<'signin' | 'signup' | 'forgot'>(params.get('mode') === 'signup' ? 'signup' : 'signin');
+  const [authMethod, setAuthMethod] = React.useState<'otp' | 'password'>('otp');
+  const [otpStep, setOtpStep] = React.useState<'request' | 'verify'>('request');
   const [identifier, setIdentifier] = React.useState('');
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
@@ -44,7 +47,7 @@ function LoginInner() {
   const [error, setError] = React.useState<string | null>(params.get('error'));
   const [success, setSuccess] = React.useState<string | null>(null);
 
-  // Forgot password states
+  // OTP login / Forgot password states
   const [forgotStep, setForgotStep] = React.useState<'request' | 'reset'>('request');
   const [otpCode, setOtpCode] = React.useState('');
   const [devOtp, setDevOtp] = React.useState<string | null>(null);
@@ -54,11 +57,34 @@ function LoginInner() {
 
   React.useEffect(() => { if (me?.user) router.replace(next); }, [me, next, router]);
 
-  async function signin() {
+  async function signinPassword() {
     setBusy(true); setError(null); setSuccess(null);
     try {
       await api('/api/auth/login', { method: 'POST', json: { identifier, password } });
       await refreshMe(); router.replace(next);
+    } catch (e) { setError(msg(e)); } finally { setBusy(false); }
+  }
+
+  async function requestLoginOtp() {
+    if (identifier.trim().length < 3) return;
+    setBusy(true); setError(null); setSuccess(null);
+    try {
+      const channel = identifier.includes('@') ? 'email' : 'sms';
+      const res = await api<{ devCode?: string }>('/api/auth/otp/request', { method: 'POST', json: { channel, identifier } });
+      if (res.devCode) setDevOtp(res.devCode);
+      setOtpStep('verify');
+      setSuccess(hi ? 'OTP आपके मोबाइल / ईमेल पर भेज दिया गया है!' : 'OTP has been sent to your mobile / email!');
+    } catch (e) { setError(msg(e)); } finally { setBusy(false); }
+  }
+
+  async function verifyLoginOtp() {
+    if (otpCode.trim().length !== 6) return;
+    setBusy(true); setError(null); setSuccess(null);
+    try {
+      const channel = identifier.includes('@') ? 'email' : 'sms';
+      await api('/api/auth/otp/verify', { method: 'POST', json: { channel, identifier, code: otpCode.trim() } });
+      await refreshMe();
+      router.replace(next);
     } catch (e) { setError(msg(e)); } finally { setBusy(false); }
   }
 
@@ -91,6 +117,7 @@ function LoginInner() {
       await api('/api/auth/reset-password', { method: 'POST', json: { identifier, code: otpCode.trim(), newPassword: password } });
       setSuccess(t.auth.resetSuccess);
       setMode('signin');
+      setAuthMethod('password');
       setForgotStep('request');
       setPassword('');
       setConfirm('');
@@ -142,7 +169,7 @@ function LoginInner() {
             <h1 className="text-3xl font-bold">{mode === 'signin' ? t.auth.title : t.auth.signupTitle}</h1>
             <p className="mb-6 mt-1 text-sm text-muted-foreground">{mode === 'signin' ? t.auth.sub : t.auth.signupSub}</p>
             <Tabs className="mb-5" tabs={[{ value: 'signin', label: t.auth.signin }, { value: 'signup', label: t.auth.signup }]} value={mode}
-              onChange={(v) => { setMode(v as 'signin' | 'signup'); setError(null); setSuccess(null); setPassword(''); setConfirm(''); }} />
+              onChange={(v) => { setMode(v as 'signin' | 'signup'); setError(null); setSuccess(null); setPassword(''); setConfirm(''); setOtpStep('request'); }} />
             {me?.providers.google && (
               <>
                 <a href={`/api/auth/google?next=${encodeURIComponent(next)}`} className="flex h-11 w-full items-center justify-center gap-3 rounded-md border border-border bg-white text-sm font-medium text-[#1f1f1f] hover:bg-gray-50">
@@ -152,23 +179,110 @@ function LoginInner() {
                 <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground"><span className="h-px flex-1 bg-border" />{t.auth.or}<span className="h-px flex-1 bg-border" /></div>
               </>
             )}
+
             {mode === 'signin' ? (
-              <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); signin(); }}>
-                <Field label={t.auth.identLabel} htmlFor="ident">
-                  <Input id="ident" autoFocus autoComplete="username" placeholder={t.auth.identPlaceholder} value={identifier} onChange={(e) => setIdentifier(e.target.value)} required />
-                </Field>
-                <div>
-                  <Field label={t.auth.password} htmlFor="pw">
-                    <PasswordInput id="pw" value={password} onChange={setPassword} autoComplete="current-password" show={show} setShow={setShow} />
-                  </Field>
-                  <div className="mt-1.5 flex justify-end">
-                    <button type="button" onClick={() => { setMode('forgot'); setError(null); setSuccess(null); }} className="text-xs text-gold hover:underline">
-                      {t.auth.forgotPassword}
-                    </button>
-                  </div>
+              <div className="space-y-4">
+                {/* Auth method switcher: OTP vs Password */}
+                <div className="grid grid-cols-2 gap-1 rounded-lg border border-border p-1 bg-muted/20">
+                  <button
+                    type="button"
+                    onClick={() => { setAuthMethod('otp'); setError(null); setSuccess(null); }}
+                    className={`flex items-center justify-center gap-1.5 rounded-md py-2 text-xs font-medium transition-all ${authMethod === 'otp' ? 'bg-gold/20 text-gold shadow-sm font-semibold' : 'text-muted-foreground hover:text-foreground'}`}
+                  >
+                    <Smartphone className="h-3.5 w-3.5" />
+                    {hi ? 'OTP से लॉगिन' : 'Login with OTP'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setAuthMethod('password'); setError(null); setSuccess(null); }}
+                    className={`flex items-center justify-center gap-1.5 rounded-md py-2 text-xs font-medium transition-all ${authMethod === 'password' ? 'bg-gold/20 text-gold shadow-sm font-semibold' : 'text-muted-foreground hover:text-foreground'}`}
+                  >
+                    <KeyRound className="h-3.5 w-3.5" />
+                    {hi ? 'पासवर्ड से लॉगिन' : 'Password'}
+                  </button>
                 </div>
-                <Button type="submit" variant="gold" className="w-full" disabled={busy || identifier.length < 3 || !password}><LogIn /> {t.auth.verify}</Button>
-              </form>
+
+                {authMethod === 'otp' ? (
+                  otpStep === 'request' ? (
+                    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); requestLoginOtp(); }}>
+                      <Field label={t.auth.identLabel} htmlFor="otp-ident" hint={hi ? '10 अंकों का मोबाइल नंबर या ईमेल आईडी दर्ज करें' : 'Enter 10-digit mobile number or email'}>
+                        <Input
+                          id="otp-ident"
+                          autoFocus
+                          autoComplete="username"
+                          placeholder={t.auth.identPlaceholder}
+                          value={identifier}
+                          onChange={(e) => setIdentifier(e.target.value)}
+                          required
+                        />
+                      </Field>
+                      <Button type="submit" variant="gold" className="w-full" disabled={busy || identifier.trim().length < 3}>
+                        <Smartphone className="h-4 w-4" /> {busy ? (hi ? 'भेज रहे हैं…' : 'Sending OTP…') : (hi ? 'OTP प्राप्त करें' : 'Send OTP')}
+                      </Button>
+                    </form>
+                  ) : (
+                    <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); verifyLoginOtp(); }}>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>{hi ? 'OTP भेजा गया:' : 'OTP sent to:'} <b>{identifier}</b></span>
+                        <button
+                          type="button"
+                          onClick={() => { setOtpStep('request'); setOtpCode(''); setError(null); }}
+                          className="text-gold underline hover:opacity-80"
+                        >
+                          {hi ? 'बदलें' : 'Change'}
+                        </button>
+                      </div>
+
+                      <Field label={t.auth.code} htmlFor="login-otp-code">
+                        <Input
+                          id="login-otp-code"
+                          autoFocus
+                          inputMode="numeric"
+                          maxLength={6}
+                          placeholder="123456"
+                          value={otpCode}
+                          onChange={(e) => setOtpCode(e.target.value)}
+                          required
+                        />
+                      </Field>
+
+                      {devOtp && <p className="text-xs text-gold bg-gold/10 p-2 rounded">{t.auth.devCode}: <b>{devOtp}</b></p>}
+
+                      <Button type="submit" variant="gold" className="w-full" disabled={busy || otpCode.trim().length !== 6}>
+                        <LogIn className="h-4 w-4" /> {busy ? (hi ? 'सत्यापित कर रहे हैं…' : 'Verifying…') : (hi ? 'सत्यापित करें और लॉगिन करें' : 'Verify & Sign in')}
+                      </Button>
+
+                      <div className="text-center">
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={requestLoginOtp}
+                          className="text-xs text-gold hover:underline"
+                        >
+                          {hi ? 'OTP दोबारा भेजें' : 'Resend OTP'}
+                        </button>
+                      </div>
+                    </form>
+                  )
+                ) : (
+                  <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); signinPassword(); }}>
+                    <Field label={t.auth.identLabel} htmlFor="ident">
+                      <Input id="ident" autoFocus autoComplete="username" placeholder={t.auth.identPlaceholder} value={identifier} onChange={(e) => setIdentifier(e.target.value)} required />
+                    </Field>
+                    <div>
+                      <Field label={t.auth.password} htmlFor="pw">
+                        <PasswordInput id="pw" value={password} onChange={setPassword} autoComplete="current-password" show={show} setShow={setShow} />
+                      </Field>
+                      <div className="mt-1.5 flex justify-end">
+                        <button type="button" onClick={() => { setMode('forgot'); setError(null); setSuccess(null); }} className="text-xs text-gold hover:underline">
+                          {t.auth.forgotPassword}
+                        </button>
+                      </div>
+                    </div>
+                    <Button type="submit" variant="gold" className="w-full" disabled={busy || identifier.length < 3 || !password}><LogIn className="h-4 w-4" /> {t.auth.verify}</Button>
+                  </form>
+                )}
+              </div>
             ) : (
               <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); signup(); }}>
                 <Field label={t.auth.fullName} htmlFor="nm" required><Input id="nm" autoFocus autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} required /></Field>
