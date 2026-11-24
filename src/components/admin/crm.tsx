@@ -13,6 +13,7 @@ import { Field, Input, Select } from '@/components/ui/form';
 import { Badge } from '@/components/ui/misc';
 import { api, ApiError, download } from '@/lib/client/api';
 import { cn } from '@/lib/utils';
+import { EmailMarketingAdmin } from './email-marketing';
 
 // ------------------------------------------------------------------ types & constants
 type Stage = 'new' | 'contacted' | 'interested' | 'consultation' | 'proposal' | 'won' | 'lost';
@@ -125,10 +126,11 @@ function Modal({ title, onClose, children, wide }: { title: string; onClose: () 
 function openWhatsApp(phone: string | null, text: string) { const n = waNumber(phone); if (n) window.open(`https://wa.me/${n}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer'); }
 
 // ------------------------------------------------------------------ main
-type View = 'dashboard' | 'leads' | 'pipeline' | 'contacts' | 'tasks' | 'birthdays' | 'tags';
+type View = 'dashboard' | 'leads' | 'pipeline' | 'contacts' | 'email-marketing' | 'tasks' | 'birthdays' | 'tags';
 const VIEWS: { id: View; label: string; icon: React.ElementType }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'leads', label: 'Leads (E-Books & Readings)', icon: Flame },
+  { id: 'email-marketing', label: 'Email Marketing', icon: Mail },
   { id: 'pipeline', label: 'Pipeline', icon: KanbanSquare },
   { id: 'contacts', label: 'All Contacts', icon: Users },
   { id: 'tasks', label: 'Follow-ups', icon: ListChecks },
@@ -143,6 +145,7 @@ export function CrmAdmin() {
   const [filter, setFilter] = React.useState<Filter>({ stage: 'all', sort: 'recent' });
   const [adding, setAdding] = React.useState(false);
   const [importing, setImporting] = React.useState(false);
+  const [emailLead, setEmailLead] = React.useState<{ id?: string; fullName?: string | null; email?: string | null; phone?: string | null; dob?: string | null; moolank?: number | null; bhagyank?: number | null } | null>(null);
   const [rev, setRev] = React.useState(0); // bump to reload the visible view
   const [owners, setOwners] = React.useState<Owner[]>([]);
   const [tags, setTags] = React.useState<(TagRef & { n: number })[]>([]);
@@ -152,6 +155,10 @@ export function CrmAdmin() {
   React.useEffect(() => { api<{ tags: (TagRef & { n: number })[] }>('/api/admin/crm?view=tags').then((r) => setTags(r.tags)).catch(() => {}); }, [rev]);
   const goContacts = (f: Filter) => { setFilter({ stage: 'all', sort: 'recent', ...f }); setView('contacts'); };
   const goLeads = () => setView('leads');
+  const openEmailWithLead = (l: { id?: string; fullName?: string | null; email?: string | null; phone?: string | null; dob?: string | null; moolank?: number | null; bhagyank?: number | null }) => {
+    setEmailLead(l);
+    setView('email-marketing');
+  };
 
   async function sync() {
     try { const r = await api<{ added: number; linked: number; won: number }>('/api/admin/crm', { method: 'POST', json: { op: 'sync' } }); toast.show(true, `Synced: ${r.added} new contact(s), ${r.linked} linked to accounts, ${r.won} marked Won.`); refresh(); }
@@ -178,9 +185,10 @@ export function CrmAdmin() {
       </nav>
 
       {view === 'dashboard' && <Dashboard rev={rev} onOpen={setOpenId} goContacts={goContacts} goLeads={goLeads} goTasks={() => setView('tasks')} goBirthdays={() => setView('birthdays')} />}
-      {view === 'leads' && <LeadsView rev={rev} onOpen={setOpenId} toast={toast.show} refresh={refresh} />}
+      {view === 'leads' && <LeadsView rev={rev} onOpen={setOpenId} onEmailLead={openEmailWithLead} toast={toast.show} refresh={refresh} />}
+      {view === 'email-marketing' && <EmailMarketingAdmin initialLead={emailLead} onCloseLeadModal={() => setEmailLead(null)} />}
       {view === 'pipeline' && <Pipeline rev={rev} onOpen={setOpenId} owners={owners} toast={toast.show} />}
-      {view === 'contacts' && <Contacts rev={rev} filter={filter} setFilter={setFilter} onOpen={setOpenId} owners={owners} tags={tags} toast={toast.show} refresh={refresh} />}
+      {view === 'contacts' && <Contacts rev={rev} filter={filter} setFilter={setFilter} onOpen={setOpenId} onEmailLead={openEmailWithLead} owners={owners} tags={tags} toast={toast.show} refresh={refresh} />}
       {view === 'tasks' && <Tasks rev={rev} onOpen={setOpenId} toast={toast.show} />}
       {view === 'birthdays' && <Birthdays rev={rev} onOpen={setOpenId} toast={toast.show} />}
       {view === 'tags' && <TagsView tags={tags} goContacts={goContacts} toast={toast.show} refresh={refresh} />}
@@ -353,7 +361,7 @@ function LostDialog({ name, onClose, onPick }: { name: string; onClose: () => vo
 }
 
 // ------------------------------------------------------------------ leads (eBooks & free readings)
-function LeadsView({ rev, onOpen, toast, refresh }: { rev: number; onOpen: (id: string) => void; toast: (ok: boolean, t: string) => void; refresh: () => void }) {
+function LeadsView({ rev, onOpen, onEmailLead, toast, refresh }: { rev: number; onOpen: (id: string) => void; onEmailLead?: (l: { id?: string; fullName?: string | null; email?: string | null; phone?: string | null; dob?: string | null; moolank?: number | null; bhagyank?: number | null }) => void; toast: (ok: boolean, t: string) => void; refresh: () => void }) {
   const [data, setData] = React.useState<{ contacts: Contact[]; total: number; page: number; pageSize: number } | null>(null);
   const [leadType, setLeadType] = React.useState<'all' | 'ebook' | 'reading'>('all');
   const [stage, setStage] = React.useState<string>('all');
@@ -581,6 +589,16 @@ function LeadsView({ rev, onOpen, toast, refresh }: { rev: number; onOpen: (id: 
                       </td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-1.5">
+                          {c.email && (
+                            <button
+                              type="button"
+                              onClick={() => onEmailLead?.({ id: c.id, fullName: c.name, email: c.email, phone: c.phone, dob: c.dob, moolank: c.moolank, bhagyank: c.bhagyank })}
+                              title="Send Services Marketing Email"
+                              className="inline-flex h-7 items-center gap-1 rounded bg-gold/15 px-2 text-xs font-semibold text-gold hover:bg-gold/25 border border-gold/30"
+                            >
+                              <Mail className="h-3.5 w-3.5" /> Email
+                            </button>
+                          )}
                           {c.phone && (
                             <>
                               <button
@@ -633,7 +651,7 @@ function LeadsView({ rev, onOpen, toast, refresh }: { rev: number; onOpen: (id: 
 }
 
 // ------------------------------------------------------------------ contacts table
-function Contacts({ rev, filter, setFilter, onOpen, owners, tags, toast, refresh }: { rev: number; filter: Filter; setFilter: (f: Filter) => void; onOpen: (id: string) => void; owners: Owner[]; tags: TagRef[]; toast: (ok: boolean, t: string) => void; refresh: () => void }) {
+function Contacts({ rev, filter, setFilter, onOpen, onEmailLead, owners, tags, toast, refresh }: { rev: number; filter: Filter; setFilter: (f: Filter) => void; onOpen: (id: string) => void; onEmailLead?: (l: { id?: string; fullName?: string | null; email?: string | null; phone?: string | null; dob?: string | null; moolank?: number | null; bhagyank?: number | null }) => void; owners: Owner[]; tags: TagRef[]; toast: (ok: boolean, t: string) => void; refresh: () => void }) {
   const [data, setData] = React.useState<{ contacts: Contact[]; total: number; page: number; pageSize: number } | null>(null);
   const [sel, setSel] = React.useState<Set<string>>(new Set());
   const [more, setMore] = React.useState(false);
