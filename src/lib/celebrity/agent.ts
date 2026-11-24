@@ -12,16 +12,17 @@ type Env = Record<string, string | undefined>;
 export interface CelebAgentOpts { env?: Env; fetchImpl?: typeof fetch }
 
 const CANDIDATE_MODELS = [
-  'gemini-3.5-flash',
-  'gemini-3.1-flash-lite',
-  'gemini-flash-lite-latest',
-  'gemini-3-flash-preview',
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro',
 ];
 
 export function geminiConfig(env: Env = process.env) {
   const apiKey = env.GEMINI_API_KEY || env.GOOGLE_API_KEY || '';
   const configured = env.CELEBRITY_LLM_MODEL?.trim() || ((env.LLM_PROVIDER ?? 'gemini') === 'gemini' && env.LLM_MODEL?.trim()) || '';
-  const model = (configured && configured !== 'gemini-3-flash-preview') ? configured : 'gemini-3.5-flash';
+  // Avoid unreleased/invalid gemini-3 placeholder names, prefer gemini-2.5-flash or gemini-1.5-flash
+  const model = (configured && !configured.startsWith('gemini-3')) ? configured : 'gemini-2.5-flash';
   return { apiKey, model, grounding: !/^(off|0|false|no)$/i.test(env.CELEBRITY_GROUNDING ?? ''), baseUrl: env.LLM_BASE_URL?.trim() || 'https://generativelanguage.googleapis.com', timeoutMs: Number(env.CELEBRITY_TIMEOUT_MS ?? 100_000) };
 }
 
@@ -162,7 +163,8 @@ async function writeWithGemini(n: CelebNumbers, lang: Lang, english: CelebConten
   let grounding = cfg.grounding && lang === 'en';
   let user = prompt(n, lang, english);
   let last = '';
-  for (let attempt = 0; attempt < 3; attempt++) {
+  const maxAttempts = Math.min(4, Math.max(3, models.length));
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const currentCfg = { ...cfg, model: models[modelIdx] };
     try {
       const r = await callGemini(currentCfg, RULES, user, grounding, fetchImpl);
@@ -183,12 +185,12 @@ async function writeWithGemini(n: CelebNumbers, lang: Lang, english: CelebConten
         grounding = false;
         continue;
       }
-      // If rate limited (429) or high demand / server overload (503 / 500), try fallback model and wait with backoff
-      if (status === 429 || status === 503 || status === 500) {
+      // If rate limited (429) or high demand / server overload (503 / 500) or model not found (404), try fallback model and wait with backoff
+      if (status === 429 || status === 503 || status === 500 || status === 404) {
         if (modelIdx + 1 < models.length) {
           modelIdx++;
         }
-        await new Promise((resolve) => setTimeout(resolve, 600 * (attempt + 1)));
+        await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
         continue;
       }
       if (status && status >= 400 && status < 500 && status !== 429) {
