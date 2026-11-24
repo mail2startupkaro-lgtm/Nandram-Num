@@ -205,6 +205,70 @@ export async function sendReportEmail(opts: ReportEmailOptions): Promise<ReportE
   const base64Pdf = Buffer.from(opts.reportPdf).toString('base64');
   const fetchImpl = opts.fetchImpl || fetch;
 
+  const hostingerToken = process.env.HOSTINGER_MAIL_API_TOKEN || process.env.HOSTINGER_API_TOKEN || process.env.HOSTINGER_TOKEN;
+  if (hostingerToken) {
+    try {
+      let mailboxId = process.env.HOSTINGER_MAILBOX_ID;
+      if (!mailboxId) {
+        const meRes = await fetchImpl('https://api.mail.hostinger.com/api/v1/me', {
+          headers: {
+            authorization: `Bearer ${hostingerToken.trim()}`,
+            accept: 'application/json',
+          },
+        });
+        if (meRes.ok) {
+          const meData = (await meRes.json().catch(() => ({}))) as { data?: { mailboxes?: Array<{ resourceId?: string; address?: string }> } };
+          const senderTarget = (process.env.EMAIL_FROM || 'info@mynumerologist.com').toLowerCase();
+          const match = meData.data?.mailboxes?.find((m) => m.address && senderTarget.includes(m.address.toLowerCase()));
+          mailboxId = match?.resourceId || meData.data?.mailboxes?.[0]?.resourceId;
+        } else {
+          const errText = await meRes.text().catch(() => '');
+          console.warn(`[Report Email] Hostinger /api/v1/me failed (${meRes.status}): ${errText}`);
+        }
+      }
+
+      if (mailboxId) {
+        const sendRes = await fetchImpl(`https://api.mail.hostinger.com/api/v1/mailboxes/${mailboxId}/send`, {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${hostingerToken.trim()}`,
+            'content-type': 'application/json',
+            accept: 'application/json',
+          },
+          body: JSON.stringify({
+            to: [to],
+            subject,
+            html,
+            text,
+            attachments: [
+              {
+                filename: fileName,
+                contentType: 'application/pdf',
+                content: base64Pdf,
+              },
+            ],
+          }),
+        });
+
+        if (!sendRes.ok) {
+          const errBody = await sendRes.text().catch(() => '');
+          console.error(`[Report Email] Hostinger Mail API error (${sendRes.status}): ${errBody}`);
+          return { ok: false, sentTo: to, error: `Hostinger error ${sendRes.status}: ${errBody || 'Send failed'}` };
+        }
+
+        const json = await sendRes.json().catch(() => ({}));
+        console.info(`[Report Email] Report PDF successfully sent via Hostinger to ${to}`);
+        return { ok: true, sentTo: to, id: (json as { data?: { id?: string } })?.data?.id };
+      } else {
+        console.warn('[Report Email] No Hostinger mailboxResourceId resolved from /api/v1/me');
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Hostinger request error';
+      console.error(`[Report Email] Hostinger delivery failed: ${msg}`);
+      return { ok: false, sentTo: to, error: msg };
+    }
+  }
+
   if (process.env.RESEND_API_KEY) {
     try {
       const from = process.env.EMAIL_FROM || `${brandName} <reports@mynumerologist.com>`;
@@ -245,7 +309,7 @@ export async function sendReportEmail(opts: ReportEmailOptions): Promise<ReportE
     }
   }
 
-  // Development/testing mode without RESEND_API_KEY
+  // Development/testing mode without email provider configured
   console.info(`[Report Email] (Dev/Simulation) Attached "${fileName}" (${opts.reportPdf.length} bytes) to ${to}`);
   return { ok: true, sentTo: to, dev: true };
 }
