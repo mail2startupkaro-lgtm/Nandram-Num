@@ -37,6 +37,8 @@ const nextConfig = {
   compress: true,
   images: { formats: ['image/avif', 'image/webp'] },
   experimental: {
+    workerThreads: false,
+    cpus: 2,
     optimizePackageImports: ['lucide-react', 'framer-motion', 'recharts'],
     serverComponentsExternalPackages: ['playwright-core', '@sparticuz/chromium-min', 'pdfjs-dist', 'pdf-lib', 'qrcode', 'pg', 'papaparse'],
     outputFileTracingIncludes: { '/api/**/*': ['./node_modules/@fontsource/{playfair-display,poppins,noto-sans-devanagari}/files/*.woff2', './drizzle/**/*', './node_modules/pdfjs-dist/**/*'] },

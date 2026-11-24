@@ -6,6 +6,7 @@ import { OG_SIZE, OgCard } from '../../og-card';
 export const alt = 'Best numerologist city guide by Acharya Nandram';
 export const size = OG_SIZE;
 export const contentType = 'image/png';
+export const runtime = 'edge';
 
 export default async function Image(props: { params: Promise<{ slug: string }> }) {
   const params = await props.params;
