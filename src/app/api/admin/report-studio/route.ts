@@ -24,6 +24,7 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const Body = z.object({
   action: z.enum(['preview', 'pdf', 'email']),
   email: z.string().trim().email().optional(),
+  sendEmailIfProvided: z.boolean().default(false),
   input: z.unknown(),
   modules: z.array(z.enum(['dob', 'name', 'mobile', 'aadhaar', 'couple', 'complete'])).min(1).default(['complete']),
   language: z.enum(['en', 'hi', 'hinglish']).default('en'),
@@ -81,25 +82,37 @@ export const POST = withAdmin(async (req, user) => {
   const clientName = result.client.commonName || result.client.fullName || 'Client';
   const fileName = `${slug(clientName)}-${filePrefix}.pdf`;
 
-  if (b.action === 'email') {
+  let emailSentTo: string | undefined;
+  if (b.action === 'email' || (b.action === 'pdf' && b.sendEmailIfProvided)) {
     const targetEmail = b.email || input.email;
-    if (!targetEmail) {
+    if (b.action === 'email' && !targetEmail) {
       return json({ error: 'EMAIL_REQUIRED', message: 'Enter a client email ID to send the report.' }, 400);
     }
-    const emailRes = await sendReportEmail({
-      to: targetEmail,
-      clientName,
-      reportPdf: out.pdf,
-      fileName,
-      language: b.language,
-      brandName: (overrides.brandName as string) || style.branding?.brandName,
-      expertName: (overrides.expertName as string) || style.branding?.expertName,
-    });
-    if (!emailRes.ok) {
-      return json({ error: 'DELIVERY_FAILED', message: emailRes.error || 'Failed to send email.' }, 500);
+    if (targetEmail) {
+      const emailRes = await sendReportEmail({
+        to: targetEmail,
+        clientName,
+        reportPdf: out.pdf,
+        fileName,
+        language: b.language,
+        brandName: (overrides.brandName as string) || style.branding?.brandName,
+        expertName: (overrides.expertName as string) || style.branding?.expertName,
+      });
+      if (b.action === 'email') {
+        if (!emailRes.ok) {
+          return json({ error: 'DELIVERY_FAILED', message: emailRes.error || 'Failed to send email.' }, 500);
+        }
+        return json({ ok: true, sentTo: targetEmail, dev: emailRes.dev });
+      }
+      if (emailRes.ok) {
+        emailSentTo = targetEmail;
+      }
     }
-    return json({ ok: true, sentTo: targetEmail, dev: emailRes.dev });
   }
 
-  return pdfResponse(out.pdf, fileName, { 'x-page-count': String(out.pageCount) });
+  const extraHeaders: Record<string, string> = { 'x-page-count': String(out.pageCount) };
+  if (emailSentTo) {
+    extraHeaders['x-email-sent-to'] = emailSentTo;
+  }
+  return pdfResponse(out.pdf, fileName, extraHeaders);
 });

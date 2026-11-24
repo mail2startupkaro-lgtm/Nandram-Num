@@ -24,7 +24,7 @@ export const SERVICE_PRESETS: ServicePreset[] = [
     reportTitle: 'Personal Numerology Life Report',
     modules: ['complete'],
     includedChapters: ['glance', 'core', 'grid', 'kua', 'timing', 'life', 'name', 'numbers', 'couple', 'remedies'],
-    keyFields: ['fullName', 'dob', 'gender', 'mobile', 'profession'],
+    keyFields: ['fullName', 'dob', 'gender', 'mobile', 'email', 'profession'],
     icon: '👑',
   },
   {

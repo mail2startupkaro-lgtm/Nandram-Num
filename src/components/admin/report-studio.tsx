@@ -88,9 +88,11 @@ export function ReportStudio({
 
   const [p, setP] = React.useState<Preview | null>(null);
   const [edits, setEdits] = React.useState<Record<string, string>>({});
-  const [busy, setBusy] = React.useState<'' | 'preview' | 'pdf'>('');
+  const [busy, setBusy] = React.useState<'' | 'preview' | 'pdf' | 'email'>('');
   const [err, setErr] = React.useState<string | null>(null);
   const [confirmed, setConfirmed] = React.useState(false);
+  const [emailSuccess, setEmailSuccess] = React.useState<string | null>(null);
+  const [sendEmailWithPdf, setSendEmailWithPdf] = React.useState(true);
 
   const setCv = (k: keyof typeof c, v: unknown) => { setC((prev) => ({ ...prev, [k]: v })); setP(null); setConfirmed(false); };
   const setOv = (k: keyof typeof o, v: unknown) => setO((prev) => ({ ...prev, [k]: v }));
@@ -196,19 +198,20 @@ export function ReportStudio({
   function clearLoadedOrder() {
     setSelectedOrderId('');
     setActiveOrderBanner(null);
+    setEmailSuccess(null);
     onClearPreloadedOrder?.();
   }
 
-  function payload(action: 'preview' | 'pdf') {
+  function payload(action: 'preview' | 'pdf' | 'email') {
     const input: Record<string, unknown> = {
       fullName: c.fullName, gender: c.gender, dob: c.dob, concerns: c.concerns, language: o.language,
-      ...Object.fromEntries((['commonName', 'hindiName', 'timeOfBirth', 'placeOfBirth', 'mobile', 'maritalStatus', 'profession', 'city', 'state', 'kuaBasis'] as const).filter((k) => c[k].trim()).map((k) => [k, c[k].trim()])),
+      ...Object.fromEntries((['commonName', 'hindiName', 'timeOfBirth', 'placeOfBirth', 'mobile', 'email', 'maritalStatus', 'profession', 'city', 'state', 'kuaBasis'] as const).filter((k) => c[k].trim()).map((k) => [k, c[k].trim()])),
     };
     if (c.partnerName.trim() && c.partnerDob.trim()) input.partner = { name: c.partnerName.trim(), gender: c.partnerGender, dob: c.partnerDob.trim() };
     const branding = Object.fromEntries((['brandName', 'expertName', 'expertTitle', 'contactLine', 'bookingUrl'] as const).filter((k) => o[k].trim()).map((k) => [k, o[k].trim()]));
     return {
-      action, input, modules: o.modules, language: o.language, theme: o.theme, asOf: o.asOf || undefined, reportDate: o.reportDate || undefined, useAi: o.useAi,
-      hiddenChapters: o.hidden, expertNote: o.note || undefined, watermark: o.watermark || undefined, branding, sectionEdits: action === 'pdf' ? edits : {},
+      action, email: c.email.trim() || undefined, sendEmailIfProvided: action === 'pdf' ? sendEmailWithPdf : false, input, modules: o.modules, language: o.language, theme: o.theme, asOf: o.asOf || undefined, reportDate: o.reportDate || undefined, useAi: o.useAi,
+      hiddenChapters: o.hidden, expertNote: o.note || undefined, watermark: o.watermark || undefined, branding, sectionEdits: (action === 'pdf' || action === 'email') ? edits : {},
       reportTitle: o.reportTitle || undefined, serviceCode: o.serviceCode || undefined,
     };
   }
@@ -216,15 +219,32 @@ export function ReportStudio({
   const errText = (e: unknown) => (e instanceof ApiError ? (e.body.issues?.map((i) => `${i.path ? `${i.path}: ` : ''}${i.message}`).join(' · ') || e.message) : 'Something went wrong');
 
   async function preview() {
-    setBusy('preview'); setErr(null);
+    setBusy('preview'); setErr(null); setEmailSuccess(null);
     try { const r = await api<Preview>('/api/admin/report-studio', { method: 'POST', json: payload('preview') }); setP(r); setEdits({}); setConfirmed(false); }
     catch (e) { setErr(errText(e)); } finally { setBusy(''); }
   }
 
   async function pdf() {
-    setBusy('pdf'); setErr(null);
-    try { await download('/api/admin/report-studio', { method: 'POST', json: payload('pdf') }); }
+    setBusy('pdf'); setErr(null); setEmailSuccess(null);
+    try {
+      await download('/api/admin/report-studio', { method: 'POST', json: payload('pdf') });
+      if (sendEmailWithPdf && c.email.trim()) {
+        setEmailSuccess(`Report PDF generated, downloaded, and delivered to ${c.email.trim()}!`);
+      }
+    }
     catch (e) { setErr(errText(e)); } finally { setBusy(''); }
+  }
+
+  async function sendEmail() {
+    setBusy('email'); setErr(null); setEmailSuccess(null);
+    try {
+      const res = await api<{ ok: boolean; sentTo: string; dev?: boolean }>('/api/admin/report-studio', { method: 'POST', json: payload('email') });
+      setEmailSuccess(`Report sent successfully to ${res.sentTo}${res.dev ? ' (simulated in dev mode)' : ''}!`);
+    } catch (e) {
+      setErr(errText(e));
+    } finally {
+      setBusy('');
+    }
   }
 
   const toggle = (list: string[], v: string) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
@@ -368,6 +388,7 @@ export function ReportStudio({
           <Field label="Gender" htmlFor="s-g"><Select id="s-g" value={c.gender} onChange={(e) => setCv('gender', e.target.value)}><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></Select></Field>
           <Field label="Kua formula" htmlFor="s-k" hint="Leave on auto unless gender is Other"><Select id="s-k" value={c.kuaBasis} onChange={(e) => setCv('kuaBasis', e.target.value)}><option value="">Auto (from gender)</option><option value="male">Male formula</option><option value="female">Female formula</option></Select></Field>
           <Field label="Mobile number" htmlFor="s-m" className={cn(isKeyField('mobile') && 'rounded-md p-1 bg-gold/5 border border-gold/30')}><Input id="s-m" inputMode="numeric" value={c.mobile} onChange={(e) => setCv('mobile', e.target.value)} /></Field>
+          <Field label="Client email ID" htmlFor="s-em" hint="Report PDF is sent to this email if provided" className={cn(isKeyField('email') && 'rounded-md p-1 bg-gold/5 border border-gold/30')}><Input id="s-em" type="email" placeholder="client@example.com" value={c.email} onChange={(e) => setCv('email', e.target.value)} /></Field>
           <Field label="Time of birth (HH:MM)" htmlFor="s-t"><Input id="s-t" placeholder="14:30" value={c.timeOfBirth} onChange={(e) => setCv('timeOfBirth', e.target.value)} /></Field>
           <Field label="Place of birth" htmlFor="s-pob"><Input id="s-pob" value={c.placeOfBirth} onChange={(e) => setCv('placeOfBirth', e.target.value)} /></Field>
           <Field label="Marital status" htmlFor="s-ms"><Select id="s-ms" value={c.maritalStatus} onChange={(e) => setCv('maritalStatus', e.target.value)}><option value="">—</option>{['single', 'married', 'engaged', 'divorced', 'widowed'].map((x) => <option key={x} value={x}>{x}</option>)}</Select></Field>
@@ -478,9 +499,36 @@ export function ReportStudio({
           </section>
 
           <section className="glass rounded-lg p-5">
-            <h2 className="mb-3 text-xl font-semibold">5 · Download</h2>
-            <Checkbox id="confirm" checked={confirmed} onChange={setConfirmed} label={<>I have confirmed the date of birth ({p.summary.dob.split('-').reverse().join('-')}) and name spelling with the client.</>} />
-            <Button className="mt-4" variant="gold" onClick={pdf} disabled={!!busy || !confirmed || errors > 0}>{busy === 'pdf' ? <RefreshCw className="animate-spin" /> : <FileDown />} Generate PDF</Button>
+            <h2 className="mb-3 text-xl font-semibold">5 · Download &amp; Delivery</h2>
+            <div className="space-y-3">
+              <Checkbox id="confirm" checked={confirmed} onChange={setConfirmed} label={<>I have confirmed the date of birth ({p.summary.dob.split('-').reverse().join('-')}) and name spelling with the client.</>} />
+
+              {c.email.trim() && (
+                <div className="rounded-md border border-gold/30 bg-gold/5 p-3">
+                  <Checkbox
+                    id="auto-email"
+                    checked={sendEmailWithPdf}
+                    onChange={setSendEmailWithPdf}
+                    label={<>Also email the PDF report to client at <b className="text-gold">{c.email.trim()}</b></>}
+                  />
+                  <p className="mt-1 pl-6 text-xs text-muted-foreground">
+                    When checked, generating the PDF will automatically deliver a copy to the client&apos;s email ID.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Button variant="gold" onClick={pdf} disabled={!!busy || !confirmed || errors > 0}>
+                {busy === 'pdf' ? <RefreshCw className="animate-spin" /> : <FileDown />} Generate PDF
+              </Button>
+              {c.email.trim() && (
+                <Button variant="outline" onClick={sendEmail} disabled={!!busy || !confirmed || errors > 0}>
+                  {busy === 'email' ? <RefreshCw className="animate-spin" /> : <Mail className="h-4 w-4" />} Send to {c.email.trim()}
+                </Button>
+              )}
+            </div>
+            {emailSuccess && <p className="mt-3 flex items-center gap-1.5 text-sm text-success"><Check className="h-4 w-4" /> {emailSuccess}</p>}
             {errors > 0 && <p className="mt-2 text-sm text-danger">Fix the errors above before generating.</p>}
           </section>
         </>
