@@ -48,6 +48,8 @@ export const ListFilter = z.object({
   followUp: z.enum(['overdue', 'today', 'week', 'none']).optional(),
   birthday: z.enum(['today', 'week', 'month']).optional(),
   stale: z.coerce.number().int().min(1).max(365).optional(), // open contacts not contacted for N days
+  magnet: z.string().max(80).optional(),
+  leadType: z.enum(['all', 'ebook', 'reading']).optional(),
   sort: z.enum(['recent', 'created', 'name', 'followup', 'value', 'score']).default('recent'),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(5000).default(50),
@@ -75,6 +77,16 @@ function whereFor(f: ListFilter): SQL {
   if (f.birthday) {
     const days = f.birthday === 'today' ? 0 : f.birthday === 'week' ? 6 : 30;
     w.push(sql`l.dob IS NOT NULL AND EXISTS (SELECT 1 FROM generate_series(0, ${days}) g(n) WHERE to_char(${IST}::date + g.n, 'MM-DD') = to_char(l.dob, 'MM-DD'))`);
+  }
+  if (f.magnet) {
+    w.push(sql`l.lead_magnet ILIKE ${'%' + f.magnet.replace(/[%_\\]/g, '\\$&') + '%'}`);
+  }
+  if (f.leadType === 'ebook') {
+    w.push(sql`(l.lead_magnet ILIKE '%ebook%' OR l.lead_source ILIKE '%ebook%')`);
+  } else if (f.leadType === 'reading') {
+    w.push(sql`(l.lead_magnet ILIKE '%reading%' OR l.lead_magnet ILIKE '%sample%' OR l.lead_source = 'services-funnel')`);
+  } else if (f.leadType === 'all') {
+    w.push(sql`(l.lead_magnet IS NOT NULL OR l.lead_source = 'services-funnel' OR l.lead_source ILIKE '%ebook%')`);
   }
   if (f.stale) w.push(sql`l.crm_stage NOT IN ('won','lost') AND COALESCE(l.last_contacted_at, l.created_at) < now() - make_interval(days => ${f.stale})`);
   return sql.join(w, sql` AND `);
@@ -141,7 +153,10 @@ export async function dashboard(db: Db = getDb()) {
     count(*) FILTER (WHERE crm_stage NOT IN ('won','lost') AND COALESCE(last_contacted_at, created_at) < now() - interval '7 days')::int AS stale,
     count(*) FILTER (WHERE crm_stage = 'won' AND stage_changed_at >= now() - interval '30 days')::int AS "won30",
     count(*) FILTER (WHERE crm_stage = 'lost' AND stage_changed_at >= now() - interval '30 days')::int AS "lost30",
-    count(*) FILTER (WHERE crm_stage = 'new' AND last_contacted_at IS NULL AND created_at < now() - interval '1 day')::int AS "uncontacted"
+    count(*) FILTER (WHERE crm_stage = 'new' AND last_contacted_at IS NULL AND created_at < now() - interval '1 day')::int AS "uncontacted",
+    count(*) FILTER (WHERE lead_magnet ILIKE '%ebook%' OR lead_source ILIKE '%ebook%')::int AS "ebookLeads",
+    count(*) FILTER (WHERE lead_magnet ILIKE '%reading%' OR lead_magnet ILIKE '%sample%' OR lead_source = 'services-funnel')::int AS "readingLeads",
+    count(*) FILTER (WHERE (lead_magnet IS NOT NULL OR lead_source = 'services-funnel') AND created_at >= now() - interval '7 days')::int AS "leadsNew7"
     FROM marketing_leads`);
   const revenue = await one<{ paise: number; customers: number }>(db, sql`SELECT COALESCE(sum(p.amount_paise),0)::int AS paise, count(DISTINCT p.user_id)::int AS customers FROM payments p WHERE p.status = 'paid' AND COALESCE(p.currency,'INR') = 'INR' AND p.paid_at >= now() - interval '30 days' AND p.user_id IN (SELECT user_id FROM marketing_leads WHERE user_id IS NOT NULL)`);
   const sources = await rows<{ source: string; n: number; won: number }>(db, sql`SELECT lead_source AS source, count(*)::int AS n, count(*) FILTER (WHERE crm_stage = 'won')::int AS won FROM marketing_leads GROUP BY 1 ORDER BY 2 DESC LIMIT 12`);

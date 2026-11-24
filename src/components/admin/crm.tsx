@@ -5,8 +5,8 @@
  */
 import * as React from 'react';
 import {
-  AlarmClock, ArrowRight, Cake, CalendarClock, Check, CheckCircle2, ChevronLeft, ChevronRight, Copy, Download, Flame, Inbox, KanbanSquare, LayoutDashboard,
-  ListChecks, Mail, MessageCircle, NotebookPen, Phone, Plus, RefreshCw, Search, ShieldCheck, ShieldOff, Tag, Trash2, Upload, Users, X,
+  AlarmClock, ArrowRight, BookOpen, Cake, CalendarClock, Check, CheckCircle2, ChevronLeft, ChevronRight, Copy, Download, Flame, Inbox, KanbanSquare, LayoutDashboard,
+  ListChecks, Mail, MessageCircle, NotebookPen, Phone, Plus, RefreshCw, Search, ShieldCheck, ShieldOff, Sparkles, Tag, Trash2, Upload, Users, X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/form';
@@ -125,10 +125,15 @@ function Modal({ title, onClose, children, wide }: { title: string; onClose: () 
 function openWhatsApp(phone: string | null, text: string) { const n = waNumber(phone); if (n) window.open(`https://wa.me/${n}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer'); }
 
 // ------------------------------------------------------------------ main
-type View = 'dashboard' | 'pipeline' | 'contacts' | 'tasks' | 'birthdays' | 'tags';
+type View = 'dashboard' | 'leads' | 'pipeline' | 'contacts' | 'tasks' | 'birthdays' | 'tags';
 const VIEWS: { id: View; label: string; icon: React.ElementType }[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard }, { id: 'pipeline', label: 'Pipeline', icon: KanbanSquare }, { id: 'contacts', label: 'Contacts', icon: Users },
-  { id: 'tasks', label: 'Follow-ups', icon: ListChecks }, { id: 'birthdays', label: 'Birthdays', icon: Cake }, { id: 'tags', label: 'Tags', icon: Tag },
+  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'leads', label: 'Leads (E-Books & Readings)', icon: Flame },
+  { id: 'pipeline', label: 'Pipeline', icon: KanbanSquare },
+  { id: 'contacts', label: 'All Contacts', icon: Users },
+  { id: 'tasks', label: 'Follow-ups', icon: ListChecks },
+  { id: 'birthdays', label: 'Birthdays', icon: Cake },
+  { id: 'tags', label: 'Tags', icon: Tag },
 ];
 type Filter = Record<string, string>;
 
@@ -146,6 +151,7 @@ export function CrmAdmin() {
   React.useEffect(() => { api<{ owners: Owner[] }>('/api/admin/crm?view=owners').then((r) => setOwners(r.owners)).catch(() => {}); }, []);
   React.useEffect(() => { api<{ tags: (TagRef & { n: number })[] }>('/api/admin/crm?view=tags').then((r) => setTags(r.tags)).catch(() => {}); }, [rev]);
   const goContacts = (f: Filter) => { setFilter({ stage: 'all', sort: 'recent', ...f }); setView('contacts'); };
+  const goLeads = () => setView('leads');
 
   async function sync() {
     try { const r = await api<{ added: number; linked: number; won: number }>('/api/admin/crm', { method: 'POST', json: { op: 'sync' } }); toast.show(true, `Synced: ${r.added} new contact(s), ${r.linked} linked to accounts, ${r.won} marked Won.`); refresh(); }
@@ -171,7 +177,8 @@ export function CrmAdmin() {
         {VIEWS.map((v) => <button key={v.id} role="tab" aria-selected={view === v.id} onClick={() => setView(v.id)} className={cn('flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm', view === v.id ? 'bg-card font-semibold shadow' : 'text-muted-foreground hover:text-foreground')}><v.icon className="h-4 w-4 text-gold" />{v.label}</button>)}
       </nav>
 
-      {view === 'dashboard' && <Dashboard rev={rev} onOpen={setOpenId} goContacts={goContacts} goTasks={() => setView('tasks')} goBirthdays={() => setView('birthdays')} />}
+      {view === 'dashboard' && <Dashboard rev={rev} onOpen={setOpenId} goContacts={goContacts} goLeads={goLeads} goTasks={() => setView('tasks')} goBirthdays={() => setView('birthdays')} />}
+      {view === 'leads' && <LeadsView rev={rev} onOpen={setOpenId} toast={toast.show} refresh={refresh} />}
       {view === 'pipeline' && <Pipeline rev={rev} onOpen={setOpenId} owners={owners} toast={toast.show} />}
       {view === 'contacts' && <Contacts rev={rev} filter={filter} setFilter={setFilter} onOpen={setOpenId} owners={owners} tags={tags} toast={toast.show} refresh={refresh} />}
       {view === 'tasks' && <Tasks rev={rev} onOpen={setOpenId} toast={toast.show} />}
@@ -192,7 +199,7 @@ interface Dash {
   campaigns: { campaign: string; n: number; won: number }[]; interests: { service: string; n: number }[]; daily: { day: string; n: number }[];
   tasks: Task[]; birthdays: Birthday[]; recent: { id: string; type: string; body: string | null; createdAt: string; leadId: string; name: string }[];
 }
-function Dashboard({ rev, onOpen, goContacts, goTasks, goBirthdays }: { rev: number; onOpen: (id: string) => void; goContacts: (f: Filter) => void; goTasks: () => void; goBirthdays: () => void }) {
+function Dashboard({ rev, onOpen, goContacts, goLeads, goTasks, goBirthdays }: { rev: number; onOpen: (id: string) => void; goContacts: (f: Filter) => void; goLeads: () => void; goTasks: () => void; goBirthdays: () => void }) {
   const [d, setD] = React.useState<Dash | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
   React.useEffect(() => { setErr(null); api<Dash>('/api/admin/crm?view=dashboard').then(setD).catch((e) => setErr(errText(e))); }, [rev]);
@@ -203,9 +210,11 @@ function Dashboard({ rev, onOpen, goContacts, goTasks, goBirthdays }: { rev: num
   const openN = open.reduce((a, s) => a + s.n, 0), openValue = open.reduce((a, s) => a + s.value, 0);
   const max = Math.max(1, ...d.stages.map((s) => s.n)), dmax = Math.max(1, ...d.daily.map((x) => x.n));
   const delta = k.new7 - k.newPrev7;
+  const leadTotal = (k.ebookLeads ?? 0) + (k.readingLeads ?? 0);
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+        <Kpi label="E-Book & Reading Leads" value={leadTotal} tone="good" sub={`${k.ebookLeads ?? 0} eBook · ${k.readingLeads ?? 0} Readings`} onClick={goLeads} />
         <Kpi label="Total contacts" value={k.total} sub={`${k.new30} added in 30 days`} onClick={() => goContacts({})} />
         <Kpi label="New this week" value={k.new7} sub={<span className={delta > 0 ? 'text-emerald-500' : delta < 0 ? 'text-rose-500' : ''}>{delta >= 0 ? '+' : ''}{delta} vs last week</span>} onClick={() => goContacts({ sort: 'created' })} />
         <Kpi label="Follow-ups overdue" value={k.overdue} tone={k.overdue ? 'bad' : undefined} sub={`${k.dueToday} due today`} onClick={goTasks} />
@@ -340,6 +349,286 @@ function LostDialog({ name, onClose, onPick }: { name: string; onClose: () => vo
       <div className="flex flex-wrap gap-2">{LOST_REASONS.filter((r) => r !== 'Other').map((r) => <Button key={r} size="sm" variant="outline" onClick={() => onPick(r)}>{r}</Button>)}</div>
       <div className="mt-3 flex gap-2"><Input placeholder="Other reason…" value={other} onChange={(e) => setOther(e.target.value)} maxLength={500} /><Button onClick={() => onPick(other.trim() || 'Other')}>Save</Button></div>
     </Modal>
+  );
+}
+
+// ------------------------------------------------------------------ leads (eBooks & free readings)
+function LeadsView({ rev, onOpen, toast, refresh }: { rev: number; onOpen: (id: string) => void; toast: (ok: boolean, t: string) => void; refresh: () => void }) {
+  const [data, setData] = React.useState<{ contacts: Contact[]; total: number; page: number; pageSize: number } | null>(null);
+  const [leadType, setLeadType] = React.useState<'all' | 'ebook' | 'reading'>('all');
+  const [stage, setStage] = React.useState<string>('all');
+  const [q, setQ] = React.useState('');
+  const [page, setPage] = React.useState(1);
+  const [updatingId, setUpdatingId] = React.useState<string | null>(null);
+
+  const qs = new URLSearchParams(Object.entries({
+    view: 'contacts',
+    leadType,
+    stage: stage === 'all' ? '' : stage,
+    q: q.trim(),
+    sort: 'created',
+    page: String(page),
+    pageSize: '50',
+  }).filter(([, v]) => v)).toString();
+
+  React.useEffect(() => {
+    const h = setTimeout(() => {
+      api<{ contacts: Contact[]; total: number; page: number; pageSize: number }>(`/api/admin/crm?${qs}`)
+        .then(setData)
+        .catch(() => setData({ contacts: [], total: 0, page: 1, pageSize: 50 }));
+    }, 200);
+    return () => clearTimeout(h);
+  }, [qs, rev]);
+
+  async function updateStage(id: string, newStage: string) {
+    setUpdatingId(id);
+    try {
+      await api('/api/admin/crm', { method: 'POST', json: { op: 'update', id, stage: newStage } });
+      toast(true, 'Lead stage updated');
+      refresh();
+    } catch (e) {
+      toast(false, errText(e));
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  function getWhatsAppMsg(c: Contact) {
+    const firstName = (c.name || 'Friend').trim().split(' ')[0];
+    const isEbook = (c.magnet || '').includes('ebook') || (c.source || '').includes('ebook');
+    const hi = c.language !== 'en';
+    if (isEbook) {
+      return hi
+        ? `नमस्ते ${firstName} जी 🙏 मैं myNumerologist.com से आचार्य नंदराम जी की टीम से बोल रहा हूँ। आपने हमारी 'अंक ज्योतिष आसान शुरुआत' ई-बुक डाउनलोड की है। आपका मूलांक ${c.moolank ?? '–'} और भाग्यांक ${c.bhagyank ?? '–'} है। क्या आप अपने अंकों पर व्यक्तिगत मार्गदर्शन लेना चाहेंगे?`
+        : `Namaste ${firstName} ji 🙏 This is Acharya Nandram's team from myNumerologist.com. You downloaded our 'Numerology Made Easy' eBook. Your Moolank is ${c.moolank ?? '–'} and Bhagyank is ${c.bhagyank ?? '–'}. Would you like personal guidance for your numbers?`;
+    }
+    return hi
+      ? `नमस्ते ${firstName} जी 🙏 आपने myNumerologist.com पर अपने अंक (मूलांक ${c.moolank ?? '–'}, भाग्यांक ${c.bhagyank ?? '–'}) चेक किए थे। क्या आप अपनी पूरी 17-पेज की व्यक्तिगत रिपोर्ट या परामर्श प्राप्त करना चाहेंगे?`
+      : `Namaste ${firstName} ji 🙏 Thank you for checking your numbers on myNumerologist.com (Moolank ${c.moolank ?? '–'}, Bhagyank ${c.bhagyank ?? '–'}). Would you like your complete 17-page personal numerology report or a consultation?`;
+  }
+
+  const exportUrl = `/api/admin/crm?view=contacts&format=csv&${qs}`;
+  const pages = data ? Math.max(1, Math.ceil(data.total / data.pageSize)) : 1;
+
+  return (
+    <div className="space-y-4">
+      {/* Header & Filter Card */}
+      <div className="glass rounded-xl p-5 border border-gold/30 bg-gradient-to-r from-gold/5 via-card to-card">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gold/15 text-gold border border-gold/30">
+                <Flame className="h-5 w-5" />
+              </span>
+              <h3 className="font-serif text-xl font-bold">Leads: E-Books & Free Readings</h3>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Direct list of visitors who shared their details for the <b>21-Page Numerology E-Book</b> or <b>Free Mini-Readings & Sample Reports</b>.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button size="sm" variant="outline" onClick={() => download(exportUrl).catch((e) => toast(false, errText(e)))}>
+              <Download className="h-4 w-4" /> Export Leads CSV
+            </Button>
+          </div>
+        </div>
+
+        {/* Filter Switcher */}
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-border/50">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => { setLeadType('all'); setPage(1); }}
+              className={cn('flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition', leadType === 'all' ? 'bg-gold text-slate-950 shadow' : 'bg-muted text-muted-foreground hover:text-foreground')}
+            >
+              <Users className="h-3.5 w-3.5" /> All Leads ({data?.total ?? '…'})
+            </button>
+            <button
+              type="button"
+              onClick={() => { setLeadType('ebook'); setPage(1); }}
+              className={cn('flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition', leadType === 'ebook' ? 'bg-amber-500 text-slate-950 shadow' : 'bg-muted text-muted-foreground hover:text-foreground')}
+            >
+              <BookOpen className="h-3.5 w-3.5" /> 📖 E-Book Downloads
+            </button>
+            <button
+              type="button"
+              onClick={() => { setLeadType('reading'); setPage(1); }}
+              className={cn('flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition', leadType === 'reading' ? 'bg-purple-500 text-white shadow' : 'bg-muted text-muted-foreground hover:text-foreground')}
+            >
+              <Sparkles className="h-3.5 w-3.5" /> 🔮 Free Mini-Readings
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="search"
+                value={q}
+                onChange={(e) => { setQ(e.target.value); setPage(1); }}
+                placeholder="Search name, phone, email…"
+                className="h-8 w-44 sm:w-56 rounded-md border border-input bg-background pl-8 pr-3 text-xs focus:border-gold focus:outline-none"
+              />
+            </div>
+
+            <Select value={stage} onChange={(e) => { setStage(e.target.value); setPage(1); }} className="h-8 w-32 text-xs">
+              <option value="all">All stages</option>
+              {STAGES.map((s) => (
+                <option key={s.id} value={s.id}>{s.short}</option>
+              ))}
+            </Select>
+          </div>
+        </div>
+      </div>
+
+      {/* Leads Table */}
+      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+              <tr>
+                <th className="px-4 py-3 font-medium">Lead / Name</th>
+                <th className="px-3 py-3 font-medium">Lead Type</th>
+                <th className="px-3 py-3 font-medium">Numbers (DOB)</th>
+                <th className="px-3 py-3 font-medium">Mobile / Email</th>
+                <th className="px-3 py-3 font-medium">Received</th>
+                <th className="px-3 py-3 font-medium">Status / Stage</th>
+                <th className="px-4 py-3 text-right font-medium">Instant Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/60">
+              {!data ? (
+                <tr>
+                  <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                    <RefreshCw className="mx-auto h-5 w-5 animate-spin text-gold" />
+                    <p className="mt-2 text-xs">Loading leads…</p>
+                  </td>
+                </tr>
+              ) : data.contacts.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="p-12 text-center">
+                    <BookOpen className="mx-auto h-8 w-8 text-muted-foreground/60" />
+                    <p className="mt-2 text-sm font-semibold">No leads found in this view</p>
+                    <p className="text-xs text-muted-foreground">When visitors share details for the eBook or free reading, they will appear here automatically.</p>
+                  </td>
+                </tr>
+              ) : (
+                data.contacts.map((c) => {
+                  const isEbook = (c.magnet || '').includes('ebook') || (c.source || '').includes('ebook');
+                  const waMsg = getWhatsAppMsg(c);
+                  return (
+                    <tr key={c.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => onOpen(c.id)}
+                          className="font-medium text-foreground hover:text-gold hover:underline text-left block"
+                        >
+                          {c.name || 'Unnamed lead'}
+                        </button>
+                        {c.city && <span className="text-xs text-muted-foreground">{c.city}{c.state ? `, ${c.state}` : ''}</span>}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        {isEbook ? (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-500 border border-amber-500/20">
+                            <BookOpen className="h-3 w-3" /> E-Book
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-md bg-purple-500/10 px-2 py-0.5 text-xs font-medium text-purple-400 border border-purple-500/20">
+                            <Sparkles className="h-3 w-3" /> Free Reading
+                          </span>
+                        )}
+                        {c.service && <span className="block text-[11px] text-muted-foreground">{prettyService(c.service)}</span>}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          <span className="inline-flex items-center justify-center rounded bg-gold/15 px-1.5 py-0.5 font-mono text-[11px] font-bold text-gold border border-gold/30" title="Moolank (मूलांक)">
+                            M: {c.moolank ?? '–'}
+                          </span>
+                          <span className="inline-flex items-center justify-center rounded bg-primary/15 px-1.5 py-0.5 font-mono text-[11px] font-bold text-primary border border-primary/30" title="Bhagyank (भाग्यांक)">
+                            B: {c.bhagyank ?? '–'}
+                          </span>
+                        </div>
+                        {c.dob && <span className="text-[11px] text-muted-foreground block mt-0.5">{c.dob}</span>}
+                      </td>
+                      <td className="px-3 py-3">
+                        {c.phone ? (
+                          <div className="flex items-center gap-1">
+                            <span className="font-mono text-xs">{c.phone}</span>
+                            {c.waConsent && (
+                              <span title="WhatsApp consent verified">
+                                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                              </span>
+                            )}
+                          </div>
+                        ) : <span className="text-muted-foreground text-xs">—</span>}
+                        {c.email && <span className="text-[11px] text-muted-foreground block truncate max-w-[180px]">{c.email}</span>}
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap text-xs text-muted-foreground">
+                        <span title={fmtDate(c.createdAt)}>{ago(c.createdAt)}</span>
+                      </td>
+                      <td className="px-3 py-3 whitespace-nowrap">
+                        <select
+                          value={c.stage}
+                          disabled={updatingId === c.id}
+                          onChange={(e) => updateStage(c.id, e.target.value)}
+                          className={cn('h-7 rounded border border-border bg-background px-2 text-xs font-medium focus:border-gold focus:outline-none cursor-pointer', stageOf(c.stage).tone)}
+                        >
+                          {STAGES.map((s) => (
+                            <option key={s.id} value={s.id}>{s.short}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {c.phone && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => openWhatsApp(c.phone, waMsg)}
+                                title="Chat on WhatsApp with customized lead message"
+                                className="inline-flex h-7 items-center gap-1 rounded bg-emerald-500/15 px-2.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-500/25 border border-emerald-500/30"
+                              >
+                                <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                              </button>
+                              <a
+                                href={`tel:${c.phone}`}
+                                title={`Call ${c.phone}`}
+                                className="inline-flex h-7 w-7 items-center justify-center rounded border border-border hover:bg-muted text-muted-foreground hover:text-foreground"
+                              >
+                                <Phone className="h-3.5 w-3.5" />
+                              </a>
+                            </>
+                          )}
+                          <Button size="sm" variant="ghost" onClick={() => onOpen(c.id)} className="h-7 px-2 text-xs">
+                            View
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {pages > 1 && (
+          <div className="flex items-center justify-between border-t px-4 py-2 text-xs text-muted-foreground">
+            <span>Showing page {page} of {pages} ({data?.total} total leads)</span>
+            <div className="flex gap-1">
+              <Button size="sm" variant="ghost" disabled={page <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                <ChevronLeft className="h-3.5 w-3.5" /> Previous
+              </Button>
+              <Button size="sm" variant="ghost" disabled={page >= pages} onClick={() => setPage((p) => Math.min(pages, p + 1))}>
+                Next <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 

@@ -23,6 +23,7 @@ const isoDob = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((s) => {
 export const LeadInput = z.object({
   name: z.string().trim().min(2).max(120),
   phone: z.string().trim().min(8).max(20),
+  email: z.string().trim().email().optional().or(z.literal('')),
   dob: z.string().trim().optional().or(z.literal('')).refine((s) => {
     if (!s) return true;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
@@ -62,11 +63,12 @@ export async function createLead(input: LeadInput, meta: { ip?: string | null; u
       leadId = existing.id;
       await tx.update(marketingLeads).set({
         fullName: input.name, dob: input.dob || null, language: input.language, moolank: r.moolank, bhagyank: r.bhagyank, leadMagnet,
+        ...(input.email ? { email: input.email.trim() } : {}),
         ...(input.service ? { primaryConcern: input.service } : {}), ...(input.utmSource ? utmSet : {}), ...(meta.userId ? { userId: meta.userId } : {}), updatedAt: new Date(),
       }).where(eq(marketingLeads.id, leadId));
     } else {
       const [row] = await tx.insert(marketingLeads).values({
-        userId: meta.userId ?? null, fullName: input.name, phone, dob: input.dob || null, language: input.language,
+        userId: meta.userId ?? null, fullName: input.name, phone, email: input.email?.trim() || null, dob: input.dob || null, language: input.language,
         moolank: r.moolank, bhagyank: r.bhagyank, primaryConcern: input.service || null, leadSource: LEAD_SOURCE, leadMagnet, ...utmSet,
         referrerUrl: input.referrer?.slice(0, 500) || null, ipAddress: meta.ip?.slice(0, 64) ?? null, userAgent: meta.userAgent?.slice(0, 400) ?? null,
         metadata: { page: input.page?.slice(0, 200) ?? null },
