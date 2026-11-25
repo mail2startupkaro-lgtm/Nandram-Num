@@ -76,6 +76,8 @@ export function SignatureStudio({ preloadedOrder, onClearPreloadedOrder }: { pre
   const [pdfBusy, setPdfBusy] = React.useState(false);
   const [err, setErr] = React.useState('');
   const [res, setRes] = React.useState<Result | null>(null);
+  // Client details exactly as they were when the analysis ran – the PDF must match the numbers, even if the form is edited afterwards.
+  const analysedWith = React.useRef<{ f: typeof f; goals: string[] } | null>(null);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
   // Opened from Admin → Services & orders → "Generate Report": fill in the client's booking details.
   React.useEffect(() => {
@@ -118,6 +120,7 @@ export function SignatureStudio({ preloadedOrder, onClearPreloadedOrder }: { pre
         fullName: f.fullName, signatureName: f.signatureName || undefined, dob: f.dob, gender: f.gender || undefined, hand: f.hand || undefined,
         professionId: f.professionId, professionText: f.professionText || undefined, experienceYears: f.experienceYears ? Number(f.experienceYears) : undefined,
         goals, concerns: f.concerns || undefined, language: f.language, images: samples.map((s) => s.dataUrl), measured, consistency, observations: obs } });
+      analysedWith.current = { f: { ...f }, goals: [...goals] };
       setRes(r);
       setTimeout(() => document.getElementById('sig-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
     } catch (x) {
@@ -129,17 +132,18 @@ export function SignatureStudio({ preloadedOrder, onClearPreloadedOrder }: { pre
     if (!res) return;
     setPdfBusy(true); setErr('');
     try {
-      const prof = PROFESSIONS.find((p) => p.id === f.professionId)!;
+      const c = analysedWith.current?.f ?? f, g = analysedWith.current?.goals ?? goals;
+      const prof = PROFESSIONS.find((p) => p.id === c.professionId) ?? PROFESSIONS[PROFESSIONS.length - 1];
       const body = {
-        client: { fullName: f.fullName, signatureName: f.signatureName || undefined, dob: f.dob, gender: f.gender || undefined, profession: prof.id === 'other' ? f.professionText || 'Other' : `${prof.label}${f.professionText ? ` – ${f.professionText}` : ''}`, goals, language: f.language },
+        client: { fullName: c.fullName, signatureName: c.signatureName || undefined, dob: c.dob, gender: c.gender || undefined, profession: prof.id === 'other' ? c.professionText || 'Other' : `${prof.label}${c.professionText ? `, ${c.professionText}` : ''}`, goals: g, language: c.language },
         preparedBy: f.preparedBy || 'Acharya Nandram', theme: f.theme, expertNote: f.expertNote || undefined, generatedAt: res.generatedAt, numbers: res.numbers,
         result: { analysis: res.analysis, source: res.source, scores: res.scores, features: res.features },
         annotated: samples[0]?.annotated ?? samples[0]?.dataUrl, samples: samples.length > 1 ? samples.map((s) => s.dataUrl) : undefined,
       };
       const r = await fetch('/api/admin/signature/pdf', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
-      if (!r.ok) throw new Error(r.status === 503 ? 'PDF engine is not available on this server.' : `PDF failed (${r.status})`);
+      if (!r.ok) throw new Error(r.status === 503 ? 'PDF engine is not available on this server.' : r.status === 413 ? 'The signature images are too large for the PDF. Remove one sample and try again.' : r.status === 400 ? 'Some report details are invalid. Run the analysis again, then download.' : `PDF failed (${r.status})`);
       const url = URL.createObjectURL(await r.blob());
-      const a = document.createElement('a'); a.href = url; a.download = `signature-analysis-${f.fullName.replace(/\W+/g, '-').toLowerCase()}.pdf`; a.click();
+      const a = document.createElement('a'); a.href = url; a.download = `signature-analysis-${(c.fullName.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase()) || 'client'}.pdf`; a.click();
       setTimeout(() => URL.revokeObjectURL(url), 5000);
     } catch (x) { setErr(x instanceof Error ? x.message : 'PDF failed'); }
     finally { setPdfBusy(false); }

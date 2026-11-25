@@ -1,5 +1,5 @@
 /** Deterministic numerology facts that ground the signature analysis (never invented by the AI). */
-import { analyseNameSystem, bhagyank, moolank, nameCompatibilityScore, reduce, todayIST, type DateParts } from '@/lib/numerology';
+import { analyseNameSystem, bhagyank, moolank, nameCompatibilityScore, personalYear, personalYearPeriod, personalYearStart, reduce, todayIST, type DateParts } from '@/lib/numerology';
 import { planetOf } from '@/lib/numerology/data/planets';
 import { mutualHarmony, relationOf, RELATION_TABLE, type Relation } from '@/lib/numerology/data/relations';
 import { CHALDEAN, compoundCategory, type CompoundCategory } from '@/lib/numerology/data/tables';
@@ -44,6 +44,16 @@ export interface SignatureNumbers {
   bestOption: NameOption | null;
   startDates: StartDate[];
   numerologyScore: number;
+  /** Letter-by-letter Chaldean values (optional: results produced before 2026-11-25 do not have them). */
+  letters?: { signed: LetterValue[]; full: LetterValue[]; best?: LetterValue[] };
+  /** Personal Year running today (birthday to birthday) – used to judge the timing of the new signature. */
+  personalYear?: { number: number; period: string; nextNumber: number; nextFrom: string };
+}
+export interface LetterValue { ch: string; v: number }
+
+/** Chaldean value of every letter of a name (spaces and dots dropped). */
+export function letterValues(text: string): LetterValue[] {
+  return text.toUpperCase().replace(/[^A-Z]/g, '').split('').map((ch) => ({ ch, v: CHALDEAN[ch] ?? 0 }));
 }
 
 const cap = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
@@ -121,6 +131,9 @@ export function signatureNumbers(input: { fullName: string; signatureName?: stri
   const signScore = scoreName(sign.nameNumber.single, sign.nameNumber.compound);
   const fullScore = scoreName(full.nameNumber.single, full.nameNumber.compound);
   const flHarmony = mutualHarmony(b.value, firstVal);
+  const today = input.asOf ?? todayIST();
+  const pyStart = personalYearStart(input.dob, today);
+  const bestOption = best && best.score >= current.score + 8 ? best : null;
   return {
     moolank: m, bhagyank: b.value, bhagyankMaster: b.master,
     fullName: { text: full.name, compound: full.nameNumber.compound, single: full.nameNumber.single, category: compoundCategory(full.nameNumber.compound), meaning: compoundMeaning(full.nameNumber.compound), score: fullScore },
@@ -134,8 +147,10 @@ export function signatureNumbers(input: { fullName: string; signatureName?: stri
     planet: { name: p.name, weekday: p.weekday, colours: p.colours, signatureTip: p.signatureTip, careers: p.careers },
     moolankPlanet: { name: planetOf(m).name, weekday: planetOf(m).weekday },
     nameOptions: ranked.slice(0, 7),
-    bestOption: best && best.score >= current.score + 8 ? best : null,
-    startDates: nextDates(p.weekday, b.value, input.asOf ?? todayIST()),
+    bestOption,
+    startDates: nextDates(p.weekday, b.value, today),
     numerologyScore: Math.round(0.45 * signScore + 0.2 * fullScore + 0.15 * flHarmony + 0.2 * fit),
+    letters: { signed: letterValues(sign.name), full: letterValues(full.name), best: bestOption ? letterValues(bestOption.text) : undefined },
+    personalYear: { number: personalYear(input.dob, pyStart), period: personalYearPeriod(input.dob, pyStart).label, nextNumber: personalYear(input.dob, pyStart + 1), nextFrom: personalYearPeriod(input.dob, pyStart + 1).label.split(' – ')[0] },
   };
 }

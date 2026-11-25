@@ -4,6 +4,7 @@ import { classifyMetrics, combineSamples, consistencyScore, measureSignature, ty
 import { signatureNumbers, signingVariants } from '@/lib/signature/numbers';
 import { effectiveFeatures, engineScores, ruleBasedAnalysis, runSignatureAgent, AnalysisSchema } from '@/lib/signature/agent';
 import { buildSignatureReportHtml } from '@/lib/signature/report';
+import { humanise } from '@/lib/signature/humanise';
 import { resolveTheme, DEFAULT_BRANDING } from '@/lib/pdf/themes';
 import { parseDate } from '@/lib/numerology';
 
@@ -133,15 +134,49 @@ describe('offline analyst and report', () => {
     const body = JSON.parse(String(init.body));
     expect(body.generationConfig.responseMimeType).toBe('application/json');
   });
-  it('builds a 5-section report in English and Hindi with escaped text', () => {
+  it('builds an 8-section report, each section on a fresh page, in English and Hindi with escaped text', () => {
     const fs = effectiveFeatures(input);
     const analysis = ruleBasedAnalysis({ ...input, fullName: '<b>Rahul</b>' }, n, fs);
     for (const language of ['en', 'hi'] as const) {
       const html = buildSignatureReportHtml({ client: { fullName: '<b>Rahul</b>', dob: '1990-08-28', profession: 'Business', goals: [], language }, preparedBy: 'Acharya Nandram', numbers: n,
         result: { analysis, source: 'rules', scores: engineScores(input, n, fs), features: fs }, generatedAt: '2026-11-19T10:00:00Z' }, resolveTheme('royal-gold-maroon'), DEFAULT_BRANDING);
       expect(html).not.toContain('<b>Rahul</b>');
-      expect((html.match(/class="sec-h"/g) ?? []).length).toBe(5);
-      if (language === 'hi') expect(html).toContain('हस्ताक्षर विश्लेषण रिपोर्ट');
+      expect((html.match(/class="sec-h"/g) ?? []).length).toBe(8);
+      expect((html.match(/<section class="page">/g) ?? []).length).toBe(8);
+      expect(html).toContain('88199 99374');
+      expect(html).toContain('@MYNUMEROLOGIST8');
+      if (language === 'hi') expect(html).toContain('मुख्य निष्कर्ष');
+      else expect(html).toContain('Other ways I can help you');
     }
+  });
+  it('still renders results saved before letter values and Personal Year existed', () => {
+    const fs = effectiveFeatures(input);
+    const { letters, personalYear, ...old } = n; void letters; void personalYear;
+    const html = buildSignatureReportHtml({ client: { fullName: 'Rahul Kumar Sharma', dob: '1990-08-28', profession: 'Business', goals: [], language: 'en' }, preparedBy: 'Acharya Nandram', numbers: old,
+      result: { analysis: ruleBasedAnalysis(input, n, fs), source: 'rules', scores: engineScores(input, n, fs), features: fs }, generatedAt: '2026-11-19T10:00:00Z' }, resolveTheme('royal-gold-maroon'), DEFAULT_BRANDING);
+    expect(html).not.toContain('Letter by letter');
+    expect(html).toContain('The best way to sign your name');
+  });
+});
+
+describe('advanced numerology and natural wording', () => {
+  it('gives letter values and the Personal Year', () => {
+    const n = signatureNumbers({ fullName: 'Rahul Kumar Sharma', signatureName: 'R K Sharma', dob: parseDate('28-08-1990'), professionId: 'business', asOf: parseDate('25-11-2026') });
+    expect(n.letters!.signed.map((x) => x.ch).join('')).toBe('RKSHARMA');
+    expect(n.letters!.signed.reduce((a, x) => a + x.v, 0)).toBe(n.signName.compound);
+    expect(n.letters!.full.reduce((a, x) => a + x.v, 0)).toBe(n.fullName.compound);
+    // birthday 28 Aug 2026 has passed: 2+8+8+2+0+2+6 = 28 → 1
+    expect(n.personalYear).toMatchObject({ number: 1, nextNumber: 2 });
+  });
+  it('removes machine-like dashes and stock phrases but keeps number ranges', () => {
+    expect(humanise('Warm and expressive — connects easily. Moreover, it rises about 10–15°.')).toBe('Warm and expressive, connects easily. It rises about 10–15°.');
+    expect(humanise('This is a testament to your effort – keep going')).toBe('This is a sign of your effort, keep going');
+  });
+  it('writes the offline headline and closing to the client by first name', () => {
+    const n = signatureNumbers({ fullName: 'rahul kumar sharma', dob: parseDate('28-08-1990'), professionId: 'business', asOf: parseDate('25-11-2026') });
+    const a = ruleBasedAnalysis({ fullName: 'rahul kumar sharma', dobText: '28-08-1990', profession: 'Business', goals: [], language: 'en', observations: {} }, n, []);
+    expect(a.headline).toMatch(/^Rahul,/);
+    expect(a.closing).toMatch(/^Rahul,/);
+    expect(a.idealSignature.steps[0]).not.toContain('undefined');
   });
 });

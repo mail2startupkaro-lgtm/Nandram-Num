@@ -14,6 +14,7 @@
 import { scrubDeep } from '@/lib/narrative/filter';
 import { PLAIN_LANGUAGE } from '@/lib/narrative/prompts';
 import { featureHi, hindiParts } from './hindi';
+import { humaniseDeep } from './humanise';
 import { z } from 'zod';
 import { configFromEnv, type LlmConfig } from '@/lib/narrative/providers/llm';
 import { FEATURE_WEIGHT, FEATURES, featureLabel, type Impact } from './catalogue';
@@ -111,12 +112,13 @@ Write for this specific person: connect the signature to their profession, goals
 - Never diagnose illness or mental-health conditions, never predict death, accidents, divorce or disasters, never promise money or results, never shame the person. Use "tends to", "may", "suggests".
 - overallScore (0–100) rates how well the CURRENT signature supports the person's goals.
 - Write all text values in ${LANG[lang]}.
-- Never mention AI, models, software or that the text was generated – you write as Acharya Nandram's analyst.
+- Never mention AI, models, software or that the text was generated. You write as Acharya Nandram, in the first person ("I noticed…", "I suggest…"), the way he would speak to a client across the table.
+- Sound like a person, not a template: address the client by first name once or twice, mix short and longer sentences, refer to concrete details from THEIR signature and numbers, and avoid stock phrases ("journey", "unlock your potential", "testament to", "delve", "in today's world", "moreover", "furthermore"). Do not use em dashes or en dashes in sentences; use commas or full stops. No emojis.
 
 ${PLAIN_LANGUAGE}
 
 Reply with ONE JSON object and nothing else, exactly in this shape:
-{"overallScore":72,"headline":"…","summary":"4–6 sentences","observations":[{"featureId":"baseline","feature":"Baseline","observed":"what you see (with the measured value)","meaning":"what it indicates for this person","impact":"positive|neutral|watch","confidence":"high|medium|low"}],"personality":["…"],"career":{"fit":"…","advice":"…"},"finance":"…","relationships":"…","strengths":["…"],"watchouts":["…"],"corrections":[{"title":"…","detail":"…","priority":"high|medium|low"}],"idealSignature":{"steps":["…"],"do":["…"],"dont":["…"],"startDay":"…","inkColour":"…","practice":"…"},"closing":"one encouraging line"}`;
+{"overallScore":72,"headline":"…","summary":"4–6 sentences","observations":[{"featureId":"baseline","feature":"Baseline","observed":"what you see (with the measured value)","meaning":"what it indicates for this person","impact":"positive|neutral|watch","confidence":"high|medium|low"}],"personality":["…"],"career":{"fit":"…","advice":"…"},"finance":"…","relationships":"…","strengths":["…"],"watchouts":["…"],"corrections":[{"title":"…","detail":"…","priority":"high|medium|low"}],"idealSignature":{"steps":["…"],"do":["…"],"dont":["…"],"startDay":"…","inkColour":"…","practice":"…"},"closing":"one short, personal closing line that mentions their first name or their start date"}`;
 }
 
 export function factsText(i: SignatureInput, n: SignatureNumbers) {
@@ -209,14 +211,18 @@ async function callVision(cfg: LlmConfig, model: string, system: string, text: s
   } finally { clearTimeout(timer); }
 }
 
+const firstNameOf = (full: string) => { const w = full.trim().split(/\s+/)[0] ?? ''; return w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : full; };
+/** "R K SHARMA" → "R. K. Sharma" (initials get a dot; empty parts from double spaces are skipped). */
+const titleWords = (s: string) => s.split(/\s+/).filter(Boolean).map((x) => (x.length === 1 ? `${x}.` : x.charAt(0) + x.slice(1).toLowerCase())).join(' ');
+
 const PERSONALITY: Record<string, Record<string, string>> = {
-  baseline: { rising: 'Optimistic and ambitious – tends to look ahead and work towards growth.', straight: 'Steady and practical – keeps emotions under control at work.', falling: 'May be carrying fatigue or pressure at present; needs encouragement and rest.', wavy: 'Moods and energy can vary from day to day; benefits from routine.' },
-  slant: { right: 'Warm and expressive – connects easily with people.', upright: 'Balanced and independent – the head usually rules the heart.', left: 'Reserved and private – may hold back feelings.', mixed: 'Versatile, though reactions can be hard for others to predict.' },
+  baseline: { rising: 'Optimistic and ambitious, tends to look ahead and work towards growth.', straight: 'Steady and practical, keeps emotions under control at work.', falling: 'May be carrying fatigue or pressure at present; needs encouragement and rest.', wavy: 'Moods and energy can vary from day to day; benefits from routine.' },
+  slant: { right: 'Warm and expressive, connects easily with people.', upright: 'Balanced and independent, the head usually rules the heart.', left: 'Reserved and private, may hold back feelings.', mixed: 'Versatile, though reactions can be hard for others to predict.' },
   first: { bold: 'Healthy self-esteem and initiative.', proportionate: 'A balanced, realistic self-image.', small: 'Tends to under-value own achievements.' },
-  legibility: { clear: 'Open and straightforward in communication.', partial: 'Shares selectively and values privacy.', illegible: 'Busy and private – others may misread intentions.' },
+  legibility: { clear: 'Open and straightforward in communication.', partial: 'Shares selectively and values privacy.', illegible: 'Busy and private, others may misread intentions.' },
   underline: { single: 'Self-confident with a stable base.', double: 'Seeks recognition and security.', through: 'Can be self-critical and block own progress.' },
   ending: { upward: 'Finishes with hope and ambition.', downward: 'May end tasks tired or doubtful.' },
-  enclosure: { circled: 'Guarded – keeps people and offers at a distance.' },
+  enclosure: { circled: 'Guarded, keeps people and offers at a distance.' },
 };
 
 const FIX_TITLE: Record<string, string> = {
@@ -235,31 +241,33 @@ export function ruleBasedAnalysis(i: SignatureInput, n: SignatureNumbers, fs: Ef
   if (i.language === 'hi') return ruleBasedAnalysisHi(i, n, fs, total, watch, count);
   const fixes: SignatureAnalysis['corrections'] = watch.map((c, k) => ({ title: FIX_TITLE[`${c.id}:${c.option}`] ?? FIX_TITLE[c.id] ?? `Correct the ${c.feature.toLowerCase()}`, detail: c.fix!, priority: k < 2 && (FEATURE_WEIGHT[c.id] ?? 0) >= 1 ? 'high' : 'medium' }));
   if (n.bestOption) fixes.unshift({ title: `Sign as “${n.bestOption.text}”`, detail: `The name you sign now adds up to number ${n.signName.single}. Writing “${n.bestOption.text}” instead gives number ${n.bestOption.single}, which matches your Bhagyank ${n.bhagyank} (destiny number) much better.`, priority: 'high' });
-  else if (n.signToBhagyank === 'enemy') fixes.unshift({ title: 'Adjust the signed name', detail: `Your signature-name number ${n.signName.single} is not friendly to your Bhagyank ${n.bhagyank}. Sign a form of your name whose number is one of ${n.friendly.join(', ')} – Acharya Nandram can suggest exact spellings.`, priority: 'high' });
-  if (n.firstLetter.toBhagyank !== 'enemy' && !fs.some((f) => f.id === 'first' && f.option === 'bold')) fixes.push({ title: `Strengthen the first letter “${n.firstLetter.letter}”`, detail: `${n.firstLetter.letter} carries ${n.firstLetter.value} (${n.firstLetter.planet}), ${n.firstLetter.toBhagyank} to your Bhagyank – write it clearly and about 1.5× taller than the other letters.`, priority: 'medium' });
+  else if (n.signToBhagyank === 'enemy') fixes.unshift({ title: 'Adjust the signed name', detail: `Your signature-name number ${n.signName.single} is not friendly to your Bhagyank ${n.bhagyank}. Sign a form of your name whose number is one of ${n.friendly.join(', ')}. I can suggest exact spellings if you message me.`, priority: 'high' });
+  if (n.firstLetter.toBhagyank !== 'enemy' && !fs.some((f) => f.id === 'first' && f.option === 'bold')) fixes.push({ title: `Strengthen the first letter “${n.firstLetter.letter}”`, detail: `The letter ${n.firstLetter.letter} carries the number ${n.firstLetter.value} (${n.firstLetter.planet}), which is ${n.firstLetter.toBhagyank === 'friend' ? 'friendly' : 'neutral'} to your Bhagyank. Write it clearly and about 1.5 times taller than the other letters.`, priority: 'medium' });
   if (!fixes.length) fixes.push({ title: 'Keep the strengths', detail: 'Keep the signature rising, readable and free of strokes that cut through the name.', priority: 'low' });
   const pers = [`Bhagyank ${n.bhagyank} (${n.planet.name}) sets the main direction of life; Moolank ${n.moolank} (${n.moolankPlanet.name}) shapes everyday nature.`,
     ...fs.map((f) => PERSONALITY[f.id]?.[f.option]).filter((x): x is string => !!x)].slice(0, 7);
-  const dates = n.startDates.map((d) => new Date(`${d.iso}T12:00:00Z`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }));
+  const dates = n.startDates.map((d) => new Date(`${d.iso}T12:00:00Z`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }));
+  const fname = firstNameOf(i.fullName);
+  const top = watch[0];
   return {
     overallScore: total,
-    headline: total >= 75 ? 'A supportive signature with small refinements' : total >= 55 ? 'A workable signature that can be strengthened' : 'A signature that needs correction to support your goals',
-    summary: `${i.fullName}'s Bhagyank (destiny number, from the full date of birth) is ${n.bhagyank}, ruled by ${n.planet.name}. The Moolank (birth-day number) is ${n.moolank}. The name in the signature, “${n.signName.text}”, adds up to number ${n.signName.single}, which ${rel(n.signToBhagyank)} the Bhagyank. ${fs.length ? `We looked at ${fs.length} things in the signature: ${count('positive')} are good, ${count('neutral')} are fine and ${count('watch')} need a small change.` : 'No signature features could be read, so this assessment is based on numerology only; add a clear signature image for a complete reading.'}${i.consistency != null ? ` Consistency across samples is ${i.consistency}/100.` : ''}`,
+    headline: total >= 75 ? `${fname}, your signature is working for you` : total >= 55 ? `${fname}, your signature is sound but can do more for you` : `${fname}, your signature needs a few corrections`,
+    summary: `Your Bhagyank, taken from your full date of birth, is ${n.bhagyank} and is ruled by ${n.planet.name}. Your Moolank, the day you were born, is ${n.moolank}. The name you write in your signature, “${n.signName.text}”, adds up to ${n.signName.single}, and this number ${rel(n.signToBhagyank)} your Bhagyank. ${fs.length ? `I looked at ${fs.length} features of your signature. ${count('positive')} of them help you, ${count('neutral')} are fine as they are and ${count('watch')} ${count('watch') === 1 ? 'needs' : 'need'} a small change.${top ? ` The most important one is the ${top.feature.toLowerCase()}.` : ''}` : 'I could not read the features from the image, so this reading is based on your numbers only. Please send a clear photo of your signature on plain white paper for a full reading.'}${i.consistency != null && fs.length ? ` Your samples are ${i.consistency >= 75 ? 'quite consistent' : i.consistency >= 50 ? 'fairly consistent' : 'not very consistent'} with each other (${i.consistency}/100).` : ''}`,
     observations: fs.length ? fs.map((c) => ({ featureId: c.id, feature: c.feature, observed: c.value ? `${c.label} (${c.value})` : c.label, meaning: c.meaning, impact: c.impact, confidence: conf(c.confidence) })) : [{ feature: 'Signature features', observed: 'Not provided', meaning: 'Upload a signature or mark observations to analyse slant, baseline, size and strokes.', impact: 'neutral' }],
     personality: pers,
-    career: { fit: `${n.profession.note} Fit score: ${n.profession.fitScore}/100.`, advice: `Careers traditionally favoured by ${n.planet.name}: ${n.planet.careers.join(', ')}. ${n.planet.signatureTip}` },
+    career: { fit: `${n.profession.note} Your fit score for this line of work is ${n.profession.fitScore} out of 100.`, advice: `${n.planet.name}, your ruling planet, traditionally favours ${n.planet.careers.slice(0, 5).join(', ').toLowerCase()}. ${n.planet.signatureTip}` },
     strengths: fs.filter((c) => c.impact === 'positive').sort((a, b) => (FEATURE_WEIGHT[b.id] ?? 0) - (FEATURE_WEIGHT[a.id] ?? 0)).slice(0, 6).map((c) => `${c.feature}: ${c.meaning}`),
     watchouts: fs.filter((c) => c.impact === 'watch').sort((a, b) => (FEATURE_WEIGHT[b.id] ?? 0) - (FEATURE_WEIGHT[a.id] ?? 0)).slice(0, 6).map((c) => `${c.feature}: ${c.meaning}`),
     corrections: fixes.slice(0, 8),
     idealSignature: {
-      steps: [`Sign ${n.bestOption ? `“${n.bestOption.text}”` : `“${n.signName.text.split(' ').map((x) => x[0] + x.slice(1).toLowerCase()).join(' ')}”`} with a clear, slightly larger first letter ${n.firstLetter.letter}.`, 'Keep the baseline rising gently (about 10–15°) from left to right.', 'Keep the name readable; never let a stroke cut through it.', 'Finish with a light upward stroke – no full stop.', 'If you like, add one clean underline below the name, not touching the letters.'],
+      steps: [`Sign ${n.bestOption ? `“${n.bestOption.text}”` : `“${titleWords(n.signName.text)}”`} with a clear, slightly larger first letter ${n.firstLetter.letter}.`, 'Let the signature rise gently from left to right, about 10–15°.', 'Keep the name readable and never let a stroke cut through it.', 'Finish with a light upward stroke and leave out the full stop.', 'If you like, add one clean underline below the name, not touching the letters.'],
       do: ['Rising baseline', 'Clear, larger first letter', 'Slight right slant', 'Upward finishing stroke', 'Same signature on every document'],
       dont: ['Full stop after the name', 'Line cutting through the letters', 'Circle around the signature', 'Falling or downward ending', 'Overwriting or retouching'],
-      startDay: `${n.planet.weekday} (day of ${n.planet.name})${dates.length ? ` – suggested dates: ${dates.join(', ')}` : ''}`,
+      startDay: `${n.planet.weekday}, the day of ${n.planet.name}${dates.length ? `. Good dates: ${dates.join(', ')}` : ''}`,
       inkColour: `Blue or black for official documents; ${n.planet.colours.slice(0, 2).join(' / ')} are your traditionally lucky colours for a personal pen.`,
       practice: 'Traditionally the new signature is practised daily (for example 108 times a day for 21 days) until it becomes natural, then used on all new documents.',
     },
-    closing: 'A signature is a daily affirmation – small, consistent corrections help it support your goals.',
+    closing: dates.length ? `${fname}, begin on ${dates[0]} and give it 21 days. Small changes, done every day, are what make a signature work for you.` : `${fname}, give the new signature 21 days of daily practice. Small changes, done every day, are what make it work for you.`,
   };
 }
 
@@ -308,7 +316,7 @@ export async function runSignatureAgent(i: SignatureInput, n: SignatureNumbers, 
       const parsed = AnalysisSchema.safeParse(extractJson(raw));
       if (parsed.success) {
         const scores = engineScores(i, n, fs, Math.round(parsed.data.overallScore));
-        return { analysis: { ...scrubDeep(parsed.data), overallScore: scores.overall }, source: 'ai', model, scores, features: fs };
+        return { analysis: { ...humaniseDeep(scrubDeep(parsed.data)), overallScore: scores.overall }, source: 'ai', model, scores, features: fs };
       }
       lastErr = parsed.error.issues.slice(0, 5).map((x) => `${x.path.join('.')}: ${x.message}`).join('; ');
       text = `${factsText(i, n)}\n\nYour previous reply was invalid (${lastErr}). Reply again with ONLY the JSON object in the required shape.`;

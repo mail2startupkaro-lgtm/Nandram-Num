@@ -163,8 +163,7 @@ async function writeWithGemini(n: CelebNumbers, lang: Lang, english: CelebConten
   let grounding = cfg.grounding && lang === 'en';
   let user = prompt(n, lang, english);
   let last = '';
-  const maxAttempts = Math.min(4, Math.max(3, models.length));
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+  for (let attempt = 0; attempt < 3; attempt++) {
     const currentCfg = { ...cfg, model: models[modelIdx] };
     try {
       const r = await callGemini(currentCfg, RULES, user, grounding, fetchImpl);
