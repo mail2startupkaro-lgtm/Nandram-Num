@@ -9,6 +9,7 @@ import { ChipGroup, Field, Input, Select } from '@/components/ui/form';
 import { DisclaimerNote } from '@/components/legal/disclaimer-note';
 import { api, ApiError } from '@/lib/client/api';
 import { confirmCashfreeOrder, loadCashfree } from '@/lib/client/cashfree';
+import { openRazorpayCheckout } from '@/lib/client/razorpay';
 import { useDisplayCurrency } from '@/lib/client/currency';
 import { OUTSIDE_INDIA } from '@/lib/billing/currency';
 import { todayIST, toIso } from '@/lib/numerology';
@@ -20,7 +21,7 @@ import { FIELD_LABEL, FLOW, RELATION_LABEL } from './labels';
 import { priceOf, SERVICE_ICON, StepBar } from './reading-picker';
 
 type Person = PersonLite & { id: string };
-interface Order { gateway: 'cashfree' | 'mock'; mode: string; paymentSessionId: string; mock: boolean; orderId: string; amountPaise: number }
+interface Order { gateway: 'cashfree' | 'razorpay' | 'mock'; keyId?: string; mode: string; paymentSessionId: string; mock: boolean; orderId: string; amountPaise: number; currency?: string }
 type Step = 'details' | 'account' | 'pay' | 'done';
 
 const WHATSAPP = '918819999374';
@@ -284,6 +285,41 @@ function PayStep({ svc, details, forName, relation, personId, onBack, onDone, si
     try {
       const o = await api<Order>('/api/billing/checkout', { method: 'POST', json: { planCode: svc.code, intake: shown, profileId: personId ?? undefined, billingState: bill.state, billingName: bill.name || undefined, phone: bill.phone || undefined, gstin: abroad ? undefined : bill.gstin || undefined } });
       setOrder(o);
+      if (o.gateway === 'razorpay') {
+        try {
+          const resp = await openRazorpayCheckout({
+            key: o.keyId || '',
+            amount: o.amountPaise,
+            currency: o.currency || (usd ? 'USD' : 'INR'),
+            name: 'myNumerologist',
+            description: svc.en.name,
+            order_id: o.orderId,
+            prefill: {
+              name: bill.name || u.name || '',
+              email: u.email || '',
+              contact: bill.phone || u.phone || '',
+            },
+            theme: { color: '#d4af37' },
+          });
+          setStage('confirming');
+          const verify = await api<{ status: string }>('/api/billing/razorpay/verify', {
+            method: 'POST',
+            json: {
+              orderId: resp.razorpay_order_id,
+              paymentId: resp.razorpay_payment_id,
+              signature: resp.razorpay_signature,
+            },
+          });
+          if (verify.status === 'paid') onDone();
+          else setStage('fail');
+        } catch (err: unknown) {
+          if ((err as Error)?.message !== 'PAYMENT_CANCELLED') {
+            setError(lang === 'hi' ? 'भुगतान पूरा नहीं हुआ।' : 'Payment could not be completed.');
+          }
+        }
+        setBusy(false);
+        return;
+      }
       if (o.gateway === 'cashfree') {
         const Cashfree = await loadCashfree();
         const r = await Cashfree({ mode: o.mode === 'production' ? 'production' : 'sandbox' }).checkout({ paymentSessionId: o.paymentSessionId, redirectTarget: '_modal' });

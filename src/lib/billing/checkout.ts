@@ -9,6 +9,7 @@ import { intlPhone, OUTSIDE_INDIA, planPrice, serviceUsd, type Currency } from '
 import { getPerson } from '@/lib/db/repo/people';
 import { createServiceOrder, getService, isPayable, isServiceCode, markServiceOrderPaid, parseIntake } from './services';
 import { CASHFREE_ORDER_PREFIX, cashfreeConfig, cashfreePhone, createCashfreeOrder, getCashfreeOrder, getCashfreePayments, isCashfreeOrder, newCashfreeOrderId, toPaise } from './cashfree';
+import { createRazorpayOrder, getRazorpayOrder, getRazorpayOrderPayments, isRazorpayOrder, razorpayConfig, verifyRazorpayPaymentSignature } from './razorpay';
 
 export class CheckoutError extends Error { constructor(public code: string) { super(code); } }
 
@@ -46,11 +47,24 @@ export const MOCK_ORDER_PREFIX = 'mock_';
 export const isMockOrder = (orderId: string) => orderId.startsWith(MOCK_ORDER_PREFIX);
 
 /**
- * Cashfree is the only payment gateway. Without CASHFREE_APP_ID / CASHFREE_SECRET_KEY a local development
- * server uses a test mode ("Simulate payment" button); production refuses to take orders.
+ * Active gateway determined per order currency and configuration:
+ * - If USD or client outside India and Razorpay is configured -> razorpay
+ * - If Cashfree is configured -> cashfree
+ * - If Razorpay is configured -> razorpay
+ * - Mock in development
  */
-export function activeGateway(): 'cashfree' | 'mock' | null {
-  if (cashfreeConfig()) return 'cashfree';
+export function activeGateway(currency: Currency = 'INR', billingState?: string): 'cashfree' | 'razorpay' | 'mock' | null {
+  const rzp = razorpayConfig();
+  const cf = cashfreeConfig();
+
+  // For international transactions (USD or Outside India), prioritize Razorpay if available
+  if ((currency === 'USD' || billingState === OUTSIDE_INDIA) && rzp) {
+    return 'razorpay';
+  }
+
+  if (cf) return 'cashfree';
+  if (rzp) return 'razorpay';
+
   if (process.env.ALLOW_MOCK_PAYMENTS === '1' || process.env.ALLOW_MOCK_PAYMENTS === 'true') return 'mock';
   return process.env.NODE_ENV === 'production' ? null : 'mock';
 }
@@ -83,11 +97,45 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
     couponCode: coupon?.code ?? null, billingName, billingState: input.billingState, gstin,
   };
 
-  const gateway = activeGateway();
+  const gateway = activeGateway(currency, input.billingState);
   if (!gateway) {
-    console.error('[Billing] Payment gateway not configured. Please ensure CASHFREE_APP_ID and CASHFREE_SECRET_KEY are set in your environment variables.');
+    console.error('[Billing] Payment gateway not configured. Please ensure CASHFREE_APP_ID/CASHFREE_SECRET_KEY or RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET are set.');
     throw new CheckoutError('GATEWAY_NOT_CONFIGURED');
   }
+
+  if (gateway === 'razorpay') {
+    const rzp = razorpayConfig()!;
+    const phone = cashfreePhone(input.phone) ?? cashfreePhone(user.phone) ?? intlPhone(input.phone) ?? intlPhone(user.phone);
+    let order;
+    try {
+      order = await createRazorpayOrder(rzp, {
+        amountPaise,
+        currency,
+        receipt: `rcpt_${Date.now()}`.slice(0, 40),
+        notes: { planCode: plan.code, planName: plan.name, userId: user.id },
+      }, opts.fetchImpl);
+    } catch (e) {
+      console.error('[Billing] Razorpay order creation failed:', e);
+      throw e;
+    }
+    const [inserted] = await db.insert(payments).values({ ...row, gatewayOrderId: order.id }).returning({ id: payments.id });
+    if (intake) await createServiceOrder(inserted.id, user.id, plan.code, intake, db);
+    if (user.billingState !== input.billingState) await db.update(users).set({ billingState: input.billingState }).where(eq(users.id, user.id));
+
+    return {
+      gateway: 'razorpay' as const,
+      keyId: rzp.keyId,
+      orderId: order.id,
+      amountPaise,
+      currency,
+      discountPaise,
+      plan: { code: plan.code, name: plan.name },
+      mock: false,
+      paymentSessionId: order.id,
+      prefill: { name: billingName ?? '', email: user.email ?? '', contact: phone ?? '' },
+    };
+  }
+
   if (gateway === 'cashfree') {
     const cf = cashfreeConfig()!;
     const phone = cashfreePhone(input.phone) ?? cashfreePhone(user.phone) ?? intlPhone(input.phone) ?? intlPhone(user.phone);
@@ -195,4 +243,45 @@ export async function syncCashfreeOrder(orderId: string, db: Db = getDb()): Prom
   // ACTIVE: not paid yet – the customer may still retry inside the same checkout.
   const pays = await getCashfreePayments(cf, orderId).catch(() => [] as { payment_status: string }[]);
   return { status: pays.length && pays.every((x) => ['FAILED', 'USER_DROPPED', 'CANCELLED', 'VOID'].includes(x.payment_status)) ? 'failed' : 'pending' };
+}
+
+/**
+ * Verifies and syncs a Razorpay payment after checkout callback.
+ */
+export async function syncRazorpayOrder(params: {
+  orderId: string;
+  paymentId: string;
+  signature: string;
+}, db: Db = getDb()): Promise<{ status: 'paid' | 'pending' | 'failed'; invoiceNumber?: string | null; paymentId?: string }> {
+  const { orderId, paymentId, signature } = params;
+  if (!isRazorpayOrder(orderId)) throw new CheckoutError('ORDER_NOT_FOUND');
+  const rzp = razorpayConfig();
+  if (!rzp) throw new Error('Razorpay is not configured (RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET)');
+
+  const [p] = await db.select().from(payments).where(eq(payments.gatewayOrderId, orderId)).limit(1);
+  if (!p) throw new CheckoutError('ORDER_NOT_FOUND');
+  if (p.status === 'paid') return { status: 'paid', invoiceNumber: p.invoiceNumber, paymentId: p.id };
+
+  const valid = verifyRazorpayPaymentSignature(rzp, orderId, paymentId, signature);
+  if (!valid) {
+    console.error(`[Razorpay] Invalid payment signature for order ${orderId}`);
+    return { status: 'failed' };
+  }
+
+  // Cross check with Razorpay API for security
+  const rzpOrder = await getRazorpayOrder(rzp, orderId);
+  if (rzpOrder.status === 'paid' || rzpOrder.amount_paid >= p.amountPaise) {
+    const { payment } = await fulfilPayment(orderId, paymentId, db);
+    return { status: 'paid', invoiceNumber: payment.invoiceNumber, paymentId: payment.id };
+  }
+
+  // Check individual payments
+  const pays = await getRazorpayOrderPayments(rzp, orderId).catch(() => ({ items: [] }));
+  const captured = pays.items.find((x) => x.id === paymentId && (x.status === 'captured' || x.status === 'authorized'));
+  if (captured) {
+    const { payment } = await fulfilPayment(orderId, paymentId, db);
+    return { status: 'paid', invoiceNumber: payment.invoiceNumber, paymentId: payment.id };
+  }
+
+  return { status: 'pending' };
 }

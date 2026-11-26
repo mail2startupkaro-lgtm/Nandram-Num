@@ -11,9 +11,10 @@ import { DisclaimerNote } from '@/components/legal/disclaimer-note';
 import { chooseCurrency, useTimeZone } from '@/lib/client/currency';
 import { workingHoursLabel } from '@/lib/client/working-hours';
 import { formatMoney, OUTSIDE_INDIA, type Currency, type PriceView } from '@/lib/billing/currency';
+import { openRazorpayCheckout } from '@/lib/client/razorpay';
 
 interface Plan { code: string; name: string; description: string; pricePaise: number; intervalDays: number | null; credits: number; features: Record<string, boolean | number | null | undefined>; price: PriceView }
-interface Order { gateway: 'cashfree' | 'mock'; mode: string; paymentSessionId: string; mock: boolean; orderId: string; amountPaise: number; currency: Currency; discountPaise: number; plan: { code: string; name: string }; prefill: { name: string; email: string; contact: string } }
+interface Order { gateway: 'cashfree' | 'razorpay' | 'mock'; keyId?: string; mode: string; paymentSessionId: string; mock: boolean; orderId: string; amountPaise: number; currency: Currency; discountPaise: number; plan: { code: string; name: string }; prefill: { name: string; email: string; contact: string } }
 type CashfreeResult = { error?: { message?: string }; redirect?: boolean; paymentDetails?: { paymentMessage?: string } };
 declare global { interface Window {
   Cashfree?: (o: { mode: string }) => { checkout: (o: { paymentSessionId: string; redirectTarget?: string }) => Promise<CashfreeResult> };
@@ -335,6 +336,39 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
         },
       });
       setOrder(o);
+      if (o.gateway === 'razorpay') {
+        try {
+          const resp = await openRazorpayCheckout({
+            key: o.keyId || '',
+            amount: o.amountPaise,
+            currency: o.currency,
+            name: 'myNumerologist',
+            description: o.plan.name,
+            order_id: o.orderId,
+            prefill: o.prefill,
+            theme: { color: '#d4af37' },
+          });
+          setPending(true);
+          const verify = await api<{ status: string }>('/api/billing/razorpay/verify', {
+            method: 'POST',
+            json: {
+              orderId: resp.razorpay_order_id,
+              paymentId: resp.razorpay_payment_id,
+              signature: resp.razorpay_signature,
+            },
+          });
+          setPending(false);
+          if (verify.status === 'paid') { setDone('ok'); await onPaid(); }
+          else setDone('fail');
+        } catch (err: unknown) {
+          setPending(false);
+          if ((err as Error)?.message !== 'PAYMENT_CANCELLED') {
+            setError(hi ? 'भुगतान पूरा नहीं हुआ।' : 'Payment could not be completed.');
+          }
+        }
+        setBusy(false);
+        return;
+      }
       if (o.gateway === 'cashfree') {
         await loadCashfreeJs();
         const cf = window.Cashfree!({ mode: o.mode === 'production' ? 'production' : 'sandbox' });
