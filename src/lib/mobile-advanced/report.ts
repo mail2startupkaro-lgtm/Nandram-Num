@@ -158,6 +158,9 @@ function css(t: PdfTheme) {
   `;
 }
 
+/** Shared sheet styles (also used by the baby name report). */
+export const reportSheetCss = (t: PdfTheme) => css(t);
+
 function bar(label: string, v: number, t: PdfTheme) {
   const x = Math.max(0, Math.min(100, Math.round(v)));
   return `<div class="bar"><span>${esc(label)}</span><div class="tr"><div class="fl" style="width:${Math.max(3, x)}%;background:${scoreColour(x, t)}"></div></div><span class="v">${x}</span></div>`;
