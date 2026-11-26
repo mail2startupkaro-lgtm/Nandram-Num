@@ -11,6 +11,8 @@ import { barsSvg, compassSvg, divider, esc, gaugeSvg, gridSvg, mandala, monogram
 import type { Branding, PdfTheme } from './themes';
 import { DISCLAIMER } from '@/lib/disclaimer';
 import { tr } from '@/lib/i18n/hi-terms';
+import { analyseDestiny, writeDestiny } from '@/lib/destiny/report';
+import { blockHtml, type ReportSection } from '@/lib/report/blocks';
 
 type R = NumerologyResult['results'];
 type Lang = 'en' | 'hi';
@@ -19,7 +21,7 @@ const L = {
   en: {
     reportTypes: { complete: 'Complete Life Report', dob: 'Date of Birth Numerology', name: 'Name Numerology', mobile: 'Mobile Number Numerology', aadhaar: 'Aadhaar Vibration Report', couple: 'Couple Compatibility Report' } as Record<string, string>,
     preparedFor: 'Prepared for', dob: 'Date of birth', reportDate: 'Report date', by: 'Prepared by', contents: 'Contents', chapter: 'Chapter',
-    ch: { glance: 'Your Numbers at a Glance', core: 'Moolank & Bhagyank', grid: 'Lo Shu Grid Analysis', kua: 'Kua & Directions', timing: 'Timing & Forecast', life: 'Career, Love & Wellbeing', name: 'Name Numerology', numbers: 'Mobile & Aadhaar', couple: 'Couple Compatibility', remedies: 'Remedies & Solutions', closing: 'Closing & Consultation' } as Record<string, string>,
+    ch: { glance: 'Your Numbers at a Glance', core: 'Moolank & Bhagyank', grid: 'Lo Shu Grid Analysis', kua: 'Kua & Directions', timing: 'Timing & Forecast', life: 'Career, Love & Wellbeing', name: 'Name Numerology', numbers: 'Mobile & Aadhaar', couple: 'Couple Compatibility', destiny: 'Destiny Matrix Analysis', remedies: 'Remedies & Solutions', closing: 'Closing & Consultation' } as Record<string, string>,
     moolank: 'Moolank', bhagyank: 'Bhagyank', kua: 'Kua', nameNo: 'Name number', py: 'Personal Year', strengths: 'Key Strengths', watch: 'Watch Out For', advice: 'Expert Advice', remedy: 'Your Remedy',
     loShu: 'Lo Shu Grid', vedic: 'Vedic Grid', present: 'Present', repeated: 'Repeated', missing: 'Missing', lifeAreas: 'Life areas', friendly: 'Friendly', neutral: 'Neutral', enemy: 'Challenging',
     planes: 'Planes, arrows & yogs', plane: 'Plane', status: 'Status', complete: 'Complete', partial: 'Partial', empty: 'Empty', pyTimeline: 'Personal Year energy (birthday to birthday; year = when it begins)',
@@ -50,7 +52,7 @@ const L = {
   hi: {
     reportTypes: { complete: 'संपूर्ण जीवन रिपोर्ट', dob: 'जन्म तिथि अंक ज्योतिष', name: 'नाम अंक ज्योतिष', mobile: 'मोबाइल नंबर अंक ज्योतिष', aadhaar: 'आधार कंपन रिपोर्ट', couple: 'दंपति मिलान रिपोर्ट' } as Record<string, string>,
     preparedFor: 'विशेष रूप से तैयार', dob: 'जन्म तिथि', reportDate: 'रिपोर्ट तिथि', by: 'प्रस्तुतकर्ता', contents: 'विषय सूची', chapter: 'अध्याय',
-    ch: { glance: 'आपके अंक एक नज़र में', core: 'मूलांक और भाग्यांक', grid: 'लो शू ग्रिड विश्लेषण', kua: 'कुआ और दिशाएँ', timing: 'समय और भविष्यफल', life: 'करियर, प्रेम और स्वास्थ्य', name: 'नाम अंक ज्योतिष', numbers: 'मोबाइल और आधार', couple: 'दंपति मिलान', remedies: 'उपाय और समाधान', closing: 'समापन और परामर्श' } as Record<string, string>,
+    ch: { glance: 'आपके अंक एक नज़र में', core: 'मूलांक और भाग्यांक', grid: 'लो शू ग्रिड विश्लेषण', kua: 'कुआ और दिशाएँ', timing: 'समय और भविष्यफल', life: 'करियर, प्रेम और स्वास्थ्य', name: 'नाम अंक ज्योतिष', numbers: 'मोबाइल और आधार', couple: 'दंपति मिलान', destiny: 'डेस्टिनी मैट्रिक्स विश्लेषण', remedies: 'उपाय और समाधान', closing: 'समापन और परामर्श' } as Record<string, string>,
     moolank: 'मूलांक', bhagyank: 'भाग्यांक', kua: 'कुआ', nameNo: 'नामांक', py: 'व्यक्तिगत वर्ष', strengths: 'मुख्य शक्तियाँ', watch: 'ध्यान दें', advice: 'विशेषज्ञ सलाह', remedy: 'आपका उपाय',
     loShu: 'लो शू ग्रिड', vedic: 'वैदिक ग्रिड', present: 'उपस्थित', repeated: 'दोहराया', missing: 'अनुपस्थित', lifeAreas: 'जीवन क्षेत्र', friendly: 'मित्र', neutral: 'सम', enemy: 'शत्रु',
     planes: 'तल, तीर और योग', plane: 'तल', status: 'स्थिति', complete: 'पूर्ण', partial: 'आंशिक', empty: 'रिक्त', pyTimeline: 'व्यक्तिगत वर्ष ऊर्जा (जन्मदिन से जन्मदिन तक)',
@@ -341,6 +343,24 @@ function buildChapters(inp: TemplateInput, lab: Labels): ChapterParts[] {
     });
   }
 
+  // Destiny Matrix (full Personal report only) – same engines and texts as the stand-alone services.
+  if ((result.modules ?? ['complete']).includes('complete')) {
+    const dobIso = result.client.dob;
+    if (dobIso) {
+      const who = result.client.fullName || '';
+      const parts = (secs: ReportSection[], ids: string[]) => ids.map((id) => secs.find((x) => x.id === id)).filter((x): x is ReportSection => !!x);
+      const body = (xs: ReportSection[]) => xs.map((x) => `<div class="cr-sec"><h3 class="cr-t">${esc(x.title)}</h3>${x.blocks.map(blockHtml).join('')}</div>`).join('');
+      const chart = (x: ReportSection | undefined) => (x ? `<div class="cr">${x.blocks.map(blockHtml).join('')}</div>` : '');
+      try {
+        const dm = writeDestiny(analyseDestiny({ name: who, dob: dobIso, asOf: inp.reportDate || result.asOf }), lang);
+        // The stand-alone Destiny report prints the full 0–80 timeline; here "now and the next ten years" is enough.
+        const trimmed = dm.sections.map((x) => (x.id === 'timeline' ? { ...x, blocks: x.blocks.slice(0, 3) } : x));
+        const [c0, ...rest] = parts(trimmed, ['chart', 'summary', 'core', 'money', 'love', 'tail', 'purpose', 'timeline']);
+        ch.push({ id: 'destiny', title: lab.ch.destiny, icon: remedyIcon('number', t, 40), intro: chart(c0), inner: `<div class="cr">${body(rest)}</div>` });
+      } catch { /* date outside the matrix range – skip the chapter */ }
+    }
+  }
+
   // 10. Remedies
   const rm = r.remedies;
   const card = (icon: RemedyIcon, title: string, body: string) => `<div class="card"><div class="ct">${remedyIcon(icon, t, 20)} ${esc(title)}</div><div class="cv">${body}</div></div>`;
@@ -449,6 +469,19 @@ function recommendFor(r: NumerologyResult): string[] {
   return [...new Set(out)].slice(0, 6);
 }
 
+/** Styles for the Destiny Matrix chapter (blocks from lib/report/blocks.ts). */
+function chartCss(t: PdfTheme): string {
+  return `.cr .chart{margin:2mm auto 3mm;max-width:118mm;text-align:center;break-inside:avoid}.cr .chart svg{width:100%;height:auto}
+  .cr .chart figcaption{font-size:8.5pt;color:${t.muted};margin-top:1mm}
+  .cr .k{display:grid;grid-template-columns:repeat(3,1fr);gap:2mm;margin:2mm 0 3mm}.cr .k div{border:.6px solid ${t.border};border-radius:2mm;padding:1.8mm;text-align:center;background:${t.soft};font-size:8pt;color:${t.muted}}
+  .cr .k b{display:block;font-family:'Playfair Display',serif;font-size:14pt;color:${t.primary};margin-top:.5mm}
+  .cr-sec{margin:0 0 4mm}.cr-sec h3.cr-t{font-family:'Playfair Display',serif;color:${t.primary};font-size:12.5pt;margin:3mm 0 1.5mm;break-after:avoid}
+  .cr h3{color:${t.accent};font-size:10.5pt;margin:2.5mm 0 1mm;break-after:avoid}.cr p{margin:0 0 2mm}.cr ul{margin:0 0 2mm;padding-left:5mm}
+  .cr table{width:100%;border-collapse:collapse;font-size:8.5pt;margin:1.5mm 0 3mm}.cr td,.cr th{border:.5px solid ${t.border};padding:1.2mm 1.8mm;text-align:left;vertical-align:top}
+  .cr th{background:${t.soft}}.cr tr{break-inside:avoid}.cr tr.hl td{background:${t.soft};font-weight:700;color:${t.primary}}
+  .cr .tip{border-left:1mm solid ${t.accent};background:${t.soft};padding:2mm 3mm;border-radius:1.5mm}`;
+}
+
 // ---------- Body (TOC + chapters + closing) ----------
 export function buildBodyHtml(inp: TemplateInput, pages: Record<string, number> | null, qrSvg: string, qrs: { qrTelegram?: string; qrWebsite?: string } = {}): { html: string; chapterIds: string[] } {
   const { theme: t, branding: b, narrative } = inp;
@@ -482,7 +515,7 @@ export function buildBodyHtml(inp: TemplateInput, pages: Record<string, number> 
     ${readingGuideHtml(lang, 'personal', t)}
     ${methodPanel(inp, lab, lang)}</section>`;
 
-  const html = `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${baseCss(t, lang)}${guideCss(t)}${servicesCss(t)}@page{size:A4;margin:22mm 18mm 20mm}</style></head><body>
+  const html = `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${baseCss(t, lang)}${chartCss(t)}${guideCss(t)}${servicesCss(t)}@page{size:A4;margin:22mm 18mm 20mm}</style></head><body>
     <div class="bgm">${mandala(150 * 3.78, t.accent, 1, 24)}</div>
     ${inp.watermark ? `<div class="watermark">${esc(inp.watermark)}</div>` : ''}
     ${toc}

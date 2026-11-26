@@ -18,7 +18,8 @@ const MODULES = [
 const CHAPTERS = [
   { id: 'glance', label: 'Numbers at a glance' }, { id: 'core', label: 'Moolank & Bhagyank' }, { id: 'grid', label: 'Lo Shu grid' }, { id: 'kua', label: 'Kua & directions' },
   { id: 'timing', label: 'Timing & forecast' }, { id: 'life', label: 'Career, love & wellbeing' }, { id: 'name', label: 'Name numerology' },
-  { id: 'numbers', label: 'Mobile & Aadhaar' }, { id: 'couple', label: 'Couple compatibility' }, { id: 'remedies', label: 'Remedies' },
+  { id: 'numbers', label: 'Mobile & Aadhaar' }, { id: 'couple', label: 'Couple compatibility' },
+  { id: 'destiny', label: 'Destiny Matrix' }, { id: 'remedies', label: 'Remedies' },
 ];
 
 const THEMES = ['royal-gold-maroon', 'cosmic-blue', 'saffron-cream', 'minimal-white'];

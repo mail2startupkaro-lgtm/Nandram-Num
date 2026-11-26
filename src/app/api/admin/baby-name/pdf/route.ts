@@ -20,6 +20,8 @@ const Body = z.object({
   letters: z.string().trim().max(80).optional(),
   candidates: z.array(z.string().trim().max(40)).max(12).optional(),
   suggest: z.boolean().default(true),
+  country: z.string().trim().max(100).optional(),
+  nameStyle: z.enum(['auto', 'mix', 'indian', 'english', 'arabic', 'spanish', 'portuguese', 'french', 'german', 'dutch', 'italian', 'russian', 'malay']).optional(),
   asOf: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   language: z.enum(['en', 'hi']).default('en'),
   theme: z.enum(['royal-gold-maroon', 'cosmic-blue', 'saffron-cream', 'minimal-white']).optional(),

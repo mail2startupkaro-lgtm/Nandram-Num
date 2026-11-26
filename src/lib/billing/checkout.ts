@@ -26,7 +26,7 @@ export async function validateCoupon(code: string, plan: Pick<Plan, 'code' | 'pr
   return { coupon: c, discountPaise: Math.max(0, discountPaise) };
 }
 
-export interface CheckoutInput { planCode: string; coupon?: string; billingName?: string; billingState: string; gstin?: string; phone?: string; intake?: unknown; currency?: Currency; /** Saved person (self / family member) the service is for. */ profileId?: string }
+export interface CheckoutInput { planCode: string; coupon?: string; billingName?: string; billingState: string; gstin?: string; phone?: string; intake?: unknown; currency?: Currency; /** Saved person (self / family member) the service is for. */ profileId?: string; /** One signature photo (data URL), Signature Analysis only. */ signatureImage?: string }
 
 /** What is being bought: a report plan (credits / Pro) or an expert service (SVC_…). */
 export async function getPurchasable(code: string, db: Db = getDb(), want: Currency = 'INR') {
@@ -82,6 +82,8 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
     const person = await getPerson(user.id, input.profileId, db).catch(() => { throw new CheckoutError('PERSON_NOT_FOUND'); });
     intake.forProfileId = person.id; intake.forRelation = person.relation;
   }
+  // Added after parseIntake on purpose: its number masking must not touch the image data.
+  if (intake && plan.kind === 'service' && plan.service.code === 'SVC_SIGNATURE' && input.signatureImage) intake.signatureImage = input.signatureImage;
   const returnPath = plan.kind === 'service' ? '/services' : '/pricing';
   const gstin = input.gstin?.trim().toUpperCase() || undefined;
   if (gstin && !GSTIN_RE.test(gstin)) throw new CheckoutError('GSTIN_INVALID');

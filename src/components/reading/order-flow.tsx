@@ -1,7 +1,8 @@
 'use client';
 import * as React from 'react';
 import Link from 'next/link';
-import { CheckCircle2, ChevronLeft, LogIn, MessageCircle, ShieldCheck, Sparkles, UserPlus, Users } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, ImageUp, LogIn, MessageCircle, RefreshCw, ShieldCheck, Sparkles, UserPlus, Users, X } from 'lucide-react';
+import { shrink } from '@/lib/client/signature-image';
 import { useApp } from '@/components/layout/providers';
 import { INDIAN_STATES } from '@/components/wizard/state';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -26,6 +27,63 @@ interface Order { gateway: 'cashfree' | 'razorpay' | 'mock'; keyId?: string; mod
 type Step = 'details' | 'account' | 'pay' | 'done';
 
 const WHATSAPP = '918819999374';
+const SIG_IMAGE_MAX = 1_400_000; // must match SIGNATURE_IMAGE_MAX on the server
+
+const SIG_T = {
+  en: { title: 'Upload your signature (one photo)', hint: 'Sign your normal signature on plain white, unruled paper and take one clear photo from straight above, in good light. JPG, PNG or WEBP.', choose: 'Choose photo', replace: 'Replace photo', remove: 'Remove', only: 'Only one photo can be uploaded – choosing another replaces this one.', optional: 'Optional – if you skip this, send the photo on WhatsApp after payment.', notImage: 'Please choose a JPG, PNG or WEBP image.', tooBig: 'This photo is too large. Please choose a photo under 15 MB.', bad: 'This photo could not be read. Please try another photo (JPG or PNG).', ready: 'Signature photo attached', received: 'Your signature photo has been received with the order.' },
+  hi: { title: 'अपना हस्ताक्षर अपलोड करें (एक फ़ोटो)', hint: 'सादे सफ़ेद, बिना लाइन वाले काग़ज़ पर अपना सामान्य हस्ताक्षर करें और अच्छी रोशनी में ठीक ऊपर से एक साफ़ फ़ोटो लें। JPG, PNG या WEBP।', choose: 'फ़ोटो चुनें', replace: 'फ़ोटो बदलें', remove: 'हटाएँ', only: 'केवल एक फ़ोटो अपलोड हो सकती है – दूसरी चुनने पर यह बदल जाएगी।', optional: 'वैकल्पिक – अभी न जोड़ें तो भुगतान के बाद WhatsApp पर फ़ोटो भेजें।', notImage: 'कृपया JPG, PNG या WEBP फ़ोटो चुनें।', tooBig: 'यह फ़ोटो बहुत बड़ी है। कृपया 15 MB से छोटी फ़ोटो चुनें।', bad: 'यह फ़ोटो पढ़ी नहीं जा सकी। कृपया दूसरी फ़ोटो (JPG या PNG) आज़माएँ।', ready: 'हस्ताक्षर की फ़ोटो जुड़ गई', received: 'आपके हस्ताक्षर की फ़ोटो ऑर्डर के साथ मिल गई है।' },
+};
+
+/** Single signature photo for a Signature Analysis booking: one image only, downsized in the browser before upload. */
+function SignaturePhoto({ value, onChange }: { value: string | null; onChange: (v: string | null) => void }) {
+  const { lang } = useApp();
+  const t = SIG_T[lang];
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState<string | null>(null);
+  const input = React.useRef<HTMLInputElement>(null);
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]; e.target.value = ''; // one file only – any extra selection is ignored
+    if (!file) return;
+    setErr(null);
+    if (!/^image\//.test(file.type)) { setErr(t.notImage); return; }
+    if (file.size > 15 * 1024 * 1024) { setErr(t.tooBig); return; }
+    setBusy(true);
+    try {
+      const dataUrl = await shrink(file);
+      if (dataUrl.length > SIG_IMAGE_MAX) { setErr(t.tooBig); return; }
+      onChange(dataUrl);
+    } catch { setErr(t.bad); } finally { setBusy(false); }
+  }
+
+  return (
+    <div className="space-y-2 rounded-lg border border-gold/40 bg-gold/5 p-3">
+      <p className="text-sm font-semibold">{t.title}</p>
+      <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/*" className="sr-only" onChange={onFile} aria-label={t.title} />
+      {value ? (
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-start gap-3">
+            <img src={value} alt={t.ready} className="max-h-40 max-w-full rounded-md border border-gold/40 bg-white object-contain p-1" />
+            <div className="flex flex-col gap-2">
+              <p className="flex items-center gap-1 text-xs font-medium text-success"><CheckCircle2 className="h-4 w-4" />{t.ready}</p>
+              <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => input.current?.click()}><RefreshCw className="mr-1 h-4 w-4" />{t.replace}</Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => { onChange(null); setErr(null); }}><X className="mr-1 h-4 w-4" />{t.remove}</Button>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">{t.only}</p>
+        </div>
+      ) : (
+        <button type="button" disabled={busy} onClick={() => input.current?.click()} className="flex w-full flex-col items-center gap-1.5 rounded-lg border-2 border-dashed border-gold/40 p-5 text-center text-sm hover:bg-gold/10 disabled:opacity-60">
+          <ImageUp className="h-7 w-7 text-gold" aria-hidden />
+          <span className="font-semibold">{busy ? '…' : t.choose}</span>
+          <span className="text-xs text-muted-foreground">{t.hint}</span>
+        </button>
+      )}
+      {!value && <p className="text-xs text-muted-foreground">{t.optional}</p>}
+      {err && <p className="text-xs text-danger" role="alert">{err}</p>}
+    </div>
+  );
+}
 
 /** Steps 2–4 of "Get your reading" for a paid reading: details → account (register / sign in) → payment. */
 export function OrderFlow({ code, forId, onChangeReading }: { code: string; forId?: string | null; onChangeReading: () => void }) {
@@ -39,6 +97,7 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
   const [d, setD] = React.useState<Record<string, string>>({ gender: 'male', country: 'India' });
   const [babyName, setBabyName] = React.useState('');
   const [partnerPick, setPartnerPick] = React.useState('');
+  const [sigImage, setSigImage] = React.useState<string | null>(null);
   const [step, setStep] = React.useState<Step>('details');
   const [personId, setPersonId] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
@@ -193,7 +252,7 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
             {has('partners') && <Field label={L.partners} htmlFor="of-pt" hint={lang === 'hi' ? 'जैसे: Arjun Mehta – 03-01-1990' : 'e.g. Arjun Mehta – 03-01-1990'}><textarea id="of-pt" rows={2} maxLength={800} value={d.partners ?? ''} onChange={set('partners')} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></Field>}
             {has('brand') && <Field label={L.brand} htmlFor="of-br"><Input id="of-br" value={d.brand ?? ''} onChange={set('brand')} maxLength={400} /></Field>}
             {has('businesses') && <Field label={label('businesses')} htmlFor="of-biz" hint={lang === 'hi' ? 'जैसे: कैफ़े, कपड़े की दुकान, CA प्रैक्टिस' : 'e.g. café, clothing store, CA practice'}><Input id="of-biz" value={d.businesses ?? ''} onChange={set('businesses')} maxLength={600} /></Field>}
-            {sig && <p className="rounded-md border border-gold/40 bg-gold/10 p-2.5 text-xs">{lang === 'hi' ? 'भुगतान के बाद सादे सफ़ेद काग़ज़ पर अपने सामान्य हस्ताक्षर की 2–3 फ़ोटो WhatsApp पर भेजें।' : 'After payment, send 2–3 photos of your normal signature on plain white paper on WhatsApp.'}</p>}
+            {sig && <SignaturePhoto value={sigImage} onChange={setSigImage} />}
             {has('questions') && <Field label={label('questions')} htmlFor="of-q"><textarea id="of-q" rows={3} maxLength={2000} value={d.questions ?? ''} onChange={set('questions')} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></Field>}
           </fieldset>
           <p className="flex gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 shrink-0 text-gold" />{t.savedNote}</p>
@@ -204,14 +263,15 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
 
       {step === 'account' && <AccountStep prefill={{ name: relation === 'self' ? forName : '', mobile: relation === 'self' ? d.mobile ?? '' : '' }} onBack={() => setStep('details')} onDone={afterAuth} />}
 
-      {step === 'pay' && u && <PayStep svc={svc} details={d} forName={forName} relation={relation} personId={personId} onBack={() => setStep('details')} onDone={() => setStep('done')} sig={sig} />}
+      {step === 'pay' && u && <PayStep svc={svc} details={d} forName={forName} relation={relation} personId={personId} onBack={() => setStep('details')} onDone={() => setStep('done')} sig={sig} signatureImage={sig ? sigImage : null} />}
 
       {step === 'done' && (
         <section className="glass mt-4 space-y-3 rounded-xl p-6 text-center" role="status">
           <CheckCircle2 className="mx-auto h-12 w-12 text-success" />
           <p className="text-lg font-semibold">{t.ok}</p><p className="text-sm text-muted-foreground">{t.okText}</p>
+          {sig && sigImage && <p className="text-sm text-success">{SIG_T[lang].received}</p>}
           <div className="flex flex-wrap justify-center gap-2 pt-2">
-            {sig && <a href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(lang === 'hi' ? `नमस्ते, मैंने हस्ताक्षर विश्लेषण बुक किया है (${forName})। मेरे हस्ताक्षर की फ़ोटो भेज रहा/रही हूँ।` : `Hello, I have booked Signature Analysis (${forName}). Sending my signature photos.`)}`} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: 'outline' })}><MessageCircle className="h-4 w-4" />{t.sigPhotos}</a>}
+            {sig && !sigImage && <a href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(lang === 'hi' ? `नमस्ते, मैंने हस्ताक्षर विश्लेषण बुक किया है (${forName})। मेरे हस्ताक्षर की फ़ोटो भेज रहा/रही हूँ।` : `Hello, I have booked Signature Analysis (${forName}). Sending my signature photos.`)}`} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: 'outline' })}><MessageCircle className="h-4 w-4" />{t.sigPhotos}</a>}
             <Link href="/account" className={buttonVariants({ variant: 'gold' })}>{t.account}</Link>
             <Link href="/reading" onClick={onChangeReading} className={buttonVariants({ variant: 'outline' })}>{t.another}</Link>
             <Link href="/account#family" className={buttonVariants({ variant: 'ghost' })}><Users className="h-4 w-4" />{t.family}</Link>
@@ -274,7 +334,7 @@ function AccountStep({ prefill, onBack, onDone }: { prefill: { name: string; mob
   );
 }
 
-function PayStep({ svc, details, forName, relation, personId, onBack, onDone, sig }: { svc: PublicService; details: Record<string, string>; forName: string; relation: FamilyRelation; personId: string | null; onBack: () => void; onDone: () => void; sig: boolean }) {
+function PayStep({ svc, details, forName, relation, personId, onBack, onDone, sig, signatureImage }: { svc: PublicService; details: Record<string, string>; forName: string; relation: FamilyRelation; personId: string | null; onBack: () => void; onDone: () => void; sig: boolean; signatureImage?: string | null }) {
   const { lang, me, t: dict } = useApp();
   const t = FLOW[lang]; const L = FIELD_LABEL[lang];
   const u = me!.user!;
@@ -295,7 +355,7 @@ function PayStep({ svc, details, forName, relation, personId, onBack, onDone, si
   async function pay() {
     setBusy(true); setError(null);
     try {
-      const o = await api<Order>('/api/billing/checkout', { method: 'POST', json: { planCode: svc.code, intake: shown, profileId: personId ?? undefined, billingState: bill.state, billingName: bill.name || undefined, phone: bill.phone || undefined, gstin: abroad ? undefined : bill.gstin || undefined } });
+      const o = await api<Order>('/api/billing/checkout', { method: 'POST', json: { planCode: svc.code, intake: shown, profileId: personId ?? undefined, billingState: bill.state, billingName: bill.name || undefined, phone: bill.phone || undefined, gstin: abroad ? undefined : bill.gstin || undefined, signatureImage: signatureImage || undefined } });
       setOrder(o);
       if (o.gateway === 'razorpay') {
         try {
@@ -346,6 +406,7 @@ function PayStep({ svc, details, forName, relation, personId, onBack, onDone, si
       <div className="rounded-lg border border-border/60 p-3 text-sm">
         <div className="mb-2 flex items-center justify-between gap-2"><p><span className="text-muted-foreground">{t.readingFor}:</span> <b>{forName || '—'}</b> <span className="text-xs text-muted-foreground">· {RELATION_LABEL[relation][lang]}</span></p><button type="button" onClick={onBack} className="text-xs text-gold underline-offset-2 hover:underline">{t.change2}</button></div>
         <dl className="grid gap-x-6 gap-y-1 sm:grid-cols-2">{Object.entries(shown).filter(([k]) => k !== 'clientName').map(([k, v]) => <div key={k} className={['questions', 'businesses', 'businessName', 'partners', 'brand'].includes(k) ? 'sm:col-span-2' : ''}><dt className="inline text-muted-foreground">{lab(k)}: </dt><dd className="inline whitespace-pre-wrap break-words">{show(k, v)}</dd></div>)}</dl>
+        {sig && signatureImage && <div className="mt-2 flex items-center gap-2"><img src={signatureImage} alt="" className="h-12 rounded border border-gold/40 bg-white p-0.5" /><span className="text-xs text-success">{SIG_T[lang].ready}</span></div>}
       </div>
       <p className="text-xs text-muted-foreground">{t.signedInAs} <b>{u.name ?? u.email ?? u.phone}</b></p>
       <div className="grid gap-3 sm:grid-cols-2">

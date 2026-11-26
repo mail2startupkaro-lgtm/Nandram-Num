@@ -21,9 +21,9 @@ export const DEFAULT_SERVICES: (typeof services.$inferInsert)[] = [
   {
     code: 'SVC_PERSONAL_REPORT', sort: 1, featured: true, pricePaise: 2_100_00, mrpPaise: 4_200_00, intake: ['clientName', 'dob', 'gender', 'tob', 'pob', 'mobile', 'questions'],
     en: t('Personal Numerology Report by Acharya Nandram', 'Your complete chart read personally by Acharya Nandram, with answers to your own questions and remedies that fit your life.',
-      ['Moolank, Bhagyank, Kua and Lo Shu grid analysis', 'Name number and mobile number check', 'Current personal year and the next 3 years', 'Answers to up to 3 questions you send', 'Personal remedies: colours, days, mantra, daan', 'PDF in English, Hindi or Hinglish'], 'Delivered as a PDF within 3 hours'),
+      ['Moolank, Bhagyank, Kua and Lo Shu grid analysis', 'Name number and mobile number check', 'Destiny Matrix analysis', 'Current personal year and the next 3 years', 'Answers to up to 3 questions you send', 'Personal remedies: colours, days, mantra, daan', 'PDF in English, Hindi or Hinglish'], 'Delivered as a PDF within 3 hours'),
     hi: t('आचार्य नंदराम द्वारा व्यक्तिगत अंक ज्योतिष रिपोर्ट', 'आपका पूरा चार्ट स्वयं आचार्य नंदराम द्वारा पढ़ा जाता है, आपके अपने प्रश्नों के उत्तर और आपके जीवन के अनुकूल उपायों के साथ।',
-      ['मूलांक, भाग्यांक, कुआ और लो शू ग्रिड विश्लेषण', 'नामांक और मोबाइल नंबर की जाँच', 'वर्तमान व्यक्तिगत वर्ष और अगले 3 वर्ष', 'आपके भेजे गए अधिकतम 3 प्रश्नों के उत्तर', 'व्यक्तिगत उपाय: रंग, दिन, मंत्र, दान', 'अंग्रेज़ी, हिंदी या हिंग्लिश में PDF'], '3 घंटे के भीतर PDF के रूप में'),
+      ['मूलांक, भाग्यांक, कुआ और लो शू ग्रिड विश्लेषण', 'नामांक और मोबाइल नंबर की जाँच', 'डेस्टिनी मैट्रिक्स विश्लेषण', 'वर्तमान व्यक्तिगत वर्ष और अगले 3 वर्ष', 'आपके भेजे गए अधिकतम 3 प्रश्नों के उत्तर', 'व्यक्तिगत उपाय: रंग, दिन, मंत्र, दान', 'अंग्रेज़ी, हिंदी या हिंग्लिश में PDF'], '3 घंटे के भीतर PDF के रूप में'),
   },
   {
     code: 'SVC_NAME_CORRECTION', sort: 2, featured: true, pricePaise: 1_100_00, mrpPaise: 2_100_00, intake: ['currentName', 'dob', 'gender', 'mobile', 'questions'],
@@ -194,7 +194,11 @@ const FIELD: Record<ServiceIntakeField, z.ZodTypeAny> = {
 };
 const OPTIONAL: ServiceIntakeField[] = ['tob', 'pob', 'mobile', 'parents', 'letters', 'businesses', 'launchDate', 'partners', 'brand', 'questions'];
 /** Booking details; `forProfileId` / `forRelation` link the order to the saved person (self or a family member). */
-export type IntakeDetails = Partial<Record<ServiceIntakeField | 'forProfileId' | 'forRelation', string>>;
+export type IntakeDetails = Partial<Record<ServiceIntakeField | 'forProfileId' | 'forRelation' | 'signatureImage', string>>;
+
+/** One signature photo sent with a Signature Analysis booking: a JPEG/PNG/WEBP data URL, at most ~1 MB. */
+export const SIGNATURE_IMAGE_MAX = 1_400_000;
+export const SignatureImage = z.string().max(SIGNATURE_IMAGE_MAX).regex(/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/, 'Upload a JPG, PNG or WEBP image');
 
 /** Validates exactly the fields this service asks for; unknown keys are dropped. Aadhaar-like numbers are masked. */
 export function parseIntake(svc: Service, raw: unknown): IntakeDetails {
@@ -219,7 +223,17 @@ export async function listServiceOrders(filter: { status?: string; userId?: stri
     .where(and(filter.userId ? eq(serviceOrders.userId, filter.userId) : undefined,
       filter.status && filter.status !== 'all' ? eq(serviceOrders.status, filter.status) : filter.userId ? undefined : inArray(serviceOrders.status, ['paid', 'in_progress', 'delivered', 'cancelled'])))
     .orderBy(desc(serviceOrders.createdAt)).limit(300);
-  return rows.map(({ o: { detailsEnc, ...o }, p }) => ({ ...o, payment: p, details: decryptJson<IntakeDetails>(detailsEnc) }));
+  // The signature photo is left out of the list (it can be ~1 MB per order) and fetched on its own with getServiceOrderImage.
+  return rows.map(({ o: { detailsEnc, ...o }, p }) => {
+    const { signatureImage, ...details } = decryptJson<IntakeDetails>(detailsEnc);
+    return { ...o, payment: p, details, hasSignatureImage: !!signatureImage };
+  });
+}
+
+/** The signature photo the client uploaded with the order, or null. */
+export async function getServiceOrderImage(id: string, db: Db = getDb()): Promise<string | null> {
+  const [row] = await db.select({ detailsEnc: serviceOrders.detailsEnc }).from(serviceOrders).where(eq(serviceOrders.id, id)).limit(1);
+  return row ? decryptJson<IntakeDetails>(row.detailsEnc).signatureImage ?? null : null;
 }
 
 export const ServiceOrderUpdate = z.object({ id: z.string().min(1), status: z.enum(SERVICE_ORDER_STATUSES).optional(), adminNote: z.string().max(2000).nullable().optional() });

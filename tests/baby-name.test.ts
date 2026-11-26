@@ -75,3 +75,64 @@ describe('name bank', () => {
     expect(parseLetters('a, Sh / k;  a')).toEqual(['A', 'SH', 'K']);
   });
 });
+
+describe('baby names for families abroad (as per country)', () => {
+  it('maps countries to naming cultures (name or code; unknown → English)', async () => {
+    const { nameStyleForCountry } = await import('@/lib/baby-name/world-names');
+    expect(nameStyleForCountry('India')).toBe('indian');
+    expect(nameStyleForCountry('')).toBe('indian');
+    expect(nameStyleForCountry('United States')).toBe('english');
+    expect(nameStyleForCountry('UK')).toBe('english');
+    expect(nameStyleForCountry('United Arab Emirates')).toBe('arabic');
+    expect(nameStyleForCountry('Spain')).toBe('spanish');
+    expect(nameStyleForCountry('BR')).toBe('portuguese');
+    expect(nameStyleForCountry('Germany')).toBe('german');
+    expect(nameStyleForCountry('Malaysia')).toBe('malay');
+    expect(nameStyleForCountry('Japan')).toBe('english');
+  });
+
+  it('every bank has boys and girls, unique spellings and Hindi meanings', async () => {
+    const { WORLD_BANKS } = await import('@/lib/baby-name/world-names');
+    for (const [style, bank] of Object.entries(WORLD_BANKS)) {
+      expect(bank.filter((x) => x.g !== 'g').length, style).toBeGreaterThanOrEqual(10);
+      expect(bank.filter((x) => x.g !== 'b').length, style).toBeGreaterThanOrEqual(10);
+      expect(new Set(bank.map((x) => x.n.toUpperCase())).size, style).toBe(bank.length);
+      expect(bank.every((x) => x.hi && x.en && x.hm), style).toBe(true);
+    }
+  });
+
+  it('suggests names from the selected country and scores accented spellings correctly', async () => {
+    const { WORLD_BANKS } = await import('@/lib/baby-name/world-names');
+    const us = analyseBabyName({ dob: '2026-10-14', gender: 'girl', country: 'United States', asOf: '2026-11-26' });
+    expect(us.nameStyle).toEqual({ style: 'english', mix: false });
+    expect(us.suggestions.length).toBeGreaterThan(0);
+    expect(us.suggestions.every((x) => WORLD_BANKS.english.some((b) => b.n === x.first))).toBe(true);
+    expect(us.suggestions.every((x) => x.bank?.g !== 'b')).toBe(true);
+
+    const es = analyseBabyName({ dob: '2026-10-14', gender: 'girl', country: 'Spain', candidates: ['Lucía'], suggest: false, asOf: '2026-11-26' });
+    const lucia = es.family[0];
+    expect(lucia.bank?.en).toBe('Light'); // meaning found in the Spanish bank
+    // L3 U6 C3 I1 A1 = 14 → 5 (accent ignored)
+    expect(lucia.firstNum).toMatchObject({ compound: 14, single: 5 });
+
+    const mix = analyseBabyName({ dob: '2026-10-14', gender: 'boy', country: 'Canada', nameStyle: 'mix', asOf: '2026-11-26' });
+    expect(mix.nameStyle.mix).toBe(true);
+    const pool = new Set([...WORLD_BANKS.english, ...WORLD_BANKS.indian].map((b) => b.n));
+    expect(mix.suggestions.every((x) => pool.has(x.first))).toBe(true);
+
+    const india = analyseBabyName({ ...base, country: 'India' });
+    expect(india.nameStyle.style).toBe('indian');
+    expect(india.suggestions.map((x) => x.first)).toEqual(r0.suggestions.map((x) => x.first)); // unchanged for Indian families
+  });
+
+  it('English report for a family abroad: culture named, no Devanagari, registration tip instead of mantra', () => {
+    const us = analyseBabyName({ dob: '2026-10-14', gender: 'girl', surname: 'Miller', country: 'United States', asOf: '2026-11-26' });
+    const html = buildBabyReportHtml(us, resolveTheme('royal-gold-maroon'), DEFAULT_BRANDING, { lang: 'en', preparedBy: 'Acharya Nandram' });
+    expect(html).toContain('English (international) names (for United States)');
+    expect(html).toContain('Spelling and registration');
+    expect(html).not.toMatch(/[ऀ-ॿ]/); // no Devanagari anywhere in the English report
+    const hi = buildBabyReportHtml(us, resolveTheme('royal-gold-maroon'), DEFAULT_BRANDING, { lang: 'hi', preparedBy: 'Acharya Nandram' });
+    expect(hi).toContain('United States के लिए');
+  });
+});
+const r0 = analyseBabyName(base);

@@ -19,7 +19,11 @@ import { CHALDEAN, type CompoundCategory } from '@/lib/numerology/data/tables';
 import { compoundMeaning } from '@/lib/signature/numbers';
 import { compoundMeaningHi } from '@/lib/signature/hindi';
 import { luckyNameTotals } from '@/lib/name-calculator';
-import { NAME_BANK, parseLetters, startsWithAny, type BankName, type NameGender } from './names';
+import { parseLetters, startsWithAny, type BankName, type NameGender } from './names';
+import { resolveNameStyle, WORLD_BANKS, type NameStyle, type NameStyleChoice } from './world-names';
+
+/** Every curated name (all cultures) – used to show the meaning of a family-chosen name from any culture. */
+const ALL_BANK_NAMES: BankName[] = Object.values(WORLD_BANKS).flat();
 
 export type BabyGender = 'boy' | 'girl' | 'any';
 export interface BabyNameInput {
@@ -38,6 +42,10 @@ export interface BabyNameInput {
   candidates?: string[];
   /** Add names from the curated bank that suit the date of birth (default true). */
   suggest?: boolean;
+  /** Client's country (name or ISO code). Clients outside India get names from their country's naming culture. */
+  country?: string;
+  /** Which names to suggest: 'auto' (from the country, default), 'mix' (country + Indian), or a fixed culture. */
+  nameStyle?: NameStyleChoice;
   /** Report "as of" date (YYYY-MM-DD) – defaults to today in India. */
   asOf?: string;
 }
@@ -182,6 +190,7 @@ export function analyseBabyName(input: BabyNameInput) {
 
   // ---------- Family's own names ----------
   const invalid: string[] = [];
+  const names = resolveNameStyle(input.nameStyle, input.country);
   const seen = new Set<string>();
   const family: EvaluatedName[] = [];
   for (const raw of input.candidates ?? []) {
@@ -189,7 +198,7 @@ export function analyseBabyName(input: BabyNameInput) {
     const n = normalizeName(t).split(' ')[0];
     if (!n || n.length < 2) { invalid.push(t); continue; }
     if (seen.has(n)) continue;
-    seen.add(n); family.push(evaluate(n, 'family', NAME_BANK.find((x) => x.n.toUpperCase() === n) ?? null));
+    seen.add(n); family.push(evaluate(n, 'family', [...names.banks, ...ALL_BANK_NAMES].find((x) => normalizeName(x.n) === n) ?? null));
     if (family.length >= 12) break;
   }
 
@@ -197,7 +206,7 @@ export function analyseBabyName(input: BabyNameInput) {
   const allow: NameGender[] = gender === 'boy' ? ['b', 'u'] : gender === 'girl' ? ['g', 'u'] : ['b', 'g', 'u'];
   let suggestions: EvaluatedName[] = [];
   if (input.suggest !== false) {
-    const pool = NAME_BANK.filter((x) => allow.includes(x.g) && !seen.has(x.n.toUpperCase()));
+    const pool = names.banks.filter((x) => allow.includes(x.g) && !seen.has(normalizeName(x.n)));
     const pick = (xs: BankName[]) => xs.map((x) => evaluate(x.n, 'bank', x)).sort((x, y) => y.score - x.score || x.first.localeCompare(y.first));
     const inLetters = prefLetters.length ? pick(pool.filter((x) => startsWithAny(x.n, prefLetters))) : [];
     const rest = pick(pool.filter((x) => !prefLetters.length || !startsWithAny(x.n, prefLetters)));
@@ -232,7 +241,8 @@ export function analyseBabyName(input: BabyNameInput) {
 
   const mp = planetOf(m), bp = planetOf(b);
   return {
-    client: { dob: toIso(dobP), weekday: weekdayOf(dobP), gender, surname, timeOfBirth: input.timeOfBirth?.trim() || '', placeOfBirth: input.placeOfBirth?.trim() || '' },
+    client: { dob: toIso(dobP), weekday: weekdayOf(dobP), gender, surname, timeOfBirth: input.timeOfBirth?.trim() || '', placeOfBirth: input.placeOfBirth?.trim() || '', country: input.country?.trim() || '' },
+    nameStyle: { style: names.style as NameStyle, mix: names.mix },
     asOf: toIso(asOf),
     core: {
       moolank: { value: m, planet: mp.name }, bhagyank: { value: b, compound: dob.bhagyank.compound, master: dob.bhagyank.master, planet: bp.name, chain: dob.bhagyank.chain },

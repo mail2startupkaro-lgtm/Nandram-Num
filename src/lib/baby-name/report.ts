@@ -19,6 +19,7 @@ import type { CompoundCategory } from '@/lib/numerology/data/tables';
 import { reportSheetCss } from '@/lib/mobile-advanced/report';
 import { guideCss, readingGuideHtml, servicesCss, servicesCtaHtml } from '@/lib/report/guide-cta';
 import type { BabyNameResult, EvaluatedName, LetterClass } from './analysis';
+import { styleLabel } from './world-names';
 import { CHILD_NATURE, checkText, L, LIFE_PATH, NAME_NUMBER_TEXT, relText, type Lab, type Lang } from './text';
 
 export interface BabyReportOptions {
@@ -100,7 +101,18 @@ const clsPill = (c: LetterClass, l: Lab) => `<span class="pill ${c === 'lucky' ?
 const chips = (xs: (number | string)[], kind: 'good' | 'bad' | 'neu' | 'warn', l: Lab) => `<div class="chips">${xs.length ? xs.map((x) => `<span class="chip ${kind}">${esc(x)}</span>`).join('') : `<span class="small muted">${esc(l.none)}</span>`}</div>`;
 const vPill = (e: EvaluatedName, l: Lab) => `<span class="pill ${e.verdict === 'excellent' || e.verdict === 'good' ? 'positive' : e.verdict === 'average' ? 'neutral' : 'watch'}">${esc(l.verdict[e.verdict])}</span>`;
 const meaningOf = (e: EvaluatedName, lang: Lang) => (e.bank ? (lang === 'hi' ? e.bank.hm : e.bank.en) : '');
-const hiName = (e: EvaluatedName) => e.bank?.hi ?? '';
+/** Devanagari spellings help Indian families; an English report for a family abroad shows the Latin spelling only. */
+const showDevanagari = (r: BabyNameResult, lang: Lang) => lang === 'hi' || r.nameStyle.style === 'indian' || r.nameStyle.mix;
+const foreign = (r: BabyNameResult) => r.nameStyle.style !== 'indian';
+/** "From my list of meaningful Indian names …" → the culture the suggestions came from. */
+function bankIntro(r: BabyNameResult, base: string, lang: Lang): string {
+  if (!foreign(r)) return base;
+  const culture = styleLabel(r.nameStyle.style, lang);
+  const where = r.client.country ? (lang === 'hi' ? ` (${r.client.country} के लिए)` : ` (for ${r.client.country})`) : '';
+  return lang === 'hi'
+    ? `मेरी अर्थपूर्ण ${culture}${r.nameStyle.mix ? ' और भारतीय' : ''} नामों की सूची${where} में से ये नाम आपके शिशु की जन्म तिथि के अनुकूल हैं`
+    : `From my list of meaningful ${culture}${r.nameStyle.mix ? ' and Indian' : ''} names${where}, these suit your baby’s date of birth`;
+}
 
 /** Name as letter tiles with Chaldean values (vowels outlined). */
 function tiles(e: EvaluatedName): string {
@@ -118,6 +130,7 @@ function tweakList(e: EvaluatedName, l: Lab, lang: Lang, t: PdfTheme) {
 }
 
 export function buildBabyReportHtml(r: BabyNameResult, t: PdfTheme, b: Branding, o: BabyReportOptions, extras: BabyReportExtras = {}): string {
+  const hiName = (e: EvaluatedName) => (showDevanagari(r, o.lang) ? e.bank?.hi ?? '' : '');
   const lang = o.lang, l = L[lang], T = (s: string) => tr(lang, s);
   const contact = { ...DEFAULT_CONTACT, ...(extras.contact ?? {}) };
   const isHouseExpert = (b.expertName || '').trim().toLowerCase() === (DEFAULT_BRANDING.expertName || '').trim().toLowerCase();
@@ -257,7 +270,7 @@ export function buildBabyReportHtml(r: BabyNameResult, t: PdfTheme, b: Branding,
   </section>` : '';
 
   // ---------- Bank suggestions ----------
-  const sBank = bankList.length ? `<section class="page">${secHead(no('bank'), l.sec.bank)}<p class="intro">${esc(l.secD.bank)}${r.prefLetters.length ? esc(lang === 'hi' ? ` (पहले आपके अक्षर ${r.prefLetters.join(', ')} वाले नाम)।` : ` (names in your letters ${r.prefLetters.join(', ')} first).`) : '.'}</p>
+  const sBank = bankList.length ? `<section class="page">${secHead(no('bank'), l.sec.bank)}<p class="intro">${esc(bankIntro(r, l.secD.bank, lang))}${r.prefLetters.length ? esc(lang === 'hi' ? ` (पहले आपके अक्षर ${r.prefLetters.join(', ')} वाले नाम)।` : ` (names in your letters ${r.prefLetters.join(', ')} first).`) : '.'}</p>
     <table class="ftab flow"><thead><tr><th>${esc(l.name)}</th><th>${esc(l.meaning)}</th><th>${esc(l.firstN)}</th><th>${esc(r.client.surname ? l.fullN : l.compound)}</th><th>${esc(l.planet)}</th><th>${esc(l.score)}</th><th>${esc(l.verdictH)}</th></tr></thead><tbody>
     ${bankList.map((e) => `<tr><td><span class="nmc">${esc(e.first)} <small>${esc(hiName(e))}</small></span></td><td class="small">${esc(meaningOf(e, lang))}</td><td>${nn(e.firstNum)}</td><td>${nn(mainNum(e))}</td><td>${esc(T(e.planet))}</td><td><span class="scb" style="color:${scoreColour(e.score, t)}">${e.score}</span></td><td>${vPill(e, l)}</td></tr>`).join('')}
     </tbody></table>
@@ -273,7 +286,9 @@ export function buildBabyReportHtml(r: BabyNameResult, t: PdfTheme, b: Branding,
     <div class="rem" style="margin-top:4mm">
       <div class="r"><h4>${esc(l.colours)}</h4><p>${r.guidance.colours.slice(0, 4).map(sw).join('')}</p></div>
       <div class="r"><h4>${esc(l.luckyDay)}</h4><p>${esc(T(r.guidance.weekday))} – ${esc(lang === 'hi' ? `मूलांक ${c.moolank.value} के ग्रह ${T(c.moolank.planet)} का दिन। टीकाकरण के बाद की पहली पूजा या शुभ शुरुआत इसी दिन करें।` : `the day of ${c.moolank.planet}, planet of Moolank ${c.moolank.value}. Good for first pujas and new beginnings for the baby.`)}</p></div>
-      <div class="r"><h4>${esc(l.mantra)}</h4><p>${esc(r.guidance.mantra)} – ${esc(lang === 'hi' ? 'माता-पिता नामकरण के दिन 11 बार जप करें।' : 'parents may chant it 11 times on the naming day.')}</p></div>
+      ${foreign(r) && !r.nameStyle.mix
+        ? `<div class="r"><h4>${esc(lang === 'hi' ? 'स्पेलिंग और रजिस्ट्रेशन' : 'Spelling and registration')}</h4><p>${esc(lang === 'hi' ? `${r.client.country || 'आपके देश'} में जन्म प्रमाणपत्र पर जो स्पेलिंग लिखी जाएगी, वही अंकों में गिनी जाती है। रजिस्ट्रेशन से पहले स्पेलिंग पक्की कर लें – एक्सेंट (é, ñ) से अंक नहीं बदलते।` : `The spelling written on the birth certificate${r.client.country ? ` in ${r.client.country}` : ''} is the one that counts. Fix the spelling before you register the name – accents (é, ñ) do not change the numbers.`)}</p></div>`
+        : `<div class="r"><h4>${esc(l.mantra)}</h4><p>${esc(r.guidance.mantra)} – ${esc(lang === 'hi' ? 'माता-पिता नामकरण के दिन 11 बार जप करें।' : 'parents may chant it 11 times on the naming day.')}</p></div>`}
       ${nursery.length ? `<div class="r"><h4>${esc(l.nursery)}</h4><p>${esc(nursery.join(' | '))}</p></div>` : ''}
     </div>
     <div class="box advice" style="margin-top:4mm"><div class="bt">${esc(l.useH)}</div><ul class="lst" style="margin-top:1mm">${l.useList.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>
@@ -367,7 +382,7 @@ export function buildBabyCoverHtml(r: BabyNameResult, t: PdfTheme, b: Branding, 
     <div class="pf"><div class="k">${esc(l.preparedFor)}</div><div class="n">${esc(l.babyOf(fam))}</div>
       <div class="facts">${facts.map(([k, v]) => `<div><span>${esc(k)}</span>${esc(v)}</div>`).join('')}</div></div>
     <div class="sg"><div class="dg">${best.letters.map((x) => `<i>${esc(x.letter)}<small>${x.ch}</small></i>`).join('')}</div>
-      <div class="nb">${esc(best.full)}${best.bank ? ` · ${esc(best.bank.hi)}` : ''} · ${nn(mainNum(best))}</div><span class="l">${esc(l.recommended)}</span></div>
+      <div class="nb">${esc(best.full)}${best.bank && showDevanagari(r, o.lang) ? ` · ${esc(best.bank.hi)}` : ''} · ${nn(mainNum(best))}</div><span class="l">${esc(l.recommended)}</span></div>
     <div class="ex">${photo}<div><div class="lab">${esc(l.by)}</div><div class="nm">${esc(o.preparedBy || b.expertName)}</div><div class="ti">${esc(b.expertTitle ?? '')}</div>
       ${house ? `<div class="yr">${esc(l.years)}</div>` : ''}
       <div class="ct">${[contact.telegram ? `Telegram ${esc(contact.telegram)}` : '', site ? esc(site) : ''].filter(Boolean).join('  ·  ')}</div></div></div>

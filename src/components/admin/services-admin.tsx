@@ -1,7 +1,7 @@
 'use client';
 import { STANDARD_USD } from '@/lib/billing/currency';
 import * as React from 'react';
-import { Mail, MessageCircle, Phone, Plus, RefreshCw, Save, Sparkles, Trash2 } from 'lucide-react';
+import { Download, ImageIcon, Mail, MessageCircle, Phone, Plus, RefreshCw, Save, Sparkles, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/form';
 import { Badge } from '@/components/ui/misc';
@@ -33,7 +33,7 @@ export function ServicesAdmin({ onGenerateReport }: { onGenerateReport?: (order:
   );
 }
 
-export interface Order { id: string; serviceCode: string; status: string; adminNote: string | null; createdAt: string; deliveredAt: string | null; details: Record<string, string>; payment: { amountPaise: number; currency?: string; invoiceNumber: string | null; billingName: string | null; paidAt: string | null }; userId: string | null }
+export interface Order { id: string; serviceCode: string; status: string; adminNote: string | null; createdAt: string; deliveredAt: string | null; details: Record<string, string>; payment: { amountPaise: number; currency?: string; invoiceNumber: string | null; billingName: string | null; paidAt: string | null }; userId: string | null; /** The client uploaded a signature photo with the booking (fetch with ?image=<id>). */ hasSignatureImage?: boolean }
 
 function Orders({ onGenerateReport }: { onGenerateReport?: (order: Order) => void }) {
   const [status, setStatus] = React.useState('all');
@@ -74,12 +74,34 @@ function OrderCard({ o, name, onChanged, onGenerateReport }: { o: Order; name: s
         </div>
       </div>
       <dl className="mt-3 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">{rows.map(([k, v]) => <div key={k} className={k === 'Questions / notes' ? 'sm:col-span-2' : ''}><dt className="inline text-muted-foreground">{k}: </dt><dd className="inline whitespace-pre-wrap">{v}</dd></div>)}</dl>
+      {o.hasSignatureImage && <OrderSignaturePhoto id={o.id} name={d.clientName ?? d.currentName ?? 'client'} />}
+      {o.serviceCode === 'SVC_SIGNATURE' && !o.hasSignatureImage && <p className="mt-2 text-xs text-muted-foreground">No signature photo uploaded – ask the client to send it on WhatsApp.</p>}
       {wa.length >= 10 && <div className="mt-2 flex gap-3 text-sm"><a href={`tel:${d.mobile}`} className="inline-flex items-center gap-1 hover:text-gold"><Phone className="h-4 w-4 text-gold" />{d.mobile}</a><a href={`https://wa.me/${wa.length === 10 ? `91${wa}` : wa}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-success"><MessageCircle className="h-4 w-4" />WhatsApp</a></div>}
       <p className="mt-1 text-xs text-muted-foreground"><Mail className="mr-1 inline h-3 w-3" />Customer contact (email / mobile) is on the customer's account – see Users.</p>
       <div className="mt-3 flex flex-wrap items-end gap-2"><textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={2000} placeholder="Internal note" aria-label="Internal note" className="min-w-[240px] flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm" />
         <Button size="sm" variant="outline" disabled={note === (o.adminNote ?? '')} onClick={() => patch({ adminNote: note }, 'Note saved')}><Save className="h-4 w-4" /> Save note</Button></div>
       {msg && <p className="mt-1 text-xs text-muted-foreground" role="status">{msg}</p>}
     </article>
+  );
+}
+
+/** The one signature photo the client uploaded with a Signature Analysis order (loaded on demand). */
+function OrderSignaturePhoto({ id, name }: { id: string; name: string }) {
+  const [img, setImg] = React.useState<string | null>(null);
+  const [state, setState] = React.useState<'idle' | 'loading' | 'error'>('idle');
+  const load = async () => { setState('loading'); try { const r = await api<{ image: string }>(`/api/admin/service-orders?image=${encodeURIComponent(id)}`); setImg(r.image); setState('idle'); } catch { setState('error'); } };
+  const ext = img?.startsWith('data:image/png') ? 'png' : img?.startsWith('data:image/webp') ? 'webp' : 'jpg';
+  return (
+    <div className="mt-3 rounded-lg border border-gold/40 bg-gold/5 p-3 text-sm">
+      <p className="mb-2 flex items-center gap-1 font-medium"><ImageIcon className="h-4 w-4 text-gold" />Signature photo uploaded by the client</p>
+      {img ? (
+        <div className="flex flex-wrap items-end gap-3">
+          <img src={img} alt={`Signature of ${name}`} className="max-h-48 max-w-full rounded border border-border bg-white object-contain p-1" />
+          <a href={img} download={`signature-${name.replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'client'}.${ext}`} className="inline-flex items-center gap-1 text-gold hover:underline"><Download className="h-4 w-4" />Download</a>
+        </div>
+      ) : <Button size="sm" variant="outline" disabled={state === 'loading'} onClick={load}>{state === 'loading' ? 'Loading…' : 'Show photo'}</Button>}
+      {state === 'error' && <p className="mt-1 text-xs text-danger">Could not load the photo.</p>}
+    </div>
   );
 }
 

@@ -88,7 +88,18 @@ export function SignatureStudio({ preloadedOrder, onClearPreloadedOrder }: { pre
     const lang = /hinglish/i.test(q) ? 'hinglish' : /hindi|हिंदी/i.test(q) ? 'hi' : 'en';
     setF((x) => ({ ...x, fullName: d.clientName ?? '', signatureName: d.currentName ?? '', dob: dob ?? '', gender: ['male', 'female', 'other'].includes(d.gender ?? '') ? d.gender : '', concerns: q.slice(0, 1000), language: lang }));
     setSamples([]); setObs({}); setRes(null);
-    setFromOrder(`${d.clientName ?? 'Client'} · ordered ${new Date(preloadedOrder.createdAt).toLocaleDateString('en-IN')} – add the signature photos the client sent on WhatsApp`);
+    const when = `${d.clientName ?? 'Client'} · ordered ${new Date(preloadedOrder.createdAt).toLocaleDateString('en-IN')}`;
+    setFromOrder(preloadedOrder.hasSignatureImage ? `${when} – loading the signature photo the client uploaded…` : `${when} – add the signature photos the client sent on WhatsApp`);
+    // The client's uploaded signature photo is added as the first sample and measured like any other.
+    if (preloadedOrder.hasSignatureImage) {
+      const orderId = preloadedOrder.id;
+      api<{ image: string }>(`/api/admin/service-orders?image=${encodeURIComponent(orderId)}`).then(async ({ image }) => {
+        const id = `order-${orderId}`;
+        setSamples((s) => (s.some((x) => x.id === id) ? s : [{ id, dataUrl: image, source: 'photo' as const, metrics: null, annotated: null, width: 0, height: 0 }, ...s].slice(0, MAX_SAMPLES)));
+        setFromOrder(`${when} – the client's uploaded signature photo is added below; add more samples if they sent any on WhatsApp`);
+        try { const m = await analyseSample(image, 'photo'); setSamples((s) => s.map((x) => (x.id === id ? { ...x, ...m } : x))); } catch { /* shown unmeasured */ }
+      }).catch(() => setFromOrder(`${when} – the uploaded signature photo could not be loaded; download it from the order card`));
+    }
     onClearPreloadedOrder?.();
   }, [preloadedOrder]); // eslint-disable-line react-hooks/exhaustive-deps
 

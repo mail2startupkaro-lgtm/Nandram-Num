@@ -17,7 +17,7 @@ export const SERVICE_PAGES: ServicePage[] = [
     slug: 'personal-numerology-report', serviceCode: 'SVC_PERSONAL_REPORT',
     menu: { en: 'Personal Numerology Report', hi: 'व्यक्तिगत अंक ज्योतिष रिपोर्ट' }, menuSub: { en: 'Your full chart, read by Acharya Nandram', hi: 'आचार्य नंदराम द्वारा पढ़ा गया आपका पूरा चार्ट' },
     title: 'Personal Numerology Report by Acharya Nandram',
-    description: 'Personal numerology report by Acharya Nandram: Moolank, Bhagyank, Lo Shu grid, name, mobile, year forecast and remedies, with answers to your questions.',
+    description: 'Personal numerology report by Acharya Nandram: Moolank, Bhagyank, Lo Shu grid, name, mobile, Destiny Matrix, year forecast and remedies.',
     h1: { en: 'Personal Numerology Report', hi: 'व्यक्तिगत अंक ज्योतिष रिपोर्ट' },
     intro: {
       en: ['Free calculators show single numbers. A personal report reads all of them together – your date of birth, name and mobile number – the way an experienced numerologist does in a consultation.', 'Acharya Nandram prepares the report himself, answers up to three questions you send, and gives remedies you can actually follow in daily life.'],

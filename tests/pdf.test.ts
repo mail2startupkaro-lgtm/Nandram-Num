@@ -85,3 +85,29 @@ describe('PDF report', () => {
     expect(buildBodyHtml(inp, null, '<svg></svg>').html).toContain('#123456');
   });
 });
+
+describe('Destiny Matrix chapter in the Personal report', () => {
+  it('complete report has the Destiny Matrix chapter but no Pythagorean chart; a name-only report has neither', async () => {
+    const narrative = await generateNarrative(result, { language: 'en', provider: null });
+    const inp = { result, narrative, theme: resolveTheme('royal-gold-maroon'), branding: DEFAULT_BRANDING, reportDate: '2026-11-26' };
+    const { html, chapterIds } = buildBodyHtml(inp, null, '');
+    expect(chapterIds).toContain('destiny');
+    expect(chapterIds).not.toContain('pythagoras');
+    expect(chapterIds.indexOf('destiny')).toBe(chapterIds.indexOf('remedies') - 1);
+    expect(html).toContain('Destiny Matrix Analysis');
+    // (The services list at the end still offers the separate Pythagorean Birth Chart service.)
+    expect(html).not.toContain('id="ch-pythagoras"');
+    expect(html).not.toContain('The nine qualities');
+    expect(html).toContain('Karmic tail');
+    expect(html).not.toContain('The full timeline'); // only "now and the next ten years" in this report
+    // 28-08-1990 → A = 28 → 10, B = 8, C = 1+9+9+0 = 19 (Natalia Ladini method)
+    expect(html).toMatch(/A · Personality<b>10<\/b>/);
+
+    const hidden = buildBodyHtml({ ...inp, hiddenChapters: ['destiny'] }, null, '');
+    expect(hidden.chapterIds).not.toContain('destiny');
+
+    const nameOnly = generateNumerology({ fullName: 'Rahul Kumar Sharma', gender: 'male', dob: '28-08-1990' }, { asOf: { day: 3, month: 11, year: 2026 }, modules: ['dob', 'name'] });
+    const n2 = await generateNarrative(nameOnly, { language: 'en', provider: null });
+    expect(buildBodyHtml({ ...inp, result: nameOnly, narrative: n2 }, null, '').chapterIds).not.toContain('destiny');
+  });
+});
