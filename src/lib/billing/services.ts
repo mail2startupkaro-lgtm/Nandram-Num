@@ -21,93 +21,93 @@ export const DEFAULT_SERVICES: (typeof services.$inferInsert)[] = [
   {
     code: 'SVC_PERSONAL_REPORT', sort: 1, featured: true, pricePaise: 2_100_00, mrpPaise: 4_200_00, intake: ['clientName', 'dob', 'gender', 'tob', 'pob', 'mobile', 'questions'],
     en: t('Personal Numerology Report by Acharya Nandram', 'Your complete chart read personally by Acharya Nandram, with answers to your own questions and remedies that fit your life.',
-      ['Moolank, Bhagyank, Kua and Lo Shu grid analysis', 'Name number and mobile number check', 'Current personal year and the next 3 years', 'Answers to up to 3 questions you send', 'Personal remedies: colours, days, mantra, daan', 'PDF in English, Hindi or Hinglish'], 'Delivered as a PDF within 3–5 working days'),
+      ['Moolank, Bhagyank, Kua and Lo Shu grid analysis', 'Name number and mobile number check', 'Current personal year and the next 3 years', 'Answers to up to 3 questions you send', 'Personal remedies: colours, days, mantra, daan', 'PDF in English, Hindi or Hinglish'], 'Delivered as a PDF within 3 hours'),
     hi: t('आचार्य नंदराम द्वारा व्यक्तिगत अंक ज्योतिष रिपोर्ट', 'आपका पूरा चार्ट स्वयं आचार्य नंदराम द्वारा पढ़ा जाता है, आपके अपने प्रश्नों के उत्तर और आपके जीवन के अनुकूल उपायों के साथ।',
-      ['मूलांक, भाग्यांक, कुआ और लो शू ग्रिड विश्लेषण', 'नामांक और मोबाइल नंबर की जाँच', 'वर्तमान व्यक्तिगत वर्ष और अगले 3 वर्ष', 'आपके भेजे गए अधिकतम 3 प्रश्नों के उत्तर', 'व्यक्तिगत उपाय: रंग, दिन, मंत्र, दान', 'अंग्रेज़ी, हिंदी या हिंग्लिश में PDF'], '3–5 कार्य-दिवसों में PDF के रूप में'),
+      ['मूलांक, भाग्यांक, कुआ और लो शू ग्रिड विश्लेषण', 'नामांक और मोबाइल नंबर की जाँच', 'वर्तमान व्यक्तिगत वर्ष और अगले 3 वर्ष', 'आपके भेजे गए अधिकतम 3 प्रश्नों के उत्तर', 'व्यक्तिगत उपाय: रंग, दिन, मंत्र, दान', 'अंग्रेज़ी, हिंदी या हिंग्लिश में PDF'], '3 घंटे के भीतर PDF के रूप में'),
   },
   {
     code: 'SVC_NAME_CORRECTION', sort: 2, featured: true, pricePaise: 1_100_00, mrpPaise: 2_100_00, intake: ['currentName', 'dob', 'gender', 'mobile', 'questions'],
     en: t('Name Correction (Lucky Name Spelling)', 'A name spelling that matches your Moolank and Bhagyank, chosen so it still looks and sounds natural.',
-      ['Analysis of your current name (Chaldean and Pythagorean)', '3 corrected spellings with their numbers', 'Which spelling to use where: signature, documents, social media', 'Signature guidance'], 'Delivered within 2–3 working days'),
+      ['Analysis of your current name (Chaldean and Pythagorean)', '3 corrected spellings with their numbers', 'Which spelling to use where: signature, documents, social media', 'Signature guidance'], 'Delivered within 3 hours'),
     hi: t('नाम सुधार (शुभ नाम-वर्तनी)', 'ऐसी नाम-वर्तनी जो आपके मूलांक और भाग्यांक से मेल खाए और फिर भी स्वाभाविक दिखे और सुनाई दे।',
-      ['आपके वर्तमान नाम का विश्लेषण (कैल्डियन और पाइथागोरियन)', 'अंकों सहित 3 सुधारी हुई वर्तनियाँ', 'कौन-सी वर्तनी कहाँ उपयोग करें: हस्ताक्षर, दस्तावेज़, सोशल मीडिया', 'हस्ताक्षर संबंधी मार्गदर्शन'], '2–3 कार्य-दिवसों में'),
+      ['आपके वर्तमान नाम का विश्लेषण (कैल्डियन और पाइथागोरियन)', 'अंकों सहित 3 सुधारी हुई वर्तनियाँ', 'कौन-सी वर्तनी कहाँ उपयोग करें: हस्ताक्षर, दस्तावेज़, सोशल मीडिया', 'हस्ताक्षर संबंधी मार्गदर्शन'], '3 घंटे के भीतर'),
   },
   {
     code: 'SVC_MOBILE_NUMBER', sort: 4, featured: false, pricePaise: 501_00, mrpPaise: 1_001_00, intake: ['clientName', 'dob', 'gender', 'mobile', 'questions'],
     en: t('Lucky Mobile Number Selection', 'Find out whether your mobile number supports you, and get the number patterns that suit your date of birth.',
-      ['Full analysis of your current number', 'Your best totals and digit pairs', 'Digits and pairs to avoid', 'Help choosing between numbers you shortlist (up to 5)'], 'Delivered within 1–2 working days'),
+      ['Full analysis of your current number', 'Your best totals and digit pairs', 'Digits and pairs to avoid', 'Help choosing between numbers you shortlist (up to 5)'], 'Delivered within 3 hours'),
     hi: t('शुभ मोबाइल नंबर चयन', 'जानें कि आपका मोबाइल नंबर आपका साथ देता है या नहीं, और अपनी जन्म तिथि के अनुकूल नंबर-पैटर्न पाएँ।',
-      ['आपके वर्तमान नंबर का पूरा विश्लेषण', 'आपके सर्वोत्तम योग और अंक-जोड़ियाँ', 'बचने योग्य अंक और जोड़ियाँ', 'आपके चुने हुए अधिकतम 5 नंबरों में से चयन में मदद'], '1–2 कार्य-दिवसों में'),
+      ['आपके वर्तमान नंबर का पूरा विश्लेषण', 'आपके सर्वोत्तम योग और अंक-जोड़ियाँ', 'बचने योग्य अंक और जोड़ियाँ', 'आपके चुने हुए अधिकतम 5 नंबरों में से चयन में मदद'], '3 घंटे के भीतर'),
   },
   {
     code: 'SVC_BABY_NAME', sort: 5, featured: false, pricePaise: 1_100_00, mrpPaise: 2_100_00, intake: ['dob', 'gender', 'tob', 'pob', 'parents', 'letters', 'questions'],
     en: t('Baby Name Numerology', 'Meaningful baby names whose numbers suit your child\'s date of birth, in the starting letters you prefer.',
-      ['7 shortlisted names with meanings', 'Name number of each and how it matches the date of birth', 'Spelling advice for documents', 'Lucky colours and numbers for the child'], 'Delivered within 2–3 working days'),
+      ['7 shortlisted names with meanings', 'Name number of each and how it matches the date of birth', 'Spelling advice for documents', 'Lucky colours and numbers for the child'], 'Delivered within 3 hours'),
     hi: t('शिशु नाम अंक ज्योतिष', 'अर्थपूर्ण शिशु नाम जिनके अंक आपके बच्चे की जन्म तिथि के अनुकूल हों, आपके पसंदीदा आरंभिक अक्षरों में।',
-      ['अर्थ सहित 7 चुने हुए नाम', 'हर नाम का नामांक और जन्म तिथि से उसका मेल', 'दस्तावेज़ों के लिए वर्तनी संबंधी सलाह', 'बच्चे के शुभ रंग और अंक'], '2–3 कार्य-दिवसों में'),
+      ['अर्थ सहित 7 चुने हुए नाम', 'हर नाम का नामांक और जन्म तिथि से उसका मेल', 'दस्तावेज़ों के लिए वर्तनी संबंधी सलाह', 'बच्चे के शुभ रंग और अंक'], '3 घंटे के भीतर'),
   },
   {
     code: 'SVC_LOSHU', sort: 3, featured: false, pricePaise: 1_100_00, mrpPaise: 2_100_00, intake: ['clientName', 'dob', 'gender', 'questions'],
     en: t('Lo Shu Grid Analysis', 'A detailed reading of your Lo Shu grid: what your repeated and missing numbers mean for you, and exactly how to balance them.',
-      ['Your grid with Moolank, Bhagyank and Kua placed', 'Meaning of every repeated and missing number', 'Planes, arrows of strength and weakness, Raj Yog', 'Remedies for each missing number: placement, colour, bracelet, habit', 'Lucky directions from your Kua number'], 'Delivered within 2–3 working days'),
+      ['Your grid with Moolank, Bhagyank and Kua placed', 'Meaning of every repeated and missing number', 'Planes, arrows of strength and weakness, Raj Yog', 'Remedies for each missing number: placement, colour, bracelet, habit', 'Lucky directions from your Kua number'], 'Delivered within 3 hours'),
     hi: t('लो शू ग्रिड विश्लेषण', 'आपके लो शू ग्रिड की विस्तृत रीडिंग: आपके दोहराए गए और अनुपस्थित अंकों का अर्थ, और उन्हें संतुलित करने का सटीक तरीक़ा।',
-      ['मूलांक, भाग्यांक और कुआ सहित आपका ग्रिड', 'हर दोहराए गए और अनुपस्थित अंक का अर्थ', 'प्लेन, शक्ति और कमज़ोरी के तीर, राज योग', 'हर अनुपस्थित अंक के उपाय: स्थान, रंग, ब्रेसलेट, आदत', 'कुआ अंक से शुभ दिशाएँ'], '2–3 कार्य-दिवसों में'),
+      ['मूलांक, भाग्यांक और कुआ सहित आपका ग्रिड', 'हर दोहराए गए और अनुपस्थित अंक का अर्थ', 'प्लेन, शक्ति और कमज़ोरी के तीर, राज योग', 'हर अनुपस्थित अंक के उपाय: स्थान, रंग, ब्रेसलेट, आदत', 'कुआ अंक से शुभ दिशाएँ'], '3 घंटे के भीतर'),
   },
   {
     code: 'SVC_COUPLE', sort: 6, featured: false, pricePaise: 2_100_00, mrpPaise: 4_200_00, intake: ['clientName', 'dob', 'gender', 'partnerName', 'partnerDob', 'questions'],
     en: t('Couple Compatibility Report', 'How your numbers work together – for marriage, engagement or an existing relationship – with practical guidance for harmony.',
-      ['Moolank, Bhagyank and name number harmony of both partners', 'Combined Lo Shu grid: what each partner brings', 'Strengths and likely friction areas', 'Favourable marriage dates and years', 'Remedies for a balanced relationship'], 'Delivered within 3–4 working days'),
+      ['Moolank, Bhagyank and name number harmony of both partners', 'Combined Lo Shu grid: what each partner brings', 'Strengths and likely friction areas', 'Favourable marriage dates and years', 'Remedies for a balanced relationship'], 'Delivered within 3 hours'),
     hi: t('जोड़ी अनुकूलता रिपोर्ट', 'विवाह, सगाई या मौजूदा रिश्ते के लिए – आप दोनों के अंक साथ कैसे काम करते हैं, सामंजस्य के व्यावहारिक मार्गदर्शन के साथ।',
-      ['दोनों साथियों के मूलांक, भाग्यांक और नामांक का सामंजस्य', 'संयुक्त लो शू ग्रिड: हर साथी क्या जोड़ता है', 'ख़ूबियाँ और संभावित टकराव के क्षेत्र', 'विवाह की शुभ तिथियाँ और वर्ष', 'संतुलित रिश्ते के लिए उपाय'], '3–4 कार्य-दिवसों में'),
+      ['दोनों साथियों के मूलांक, भाग्यांक और नामांक का सामंजस्य', 'संयुक्त लो शू ग्रिड: हर साथी क्या जोड़ता है', 'ख़ूबियाँ और संभावित टकराव के क्षेत्र', 'विवाह की शुभ तिथियाँ और वर्ष', 'संतुलित रिश्ते के लिए उपाय'], '3 घंटे के भीतर'),
   },
   {
     code: 'SVC_BUSINESS_NAME', sort: 7, featured: false, pricePaise: 2_100_00, mrpPaise: 4_200_00, intake: ['clientName', 'dob', 'gender', 'currentName', 'questions'],
     en: t('Business Name Numerology', 'A business or brand name whose number supports the owner\'s date of birth – checked before you register, print or launch.',
-      ['Analysis of your current or proposed names (up to 5)', 'Best spelling options with their numbers', 'Fit with the owner\'s Moolank and Bhagyank', 'Lucky launch dates and business mobile number totals', 'Brand colour suggestions'], 'Delivered within 3–4 working days'),
+      ['Analysis of your current or proposed names (up to 5)', 'Best spelling options with their numbers', 'Fit with the owner\'s Moolank and Bhagyank', 'Lucky launch dates and business mobile number totals', 'Brand colour suggestions'], 'Delivered within 3 hours'),
     hi: t('व्यवसाय नाम अंक ज्योतिष', 'ऐसा व्यवसाय या ब्रांड नाम जिसका अंक मालिक की जन्म तिथि का साथ दे – पंजीकरण, छपाई या लॉन्च से पहले जाँचा हुआ।',
-      ['आपके वर्तमान या प्रस्तावित नामों का विश्लेषण (अधिकतम 5)', 'अंकों सहित सर्वोत्तम वर्तनी विकल्प', 'मालिक के मूलांक और भाग्यांक से मेल', 'लॉन्च की शुभ तिथियाँ और व्यवसायिक मोबाइल नंबर के योग', 'ब्रांड रंग के सुझाव'], '3–4 कार्य-दिवसों में'),
+      ['आपके वर्तमान या प्रस्तावित नामों का विश्लेषण (अधिकतम 5)', 'अंकों सहित सर्वोत्तम वर्तनी विकल्प', 'मालिक के मूलांक और भाग्यांक से मेल', 'लॉन्च की शुभ तिथियाँ और व्यवसायिक मोबाइल नंबर के योग', 'ब्रांड रंग के सुझाव'], '3 घंटे के भीतर'),
   },
   {
     code: 'SVC_BUSINESS_COMPAT', sort: 9, featured: false, pricePaise: 2_100_00, mrpPaise: 4_200_00, intake: ['clientName', 'dob', 'gender', 'pob', 'businesses', 'questions'],
     en: t('Business Compatibility Report', 'Which business suits your date of birth? Your Moolank, Bhagyank, name number and Lo Shu grid checked against 1000+ business categories – with timing, name, direction and remedies.',
-      ['Your compatibility score for 1000+ business categories, ranked', 'Top recommendations with how to start and what to watch', 'A clear verdict on each business you are already considering', 'Best sectors and least-suited businesses', 'Best years to launch or expand, business name totals, lucky direction and remedies', 'Downloadable PDF report prepared by Acharya Nandram'], 'Delivered within 2–3 working days'),
+      ['Your compatibility score for 1000+ business categories, ranked', 'Top recommendations with how to start and what to watch', 'A clear verdict on each business you are already considering', 'Best sectors and least-suited businesses', 'Best years to launch or expand, business name totals, lucky direction and remedies', 'Downloadable PDF report prepared by Acharya Nandram'], 'Delivered within 3 hours'),
     hi: t('व्यवसाय अनुकूलता रिपोर्ट', 'आपकी जन्म तिथि के लिए कौन-सा व्यवसाय शुभ है? आपके मूलांक, भाग्यांक, नामांक और लो शू ग्रिड का 1000+ व्यवसाय श्रेणियों से मिलान – समय, नाम, दिशा और उपायों सहित।',
-      ['1000+ व्यवसाय श्रेणियों के लिए आपका अनुकूलता स्कोर, क्रम सहित', 'शीर्ष सुझाव – कैसे शुरू करें और किन बातों का ध्यान रखें', 'जिन व्यवसायों पर आप पहले से विचार कर रहे हैं, हर एक पर स्पष्ट निर्णय', 'सर्वोत्तम क्षेत्र और सबसे कम अनुकूल व्यवसाय', 'शुरुआत या विस्तार के शुभ वर्ष, व्यवसाय नाम के योग, शुभ दिशा और उपाय', 'आचार्य नंदराम द्वारा तैयार डाउनलोड योग्य PDF रिपोर्ट'], '2–3 कार्य-दिवसों में'),
+      ['1000+ व्यवसाय श्रेणियों के लिए आपका अनुकूलता स्कोर, क्रम सहित', 'शीर्ष सुझाव – कैसे शुरू करें और किन बातों का ध्यान रखें', 'जिन व्यवसायों पर आप पहले से विचार कर रहे हैं, हर एक पर स्पष्ट निर्णय', 'सर्वोत्तम क्षेत्र और सबसे कम अनुकूल व्यवसाय', 'शुरुआत या विस्तार के शुभ वर्ष, व्यवसाय नाम के योग, शुभ दिशा और उपाय', 'आचार्य नंदराम द्वारा तैयार डाउनलोड योग्य PDF रिपोर्ट'], '3 घंटे के भीतर'),
   },
   {
     code: 'SVC_BUSINESS_COMPLETE', sort: 7, featured: true, pricePaise: 5_100_00, mrpPaise: 11_000_00, intake: ['clientName', 'dob', 'gender', 'businessName', 'businesses', 'launchDate', 'partners', 'brand', 'mobile', 'questions'],
     en: t('Complete Business Numerology Report', 'Business numerology for business name selection, brand name correction, startup dates, partnership compatibility and entrepreneur numerology – one personalised report for the owner and the business.',
-      ['Business Name Analysis – every name you send, scored against the owner\'s numbers', 'Business Name Correction – small spelling changes that make the number lucky', 'Brand & Logo Numerology – brand colours, logo shape, lettering, tagline and lucky launch dates', 'Business Partner Compatibility – each partner matched with the owner and the business, with best roles', 'Business growth cycle forecast – the business\'s year-by-year cycle for the next 9 years', 'CEO Numerology Report – leadership style, best sectors, lucky days and directions for the owner', 'Remedies and a 90-day action plan in a designed PDF by Acharya Nandram'], 'Delivered within 3–4 working days'),
+      ['Business Name Analysis – every name you send, scored against the owner\'s numbers', 'Business Name Correction – small spelling changes that make the number lucky', 'Brand & Logo Numerology – brand colours, logo shape, lettering, tagline and lucky launch dates', 'Business Partner Compatibility – each partner matched with the owner and the business, with best roles', 'Business growth cycle forecast – the business\'s year-by-year cycle for the next 9 years', 'CEO Numerology Report – leadership style, best sectors, lucky days and directions for the owner', 'Remedies and a 90-day action plan in a designed PDF by Acharya Nandram'], 'Delivered within 3 hours'),
     hi: t('संपूर्ण व्यवसाय अंक ज्योतिष रिपोर्ट', 'व्यवसाय नाम चयन, ब्रांड नाम सुधार, स्टार्टअप तिथि, साझेदारी अनुकूलता और उद्यमी अंक ज्योतिष – मालिक और व्यवसाय दोनों के लिए एक व्यक्तिगत रिपोर्ट।',
-      ['व्यवसाय नाम विश्लेषण – आपके भेजे हर नाम का मालिक के अंकों से स्कोर', 'व्यवसाय नाम सुधार – वर्तनी में छोटे बदलाव जो अंक को शुभ बनाएँ', 'ब्रांड और लोगो अंक ज्योतिष – ब्रांड रंग, लोगो आकृति, अक्षर शैली, टैगलाइन और लॉन्च की शुभ तिथियाँ', 'व्यवसाय साझेदार अनुकूलता – हर साझेदार का मालिक और व्यवसाय से मिलान, उपयुक्त भूमिकाओं सहित', 'व्यवसाय विकास चक्र पूर्वानुमान – अगले 9 वर्षों का वर्ष-दर-वर्ष चक्र', 'सीईओ अंक ज्योतिष रिपोर्ट – मालिक की नेतृत्व शैली, सर्वोत्तम क्षेत्र, शुभ दिन और दिशाएँ', 'उपाय और 90-दिन की कार्य-योजना – आचार्य नंदराम द्वारा डिज़ाइन की हुई PDF'], '3–4 कार्य-दिवसों में'),
+      ['व्यवसाय नाम विश्लेषण – आपके भेजे हर नाम का मालिक के अंकों से स्कोर', 'व्यवसाय नाम सुधार – वर्तनी में छोटे बदलाव जो अंक को शुभ बनाएँ', 'ब्रांड और लोगो अंक ज्योतिष – ब्रांड रंग, लोगो आकृति, अक्षर शैली, टैगलाइन और लॉन्च की शुभ तिथियाँ', 'व्यवसाय साझेदार अनुकूलता – हर साझेदार का मालिक और व्यवसाय से मिलान, उपयुक्त भूमिकाओं सहित', 'व्यवसाय विकास चक्र पूर्वानुमान – अगले 9 वर्षों का वर्ष-दर-वर्ष चक्र', 'सीईओ अंक ज्योतिष रिपोर्ट – मालिक की नेतृत्व शैली, सर्वोत्तम क्षेत्र, शुभ दिन और दिशाएँ', 'उपाय और 90-दिन की कार्य-योजना – आचार्य नंदराम द्वारा डिज़ाइन की हुई PDF'], '3 घंटे के भीतर'),
   },
   {
     code: 'SVC_PERSONAL_YEAR', sort: 8, featured: false, pricePaise: 1_500_00, mrpPaise: 3_000_00, intake: ['clientName', 'dob', 'gender', 'mobile', 'questions'],
     en: t('Personal Year Consultancy', 'Plan the year ahead with your personal year, month and day numbers – when to start, when to wait and when to act on big decisions.',
-      ['Your personal year theme from birthday to birthday', 'Month-by-month guidance for the next 12 months', 'Best dates for important decisions you name', 'Remedies to support the year', 'Personal answers to your questions on call or WhatsApp'], 'Scheduled within 3 working days'),
+      ['Your personal year theme from birthday to birthday', 'Month-by-month guidance for the next 12 months', 'Best dates for important decisions you name', 'Remedies to support the year', 'Personal answers to your questions on call or WhatsApp'], 'Scheduled within 3 hours'),
     hi: t('व्यक्तिगत वर्ष परामर्श', 'अपने व्यक्तिगत वर्ष, माह और दिन के अंकों से आने वाले वर्ष की योजना बनाएँ – कब शुरुआत करें, कब प्रतीक्षा करें और कब बड़े निर्णय लें।',
-      ['जन्मदिन से जन्मदिन तक आपके व्यक्तिगत वर्ष का विषय', 'अगले 12 महीनों के लिए माह-दर-माह मार्गदर्शन', 'आपके बताए महत्वपूर्ण निर्णयों के लिए शुभ तिथियाँ', 'वर्ष को सहारा देने वाले उपाय', 'कॉल या WhatsApp पर आपके प्रश्नों के व्यक्तिगत उत्तर'], '3 कार्य-दिवसों के भीतर समय तय'),
+      ['जन्मदिन से जन्मदिन तक आपके व्यक्तिगत वर्ष का विषय', 'अगले 12 महीनों के लिए माह-दर-माह मार्गदर्शन', 'आपके बताए महत्वपूर्ण निर्णयों के लिए शुभ तिथियाँ', 'वर्ष को सहारा देने वाले उपाय', 'कॉल या WhatsApp पर आपके प्रश्नों के व्यक्तिगत उत्तर'], '3 घंटे के भीतर समय तय'),
   },
   {
     code: 'SVC_SIGNATURE', sort: 10, featured: false, pricePaise: 475_00, mrpPaise: 2_475_00, priceConfirmed: true, intake: ['clientName', 'dob', 'gender', 'currentName', 'questions'],
     en: t('Signature Analysis & Correction', 'Your signature read with graphology and numerology – what it reveals, what may be holding you back, and a corrected signature to practise.',
-      ['11 signature features checked: baseline, slant, size, first letter, cutting strokes, ending, dots and more', 'Numerology of your signed name and first letter with your Moolank and Bhagyank', 'The best way to sign your name – ranked options', 'Personality, career and money indications from your signature', 'Step-by-step ideal signature with do\'s and don\'ts', 'Start dates, ink colour and a 21-day practice chart', 'Designed PDF report prepared by Acharya Nandram'], 'PDF within 1–2 working days of receiving your signature photos'),
+      ['11 signature features checked: baseline, slant, size, first letter, cutting strokes, ending, dots and more', 'Numerology of your signed name and first letter with your Moolank and Bhagyank', 'The best way to sign your name – ranked options', 'Personality, career and money indications from your signature', 'Step-by-step ideal signature with do\'s and don\'ts', 'Start dates, ink colour and a 21-day practice chart', 'Designed PDF report prepared by Acharya Nandram'], 'PDF within 3 hours of receiving your signature photos'),
     hi: t('हस्ताक्षर विश्लेषण और सुधार', 'हस्तलेख विज्ञान और अंक ज्योतिष से आपके हस्ताक्षर की रीडिंग – यह क्या दर्शाता है, क्या आपको रोक रहा हो सकता है, और अभ्यास के लिए सुधारा हुआ हस्ताक्षर।',
-      ['हस्ताक्षर की 11 विशेषताओं की जाँच: आधार रेखा, झुकाव, आकार, पहला अक्षर, काटती रेखाएँ, अंत, बिंदु और अधिक', 'आपके हस्ताक्षर-नाम और पहले अक्षर का अंक ज्योतिष, मूलांक और भाग्यांक के साथ', 'नाम लिखने का सबसे अच्छा तरीका – क्रमवार विकल्प', 'हस्ताक्षर से व्यक्तित्व, करियर और धन के संकेत', 'करें और न करें सहित आदर्श हस्ताक्षर चरण-दर-चरण', 'शुभ आरंभ तिथियाँ, स्याही का रंग और 21 दिन का अभ्यास चार्ट', 'आचार्य नंदराम द्वारा तैयार डिज़ाइन की हुई PDF रिपोर्ट'], 'हस्ताक्षर की फ़ोटो मिलने के 1–2 कार्य-दिवसों में PDF'),
+      ['हस्ताक्षर की 11 विशेषताओं की जाँच: आधार रेखा, झुकाव, आकार, पहला अक्षर, काटती रेखाएँ, अंत, बिंदु और अधिक', 'आपके हस्ताक्षर-नाम और पहले अक्षर का अंक ज्योतिष, मूलांक और भाग्यांक के साथ', 'नाम लिखने का सबसे अच्छा तरीका – क्रमवार विकल्प', 'हस्ताक्षर से व्यक्तित्व, करियर और धन के संकेत', 'करें और न करें सहित आदर्श हस्ताक्षर चरण-दर-चरण', 'शुभ आरंभ तिथियाँ, स्याही का रंग और 21 दिन का अभ्यास चार्ट', 'आचार्य नंदराम द्वारा तैयार डिज़ाइन की हुई PDF रिपोर्ट'], 'हस्ताक्षर की फ़ोटो मिलने के 3 घंटे के भीतर PDF'),
   },
   {
     code: 'SVC_DESTINY_MATRIX', sort: 11, featured: true, pricePaise: 2_100_00, mrpPaise: 4_200_00, intake: ['clientName', 'dob', 'gender', 'questions'],
     en: t('Destiny Matrix Analysis', 'Your complete Destiny Matrix (22 arcana) read in plain language – personality, talents, money and love channels, karmic tail, life purposes, chakra health map and your life timeline year by year.',
-      ['Your full Destiny Matrix chart, drawn and explained point by point', 'Personality, talents and comfort zone – your strengths in the plus and the minus', 'Money channel and love channel – where money and the right partner come from', 'Karmic tail – the lesson you carry and how to free yourself from it', 'Four life purposes: personal, social, spiritual and planetary', 'Chakra health map and family (ancestral) lines', 'Life timeline 0–80 years with your current and next 10 years', 'Personal answers to your questions'], 'Delivered within 2–3 working days'),
+      ['Your full Destiny Matrix chart, drawn and explained point by point', 'Personality, talents and comfort zone – your strengths in the plus and the minus', 'Money channel and love channel – where money and the right partner come from', 'Karmic tail – the lesson you carry and how to free yourself from it', 'Four life purposes: personal, social, spiritual and planetary', 'Chakra health map and family (ancestral) lines', 'Life timeline 0–80 years with your current and next 10 years', 'Personal answers to your questions'], 'Delivered within 3 hours'),
     hi: t('डेस्टिनी मैट्रिक्स विश्लेषण', 'आपकी पूरी डेस्टिनी मैट्रिक्स (22 आर्काना) सरल भाषा में – व्यक्तित्व, प्रतिभा, धन और प्रेम चैनल, कर्म-पूँछ, जीवन के उद्देश्य, चक्र स्वास्थ्य मानचित्र और वर्ष-दर-वर्ष जीवन समयरेखा।',
-      ['आपकी पूरी डेस्टिनी मैट्रिक्स चार्ट, हर बिंदु की व्याख्या के साथ', 'व्यक्तित्व, प्रतिभा और सहज क्षेत्र – प्लस और माइनस में आपकी ताक़त', 'धन चैनल और प्रेम चैनल – धन और सही साथी कहाँ से आते हैं', 'कर्म-पूँछ – आपकी सीख और उससे मुक्त होने का तरीका', 'चार जीवन उद्देश्य: व्यक्तिगत, सामाजिक, आध्यात्मिक और ग्रहीय', 'चक्र स्वास्थ्य मानचित्र और पारिवारिक (पूर्वज) रेखाएँ', '0–80 वर्ष की जीवन समयरेखा, आपके वर्तमान और अगले 10 वर्षों के साथ', 'आपके प्रश्नों के व्यक्तिगत उत्तर'], '2–3 कार्य-दिवसों में'),
+      ['आपकी पूरी डेस्टिनी मैट्रिक्स चार्ट, हर बिंदु की व्याख्या के साथ', 'व्यक्तित्व, प्रतिभा और सहज क्षेत्र – प्लस और माइनस में आपकी ताक़त', 'धन चैनल और प्रेम चैनल – धन और सही साथी कहाँ से आते हैं', 'कर्म-पूँछ – आपकी सीख और उससे मुक्त होने का तरीका', 'चार जीवन उद्देश्य: व्यक्तिगत, सामाजिक, आध्यात्मिक और ग्रहीय', 'चक्र स्वास्थ्य मानचित्र और पारिवारिक (पूर्वज) रेखाएँ', '0–80 वर्ष की जीवन समयरेखा, आपके वर्तमान और अगले 10 वर्षों के साथ', 'आपके प्रश्नों के व्यक्तिगत उत्तर'], '3 घंटे के भीतर'),
   },
   {
     code: 'SVC_BIRTH_CHART', sort: 12, featured: false, pricePaise: 501_00, mrpPaise: 1_001_00, intake: ['clientName', 'dob', 'gender', 'questions'],
     en: t('Pythagorean Birth Chart Analysis', 'Your Pythagoras Square (Psychomatrix) from your date of birth – character, energy, health, logic, talent, duty and memory, with the life lines that shape purpose, family, money and talent.',
-      ['Your Pythagoras Square drawn with the four working numbers', 'All nine qualities read with their strength – character, energy, interest, health, logic, work, luck, duty, memory', 'Eight life lines: purpose, family, habits, self-esteem, money & home, talent, spirituality, temperament', 'Your strengths and what to develop, with simple practices', 'Personal answers to your questions'], 'Delivered within 1–2 working days'),
+      ['Your Pythagoras Square drawn with the four working numbers', 'All nine qualities read with their strength – character, energy, interest, health, logic, work, luck, duty, memory', 'Eight life lines: purpose, family, habits, self-esteem, money & home, talent, spirituality, temperament', 'Your strengths and what to develop, with simple practices', 'Personal answers to your questions'], 'Delivered within 3 hours'),
     hi: t('पाइथागोरस जन्म चार्ट विश्लेषण', 'आपकी जन्म तिथि से पाइथागोरस वर्ग (साइकोमैट्रिक्स) – चरित्र, ऊर्जा, स्वास्थ्य, तर्क, प्रतिभा, कर्तव्य और स्मृति, साथ में उद्देश्य, परिवार, धन और प्रतिभा की जीवन रेखाएँ।',
-      ['चार कार्य-अंकों के साथ बना आपका पाइथागोरस वर्ग', 'सभी नौ गुण उनकी शक्ति के साथ – चरित्र, ऊर्जा, रुचि, स्वास्थ्य, तर्क, श्रम, भाग्य, कर्तव्य, स्मृति', 'आठ जीवन रेखाएँ: उद्देश्य, परिवार, आदतें, आत्म-सम्मान, धन व घर, प्रतिभा, आध्यात्मिकता, स्वभाव', 'आपकी ताक़त और विकसित करने योग्य बातें, सरल अभ्यासों के साथ', 'आपके प्रश्नों के व्यक्तिगत उत्तर'], '1–2 कार्य-दिवसों में'),
+      ['चार कार्य-अंकों के साथ बना आपका पाइथागोरस वर्ग', 'सभी नौ गुण उनकी शक्ति के साथ – चरित्र, ऊर्जा, रुचि, स्वास्थ्य, तर्क, श्रम, भाग्य, कर्तव्य, स्मृति', 'आठ जीवन रेखाएँ: उद्देश्य, परिवार, आदतें, आत्म-सम्मान, धन व घर, प्रतिभा, आध्यात्मिकता, स्वभाव', 'आपकी ताक़त और विकसित करने योग्य बातें, सरल अभ्यासों के साथ', 'आपके प्रश्नों के व्यक्तिगत उत्तर'], '3 घंटे के भीतर'),
   },
 ];
 
@@ -132,6 +132,10 @@ export async function ensureServices(db: Db = getDb()) {
   for (let b = done; b < SEED_BATCHES.length; b++) {
     const rows = DEFAULT_SERVICES.filter((x) => SEED_BATCHES[b].includes(x.code));
     if (rows.length) await db.insert(services).values(rows).onConflictDoNothing();
+  }
+  // Sync delivery promise across existing seeded rows
+  for (const s of DEFAULT_SERVICES) {
+    await db.update(services).set({ en: s.en, hi: s.hi, updatedAt: new Date() }).where(eq(services.code, s.code));
   }
   if (done !== SEED_BATCHES.length) await db.insert(appSettings).values({ key: 'servicesSeed', value: SEED_BATCHES.length }).onConflictDoUpdate({ target: appSettings.key, set: { value: SEED_BATCHES.length, updatedAt: new Date() } });
   seeded = true;

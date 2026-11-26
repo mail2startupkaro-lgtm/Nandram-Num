@@ -5,7 +5,7 @@
  */
 type L = { en: string; hi: string };
 export type HeroIcon = 'user' | 'type' | 'grid' | 'phone' | 'baby' | 'heart' | 'store' | 'building' | 'briefcase' | 'calendar' | 'pen' | 'label' | 'matrix' | 'square';
-export interface ServiceHero { icon: HeroIcon; tag: L; hook: L; freeTitle: L }
+export interface ServiceHero { icon: HeroIcon; tag: L; hook: L; freeTitle: L; leadLabels?: { name?: L; dob?: L } }
 
 const FREE_DOB: L = { en: 'See your Moolank & Bhagyank in 30 seconds', hi: '30 सेकंड में अपना मूलांक और भाग्यांक देखें' };
 
@@ -34,6 +34,10 @@ export const SERVICE_HERO: Record<string, ServiceHero> = {
     icon: 'baby', tag: { en: 'For your little one', hi: 'आपके नन्हे-मुन्ने के लिए' },
     hook: { en: 'A name your child will carry for life – beautiful in meaning and in harmony with their date of birth.', hi: 'वह नाम जो आपका बच्चा जीवन भर रखेगा – अर्थ में सुंदर और जन्म तिथि के साथ सामंजस्य में।' },
     freeTitle: { en: "See your baby's numbers – free", hi: 'शिशु के अंक देखें – मुफ़्त' },
+    leadLabels: {
+      name: { en: 'Baby Name', hi: 'शिशु का नाम' },
+      dob: { en: 'Baby Date of Birth', hi: 'शिशु की जन्म तिथि' },
+    },
   },
   'couple-compatibility-report': {
     icon: 'heart', tag: { en: 'Marriage & relationships', hi: 'विवाह और संबंध' },

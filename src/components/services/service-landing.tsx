@@ -322,7 +322,7 @@ export async function ServiceLanding({ slug, children }: { slug: string; childre
             <div aria-hidden className="pointer-events-none absolute right-0 top-0 h-24 w-28 sm:h-32 sm:w-40 lg:static lg:mx-auto lg:-mb-4 lg:h-44 lg:w-56"><HeroArt kind={hero.icon} /></div>
             <HeroActionCard
               freeTitle={hero.freeTitle}
-              free={<LeadForm services={funnelServices} defaultService={svc?.code ?? ''} whatsapp={wa} compact bookHref="#book" />}
+              free={<LeadForm services={funnelServices} defaultService={svc?.code ?? ''} whatsapp={wa} compact bookHref="#book" labels={hero.leadLabels} />}
               book={offer || null}
             />
           </div>
@@ -406,7 +406,7 @@ export async function ServiceLanding({ slug, children }: { slug: string; childre
         <div><p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold"><Bi en="Free · 30 seconds" hi="मुफ़्त · 30 सेकंड" /></p>
           <h2 id="lead-h" className="mt-1 font-cinzel text-2xl font-bold sm:text-3xl"><Bi en="Get Your Free Mini-Reading" hi="अपनी मुफ़्त मिनी-रीडिंग पाएँ" /></h2>
           <p className="mt-2 text-muted-foreground"><Bi en="See your Moolank and Bhagyank instantly, understand your core numbers, and get a direct WhatsApp line to Acharya Nandram." hi="अपना मूलांक और भाग्यांक तुरंत देखें, अपने मूल अंकों को समझें और आचार्य नंदराम से सीधे WhatsApp पर जुड़ें।" /></p></div>
-        <div className="glass rounded-xl p-5"><LeadForm services={funnelServices} defaultService={svc?.code ?? ''} whatsapp={wa} compact bookHref="#book" /></div>
+        <div className="glass rounded-xl p-5"><LeadForm services={funnelServices} defaultService={svc?.code ?? ''} whatsapp={wa} compact bookHref="#book" labels={hero.leadLabels} /></div>
       </section>
 
       {offer && <div className="mx-auto max-w-2xl">{offer}</div>}

@@ -94,7 +94,12 @@ function utmFromUrl() {
 
 export interface FunnelService { code: string; name: { en: string; hi: string } }
 
-export function LeadForm({ services, defaultService = '', magnet = 'mini-reading', whatsapp, onDone, compact, bookHref = '#services' }: { services: FunnelService[]; defaultService?: string; magnet?: 'mini-reading' | 'sample-report'; whatsapp: string; onDone?: () => void; compact?: boolean; bookHref?: string }) {
+export interface LeadFormLabels {
+  name?: { en: string; hi: string };
+  dob?: { en: string; hi: string };
+}
+
+export function LeadForm({ services, defaultService = '', magnet = 'mini-reading', whatsapp, onDone, compact, bookHref = '#services', labels }: { services: FunnelService[]; defaultService?: string; magnet?: 'mini-reading' | 'sample-report'; whatsapp: string; onDone?: () => void; compact?: boolean; bookHref?: string; labels?: LeadFormLabels }) {
   const { lang } = useApp();
   const [, unlock] = useUnlocked();
   const [f, setF] = React.useState({ name: '', phone: '', dob: '', service: defaultService, consent: false, website: '' });
@@ -102,6 +107,8 @@ export function LeadForm({ services, defaultService = '', magnet = 'mini-reading
   const [err, setErr] = React.useState<string | null>(null);
   const [res, setRes] = React.useState<{ moolank: number; bhagyank: number } | null>(null);
   const hi = lang === 'hi';
+  const nameLabel = labels?.name ? labels.name[lang] : (hi ? 'आपका नाम' : 'Your name');
+  const dobLabel = labels?.dob ? labels.dob[lang] : (hi ? 'जन्म तिथि' : 'Date of birth');
   const ok = f.name.trim().length >= 2 && f.phone.replace(/\D/g, '').length >= 10 && !!f.dob && f.consent;
 
   async function submit(e: React.FormEvent) {
@@ -143,9 +150,9 @@ export function LeadForm({ services, defaultService = '', magnet = 'mini-reading
   return (
     <form onSubmit={submit} className="space-y-3" noValidate>
       <div className={cn('grid gap-3', !compact && 'sm:grid-cols-2')}>
-        <Field label={hi ? 'आपका नाम' : 'Your name'} htmlFor="ld-name" required><Input id="ld-name" autoComplete="name" maxLength={120} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
+        <Field label={nameLabel} htmlFor="ld-name" required><Input id="ld-name" autoComplete="name" maxLength={120} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
         <Field label={hi ? 'WhatsApp नंबर' : 'WhatsApp number'} htmlFor="ld-ph" required><Input id="ld-ph" type="tel" inputMode="tel" autoComplete="tel" placeholder="98765 43210" maxLength={18} value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></Field>
-        <Field label={hi ? 'जन्म तिथि' : 'Date of birth'} htmlFor="ld-dob" required><Input id="ld-dob" type="date" min="1900-01-01" max={toIso(todayIST())} value={f.dob} onChange={(e) => setF({ ...f, dob: e.target.value })} /></Field>
+        <Field label={dobLabel} htmlFor="ld-dob" required><Input id="ld-dob" type="date" min="1900-01-01" max={toIso(todayIST())} value={f.dob} onChange={(e) => setF({ ...f, dob: e.target.value })} /></Field>
         <Field label={hi ? 'किस सेवा में रुचि है?' : 'Interested in'} htmlFor="ld-svc"><Select id="ld-svc" value={f.service} onChange={(e) => setF({ ...f, service: e.target.value })}><option value="">{hi ? 'अभी तय नहीं' : 'Not sure yet'}</option>{services.map((s) => <option key={s.code} value={s.code}>{s.name[lang]}</option>)}</Select></Field>
       </div>
       <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute left-[-9999px] h-0 w-0 opacity-0" value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} />
