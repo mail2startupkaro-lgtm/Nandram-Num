@@ -8,11 +8,10 @@
  *   8 About your numerologist + other services (CTA with WhatsApp / Telegram / website QR codes) and the disclaimer.
  */
 import QRCode from 'qrcode';
-import { esc, gaugeSvg, monogram, numberMedallion, ringSvg, scoreColour } from '@/lib/pdf/svg';
+import { esc, gaugeSvg, mandala, monogram, numberMedallion, ringSvg, scoreColour } from '@/lib/pdf/svg';
 import { baseCss } from '@/lib/pdf/template';
 import { COLOUR_HEX, DEFAULT_BRANDING, resolveTheme, type Branding, type PdfTheme, type ThemeId } from '@/lib/pdf/themes';
 import { renderSheetPdf } from '@/lib/pdf/render';
-import { coverDocument } from '@/lib/pdf/cover';
 import { DEFAULT_SERVICES } from '@/lib/billing/services';
 import { compoundMeaningHi, dayHi, optionLabelHi, professionHi } from './hindi';
 import { humaniseDeep } from './humanise';
@@ -404,15 +403,92 @@ export function buildSignatureReportHtml(d: SignatureReportData, t: PdfTheme, b:
   return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${baseCss(t, lang)}${css(t)}</style></head><body>${summary}${s1}${s2}${s3}${s4}${s5}${s6}${s7}${s8}</body></html>`;
 }
 
-/** Full-page cover: report name, client, date of birth, report date, the client's signature and the expert. */
-export function buildSignatureCoverHtml(d: SignatureReportData, t: PdfTheme, b: Branding): string {
+/** "mynumerologist.com" → styled wordmark: small italic "my", big "Numerologist", accent ".com". */
+export function brandWordmark(brand: string): { pre: string; core: string; tld: string } {
+  const m = /^(my)?([^.]+)(\..+)?$/i.exec(brand.trim());
+  if (!m) return { pre: '', core: brand, tld: '' };
+  const core = m[2].charAt(0).toUpperCase() + m[2].slice(1);
+  return { pre: m[1] ? 'my' : '', core, tld: (m[3] ?? '').toLowerCase() };
+}
+
+const COVER_L = {
+  en: { t1: 'Signature', t2: 'Analysis Report', tag: 'Numerology  ·  Signature  ·  Name Correction', preparedFor: 'Prepared for', by: 'Your numerologist', years: '15+ years of practice', conf: 'Personal and confidential' },
+  hi: { t1: 'हस्ताक्षर', t2: 'विश्लेषण रिपोर्ट', tag: 'अंक ज्योतिष  ·  हस्ताक्षर  ·  नाम सुधार', preparedFor: 'के लिए तैयार', by: 'आपके अंक ज्योतिषी', years: '15+ वर्षों का अनुभव', conf: 'व्यक्तिगत एवं गोपनीय' },
+};
+
+/**
+ * Full-page cover made for the signature report: large report title, a big myNumerologist.com wordmark,
+ * the client's details and signature, and a large profile block for the numerologist.
+ */
+export function buildSignatureCoverHtml(d: SignatureReportData, t: PdfTheme, b: Branding, contact: ReportContact = DEFAULT_CONTACT): string {
   const lang: 'en' | 'hi' = d.client.language === 'hi' ? 'hi' : 'en';
-  const l = L[lang];
-  return coverDocument({
-    title: l.title, subtitle: l.sub, clientName: d.client.fullName, lang, theme: t, branding: b, preparedBy: d.preparedBy,
-    facts: [[l.dob, dobText(d.client.dob)], [l.date, fmtDate(d.generatedAt, lang)], [l.profession, d.client.profession]],
-    imageDataUrl: d.annotated ?? d.samples?.[0], imageCaption: l.sig,
-  });
+  const l = L[lang], c = COVER_L[lang];
+  const w = brandWordmark(b.brandName || 'mynumerologist.com');
+  const house = (b.expertName || '').trim().toLowerCase() === (DEFAULT_BRANDING.expertName || '').trim().toLowerCase();
+  const img = d.annotated ?? d.samples?.[0];
+  const sig = img && img.startsWith('data:image/') ? img : '';
+  const photo = b.photoDataUrl ? `<img class="pf-img" src="${esc(b.photoDataUrl)}" alt="">` : `<div class="pf-img pf-mono">${monogram(b.expertName, t, 150, true)}</div>`;
+  const site = (contact.website || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+  const facts = ([[l.dob, dobText(d.client.dob)], [l.date, fmtDate(d.generatedAt, lang)], [l.profession, d.client.profession]] as [string, string][]).filter(([, v]) => v && v.trim());
+  const name = d.client.fullName.toLowerCase().replace(/(^|\s)\S/g, (x) => x.toUpperCase());
+  const ink = t.coverInk, acc = t.coverAccent;
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${baseCss(t, lang)}
+  @page{size:A4;margin:0}
+  html,body{width:210mm;height:297mm;overflow:hidden;margin:0}
+  .sc{position:relative;width:210mm;height:297mm;overflow:hidden;background:${t.coverBg};color:${ink};box-sizing:border-box;padding:17mm 18mm 14mm;display:flex;flex-direction:column;align-items:center;text-align:center}
+  .sc .f1{position:absolute;inset:7mm;border:1.2px solid ${acc}aa;border-radius:2mm}
+  .sc .f2{position:absolute;inset:9.5mm;border:.5px solid ${acc}66;border-radius:1.5mm}
+  .sc .corner{position:absolute;width:9mm;height:9mm;border:1.6px solid ${acc}}
+  .sc .c1{top:5mm;left:5mm;border-right:none;border-bottom:none}.sc .c2{top:5mm;right:5mm;border-left:none;border-bottom:none}.sc .c3{bottom:5mm;left:5mm;border-right:none;border-top:none}.sc .c4{bottom:5mm;right:5mm;border-left:none;border-top:none}
+  .sc .md{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%)}
+  .wm{position:relative;line-height:1;white-space:nowrap;display:flex;align-items:baseline;justify-content:center}
+  .wm-pre{display:inline;font-family:'Playfair Display',serif;font-style:italic;font-weight:400;font-size:28pt;color:${acc};margin-right:1mm;vertical-align:.2em}
+  .wm-core{display:inline;font-family:'Playfair Display',serif;font-weight:700;font-size:46pt;letter-spacing:.01em;color:${ink}}
+  .wm-core:first-letter{color:${acc}}
+  .wm-tld{display:inline;font-family:'Playfair Display',serif;font-style:italic;font-size:20pt;color:${acc};margin-left:.4mm}
+  .wm-rule{position:relative;display:flex;align-items:center;gap:3mm;justify-content:center;margin:2.5mm auto 0;width:130mm}
+  .wm-rule i{flex:1;height:.8px;background:linear-gradient(90deg,transparent,${acc})}.wm-rule i:last-child{background:linear-gradient(90deg,${acc},transparent)}
+  .wm-rule b{width:2.4mm;height:2.4mm;background:${acc};transform:rotate(45deg)}
+  .wm-tag{font-size:8pt;letter-spacing:.32em;text-transform:uppercase;color:${ink};opacity:.85;margin-top:2.2mm}
+  .tt{position:relative;margin-top:17mm}
+  .tt .k{font-size:9pt;letter-spacing:.38em;text-transform:uppercase;color:${acc};margin-bottom:3mm}
+  .tt h1{color:${ink};font-family:'Playfair Display','Noto Sans Devanagari',serif;font-weight:700;margin:0;line-height:1.02}
+  .tt h1 .a{display:block;font-size:56pt;letter-spacing:.02em}
+  .tt h1 .b{display:block;font-size:30pt;letter-spacing:.14em;text-transform:uppercase;color:${acc};margin-top:2mm;font-weight:600}
+  .pf{position:relative;margin-top:10mm}
+  .pf .k{font-size:8.5pt;letter-spacing:.3em;text-transform:uppercase;opacity:.85}
+  .pf .n{font-family:'Playfair Display',serif;font-size:27pt;font-weight:700;color:${ink};margin-top:1mm;line-height:1.1}
+  .facts{display:flex;gap:10mm;justify-content:center;font-size:9.5pt;margin-top:3.5mm}
+  .facts span{display:block;font-size:7.3pt;letter-spacing:.2em;text-transform:uppercase;color:${acc}}
+  .sg{position:relative;margin-top:10mm;background:#fff;border-radius:3mm;padding:2.5mm 6mm 1.5mm;border:1.2px solid ${acc};box-shadow:0 2mm 6mm rgba(0,0,0,.25)}
+  .sg img{display:block;max-width:105mm;max-height:24mm;object-fit:contain}
+  .sg span{display:block;font-size:6.8pt;letter-spacing:.24em;text-transform:uppercase;color:#7a6a55;margin-top:.8mm}
+  .ex{position:absolute;left:14mm;right:14mm;bottom:20mm;display:flex;align-items:center;gap:7mm;padding:5mm 7mm;border-radius:4mm;background:rgba(0,0,0,.22);border:1px solid ${acc}88;text-align:left}
+  .pf-img{width:46mm;height:46mm;border-radius:50%;object-fit:cover;border:2.2px solid ${acc};box-shadow:0 0 0 2.2mm ${acc}33,0 0 0 2.8mm ${acc}88;flex:none;background:#fff}
+  .pf-mono{display:flex;align-items:center;justify-content:center;background:transparent}
+  .ex .lab{font-size:8pt;letter-spacing:.3em;text-transform:uppercase;color:${acc}}
+  .ex .nm{font-family:'Playfair Display',serif;font-size:26pt;font-weight:700;color:${ink};line-height:1.1;margin:1mm 0 1mm}
+  .ex .ti{font-size:10pt;opacity:.95}
+  .ex .yr{display:inline-block;margin-top:2.5mm;padding:1mm 3.5mm;border-radius:3mm;background:${acc};color:#2a1a08;font-size:8.6pt;font-weight:600;letter-spacing:.04em}
+  .ex .ct{font-size:9pt;margin-top:2.2mm;opacity:.95}
+  .conf{position:absolute;bottom:12.5mm;left:0;right:0;font-size:7.4pt;letter-spacing:.16em;text-transform:uppercase;opacity:.75}
+  ${lang === 'hi' ? '.wm-tag,.tt .k,.tt h1 .b,.pf .k,.facts span,.ex .lab,.sg span,.conf{letter-spacing:0!important}.tt h1 .b{text-transform:none}' : ''}
+  </style></head><body><div class="sc">
+    <div class="f1"></div><div class="f2"></div><div class="corner c1"></div><div class="corner c2"></div><div class="corner c3"></div><div class="corner c4"></div>
+    <div class="md">${mandala(620, acc, 0.22, 36)}</div>
+    ${b.logoDataUrl && !/numerologist/i.test(b.brandName) ? `<img src="${esc(b.logoDataUrl)}" style="position:relative;height:16mm;margin-bottom:2mm" alt="">` : ''}
+    <div class="wm">${w.pre ? `<span class="wm-pre">${esc(w.pre)}</span>` : ''}<span class="wm-core">${esc(w.core)}</span>${w.tld ? `<span class="wm-tld">${esc(w.tld)}</span>` : ''}</div>
+    <div class="wm-rule"><i></i><b></b><i></i></div>
+    <div class="wm-tag">${esc(c.tag)}</div>
+    <div class="tt"><div class="k">${esc(l.sub)}</div><h1><span class="a">${esc(c.t1)}</span><span class="b">${esc(c.t2)}</span></h1></div>
+    <div class="pf"><div class="k">${esc(c.preparedFor)}</div><div class="n">${esc(name)}</div>
+      ${facts.length ? `<div class="facts">${facts.map(([k, v]) => `<div><span>${esc(k)}</span>${esc(v)}</div>`).join('')}</div>` : ''}</div>
+    ${sig ? `<div class="sg"><img src="${esc(sig)}" alt=""><span>${esc(l.sig)}</span></div>` : ''}
+    <div class="ex">${photo}<div><div class="lab">${esc(c.by)}</div><div class="nm">${esc(d.preparedBy || b.expertName)}</div><div class="ti">${esc(b.expertTitle ?? '')}</div>
+      ${house ? `<div class="yr">${esc(c.years)}</div>` : ''}
+      <div class="ct">${[contact.whatsapp ? `WhatsApp ${esc(contact.whatsapp)}` : '', site ? esc(site) : ''].filter(Boolean).join('  ·  ')}</div></div></div>
+    <div class="conf">${esc(c.conf)}</div>
+  </div></body></html>`;
 }
 
 const qr = (text: string) => QRCode.toString(text, { type: 'svg', margin: 0, width: 150, errorCorrectionLevel: 'M', color: { dark: '#111111', light: '#ffffff' } });
@@ -427,5 +503,5 @@ export async function renderSignatureReportPdf(d: SignatureReportData, opts: { t
   const font = "font-family:Georgia,'Times New Roman',serif;";
   const header = `<div style="${font}width:100%;font-size:7.5px;color:${t.muted};padding:0 15mm;margin-top:8mm;display:flex;justify-content:space-between;letter-spacing:.12em;text-transform:uppercase"><span style="color:${t.primary}">${esc(branding.brandName)}</span><span>${esc(L[lang].title)} · ${esc(d.client.fullName)}</span></div>`;
   const footer = `<div style="${font}width:100%;font-size:7.4px;color:${t.muted};padding:0 15mm;margin-bottom:10mm;display:flex;justify-content:space-between"><span>${esc(d.preparedBy)} · ${esc(branding.contactLine ?? '')}</span><span style="font-size:9px;color:${t.primary}"><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>`;
-  return renderSheetPdf({ html: buildSignatureReportHtml(d, t, branding, { contact, qrWhatsapp, qrWebsite }), coverHtml: buildSignatureCoverHtml(d, t, branding), header, footer, theme: t, branding, title: `${d.client.fullName} – ${L[lang].title}`, subject: L[lang].title, isoDate: d.generatedAt.slice(0, 10), language: lang });
+  return renderSheetPdf({ html: buildSignatureReportHtml(d, t, branding, { contact, qrWhatsapp, qrWebsite }), coverHtml: buildSignatureCoverHtml(d, t, branding, contact), header, footer, theme: t, branding, title: `${d.client.fullName} – ${L[lang].title}`, subject: L[lang].title, isoDate: d.generatedAt.slice(0, 10), language: lang });
 }
