@@ -4,7 +4,7 @@
  * Cover (full-bleed, recommended name as letter tiles) · Summary (score ring, top-3 podium, letter to parents, contents), then every
  * section on a fresh page: Birth numbers · Lucky name blueprint · All names compared · Recommended name in depth · Second and third
  * choices · Family harmony (when parent names are given) · More suitable names (when suggestions are on) · Naming ceremony and guidance ·
- * About the numerologist + services CTA, WhatsApp / website QR codes and disclaimer.
+ * About the numerologist + services CTA, Telegram / website QR codes and disclaimer.
  */
 import QRCode from 'qrcode';
 import { esc, gridSvg, mandala, monogram, numberMedallion, ringSvg, scoreColour } from '@/lib/pdf/svg';

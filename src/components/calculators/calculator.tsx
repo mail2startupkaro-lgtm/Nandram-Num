@@ -16,6 +16,7 @@ import type { CalcKind } from '@/lib/seo/calculators';
 import { NumberGrid } from '@/components/results/grid';
 import { Field, Input, ChipGroup } from '@/components/ui/form';
 import { buttonVariants } from '@/components/ui/button';
+import { trackCalculatorUse } from '@/lib/client/analytics';
 import { Badge } from '@/components/ui/misc';
 import { cn } from '@/lib/utils';
 
@@ -63,6 +64,7 @@ export function Calculator({ kind }: { kind: CalcKind }) {
   const d = parseIso(dob);
   const traits = NUMBER_TRAITS[lang];
   let out: React.ReactNode = null;
+  let failed = false;
 
   try {
     if (kind === 'moolank' && d) {
@@ -259,9 +261,15 @@ export function Calculator({ kind }: { kind: CalcKind }) {
         </div>
       );
     }
-  } catch { out = <p className="text-sm text-danger">{L('Please check the details you entered.', 'कृपया दर्ज किए गए विवरण जाँचें।')}</p>; }
+  } catch { failed = true; out = <p className="text-sm text-danger">{L('Please check the details you entered.', 'कृपया दर्ज किए गए विवरण जाँचें।')}</p>; }
 
   const needsDob = kind !== 'name';
+  const hasResult = !!out && !failed;
+  React.useEffect(() => {
+    if (!hasResult) return;
+    const t = setTimeout(() => trackCalculatorUse(kind === 'personalYear' ? 'personal-year' : kind), 1500);
+    return () => clearTimeout(t);
+  }, [hasResult, kind]);
   return (
     <div className="glass space-y-5 rounded-lg p-5 sm:p-7">
       <div className="grid gap-4 sm:grid-cols-2">

@@ -5,7 +5,7 @@
  *   Cover (full-bleed) · Summary of findings · 1 What your signature shows · 2 The numbers behind your signature
  *   (harmony table, letter-by-letter values, Personal Year timing) · 3 The best way to sign your name ·
  *   4 Personality and life areas · 5 What to correct · 6 Your new signature · 7 21-day practice ·
- *   8 About your numerologist + other services (CTA with WhatsApp / Telegram / website QR codes) and the disclaimer.
+ *   8 About your numerologist + other services (CTA with Telegram / website QR codes) and the disclaimer.
  */
 import QRCode from 'qrcode';
 import { esc, gaugeSvg, mandala, monogram, numberMedallion, ringSvg, scoreColour } from '@/lib/pdf/svg';

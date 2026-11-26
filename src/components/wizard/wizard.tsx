@@ -10,13 +10,14 @@ import { LIFE_CONCERNS } from '@/lib/numerology/schemas';
 import { cn } from '@/lib/utils';
 import { LivePreview } from './live-preview';
 import { INDIAN_STATES, SAMPLE, validateStep, type Errors, type WizardState } from './state';
+import { ALL_COUNTRIES, POPULAR_COUNTRIES, isIndia } from '@/lib/countries';
 
 const today = () => new Date().toISOString().slice(0, 10);
 
 export function Wizard({ value, onChange, onSubmit, onImport, submitting, serverError }: {
   value: WizardState; onChange: (s: WizardState) => void; onSubmit: () => void; onImport: (file: File) => void; submitting: boolean; serverError?: string | null;
 }) {
-  const { t } = useApp();
+  const { t, lang } = useApp();
   const [step, setStep] = React.useState(0);
   const [dir, setDir] = React.useState(1);
   const [errors, setErrors] = React.useState<Errors>({});
@@ -83,12 +84,30 @@ export function Wizard({ value, onChange, onSubmit, onImport, submitting, server
       </Field>
       <Field label={t.f.profession} htmlFor="profession"><Input id="profession" value={s.profession} onChange={(e) => set('profession', e.target.value)} /></Field>
       <Field label={t.f.education} htmlFor="education"><Input id="education" value={s.education} onChange={(e) => set('education', e.target.value)} /></Field>
-      <Field label={t.f.city} htmlFor="city"><Input id="city" autoComplete="address-level2" value={s.city} onChange={(e) => set('city', e.target.value)} /></Field>
-      <Field label={t.f.state} htmlFor="state" className="sm:col-span-2">
-        <Select id="state" value={s.state} onChange={(e) => set('state', e.target.value)}>
-          <option value="">{t.f.select}</option>
-          {INDIAN_STATES.map((st) => <option key={st}>{st}</option>)}
+      <Field label={lang === 'hi' ? 'देश' : 'Country'} htmlFor="country">
+        <Select id="country" value={s.country || 'India'} onChange={(e) => {
+          const c = e.target.value;
+          set('country', c);
+          if (!isIndia(c) && INDIAN_STATES.includes(s.state)) set('state', '');
+        }}>
+          <optgroup label={lang === 'hi' ? 'प्रमुख देश' : 'Popular Countries'}>
+            {POPULAR_COUNTRIES.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
+          </optgroup>
+          <optgroup label={lang === 'hi' ? 'सभी देश' : 'All Countries'}>
+            {ALL_COUNTRIES.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
+          </optgroup>
         </Select>
+      </Field>
+      <Field label={t.f.city} htmlFor="city"><Input id="city" autoComplete="address-level2" value={s.city} onChange={(e) => set('city', e.target.value)} /></Field>
+      <Field label={isIndia(s.country) ? t.f.state : (lang === 'hi' ? 'राज्य / प्रांत' : 'State / Province')} htmlFor="state" className="sm:col-span-2">
+        {isIndia(s.country) ? (
+          <Select id="state" value={s.state} onChange={(e) => set('state', e.target.value)}>
+            <option value="">{t.f.select}</option>
+            {INDIAN_STATES.map((st) => <option key={st}>{st}</option>)}
+          </Select>
+        ) : (
+          <Input id="state" placeholder={lang === 'hi' ? 'जैसे: California, London, Dubai' : 'e.g. California, Ontario, London'} value={s.state} onChange={(e) => set('state', e.target.value)} />
+        )}
       </Field>
       <Field label={t.f.concerns} className="sm:col-span-2">
         <ChipGroup multi options={LIFE_CONCERNS.map((c) => ({ value: c, label: t.concerns[c] }))} value={s.concerns} onChange={(v) => set('concerns', v)} />
@@ -101,8 +120,8 @@ export function Wizard({ value, onChange, onSubmit, onImport, submitting, server
 
     // 2 Numbers & Contact
     <div key="2" className="grid gap-4">
-      <Field label={t.f.mobile} htmlFor="mobile" hint={t.f.mobileHint} error={err('mobile')}>
-        <Input id="mobile" type="tel" inputMode="numeric" autoComplete="tel-national" placeholder="98765 43210" value={s.mobile} aria-invalid={inv('mobile')} onChange={(e) => set('mobile', e.target.value)} />
+      <Field label={t.f.mobile} htmlFor="mobile" hint={isIndia(s.country) ? t.f.mobileHint : (lang === 'hi' ? 'देश कोड सहित फ़ोन नंबर' : 'Phone number with country code')} error={err('mobile')}>
+        <Input id="mobile" type="tel" inputMode="tel" autoComplete="tel" placeholder={isIndia(s.country) ? '98765 43210' : '+1 555 123 4567'} value={s.mobile} aria-invalid={inv('mobile')} onChange={(e) => set('mobile', e.target.value)} />
       </Field>
       <Field label={t.f.email} htmlFor="email" hint={t.f.emailHint} error={err('email')}>
         <Input id="email" type="email" inputMode="email" autoComplete="email" placeholder="client@example.com" value={s.email} aria-invalid={inv('email')} onChange={(e) => set('email', e.target.value)} />
@@ -195,7 +214,7 @@ export function Wizard({ value, onChange, onSubmit, onImport, submitting, server
 }
 
 function ReviewStep({ s, onEdit }: { s: WizardState; onEdit: (step: number) => void }) {
-  const { t } = useApp();
+  const { t, lang } = useApp();
   const fmt = (d: string) => (d ? d.split('-').reverse().join('-') : '–');
   const masked = s.aadhaar ? `XXXX-XXXX-${s.aadhaar.replace(/\D/g, '').slice(-4)}` : '–';
   const groups: { step: number; title: string; rows: [string, string][] }[] = [

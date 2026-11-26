@@ -9,13 +9,14 @@ import { ChipGroup, Field, Input, Select } from '@/components/ui/form';
 import { DisclaimerNote } from '@/components/legal/disclaimer-note';
 import { api, ApiError } from '@/lib/client/api';
 import { confirmCashfreeOrder, loadCashfree } from '@/lib/client/cashfree';
-import { openRazorpayCheckout } from '@/lib/client/razorpay';
+import { confirmRazorpayPayment, openRazorpayCheckout } from '@/lib/client/razorpay';
 import { useDisplayCurrency } from '@/lib/client/currency';
 import { OUTSIDE_INDIA } from '@/lib/billing/currency';
 import { todayIST, toIso } from '@/lib/numerology';
 import { FAMILY_RELATIONS, type FamilyRelation } from '@/lib/numerology/schemas';
 import type { ServiceIntakeField } from '@/lib/db/schema';
 import { cleanIntake, intakeToPerson, missingIntake, personToIntake, toIsoDate, type PersonLite } from '@/lib/reading/intake';
+import { ALL_COUNTRIES, POPULAR_COUNTRIES, isIndia } from '@/lib/countries';
 import type { PublicService } from '@/components/services/book-service';
 import { FIELD_LABEL, FLOW, RELATION_LABEL } from './labels';
 import { priceOf, SERVICE_ICON, StepBar } from './reading-picker';
@@ -35,7 +36,7 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
   const [people, setPeople] = React.useState<Person[]>([]);
   const [pick, setPick] = React.useState<string>('new'); // saved person id or 'new'
   const [relation, setRelation] = React.useState<FamilyRelation>('self');
-  const [d, setD] = React.useState<Record<string, string>>({ gender: 'male' });
+  const [d, setD] = React.useState<Record<string, string>>({ gender: 'male', country: 'India' });
   const [babyName, setBabyName] = React.useState('');
   const [partnerPick, setPartnerPick] = React.useState('');
   const [step, setStep] = React.useState<Step>('details');
@@ -54,11 +55,11 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
 
   function choose(p: Person | null, list = people) {
     const s = svc!; setError(null);
-    if (!p) { setPick('new'); setRelation(list.some((x) => x.relation === 'self') ? (s.code === 'SVC_BABY_NAME' ? 'son' : 'spouse') : 'self'); setD({ gender: 'male' }); setBabyName(''); setPartnerPick(''); return; }
+    if (!p) { setPick('new'); setRelation(list.some((x) => x.relation === 'self') ? (s.code === 'SVC_BABY_NAME' ? 'son' : 'spouse') : 'self'); setD({ gender: 'male', country: 'India' }); setBabyName(''); setPartnerPick(''); return; }
     setPick(p.id); setRelation(p.relation);
     const spouse = s.intake.includes('partnerName') ? list.find((x) => x.id !== p.id && (x.relation === 'spouse' || (p.relation === 'spouse' && x.relation === 'self'))) : undefined;
     setPartnerPick(spouse?.id ?? '');
-    setD({ gender: 'male', ...personToIntake(s.code, s.intake, p, spouse ?? null) });
+    setD({ gender: 'male', country: p.country || 'India', ...personToIntake(s.code, s.intake, p, spouse ?? null) });
     if (s.code === 'SVC_BABY_NAME') setBabyName(p.fullName);
   }
 
@@ -163,11 +164,21 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
             {has('currentName') && <Field label={label('currentName')} htmlFor="of-cn" required><Input id="of-cn" value={d.currentName ?? ''} onChange={set('currentName')} maxLength={sig ? 120 : 300} /></Field>}
             {has('clientName') && <Field label={L.clientName} htmlFor="of-name" required><Input id="of-name" value={d.clientName ?? ''} onChange={set('clientName')} maxLength={120} autoComplete="name" /></Field>}
             <div className="grid gap-3 sm:grid-cols-2">
+              <Field label={lang === 'hi' ? 'देश' : 'Country'} htmlFor="of-country">
+                <Select id="of-country" value={d.country || 'India'} onChange={(e) => setD((x) => ({ ...x, country: e.target.value }))}>
+                  <optgroup label={lang === 'hi' ? 'प्रमुख देश' : 'Popular Countries'}>
+                    {POPULAR_COUNTRIES.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
+                  </optgroup>
+                  <optgroup label={lang === 'hi' ? 'सभी देश' : 'All Countries'}>
+                    {ALL_COUNTRIES.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
+                  </optgroup>
+                </Select>
+              </Field>
               {has('dob') && <Field label={label('dob')} htmlFor="of-dob" required><Input id="of-dob" type="date" min="1900-01-01" max={toIso(todayIST())} value={d.dob ?? ''} onChange={set('dob')} /></Field>}
               {has('gender') && <Field label={L.gender}><ChipGroup options={[{ value: 'male', label: L.male }, { value: 'female', label: L.female }]} value={[d.gender ?? 'male']} onChange={(v) => setD((x) => ({ ...x, gender: v[0] ?? 'male' }))} /></Field>}
               {has('tob') && <Field label={L.tob} htmlFor="of-tob"><Input id="of-tob" type="time" value={d.tob ?? ''} onChange={set('tob')} /></Field>}
-              {has('pob') && <Field label={L.pob} htmlFor="of-pob"><Input id="of-pob" value={d.pob ?? ''} onChange={set('pob')} maxLength={120} /></Field>}
-              {has('mobile') && <Field label={label('mobile')} htmlFor="of-mob"><Input id="of-mob" type="tel" inputMode="numeric" value={d.mobile ?? ''} onChange={set('mobile')} maxLength={20} /></Field>}
+              {has('pob') && <Field label={label('pob')} htmlFor="of-pob"><Input id="of-pob" placeholder={!isIndia(d.country) ? (lang === 'hi' ? 'जैसे: New York, London, Dubai' : 'e.g. New York, London, Dubai') : (lang === 'hi' ? 'जैसे: Jaipur, Delhi, Mumbai' : 'e.g. Jaipur, Delhi, Mumbai')} value={d.pob ?? ''} onChange={set('pob')} maxLength={120} /></Field>}
+              {has('mobile') && <Field label={label('mobile')} htmlFor="of-mob"><Input id="of-mob" type="tel" inputMode="tel" placeholder={!isIndia(d.country) ? '+1 555 123 4567' : '98765 43210'} value={d.mobile ?? ''} onChange={set('mobile')} maxLength={25} /></Field>}
               {has('letters') && <Field label={L.letters} htmlFor="of-let"><Input id="of-let" value={d.letters ?? ''} onChange={set('letters')} maxLength={60} /></Field>}
             </div>
             {has('partnerName') && (
@@ -268,16 +279,17 @@ function PayStep({ svc, details, forName, relation, personId, onBack, onDone, si
   const t = FLOW[lang]; const L = FIELD_LABEL[lang];
   const u = me!.user!;
   const usd = useDisplayCurrency() === 'USD' && !!svc.usdCents;
+  const isForeign = !!(details.country && !isIndia(details.country));
   const price = priceOf(svc, usd);
-  const [bill, setBill] = React.useState({ name: u.name ?? '', phone: (u.phone ?? '').replace(/^\+91/, ''), state: u.billingState ?? (usd ? OUTSIDE_INDIA : ''), gstin: '' });
-  const abroad = usd || bill.state === OUTSIDE_INDIA;
+  const [bill, setBill] = React.useState({ name: u.name ?? '', phone: (u.phone ?? '').replace(/^\+91/, ''), state: u.billingState ?? ((usd || isForeign) ? OUTSIDE_INDIA : ''), gstin: '' });
+  const abroad = usd || isForeign || bill.state === OUTSIDE_INDIA;
   const [busy, setBusy] = React.useState(false);
   const [stage, setStage] = React.useState<'form' | 'confirming' | 'fail'>('form');
   const [order, setOrder] = React.useState<Order | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const missing = !bill.state || (!u.phone && !bill.phone.trim());
   const shown = cleanIntake(svc.intake, details);
-  const lab = (k: string) => (k === 'mobile' && svc.code === 'SVC_BUSINESS_COMPLETE' ? L.mobileBiz : k === 'businesses' && svc.code === 'SVC_BUSINESS_COMPLETE' ? L.bizType : k === 'currentName' && sig ? L.signedAs : k === 'currentName' && svc.code === 'SVC_BUSINESS_NAME' ? L.business : k === 'dob' && svc.intake.includes('parents') ? L.dobBaby : (L as Record<string, string>)[k] ?? k).replace(/ \((optional|वैकल्पिक)\)$/, '');
+  const lab = (k: string) => (k === 'country' ? (lang === 'hi' ? 'देश' : 'Country') : k === 'mobile' && svc.code === 'SVC_BUSINESS_COMPLETE' ? L.mobileBiz : k === 'businesses' && svc.code === 'SVC_BUSINESS_COMPLETE' ? L.bizType : k === 'currentName' && sig ? L.signedAs : k === 'currentName' && svc.code === 'SVC_BUSINESS_NAME' ? L.business : k === 'dob' && svc.intake.includes('parents') ? L.dobBaby : (L as Record<string, string>)[k] ?? k).replace(/ \((optional|वैकल्पिक)\)$/, '');
   const show = (k: string, v: string) => (k === 'gender' ? (v === 'female' ? L.female : L.male) : /Dob$|^dob$/.test(k) ? v.split('-').reverse().join('-') : v);
 
   async function pay() {
@@ -302,16 +314,9 @@ function PayStep({ svc, details, forName, relation, personId, onBack, onDone, si
             theme: { color: '#d4af37' },
           });
           setStage('confirming');
-          const verify = await api<{ status: string }>('/api/billing/razorpay/verify', {
-            method: 'POST',
-            json: {
-              orderId: resp.razorpay_order_id,
-              paymentId: resp.razorpay_payment_id,
-              signature: resp.razorpay_signature,
-            },
-          });
-          if (verify.status === 'paid') onDone();
-          else setStage('fail');
+          const st = await confirmRazorpayPayment(resp);
+          if (st === 'paid') onDone();
+          else setStage(st === 'failed' ? 'fail' : 'confirming');
         } catch (err: unknown) {
           if ((err as Error)?.message !== 'PAYMENT_CANCELLED') {
             setError(lang === 'hi' ? 'भुगतान पूरा नहीं हुआ।' : 'Payment could not be completed.');

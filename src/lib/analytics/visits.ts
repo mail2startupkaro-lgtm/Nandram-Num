@@ -258,6 +258,7 @@ export async function visitorReport(f: VisitorFilter, db: Db = getDb()) {
   ]);
 
   const outcomes = await businessOutcomes(db, start, end);
+  const calculators = await calculatorUsage(db, start, end, WE);
   const order = ['0–10 s', '10–30 s', '30–60 s', '1–3 min', '3–10 min', '10+ min'];
   return {
     range: { from: f.from, to: f.to, days, bucket },
@@ -275,6 +276,42 @@ export async function visitorReport(f: VisitorFilter, db: Db = getDb()) {
     engagement: order.map((b) => ({ bucket: b, sessions: engagement.find((e) => e.bucket === b)?.sessions ?? 0 })),
     events: events.map((e) => ({ ...e, value: e.value === null ? null : n(e.value) })),
     outcomes,
+    calculators,
+  };
+}
+
+/** Pages that are a free calculator (also counts past days, before calculator_use events existed). */
+const CALC_PAGES = sql`(path like '/calculators/%' or path = '/angel-numbers/calculator')`;
+
+/**
+ * Free calculator users, day by day (IST), filtered by date + country only.
+ *  - users / uses: visitors who got a result from a free calculator (`calculator_use` event, once per tab session per calculator).
+ *  - pageVisitors: visitors who opened a calculator page (/calculators/…, /angel-numbers/calculator) – available for older days too.
+ * Every day in the range is listed, with 0 for quiet days.
+ */
+async function calculatorUsage(db: Db, start: Date, end: Date, WE: SQL) {
+  const [daily, byTool, [tot]] = await Promise.all([
+    q<{ day: string; users: number; uses: number; page_visitors: number }>(db, sql`
+      with d as (select g::date dt from generate_series(date_trunc('day', ${start}::timestamptz at time zone 'Asia/Kolkata'),
+                                        date_trunc('day', (${end}::timestamptz - interval '1 second') at time zone 'Asia/Kolkata'), interval '1 day') g),
+      e as (select (created_at at time zone 'Asia/Kolkata')::date dt, count(distinct visitor_id)::int users, count(*)::int uses
+            from site_events where ${WE} and name = 'calculator_use' group by 1),
+      v as (select (created_at at time zone 'Asia/Kolkata')::date dt, count(distinct visitor_id)::int page_visitors
+            from site_visits where ${WE} and ${CALC_PAGES} group by 1)
+      select to_char(d.dt, 'YYYY-MM-DD') "day", coalesce(e.users, 0)::int users, coalesce(e.uses, 0)::int uses, coalesce(v.page_visitors, 0)::int page_visitors
+      from d left join e on e.dt = d.dt left join v on v.dt = d.dt order by 1`),
+    q<{ tool: string; users: number; uses: number }>(db, sql`
+      select coalesce(label, 'other') tool, count(distinct visitor_id)::int users, count(*)::int uses
+      from site_events where ${WE} and name = 'calculator_use' group by 1 order by 2 desc, 3 desc`),
+    q<{ users: number; uses: number; page_visitors: number }>(db, sql`
+      select (select count(distinct visitor_id) from site_events where ${WE} and name = 'calculator_use')::int users,
+             (select count(*) from site_events where ${WE} and name = 'calculator_use')::int uses,
+             (select count(distinct visitor_id) from site_visits where ${WE} and ${CALC_PAGES})::int page_visitors`),
+  ]);
+  return {
+    totals: { users: n(tot?.users), uses: n(tot?.uses), pageVisitors: n(tot?.page_visitors) },
+    daily: daily.map((r) => ({ day: r.day, users: n(r.users), uses: n(r.uses), pageVisitors: n(r.page_visitors) })),
+    byTool: byTool.map((r) => ({ tool: r.tool, users: n(r.users), uses: n(r.uses) })),
   };
 }
 

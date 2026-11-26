@@ -88,8 +88,8 @@ export async function POST(req: Request) {
     if (e instanceof CheckoutError) {
       return json({ error: e.code }, 400);
     }
-    if (e instanceof Error && e.message.startsWith('Cashfree')) {
-      console.error('cashfree checkout:', e.message);
+    if (e instanceof Error && (e.message.startsWith('Cashfree') || e.message.startsWith('Razorpay'))) {
+      console.error('gateway checkout:', e.message);
       return json({ error: 'GATEWAY_ERROR', issues: [{ path: 'gateway', message: 'The payment gateway did not accept the order. Please try again in a minute.' }] }, 502);
     }
     console.error('checkout error:', e);

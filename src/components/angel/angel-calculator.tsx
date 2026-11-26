@@ -1,5 +1,6 @@
 'use client';
 import * as React from 'react';
+import { trackCalculatorUse } from '@/lib/client/analytics';
 import Link from 'next/link';
 import { Heart, Search, Sparkles, UserRound } from 'lucide-react';
 import { todayIST } from '@/lib/numerology';
@@ -75,7 +76,7 @@ export function AngelCalculator({ initialTab = 'mine', initialNumber = '' }: { i
         {TABS.map((t) => <button key={t.v} role="tab" aria-selected={tab === t.v} type="button" onClick={() => setTab(t.v)}
           className={cn('inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-colors', tab === t.v ? 'border-gold bg-gold/20 font-semibold' : 'border-border hover:bg-muted')}>{t.icon}{hi ? t.h : t.l}</button>)}
       </div>
-      <form className="mt-5 grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end" onSubmit={(e) => { e.preventDefault(); if (valid) setDone(true); }}>
+      <form className="mt-5 grid gap-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end" onSubmit={(e) => { e.preventDefault(); if (valid) { setDone(true); trackCalculatorUse('angel'); } }}>
         <Field label={tab === 'couple' ? (hi ? 'साथी 1 – जन्म तिथि' : 'Partner 1 – date of birth') : (hi ? 'आपकी जन्म तिथि' : 'Your date of birth')} htmlFor="an-dob"><Input id="an-dob" type="date" value={dob} onChange={(e) => setDob(e.target.value)} max={`${today.year}-12-31`} /></Field>
         {tab === 'match' && <Field label={hi ? 'बार-बार दिखने वाला एंजेल नंबर' : 'Angel number you keep seeing'} htmlFor="an-n"><Input id="an-n" inputMode="numeric" value={angel} onChange={(e) => setAngel(e.target.value.replace(/\D/g, '').slice(0, 5))} placeholder={hi ? 'जैसे 222, 1111, 0909' : 'e.g. 222, 1111, 0909'} /></Field>}
         {tab === 'couple' && <Field label={hi ? 'साथी 2 – जन्म तिथि' : 'Partner 2 – date of birth'} htmlFor="an-dob2"><Input id="an-dob2" type="date" value={dob2} onChange={(e) => setDob2(e.target.value)} /></Field>}

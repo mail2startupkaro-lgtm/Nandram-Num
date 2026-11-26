@@ -1,8 +1,8 @@
 'use client';
 /** Admin → Visitor analytics: first-party visitors, countries, pages, time spent, sources, devices, conversions and a live visitor log. */
 import * as React from 'react';
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Clock, Download, Eye, Globe2, Lightbulb, MapPin, MousePointerClick, RefreshCw, Route, Smartphone, TrendingDown, TrendingUp, Users, X } from 'lucide-react';
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Calculator, Clock, Download, Eye, Globe2, Lightbulb, MapPin, MousePointerClick, RefreshCw, Route, Smartphone, TrendingDown, TrendingUp, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/form';
 import { Badge } from '@/components/ui/misc';
@@ -30,6 +30,12 @@ type Report = {
   engagement: { bucket: string; sessions: number }[];
   events: { name: string; n: number; visitors: number; value: number | null }[];
   outcomes: { leads: number | null; messages: number | null; serviceOrders: number | null; reports: number | null; paidOrders: number | null; revenuePaise: number | null };
+  calculators?: CalcUsage;
+};
+type CalcUsage = {
+  totals: { users: number; uses: number; pageVisitors: number };
+  daily: { day: string; users: number; uses: number; pageVisitors: number }[];
+  byTool: { tool: string; users: number; uses: number }[];
 };
 type Breakdown = { k: string; visitors: number; pageviews: number };
 type SessionRow = { session_id: string; visitor_id: string; started_at: string; last_seen: string; pages: number; ms: number; entry: string; exit: string; country: string | null; region: string | null; city: string | null; device: string | null; browser: string | null; os: string | null; lang: string | null; channel: string; source: string | null; is_new: boolean; signed_in: boolean; max_scroll: number; events: number; visitor_sessions: number; live: boolean };
@@ -78,7 +84,7 @@ const qs = (f: Filter, extra: Record<string, string> = {}) => new URLSearchParam
 const EVENT_LABEL: Record<string, string> = {
   whatsapp_click: 'WhatsApp click', call_click: 'Phone call click', telegram_click: 'Telegram click', email_click: 'Email click', outbound_click: 'Outbound link click',
   generate_lead: 'Lead form submitted', begin_checkout: 'Checkout started', purchase: 'Purchase', service_inquiry: 'Service enquiry', reading_generated: 'Reading generated',
-  pdf_download: 'PDF downloaded', download_ebook_click: 'E-book downloaded', sample_view: 'Sample report viewed', popup_manual_open: 'Offer popup opened', contact_submit: 'Contact form sent',
+  calculator_use: 'Free calculator used', pdf_download: 'PDF downloaded', download_ebook_click: 'E-book downloaded', sample_view: 'Sample report viewed', popup_manual_open: 'Offer popup opened', contact_submit: 'Contact form sent',
 };
 const CHANNEL_TONE: Record<string, string> = { 'Organic search': 'bg-emerald-500/15 text-emerald-400', Social: 'bg-sky-500/15 text-sky-400', WhatsApp: 'bg-green-500/15 text-green-400', Direct: 'bg-muted text-foreground', Referral: 'bg-violet-500/15 text-violet-400', Paid: 'bg-amber-500/15 text-amber-400', Email: 'bg-pink-500/15 text-pink-400', Campaign: 'bg-orange-500/15 text-orange-400' };
 
@@ -142,7 +148,7 @@ const PathCell = ({ path, title }: { path: string; title?: string | null }) => (
 // ───────────────────────── main
 const SUBTABS = [
   { id: 'overview', label: 'Overview', icon: Eye }, { id: 'geo', label: 'Countries & cities', icon: Globe2 }, { id: 'pages', label: 'Pages & time spent', icon: Clock },
-  { id: 'sources', label: 'Sources & conversions', icon: MousePointerClick }, { id: 'tech', label: 'Devices', icon: Smartphone }, { id: 'log', label: 'Visitor log', icon: Route },
+  { id: 'sources', label: 'Sources & conversions', icon: MousePointerClick }, { id: 'calculators', label: 'Free calculators', icon: Calculator }, { id: 'tech', label: 'Devices', icon: Smartphone }, { id: 'log', label: 'Visitor log', icon: Route },
 ] as const;
 
 export function VisitorAnalytics() {
@@ -239,7 +245,7 @@ export function VisitorAnalytics() {
             <Stat label="Visitor → enquiry" value={`${t!.conversionRate}%`} sub={`${fmt(t!.converters)} visitors clicked WhatsApp / call / form / checkout`} />
           </div>
 
-          {tab === 'overview' && <Outcomes o={r.outcomes} visitors={t!.visitors} />}
+          {tab === 'overview' && <Outcomes o={r.outcomes} visitors={t!.visitors} calcUsers={r.calculators?.totals.users ?? null} />}
 
           <div className="flex gap-1 overflow-x-auto rounded-lg bg-muted/60 p-1">
             {SUBTABS.map((x) => (
@@ -253,6 +259,7 @@ export function VisitorAnalytics() {
           {tab === 'geo' && <Geo r={r} onCountry={(c) => set({ country: c ?? '??' })} />}
           {tab === 'pages' && <Pages r={r} onPath={(p) => { set({ path: p }); setTab('log'); }} />}
           {tab === 'sources' && <Sources r={r} onChannel={(c) => set({ channel: c })} />}
+          {tab === 'calculators' && <FreeCalculators c={r.calculators} />}
           {tab === 'tech' && <Tech r={r} onDevice={(d) => set({ device: d })} />}
           {tab === 'log' && <VisitorLog rows={sessions ?? []} onOpen={setJourney} />}
           <Retention onDone={() => load()} />
@@ -264,13 +271,73 @@ export function VisitorAnalytics() {
 }
 
 // ───────────────────────── sections
-function Outcomes({ o, visitors }: { o: Report['outcomes']; visitors: number }) {
+const CALC_NAME: Record<string, string> = {
+  moolank: 'Moolank calculator', bhagyank: 'Bhagyank calculator', loshu: 'Lo Shu grid', name: 'Name numerology', mobile: 'Mobile number', kua: 'Kua number',
+  'personal-year': 'Personal Year', vehicle: 'Vehicle number', house: 'House number', 'quick-reading': 'Home page quick reading', angel: 'Angel number calculator',
+  'destiny-matrix': 'Destiny Matrix (free)', pythagoras: 'Pythagoras square (free)', signature: 'Signature check (free)', business: 'Business compatibility (free)',
+};
+const dayLabel = (d: string) => new Date(`${d}T00:00:00+05:30`).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+
+/** Free calculator users, day by day (IST). */
+export function FreeCalculators({ c }: { c?: CalcUsage }) {
+  if (!c) return <Card title="Free calculator users"><p className="text-sm text-muted-foreground">Not available – refresh after the update is deployed.</p></Card>;
+  const rows = [...c.daily].reverse(); // newest day first
+  const best = c.daily.reduce((m, d) => (d.users > m.users ? d : m), { day: '', users: 0, uses: 0, pageVisitors: 0 });
+  const activeDays = c.daily.filter((d) => d.users > 0).length;
+  const csv = () => {
+    const lines = ['Date (IST),Calculator users,Calculations,Calculator page visitors', ...c.daily.map((d) => `${d.day},${d.users},${d.uses},${d.pageVisitors}`)];
+    const href = URL.createObjectURL(new Blob([lines.join('\n')], { type: 'text/csv' }));
+    const a = Object.assign(document.createElement('a'), { href, download: `free-calculator-users-${c.daily[0]?.day ?? ''}-to-${c.daily.at(-1)?.day ?? ''}.csv` });
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(href), 2000);
+  };
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <Stat label="Calculator users" value={fmt(c.totals.users)} sub="unique visitors who got a result" />
+        <Stat label="Calculations" value={fmt(c.totals.uses)} sub="once per visit per calculator" />
+        <Stat label="Avg users per day" value={fmt(Math.round((c.totals.users / Math.max(1, c.daily.length)) * 10) / 10)} sub={`${activeDays} of ${c.daily.length} days with use`} />
+        <Stat label="Best day" value={best.users ? fmt(best.users) : '—'} sub={best.users ? dayLabel(best.day) : 'no use yet'} />
+      </div>
+      <Card title="Free calculator users – day wise" icon={<Calculator className="h-5 w-5 text-gold" />}
+        action={<Button size="sm" variant="outline" onClick={csv} disabled={!c.daily.length}><Download className="h-4 w-4" /> CSV</Button>}>
+        <div className="h-64">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={c.daily} margin={{ left: -16, right: 8, top: 8 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
+              <XAxis dataKey="day" tickFormatter={(v: string) => v.slice(5)} fontSize={11} stroke="hsl(var(--muted-foreground))" />
+              <YAxis allowDecimals={false} fontSize={11} stroke="hsl(var(--muted-foreground))" />
+              <Tooltip labelFormatter={(v) => dayLabel(String(v))} contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
+              <Legend wrapperStyle={{ fontSize: 12 }} />
+              <Bar dataKey="users" name="Calculator users" fill="hsl(42 80% 55%)" radius={[3, 3, 0, 0]} />
+              <Bar dataKey="pageVisitors" name="Calculator page visitors" fill="hsl(270 60% 65%)" radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          <b>Calculator users</b> = visitors who entered their details and saw a result in any free calculator (counted from this update onward).
+          <b> Calculator page visitors</b> = visitors who opened a /calculators/… page or the angel number calculator (available for older days too).
+        </p>
+        <div className="mt-4 max-h-[420px] overflow-y-auto">
+          <Table head={['Date (IST)', 'Calculator users', 'Calculations', 'Calculator page visitors']} empty="No days in this period."
+            rows={rows.map((d) => [dayLabel(d.day), <b key="u" className={d.users ? 'text-gold' : 'text-muted-foreground'}>{fmt(d.users)}</b>, fmt(d.uses), fmt(d.pageVisitors)])} />
+        </div>
+      </Card>
+      <Card title="Which free calculator is used most">
+        {c.byTool.length
+          ? <BarList total={c.totals.users} data={c.byTool.map((x) => ({ label: CALC_NAME[x.tool] ?? x.tool, value: x.users, display: `${fmt(x.users)} users · ${fmt(x.uses)} calculations` }))} />
+          : <p className="text-sm text-muted-foreground">No free calculator use recorded in this period yet.</p>}
+      </Card>
+    </div>
+  );
+}
+
+function Outcomes({ o, visitors, calcUsers }: { o: Report['outcomes']; visitors: number; calcUsers: number | null }) {
   const items = [
-    ['Leads captured', o.leads], ['Contact messages', o.messages], ['Service orders', o.serviceOrders], ['Reports generated', o.reports], ['Paid orders', o.paidOrders],
+    ['Free calculator users', calcUsers], ['Leads captured', o.leads], ['Contact messages', o.messages], ['Service orders', o.serviceOrders], ['Reports generated', o.reports], ['Paid orders', o.paidOrders],
   ] as const;
   return (
     <Card title="What the traffic produced" icon={<MousePointerClick className="h-5 w-5 text-gold" />}>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
         {items.map(([k, v]) => <div key={k} className="rounded-lg border border-border/60 p-3"><p className="text-[11px] uppercase tracking-wider text-muted-foreground">{k}</p><p className="text-xl font-bold">{v === null ? '—' : fmt(v)}</p>{v !== null && visitors > 0 && <p className="text-[11px] text-muted-foreground">{share(v, visitors)} of visitors</p>}</div>)}
         <div className="rounded-lg border border-gold/40 bg-gold/5 p-3"><p className="text-[11px] uppercase tracking-wider text-muted-foreground">Revenue (₹)</p><p className="text-xl font-bold text-gold">{o.revenuePaise === null ? '—' : `₹${fmt(Math.round(o.revenuePaise / 100))}`}</p>{o.revenuePaise !== null && visitors > 0 && <p className="text-[11px] text-muted-foreground">₹{(o.revenuePaise / 100 / visitors).toFixed(1)} per visitor</p>}</div>
       </div>

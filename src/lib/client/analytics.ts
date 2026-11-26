@@ -26,6 +26,25 @@ export function trackEvent(name: string, params: Record<string, unknown> = {}) {
   }
 }
 
+/** Free calculators counted in Admin → Visitor analytics → "Free calculator users" (keys = event labels). */
+export type FreeCalculator = 'moolank' | 'bhagyank' | 'loshu' | 'name' | 'mobile' | 'kua' | 'personal-year' | 'vehicle' | 'house'
+  | 'quick-reading' | 'angel' | 'destiny-matrix' | 'pythagoras' | 'signature' | 'business';
+
+/**
+ * Records that a visitor used (got a result from) a free calculator. Counted once per browser tab session per
+ * calculator, so typing or re-calculating does not inflate the numbers. Goes to the site's own analytics and GA.
+ */
+export function trackCalculatorUse(tool: FreeCalculator) {
+  if (typeof window === 'undefined') return;
+  try {
+    const key = `mn_calc_${tool}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+  } catch { /* storage blocked: still count */ }
+  visitEvent('calculator_use', { label: tool });
+  try { if (typeof window.gtag === 'function') window.gtag('event', 'calculator_use', { calculator: tool }); } catch { /* never block the UI */ }
+}
+
 /** Tracks page view with pathname and title */
 export function trackPageView(path: string, title?: string) {
   trackEvent('page_view', {

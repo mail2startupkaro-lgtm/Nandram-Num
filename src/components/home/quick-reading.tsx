@@ -1,5 +1,6 @@
 'use client';
 import * as React from 'react';
+import { trackCalculatorUse } from '@/lib/client/analytics';
 import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
 import { tr as term } from '@/lib/i18n/hi-terms';
@@ -39,6 +40,7 @@ export function QuickReading({ lang }: { lang: Lang }) {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setInput({ name, dob, gender }); setRun((r) => r + 1);
+    trackCalculatorUse('quick-reading');
     const el = box.current;
     if (el && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       for (let q = 0; q < 18; q++) {

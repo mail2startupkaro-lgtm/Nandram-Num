@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect } from 'vitest';
 import {
   isRazorpayOrder,
   verifyRazorpayPaymentSignature,
@@ -47,5 +47,27 @@ describe('Razorpay payment gateway', () => {
     // When no keys are present in tests, falls back to mock
     const gw = activeGateway('INR');
     expect(['cashfree', 'razorpay', 'mock']).toContain(gw);
+  });
+});
+
+describe('Razorpay webhook security', () => {
+  const body = JSON.stringify({ event: 'order.paid', payload: { order: { entity: { id: 'order_FORGED123' } }, payment: { entity: { id: 'pay_FORGED', order_id: 'order_FORGED123' } } } });
+  const post = async (headers: Record<string, string> = {}) => {
+    const { POST } = await import('@/app/api/billing/razorpay/webhook/route');
+    return POST(new Request('http://localhost/api/billing/razorpay/webhook', { method: 'POST', body, headers }));
+  };
+  const saved = { ...process.env };
+  afterEach(() => { process.env = { ...saved }; });
+
+  it('rejects every event when no webhook secret is configured (forged "order.paid" cannot unlock an order)', async () => {
+    process.env.RAZORPAY_KEY_ID = 'rzp_test_x'; process.env.RAZORPAY_KEY_SECRET = 'sec';
+    delete process.env.RAZORPAY_WEBHOOK_SECRET;
+    expect((await post()).status).toBe(503);
+  });
+
+  it('rejects a bad or missing signature', async () => {
+    process.env.RAZORPAY_KEY_ID = 'rzp_test_x'; process.env.RAZORPAY_KEY_SECRET = 'sec'; process.env.RAZORPAY_WEBHOOK_SECRET = 'whsec';
+    expect((await post()).status).toBe(400);
+    expect((await post({ 'x-razorpay-signature': 'deadbeef' })).status).toBe(400);
   });
 });

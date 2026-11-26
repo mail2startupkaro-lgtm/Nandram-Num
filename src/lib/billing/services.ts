@@ -143,7 +143,10 @@ export async function ensureServices(db: Db = getDb()) {
 
 export async function listServices(opts: { includeInactive?: boolean } = {}, db: Db = getDb()): Promise<Service[]> {
   await ensureServices(db);
-  const all = await db.select().from(services).orderBy(asc(services.sort));
+  // Ties on `sort` (two services with the same number) keep the built-in catalogue order, so the list never shuffles between page loads.
+  const rank = (code: string) => { const i = DEFAULT_SERVICES.findIndex((d) => d.code === code); return i < 0 ? DEFAULT_SERVICES.length : i; };
+  const all = (await db.select().from(services).orderBy(asc(services.sort), asc(services.code)))
+    .map((s, i) => ({ s, i })).sort((a, b) => a.s.sort - b.s.sort || rank(a.s.code) - rank(b.s.code) || a.i - b.i).map((x) => x.s);
   return opts.includeInactive ? all : all.filter((s) => s.active);
 }
 
@@ -196,7 +199,7 @@ export type IntakeDetails = Partial<Record<ServiceIntakeField | 'forProfileId' |
 /** Validates exactly the fields this service asks for; unknown keys are dropped. Aadhaar-like numbers are masked. */
 export function parseIntake(svc: Service, raw: unknown): IntakeDetails {
   const shape = Object.fromEntries(svc.intake.map((k) => [k, OPTIONAL.includes(k) ? FIELD[k].optional() : FIELD[k]]));
-  const parsed = z.object(shape).parse(raw ?? {}) as IntakeDetails;
+  const parsed = z.object({ ...shape, country: z.string().trim().max(100).optional() }).parse(raw ?? {}) as IntakeDetails;
   const mask = (s: string) => s.replace(/\b(\d{4})[\s-]?(\d{4})[\s-]?(\d{4})\b/g, (_m, _a, _b, c) => `XXXX-XXXX-${c}`);
   return Object.fromEntries(Object.entries(parsed).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, mask(String(v))]));
 }

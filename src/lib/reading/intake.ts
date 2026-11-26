@@ -8,7 +8,7 @@ import type { FamilyRelation } from '@/lib/numerology/schemas';
 /** Minimal saved-person shape (matches /api/people). */
 export interface PersonLite {
   id?: string; relation: FamilyRelation; fullName: string; gender: 'male' | 'female' | 'other'; dob: string;
-  timeOfBirth?: string; placeOfBirth?: string; mobile?: string; email?: string; signedName?: string;
+  timeOfBirth?: string; placeOfBirth?: string; country?: string; state?: string; mobile?: string; email?: string; signedName?: string;
   partner?: { name: string; gender: 'male' | 'female' | 'other'; dob: string; mobile?: string };
 }
 
@@ -36,6 +36,7 @@ export function personToIntake(code: string, fields: ServiceIntakeField[], p: Pe
   if (has('gender')) d.gender = p.gender === 'other' ? 'male' : p.gender;
   if (has('tob') && p.timeOfBirth) d.tob = p.timeOfBirth;
   if (has('pob') && p.placeOfBirth) d.pob = p.placeOfBirth;
+  if (p.country) d.country = p.country;
   if (has('mobile') && p.mobile) d.mobile = p.mobile;
   if (has('currentName') && !CURRENT_NAME_IS_NOT_PERSON.includes(code)) d.currentName = code === 'SVC_SIGNATURE' ? (p.signedName || p.fullName) : p.fullName;
   const pt = partner ? { name: partner.fullName, dob: partner.dob } : p.partner ? { name: p.partner.name, dob: p.partner.dob } : null;
@@ -56,6 +57,7 @@ export function intakeToPerson(code: string, d: Record<string, string>, relation
   const out: PersonLite = { ...base, relation, fullName: name, gender: g, dob };
   if (d.tob) out.timeOfBirth = d.tob;
   if (d.pob) out.placeOfBirth = d.pob;
+  if (d.country) out.country = d.country;
   if (d.mobile) out.mobile = d.mobile; // the number to analyse is usually the person's own
   if (code === 'SVC_SIGNATURE' && d.currentName) out.signedName = d.currentName;
   if (d.partnerName && d.partnerDob && /[A-Za-z]/.test(d.partnerName)) out.partner = { name: d.partnerName.trim(), gender: g === 'male' ? 'female' : 'male', dob: d.partnerDob, ...(base.partner?.mobile ? { mobile: base.partner.mobile } : {}) };
@@ -69,5 +71,7 @@ export function missingIntake(fields: ServiceIntakeField[], d: Record<string, st
 
 /** Only the boxes this reading type asks for, trimmed, empty ones dropped (what checkout receives). */
 export function cleanIntake(fields: ServiceIntakeField[], d: Record<string, string>): Record<string, string> {
-  return Object.fromEntries(fields.map((k) => [k, (d[k] ?? '').trim()]).filter(([, v]) => v));
+  const res = Object.fromEntries(fields.map((k) => [k, (d[k] ?? '').trim()]).filter(([, v]) => v));
+  if (d.country && d.country.trim()) res.country = d.country.trim();
+  return res;
 }

@@ -11,7 +11,7 @@ import { DisclaimerNote } from '@/components/legal/disclaimer-note';
 import { chooseCurrency, useTimeZone } from '@/lib/client/currency';
 import { workingHoursLabel } from '@/lib/client/working-hours';
 import { formatMoney, OUTSIDE_INDIA, type Currency, type PriceView } from '@/lib/billing/currency';
-import { openRazorpayCheckout } from '@/lib/client/razorpay';
+import { confirmRazorpayPayment, openRazorpayCheckout } from '@/lib/client/razorpay';
 
 interface Plan { code: string; name: string; description: string; pricePaise: number; intervalDays: number | null; credits: number; features: Record<string, boolean | number | null | undefined>; price: PriceView }
 interface Order { gateway: 'cashfree' | 'razorpay' | 'mock'; keyId?: string; mode: string; paymentSessionId: string; mock: boolean; orderId: string; amountPaise: number; currency: Currency; discountPaise: number; plan: { code: string; name: string }; prefill: { name: string; email: string; contact: string } }
@@ -349,17 +349,11 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
             theme: { color: '#d4af37' },
           });
           setPending(true);
-          const verify = await api<{ status: string }>('/api/billing/razorpay/verify', {
-            method: 'POST',
-            json: {
-              orderId: resp.razorpay_order_id,
-              paymentId: resp.razorpay_payment_id,
-              signature: resp.razorpay_signature,
-            },
-          });
+          const st = await confirmRazorpayPayment(resp);
           setPending(false);
-          if (verify.status === 'paid') { setDone('ok'); await onPaid(); }
-          else setDone('fail');
+          if (st === 'paid') { setDone('ok'); await onPaid(); }
+          else if (st === 'failed') setDone('fail');
+          else setError(t.pricing.pending);
         } catch (err: unknown) {
           setPending(false);
           if ((err as Error)?.message !== 'PAYMENT_CANCELLED') {

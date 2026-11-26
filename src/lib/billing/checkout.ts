@@ -268,20 +268,35 @@ export async function syncRazorpayOrder(params: {
     return { status: 'failed' };
   }
 
-  // Cross check with Razorpay API for security
+  // The signature only proves the browser saw this payment; the money state always comes from Razorpay.
+  return syncRazorpayFromGateway(orderId, db, paymentId);
+}
+
+/**
+ * Asks Razorpay for the real state of an order and records it (used by the client verify and the webhook).
+ * Never trusts the browser or the webhook body: the order must be paid at Razorpay, in the currency we charged,
+ * with a CAPTURED payment for exactly the amount we charged. An "authorized" payment is not money received
+ * (Razorpay voids uncaptured payments), so it stays pending until the payment.captured webhook arrives.
+ */
+export async function syncRazorpayFromGateway(orderId: string, db: Db = getDb(), preferPaymentId?: string): Promise<{ status: 'paid' | 'pending' | 'failed'; invoiceNumber?: string | null; paymentId?: string }> {
+  if (!isRazorpayOrder(orderId)) throw new CheckoutError('ORDER_NOT_FOUND');
+  const rzp = razorpayConfig();
+  if (!rzp) throw new Error('Razorpay is not configured (RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET)');
+  const [p] = await db.select().from(payments).where(eq(payments.gatewayOrderId, orderId)).limit(1);
+  if (!p) throw new CheckoutError('ORDER_NOT_FOUND');
+  if (p.status === 'paid') return { status: 'paid', invoiceNumber: p.invoiceNumber, paymentId: p.id };
+
   const rzpOrder = await getRazorpayOrder(rzp, orderId);
-  if (rzpOrder.status === 'paid' || rzpOrder.amount_paid >= p.amountPaise) {
-    const { payment } = await fulfilPayment(orderId, paymentId, db);
+  if (rzpOrder.amount !== p.amountPaise || rzpOrder.currency.toUpperCase() !== String(p.currency ?? 'INR').toUpperCase()) throw new CheckoutError('AMOUNT_MISMATCH');
+
+  const pays = await getRazorpayOrderPayments(rzp, orderId);
+  const good = (x: { status: string; amount: number; currency: string }) =>
+    x.status === 'captured' && x.amount === p.amountPaise && x.currency.toUpperCase() === rzpOrder.currency.toUpperCase();
+  const ok = pays.items.find((x) => x.id === preferPaymentId && good(x)) ?? pays.items.find(good);
+  if (ok) {
+    const { payment } = await fulfilPayment(orderId, ok.id, db);
     return { status: 'paid', invoiceNumber: payment.invoiceNumber, paymentId: payment.id };
   }
-
-  // Check individual payments
-  const pays = await getRazorpayOrderPayments(rzp, orderId).catch(() => ({ items: [] }));
-  const captured = pays.items.find((x) => x.id === paymentId && (x.status === 'captured' || x.status === 'authorized'));
-  if (captured) {
-    const { payment } = await fulfilPayment(orderId, paymentId, db);
-    return { status: 'paid', invoiceNumber: payment.invoiceNumber, paymentId: payment.id };
-  }
-
-  return { status: 'pending' };
+  // A failed attempt does not end the order: the customer can retry inside the same checkout.
+  return { status: pays.items.length && pays.items.every((x) => x.status === 'failed') ? 'failed' : 'pending' };
 }

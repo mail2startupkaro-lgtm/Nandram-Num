@@ -2,7 +2,7 @@
 /** Free instant Pythagoras Square for the service page (lead magnet) – same engine as the admin report. */
 import * as React from 'react';
 import { useApp } from '@/components/layout/providers';
-import { trackEvent } from '@/lib/client/analytics';
+import { trackEvent, trackCalculatorUse } from '@/lib/client/analytics';
 import { cellLevel, cellText, psychomatrix, type CellDigit, type Psychomatrix } from '@/lib/psychomatrix/engine';
 import { CELL_LEVEL_NAME, CELLS } from '@/lib/psychomatrix/meanings';
 import { psychomatrixSvg } from '@/lib/psychomatrix/svg';
@@ -13,7 +13,7 @@ export function PythagorasFree({ whatsapp }: { whatsapp: string }) {
   const hi = lang === 'hi';
   const { dob, setDob, valid } = useDob();
   const [p, setP] = React.useState<Psychomatrix | null>(null);
-  const run = () => { if (!valid) return; setP(psychomatrix(dob)); trackEvent('chart_tool_run', { tool: 'pythagoras' }); };
+  const run = () => { if (!valid) return; setP(psychomatrix(dob)); trackEvent('chart_tool_run', { tool: 'pythagoras' }); trackCalculatorUse('pythagoras'); };
   const shown: CellDigit[] = p ? ([1, 2, 5] as CellDigit[]) : [];
   return (
     <div className="glass space-y-6 rounded-2xl border border-gold/30 p-5 sm:p-6">

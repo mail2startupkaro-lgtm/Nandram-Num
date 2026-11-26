@@ -40,6 +40,7 @@ export const ClientInputBase = z.object({
   education: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
+  country: z.string().optional(),
   mobile: z.string().optional(),
   email: z.string().trim().email().optional().or(z.literal('').transform(() => undefined)),
   /** Never persisted. Only accepted together with consent. */

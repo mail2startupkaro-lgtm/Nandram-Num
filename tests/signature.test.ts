@@ -143,10 +143,12 @@ describe('offline analyst and report', () => {
       expect(html).not.toContain('<b>Rahul</b>');
       expect((html.match(/class="sec-h"/g) ?? []).length).toBe(8);
       expect((html.match(/<section class="page">/g) ?? []).length).toBe(8);
-      expect(html).toContain('88199 99374');
+      // Reports carry Telegram + website only; the WhatsApp number was removed from report CTAs (26 Nov 2026).
+      expect(html).not.toContain('88199 99374');
       expect(html).toContain('@MYNUMEROLOGIST8');
-      if (language === 'hi') expect(html).toContain('मुख्य निष्कर्ष');
-      else expect(html).toContain('Other ways I can help you');
+      // The closing page uses the shared all-services CTA (lib/report/guide-cta.ts) since 26 Nov 2026.
+      if (language === 'hi') { expect(html).toContain('मुख्य निष्कर्ष'); expect(html).toContain('मेरी सभी सेवाएँ'); }
+      else expect(html).toContain('All my services');
     }
   });
   it('still renders results saved before letter values and Personal Year existed', () => {

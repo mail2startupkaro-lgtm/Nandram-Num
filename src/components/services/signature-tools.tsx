@@ -11,7 +11,7 @@ import { useApp } from '@/components/layout/providers';
 import { DrawPad } from '@/components/signature/draw-pad';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/form';
-import { trackEvent } from '@/lib/client/analytics';
+import { trackEvent, trackCalculatorUse } from '@/lib/client/analytics';
 import { analyseSample, shrink } from '@/lib/client/signature-image';
 import { parseDate, todayIST, toIso } from '@/lib/numerology';
 import { effectiveFeatures, engineScores, type EffectiveFeature } from '@/lib/signature/agent';
@@ -90,7 +90,7 @@ export function SignatureQuickCheck({ whatsapp, priceText }: { whatsapp: string;
       const fs = effectiveFeatures(input, 0.45);
       const findings = ORDER.map((id) => fs.find((x) => x.id === id && FINDING[id]?.[x.option])).filter((x): x is EffectiveFeature => !!x).slice(0, 5);
       setOut({ numbers, score: engineScores(input, numbers, fs).overall, hasImage: !!metrics?.strokeWidth, findings, annotated, noInk });
-      trackEvent('signature_check', { has_image: !!img });
+      trackEvent('signature_check', { has_image: !!img }); trackCalculatorUse('signature');
       setTimeout(() => document.getElementById('sqc-out')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
     } finally { setBusy(false); }
   }

@@ -2,7 +2,7 @@
 /** Free instant Destiny Matrix chart for the service page (lead magnet) – same engine as the admin report. */
 import * as React from 'react';
 import { useApp } from '@/components/layout/providers';
-import { trackEvent } from '@/lib/client/analytics';
+import { trackEvent, trackCalculatorUse } from '@/lib/client/analytics';
 import { arcana } from '@/lib/destiny/arcana';
 import { ageEnergy, ageRange, destinyMatrix, exactAge, type DestinyMatrix } from '@/lib/destiny/matrix';
 import { destinySvg } from '@/lib/destiny/svg';
@@ -13,7 +13,7 @@ export function DestinyMatrixFree({ whatsapp }: { whatsapp: string }) {
   const hi = lang === 'hi';
   const { dob, setDob, valid } = useDob();
   const [m, setM] = React.useState<DestinyMatrix | null>(null);
-  const run = () => { if (!valid) return; setM(destinyMatrix(dob)); trackEvent('chart_tool_run', { tool: 'destiny' }); };
+  const run = () => { if (!valid) return; setM(destinyMatrix(dob)); trackEvent('chart_tool_run', { tool: 'destiny' }); trackCalculatorUse('destiny-matrix'); };
   const nm = (n: number) => `${n} · ${arcana(n).name[lang]}`;
   const age = m ? exactAge(m.dob, new Date().toISOString().slice(0, 10)) : 0;
   const now = m ? ageEnergy(m, age) : null;

@@ -92,3 +92,29 @@ export async function openRazorpayCheckout(opts: RazorpayCheckoutOptions): Promi
     rzp.open();
   });
 }
+
+/**
+ * Confirms a finished Razorpay checkout with the server. Razorpay can take a few seconds to capture
+ * a successful payment, so "pending" is re-checked a few times before giving up (the webhook still
+ * activates the order later if it was really paid).
+ */
+export async function confirmRazorpayPayment(
+  resp: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string },
+  opts: { tries?: number; delayMs?: number } = {}
+): Promise<'paid' | 'pending' | 'failed'> {
+  const tries = opts.tries ?? 5;
+  const delayMs = opts.delayMs ?? 2500;
+  let last: 'paid' | 'pending' | 'failed' = 'pending';
+  for (let i = 0; i < tries; i++) {
+    if (i) await new Promise((r) => setTimeout(r, delayMs));
+    const res = await fetch('/api/billing/razorpay/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId: resp.razorpay_order_id, paymentId: resp.razorpay_payment_id, signature: resp.razorpay_signature }),
+    }).catch(() => null);
+    const data = res ? ((await res.json().catch(() => null)) as { status?: string } | null) : null;
+    last = data?.status === 'paid' ? 'paid' : data?.status === 'failed' ? 'failed' : 'pending';
+    if (last !== 'pending') return last;
+  }
+  return last;
+}

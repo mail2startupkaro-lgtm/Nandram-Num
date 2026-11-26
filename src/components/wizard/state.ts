@@ -1,12 +1,13 @@
 import { isValidDate, normalizeIndianMobile, parseDate, verhoeffValid, type ClientInput } from '@/lib/numerology';
 import type { Dict } from '@/lib/i18n/dictionary';
+import { isIndia } from '@/lib/countries';
 
 export interface WizardState {
   fullName: string; commonName: string; hindiName: string;
   gender: '' | 'male' | 'female' | 'other'; kuaBasis: '' | 'male' | 'female';
   dob: string; timeOfBirth: string; placeOfBirth: string;
   maritalStatus: '' | 'single' | 'married' | 'engaged' | 'divorced' | 'widowed';
-  profession: string; education: string; city: string; state: string;
+  profession: string; education: string; city: string; state: string; country: string;
   concerns: string[]; language: 'en' | 'hi' | 'hinglish';
   mobile: string; email: string; aadhaar: string; aadhaarConsent: boolean;
   addPartner: boolean; partnerName: string; partnerGender: '' | 'male' | 'female' | 'other'; partnerDob: string; partnerMobile: string;
@@ -14,14 +15,14 @@ export interface WizardState {
 
 export const EMPTY: WizardState = {
   fullName: '', commonName: '', hindiName: '', gender: '', kuaBasis: '', dob: '', timeOfBirth: '', placeOfBirth: '',
-  maritalStatus: '', profession: '', education: '', city: '', state: '', concerns: [], language: 'en',
+  maritalStatus: '', profession: '', education: '', city: '', state: '', country: 'India', concerns: [], language: 'en',
   mobile: '', email: '', aadhaar: '', aadhaarConsent: false,
   addPartner: false, partnerName: '', partnerGender: '', partnerDob: '', partnerMobile: '',
 };
 
 export const SAMPLE: WizardState = {
   ...EMPTY, fullName: 'Rahul Kumar Sharma', commonName: 'Rahul Sharma', hindiName: 'राहुल शर्मा', gender: 'male', dob: '1990-08-28',
-  placeOfBirth: 'Jaipur', maritalStatus: 'engaged', profession: 'Software engineer', education: 'B.Tech', city: 'Jaipur', state: 'Rajasthan',
+  placeOfBirth: 'Jaipur', maritalStatus: 'engaged', profession: 'Software engineer', education: 'B.Tech', city: 'Jaipur', state: 'Rajasthan', country: 'India',
   concerns: ['career', 'marriage', 'money'], language: 'hinglish', mobile: '9876543210', email: 'rahul.sharma@example.com',
   addPartner: true, partnerName: 'Priya Verma', partnerGender: 'female', partnerDob: '1992-05-15',
 };
@@ -34,13 +35,26 @@ export const INDIAN_STATES = [
 ];
 
 const validDob = (s: string) => { try { return isValidDate(parseDate(s)) && s <= new Date().toISOString().slice(0, 10); } catch { return false; } };
-const validMobile = (s: string) => { try { normalizeIndianMobile(s); return true; } catch { return false; } };
+const validMobile = (s: string, isIntl = false) => {
+  if (isIntl) {
+    const clean = s.replace(/[\s\-().]/g, '');
+    return /^\+?[0-9]{7,18}$/.test(clean);
+  }
+  try {
+    normalizeIndianMobile(s);
+    return true;
+  } catch {
+    const clean = s.replace(/[\s\-().]/g, '');
+    return /^\+?[0-9]{7,18}$/.test(clean);
+  }
+};
 const letters = (s: string) => s.replace(/[^A-Za-z]/g, '').length;
 
 export type Errors = Partial<Record<keyof WizardState, string>>;
 
 export function validateStep(step: number, s: WizardState, t: Dict): Errors {
   const e: Errors = {};
+  const isIntl = !isIndia(s.country);
   if (step === 0) {
     if (letters(s.fullName) < 2) e.fullName = t.err.name;
     if (s.commonName && letters(s.commonName) < 2) e.commonName = t.err.name;
@@ -48,7 +62,7 @@ export function validateStep(step: number, s: WizardState, t: Dict): Errors {
     if (!validDob(s.dob)) e.dob = t.err.dob;
   }
   if (step === 2) {
-    if (s.mobile && !validMobile(s.mobile)) e.mobile = t.err.mobile;
+    if (s.mobile && !validMobile(s.mobile, isIntl)) e.mobile = t.err.mobile;
     if (s.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.email.trim())) e.email = t.err.email;
     const a = s.aadhaar.replace(/\D/g, '');
     if (s.aadhaar && (!/^[2-9]\d{11}$/.test(a) || !verhoeffValid(a))) e.aadhaar = t.err.aadhaar;
@@ -58,7 +72,7 @@ export function validateStep(step: number, s: WizardState, t: Dict): Errors {
     if (letters(s.partnerName) < 2) e.partnerName = t.err.name;
     if (!s.partnerGender) e.partnerGender = t.err.required;
     if (!validDob(s.partnerDob)) e.partnerDob = t.err.dob;
-    if (s.partnerMobile && !validMobile(s.partnerMobile)) e.partnerMobile = t.err.mobile;
+    if (s.partnerMobile && !validMobile(s.partnerMobile, isIntl)) e.partnerMobile = t.err.mobile;
   }
   return e;
 }
@@ -71,6 +85,7 @@ export function toClientInput(s: WizardState): ClientInput {
     gender: s.gender as ClientInput['gender'], kuaBasis: s.gender === 'other' && s.kuaBasis ? s.kuaBasis : undefined,
     dob: s.dob, timeOfBirth: opt(s.timeOfBirth), placeOfBirth: opt(s.placeOfBirth),
     maritalStatus: s.maritalStatus || undefined, profession: opt(s.profession), education: opt(s.education), city: opt(s.city), state: opt(s.state),
+    country: opt(s.country),
     mobile: opt(s.mobile), email: opt(s.email), aadhaar: opt(s.aadhaar), aadhaarConsent: s.aadhaarConsent,
     concerns: s.concerns as ClientInput['concerns'], language: s.language,
     partner: s.addPartner ? { name: s.partnerName.trim(), gender: s.partnerGender as 'male', dob: s.partnerDob, mobile: opt(s.partnerMobile) } : undefined,
@@ -84,7 +99,7 @@ export function fromClient(c: Partial<ClientInput> & { partner?: ClientInput['pa
     ...EMPTY,
     fullName: c.fullName ?? '', commonName: c.commonName ?? '', hindiName: c.hindiName ?? '', gender: c.gender ?? '', kuaBasis: c.kuaBasis ?? '',
     dob: iso(c.dob), timeOfBirth: c.timeOfBirth ?? '', placeOfBirth: c.placeOfBirth ?? '', maritalStatus: c.maritalStatus ?? '',
-    profession: c.profession ?? '', education: c.education ?? '', city: c.city ?? '', state: c.state ?? '',
+    profession: c.profession ?? '', education: c.education ?? '', city: c.city ?? '', state: c.state ?? '', country: c.country ?? 'India',
     concerns: c.concerns ?? [], language: c.language ?? 'en', mobile: c.mobile ?? '', email: c.email ?? '',
     addPartner: !!c.partner, partnerName: c.partner?.name ?? '', partnerGender: c.partner?.gender ?? '', partnerDob: iso(c.partner?.dob), partnerMobile: c.partner?.mobile ?? '',
   };

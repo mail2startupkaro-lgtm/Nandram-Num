@@ -6,6 +6,7 @@
  * Both run the same deterministic engine as the paid report, in the browser; nothing is sent or stored.
  */
 import * as React from 'react';
+import { trackCalculatorUse } from '@/lib/client/analytics';
 import { Lock, MessageCircle, Search, Sparkles } from 'lucide-react';
 import { Bi } from '@/components/i18n/bi';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -67,6 +68,7 @@ export function BusinessQuickCheck({ whatsapp, bookHref = '#book' }: { whatsapp:
     if (!/[A-Za-z]{2}/.test(name)) { setErr('Please enter your name in English letters. / कृपया नाम अंग्रेज़ी अक्षरों में लिखें।'); return; }
     try {
       setRes(businessAnalytics({ fullName: name.trim(), dob: parseDate(dob), gender: 'male', birthPlace: '', mode: 'business', capital: 3, risk: 'medium', interests: [], asOf: todayIST(), shortlist: consider ? [consider] : [] }));
+      trackCalculatorUse('business');
       setTimeout(() => document.getElementById('bqc-result')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
     } catch { setErr('Please check the date of birth. / कृपया जन्म तिथि जाँचें।'); }
   }
