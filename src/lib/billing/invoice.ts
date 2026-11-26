@@ -43,26 +43,21 @@ export function buildInvoiceHtml(p: Payment, user: Pick<User, 'name' | 'email' |
   const formatInr = (m: number) => formatMoney(m, cur);
   const t = THEMES['minimal-white'];
   const date = (p.paidAt ?? p.createdAt).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' });
-  const taxRows = p.igstPaise
-    ? `<tr><td colspan="3" style="text-align:right">IGST @ 18%</td><td style="text-align:right">${formatInr(p.igstPaise)}</td></tr>`
-    : `<tr><td colspan="3" style="text-align:right">CGST @ 9%</td><td style="text-align:right">${formatInr(p.cgstPaise)}</td></tr><tr><td colspan="3" style="text-align:right">SGST @ 9%</td><td style="text-align:right">${formatInr(p.sgstPaise)}</td></tr>`;
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><style>${baseCss(t, 'en')}@page{size:A4;margin:18mm}
     .h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6mm}.h h1{font-size:22pt}.box2{border:1px solid ${t.border};border-radius:2mm;padding:3mm 4mm;font-size:9pt;line-height:1.5}
     td,th{font-size:9.5pt}</style></head><body>
-    <div class="h"><div><h1>Tax Invoice</h1><div class="small muted">${esc(brand.brandName)}</div></div>
+    <div class="h"><div><h1>Invoice</h1><div class="small muted">${esc(brand.brandName)}</div></div>
       <div style="text-align:right;font-size:9.5pt"><b>${esc(p.invoiceNumber ?? 'DRAFT')}</b><br>Date: ${esc(date)}<br>Currency: ${cur}<br>Order: ${esc(p.gatewayOrderId)}<br>Payment: ${esc(p.gatewayPaymentId ?? '—')}</div></div>
     <div class="row" style="margin-bottom:6mm">
-      <div class="box2"><b>Supplier</b><br>${esc(seller.legalName)}<br>${esc(seller.address)}<br>${esc(seller.state)} (State code ${esc(seller.stateCode)})${seller.gstin ? `<br>GSTIN: <b>${esc(seller.gstin)}</b>` : ''}${seller.email ? `<br>${esc(seller.email)}` : ''}</div>
-      <div class="box2"><b>Bill to</b><br>${esc(p.billingName || user.name || '—')}<br>${esc(user.email ?? user.phone ?? '')}<br>Place of supply: ${esc(p.billingState ?? '—')}${p.gstin ? `<br>GSTIN: <b>${esc(p.gstin)}</b>` : ''}</div>
+      <div class="box2"><b>Issued By</b><br>${esc(seller.legalName)}<br>${esc(seller.address)}<br>${esc(seller.state)}${seller.email ? `<br>${esc(seller.email)}` : ''}</div>
+      <div class="box2"><b>Billed To</b><br>${esc(p.billingName || user.name || '—')}<br>${esc(user.email ?? user.phone ?? '')}${p.billingState ? `<br>Location: ${esc(p.billingState)}` : ''}</div>
     </div>
-    <table><thead><tr><th>Description</th><th>SAC</th><th style="text-align:right">Qty</th><th style="text-align:right">Amount</th></tr></thead><tbody>
-      <tr><td>${esc(planName)} – numerology report service${p.discountPaise ? `<div class="small muted">List price ${formatInr(p.listPricePaise)} · Discount ${formatInr(p.discountPaise)}${p.couponCode ? ` (${esc(p.couponCode)})` : ''}</div>` : ''}</td><td>${esc(seller.sac)}</td><td style="text-align:right">1</td><td style="text-align:right">${formatInr(p.taxablePaise)}</td></tr>
-      <tr><td colspan="3" style="text-align:right">Taxable value</td><td style="text-align:right">${formatInr(p.taxablePaise)}</td></tr>
-      ${taxRows}
-      <tr><td colspan="3" style="text-align:right"><b>Total (incl. GST)</b></td><td style="text-align:right"><b>${formatInr(p.amountPaise)}</b></td></tr>
+    <table><thead><tr><th>Description</th><th style="text-align:right">Qty</th><th style="text-align:right">Amount</th></tr></thead><tbody>
+      <tr><td>${esc(planName)} – numerology report service${p.discountPaise ? `<div class="small muted">List price ${formatInr(p.listPricePaise)} · Discount ${formatInr(p.discountPaise)}${p.couponCode ? ` (${esc(p.couponCode)})` : ''}</div>` : ''}</td><td style="text-align:right">1</td><td style="text-align:right">${formatInr(p.amountPaise)}</td></tr>
+      <tr><td colspan="2" style="text-align:right"><b>Total Paid</b></td><td style="text-align:right"><b>${formatInr(p.amountPaise)}</b></td></tr>
     </tbody></table>
     <p style="margin-top:4mm;text-align:left"><b>Amount in words:</b> ${esc(cur === 'USD' ? dollarsInWords(p.amountPaise) : rupeesInWords(p.amountPaise))}</p>${cur === 'USD' ? '<p class="small muted" style="text-align:left">Invoice currency: US Dollar (USD). Client located outside India.</p>' : ''}
-    <p class="small muted" style="text-align:left;margin-top:10mm">This is a computer-generated invoice and does not require a signature. Paid online via Cashfree Payments.${seller.gstin ? '' : ' Supplier GSTIN to be added in Admin → Settings before going live.'}</p>
+    <p class="small muted" style="text-align:left;margin-top:10mm">This is a computer-generated invoice receipt and does not require a signature. Paid online via Cashfree Payments.</p>
   </body></html>`;
 }
 
@@ -72,6 +67,6 @@ export async function renderInvoicePdf(p: Payment, user: Pick<User, 'name' | 'em
   return renderSheetPdf({
     html: buildInvoiceHtml(p, user, planName, seller, branding),
     header: '<span></span>', footer: `<div style="width:100%;font-size:7px;color:${t.muted};text-align:center;margin-bottom:8mm;font-family:Georgia,serif">${esc(seller.legalName)} · ${esc(p.invoiceNumber ?? '')}</div>`,
-    theme: t, branding, title: `Invoice ${p.invoiceNumber}`, subject: 'Tax invoice', isoDate: (p.paidAt ?? p.createdAt).toISOString().slice(0, 10), language: 'en',
+    theme: t, branding, title: `Invoice ${p.invoiceNumber}`, subject: 'Invoice', isoDate: (p.paidAt ?? p.createdAt).toISOString().slice(0, 10), language: 'en',
   });
 }

@@ -12,12 +12,12 @@ import { esc, gaugeSvg, mandala, monogram, numberMedallion, ringSvg, scoreColour
 import { baseCss } from '@/lib/pdf/template';
 import { COLOUR_HEX, DEFAULT_BRANDING, resolveTheme, type Branding, type PdfTheme, type ThemeId } from '@/lib/pdf/themes';
 import { renderSheetPdf } from '@/lib/pdf/render';
-import { DEFAULT_SERVICES } from '@/lib/billing/services';
 import { compoundMeaningHi, dayHi, optionLabelHi, professionHi } from './hindi';
 import { humaniseDeep } from './humanise';
 import { tr } from '@/lib/i18n/hi-terms';
 import type { AgentResult, SignatureAnalysis } from './agent';
 import type { LetterValue, SignatureNumbers } from './numbers';
+import { guideCss, readingGuideHtml, servicesCss, servicesCtaHtml } from '@/lib/report/guide-cta';
 
 export interface SignatureReportData {
   client: { fullName: string; signatureName?: string; dob: string; gender?: string; profession: string; goals: string[]; language: 'en' | 'hi' | 'hinglish' };
@@ -152,7 +152,7 @@ const fmtDate = (iso: string, lang: 'en' | 'hi') => {
 const dobText = (d: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d); return m ? `${m[3]}-${m[2]}-${m[1]}` : d; };
 const firstName = (full: string) => { const w = full.trim().split(/\s+/)[0] ?? ''; return w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : full; };
 const num = (x: unknown) => esc(String(x ?? ''));
-const waLink = (phone: string) => `https://wa.me/${phone.replace(/\D/g, '').replace(/^(?=\d{10}$)/, '91')}`;
+const tgLink = (handle: string) => `https://t.me/${handle.trim().replace(/^@/, '').replace(/^https?:\/\/t\.me\//, '')}`;
 
 function css(t: PdfTheme) {
   return `
@@ -308,7 +308,8 @@ export function buildSignatureReportHtml(d: SignatureReportData, t: PdfTheme, b:
   </div>
   <div class="letter"><div class="sal">${esc(l.dear(fname))}</div>${esc(a.summary)}<div class="sgn">${esc(expert)}</div></div>
   <div class="kicker" style="margin-top:5mm">${esc(l.inside)}</div>
-  <ol class="toc">${sectionNames.map((x, i) => `<li><b>${i + 1}</b><span>${esc(x)}</span></li>`).join('')}</ol>`;
+  <ol class="toc">${sectionNames.map((x, i) => `<li><b>${i + 1}</b><span>${esc(x)}</span></li>`).join('')}</ol>
+  ${readingGuideHtml(lang, 'signature', t)}`;
 
   // ---------- 1. What your signature shows ----------
   const s1 = `<section class="page">${secHead(1, l.s1)}<p class="intro">${esc(l.s1d)}</p>
@@ -384,23 +385,20 @@ export function buildSignatureReportHtml(d: SignatureReportData, t: PdfTheme, b:
   const photo = b.photoDataUrl ? `<img src="${esc(b.photoDataUrl)}" alt="">` : monogram(b.expertName, t, 120);
   const bio = contact.bio?.trim() || (isHouseExpert ? l.bioDefault(b.expertName) : l.bioOther(b.expertName));
   const why = (code: string) => code === 'SVC_NAME_CORRECTION' ? l.why.name(n, l.relWord[n.nameToBhagyank] ?? n.nameToBhagyank) : code === 'SVC_MOBILE_NUMBER' ? l.why.mobile(n) : code === 'SVC_PERSONAL_YEAR' ? l.why.year(n) : '';
-  const svcs = CTA_SERVICES.map((code) => DEFAULT_SERVICES.find((x) => x.code === code)).filter((x): x is (typeof DEFAULT_SERVICES)[number] => !!x);
   const site = (contact.website || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
   const s8 = `<section class="page">${secHead(8, l.s8)}
     <div class="prof">${photo}<div><h3>${esc(b.expertName)}</h3><div class="small muted">${esc(b.expertTitle ?? '')}</div><p>${esc(bio)}</p></div></div>
-    <h3 class="sub" style="margin-top:6mm">${esc(l.services)}</h3><p class="intro" style="margin-bottom:1mm">${esc(l.servicesD)}</p>
-    <div class="svc">${svcs.map((x) => { const txt = humaniseDeep(lang === 'hi' ? x.hi : x.en); const w = why(x.code); return `<div class="s"><h4>${esc(txt.name)}</h4><p>${esc(txt.short)}</p>${w ? `<div class="why">${esc(w)}</div>` : ''}</div>`; }).join('')}</div>
+    ${servicesCtaHtml({ lang, theme: t, branding: b, contact, recommend: CTA_SERVICES, why, noProfile: true, noContactBox: true, preparedBy: expert })}
     <div class="cta"><div><h4>${esc(l.contact)}</h4>
-        ${contact.whatsapp ? `<div class="ln"><b>${esc(l.whatsapp)}</b>${esc(contact.whatsapp)}</div>` : ''}
         ${contact.telegram ? `<div class="ln"><b>${esc(l.telegram)}</b>${esc(contact.telegram)}</div>` : ''}
         ${site ? `<div class="ln"><b>${esc(l.website)}</b>${esc(site)}</div>` : ''}</div>
-      ${extras.qrWhatsapp ? `<div><div class="qr">${extras.qrWhatsapp}</div><div class="cap">${esc(l.scanWa)}</div></div>` : '<div></div>'}
+      ${extras.qrWhatsapp ? `<div><div class="qr">${extras.qrWhatsapp}</div><div class="cap">${esc(lang === 'hi' ? 'टेलीग्राम पर बात करने के लिए स्कैन करें' : 'Scan to chat on Telegram')}</div></div>` : '<div></div>'}
       ${extras.qrWebsite ? `<div><div class="qr">${extras.qrWebsite}</div><div class="cap">${esc(l.scanWeb)}</div></div>` : '<div></div>'}
     </div>
     <p class="disc">${esc(l.disclaimer)}</p>
     <p class="small muted center" style="margin-top:2mm">${esc(l.madeLine(expert))}</p></section>`;
 
-  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${baseCss(t, lang)}${css(t)}</style></head><body>${summary}${s1}${s2}${s3}${s4}${s5}${s6}${s7}${s8}</body></html>`;
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${baseCss(t, lang)}${css(t)}${guideCss(t)}${servicesCss(t)}</style></head><body>${summary}${s1}${s2}${s3}${s4}${s5}${s6}${s7}${s8}</body></html>`;
 }
 
 /** "mynumerologist.com" → styled wordmark: small italic "my", big "Numerologist", accent ".com". */
@@ -486,7 +484,7 @@ export function buildSignatureCoverHtml(d: SignatureReportData, t: PdfTheme, b: 
     ${sig ? `<div class="sg"><img src="${esc(sig)}" alt=""><span>${esc(l.sig)}</span></div>` : ''}
     <div class="ex">${photo}<div><div class="lab">${esc(c.by)}</div><div class="nm">${esc(d.preparedBy || b.expertName)}</div><div class="ti">${esc(b.expertTitle ?? '')}</div>
       ${house ? `<div class="yr">${esc(c.years)}</div>` : ''}
-      <div class="ct">${[contact.whatsapp ? `WhatsApp ${esc(contact.whatsapp)}` : '', site ? esc(site) : ''].filter(Boolean).join('  ·  ')}</div></div></div>
+      <div class="ct">${[contact.telegram ? `Telegram ${esc(contact.telegram)}` : '', site ? esc(site) : ''].filter(Boolean).join('  ·  ')}</div></div></div>
     <div class="conf">${esc(c.conf)}</div>
   </div></body></html>`;
 }
@@ -499,7 +497,7 @@ export async function renderSignatureReportPdf(d: SignatureReportData, opts: { t
   const lang = d.client.language === 'hi' ? 'hi' : 'en';
   const contact = { ...DEFAULT_CONTACT, ...(opts.contact ?? {}) };
   const servicesUrl = `${(contact.website || 'https://www.mynumerologist.com').replace(/\/$/, '')}/services`;
-  const [qrWhatsapp, qrWebsite] = await Promise.all([contact.whatsapp ? qr(waLink(contact.whatsapp)) : Promise.resolve(''), qr(/^https?:\/\//.test(servicesUrl) ? servicesUrl : `https://${servicesUrl}`)]);
+  const [qrWhatsapp, qrWebsite] = await Promise.all([contact.telegram ? qr(tgLink(contact.telegram)) : Promise.resolve(''), qr(/^https?:\/\//.test(servicesUrl) ? servicesUrl : `https://${servicesUrl}`)]);
   const font = "font-family:Georgia,'Times New Roman',serif;";
   const header = `<div style="${font}width:100%;font-size:7.5px;color:${t.muted};padding:0 15mm;margin-top:8mm;display:flex;justify-content:space-between;letter-spacing:.12em;text-transform:uppercase"><span style="color:${t.primary}">${esc(branding.brandName)}</span><span>${esc(L[lang].title)} · ${esc(d.client.fullName)}</span></div>`;
   const footer = `<div style="${font}width:100%;font-size:7.4px;color:${t.muted};padding:0 15mm;margin-bottom:10mm;display:flex;justify-content:space-between"><span>${esc(d.preparedBy)} · ${esc(branding.contactLine ?? '')}</span><span style="font-size:9px;color:${t.primary}"><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>`;

@@ -72,7 +72,7 @@ const WHY = [
 const FAQ: { en: [string, string]; hi: [string, string] }[] = [
   { en: ['Will my clients see your name or website?', 'No. White-label and customized reports carry only your brand – your logo, name and contact details. myNumerologist.com is not mentioned anywhere in the report.'], hi: ['क्या मेरे क्लाइंट आपका नाम या वेबसाइट देखेंगे?', 'नहीं। व्हाइट-लेबल और कस्टमाइज़्ड रिपोर्ट पर केवल आपका ब्रांड होता है – आपका लोगो, नाम और संपर्क। रिपोर्ट में कहीं भी myNumerologist.com का उल्लेख नहीं होता।'] },
   { en: ['Can I set my own price for my clients?', 'Yes. You buy at the trade price and charge your clients whatever you choose. Most consultants charge at least our own retail price.'], hi: ['क्या मैं अपने क्लाइंट के लिए अपना मूल्य तय कर सकता हूँ?', 'हाँ। आप ट्रेड मूल्य पर खरीदते हैं और अपने क्लाइंट से जो चाहें वह शुल्क लेते हैं। अधिकांश परामर्शदाता कम से कम हमारा खुदरा मूल्य लेते हैं।'] },
-  { en: ['How do I pay?', 'Pay per order or buy a pack in advance by UPI, card or bank transfer. Indian prices exclude 18% GST and you receive a GST invoice. Consultants outside India pay in US dollars.'], hi: ['भुगतान कैसे करें?', 'हर ऑर्डर पर भुगतान करें या UPI, कार्ड या बैंक ट्रांसफ़र से पहले पैक खरीदें। भारतीय मूल्य 18% GST के बिना हैं और आपको GST इनवॉइस मिलता है। भारत के बाहर के परामर्शदाता अमेरिकी डॉलर में भुगतान करते हैं।'] },
+  { en: ['How do I pay?', 'Pay per order or buy a pack in advance by UPI, card or bank transfer. You receive a proper invoice receipt. Consultants outside India pay in US dollars.'], hi: ['भुगतान कैसे करें?', 'हर ऑर्डर पर भुगतान करें या UPI, कार्ड या बैंक ट्रांसफ़र से पहले पैक खरीदें। आपको विधिवत इनवॉइस रसीद मिलती है। भारत के बाहर के परामर्शदाता अमेरिकी डॉलर में भुगतान करते हैं।'] },
   { en: ['How fast will I get the reports?', 'Standard delivery is 2–3 working days. Express delivery within 24 hours costs 50% extra, and is included free in the Studio pack.'], hi: ['रिपोर्ट कितनी जल्दी मिलेगी?', 'सामान्य डिलीवरी 2–3 कार्य-दिवस। 24 घंटे में एक्सप्रेस डिलीवरी 50% अतिरिक्त है, और स्टूडियो पैक में मुफ़्त शामिल है।'] },
   { en: ['Can I see a sample first?', 'Yes. Ask on WhatsApp and we will send you a sample report so you can check the quality and layout before your first order.'], hi: ['क्या मैं पहले नमूना देख सकता हूँ?', 'हाँ। WhatsApp पर पूछें, हम आपको नमूना रिपोर्ट भेजेंगे ताकि पहले ऑर्डर से पहले आप गुणवत्ता और लेआउट देख सकें।'] },
   { en: ['Can I mix report types in a pack?', 'Yes. Pack discounts apply to any mix of report types, and the reports can be used over 12 months.'], hi: ['क्या पैक में अलग-अलग रिपोर्ट ले सकते हैं?', 'हाँ। पैक छूट किसी भी रिपोर्ट मिश्रण पर लागू होती है, और रिपोर्ट 12 महीनों में उपयोग की जा सकती हैं।'] },
@@ -146,7 +146,7 @@ export default async function WhiteLabelPage() {
             <div className="sh-card relative rounded-2xl p-5 text-center">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold"><Bi en="Trade prices from" hi="ट्रेड मूल्य शुरू" /></p>
               <p className="mt-1 font-serif text-4xl font-bold"><span className="gold-text"><Money inr={PRO_FROM.inr} usd={PRO_FROM.usd} /></span><span className="text-base font-normal text-muted-foreground"> / <Bi en="report" hi="रिपोर्ट" /></span></p>
-              <p className="mt-1 text-xs text-muted-foreground"><span className="cur-inr"><Bi en="+ GST · save up to 20% with packs" hi="+ GST · पैक से 20% तक बचत" /></span><span className="cur-usd"><Bi en="save up to 20% with packs" hi="पैक से 20% तक बचत" /></span></p>
+              <p className="mt-1 text-xs text-muted-foreground"><Bi en="save up to 20% with packs" hi="पैक से 20% तक बचत" /></p>
               <Link href={ENQUIRY} className="cz-btn cz-btn-primary mt-4 w-full justify-center"><Send className="h-4 w-4" /><Bi en="Send a business enquiry" hi="व्यावसायिक पूछताछ भेजें" /></Link>
             </div>
           </div>
@@ -184,7 +184,7 @@ export default async function WhiteLabelPage() {
       <section id="pricing" aria-labelledby="wl-price" className="scroll-mt-24 space-y-5">
         <div className="space-y-2 text-center">
           <h2 id="wl-price" className="font-serif text-3xl font-semibold"><Bi en="Trade price list – per report" hi="ट्रेड मूल्य सूची – प्रति रिपोर्ट" /></h2>
-          <p className="text-sm text-muted-foreground"><span className="cur-inr"><Bi en="Prices in ₹, excluding 18% GST (GST invoice provided). One language included." hi="मूल्य ₹ में, 18% GST के बिना (GST इनवॉइस दिया जाता है)। एक भाषा शामिल।" /></span><span className="cur-usd"><Bi en="Prices in US dollars for consultants outside India. One language included." hi="भारत के बाहर के परामर्शदाताओं के लिए मूल्य अमेरिकी डॉलर में। एक भाषा शामिल।" /></span></p>
+          <p className="text-sm text-muted-foreground"><span className="cur-inr"><Bi en="Prices in ₹. One language included." hi="मूल्य ₹ में। एक भाषा शामिल।" /></span><span className="cur-usd"><Bi en="Prices in US dollars for consultants outside India. One language included." hi="भारत के बाहर के परामर्शदाताओं के लिए मूल्य अमेरिकी डॉलर में। एक भाषा शामिल।" /></span></p>
         </div>
         <div className="glass overflow-x-auto rounded-2xl border border-gold/25">
           <table className="w-full min-w-[640px] text-left text-sm">

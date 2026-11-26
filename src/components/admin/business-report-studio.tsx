@@ -7,6 +7,7 @@ import { api, ApiError } from '@/lib/client/api';
 import { SITE_NAME } from '@/lib/seo/site';
 import { fmtDate, parsePartners, splitNames, type Blk, type BizSection, type CompleteBizData } from '@/lib/business/complete';
 import type { Order } from '@/components/admin/services-admin';
+import { contentsAndGuide, endCta, extrasCss, type CoverWithExtras } from '@/lib/report/print-extras';
 
 type Written = { title: string; subtitle: string; summary: string; sections: BizSection[] };
 interface Result { data: CompleteBizData; report: { en: Written; hi: Written }; generatedAt: string }
@@ -44,8 +45,8 @@ async function printReport(r: Result, lang: 'en' | 'hi', by: string) {
   w.document.write(`<p style="font-family:Georgia,serif;padding:40px;color:#7a1f2b">${hi ? 'रिपोर्ट तैयार हो रही है…' : 'Preparing the report…'}</p>`);
   const loc = hi ? 'hi-IN' : 'en-IN';
   const date = new Date(r.generatedAt).toLocaleDateString(loc, { day: 'numeric', month: 'long', year: 'numeric' });
-  const cover = await api<{ css: string; html: string }>('/api/admin/report-cover', { method: 'POST', json: {
-    title: R.title, subtitle: R.subtitle, clientName: d.owner.name, preparedBy: by, lang,
+  const cover = await api<CoverWithExtras>('/api/admin/report-cover', { method: 'POST', json: {
+    extras: 'business', title: R.title, subtitle: R.subtitle, clientName: d.owner.name, preparedBy: by, lang,
     facts: [[hi ? 'जन्म तिथि' : 'Date of birth', fmtDate(d.owner.dob, lang)], [hi ? 'व्यवसाय' : 'Business', d.best.text], [hi ? 'समग्र स्कोर' : 'Overall score', `${d.overall}/100`], [hi ? 'रिपोर्ट तिथि' : 'Report date', date]],
   } }).catch(() => null);
   const html = `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><title>${esc(R.title)} – ${esc(d.owner.name)}</title><style>
@@ -56,9 +57,11 @@ h1{color:#7a1f2b;margin:0;font-size:28px}h2{color:#7a1f2b;border-bottom:2px soli
 .bar{position:relative;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #eee;padding:5px 0;font-size:13px}.bar i{position:absolute;left:0;bottom:-1px;height:3px;background:#c9a227}
 table{border-collapse:collapse;width:100%;font-size:12.5px;margin:8px 0}td,th{border:1px solid #e5d3a1;padding:5px 7px;text-align:left;vertical-align:top}th{background:#fbf1d9}tr{break-inside:avoid}
 .tip{border-left:4px solid #c9a227;background:#fbf1d9;padding:8px 12px;border-radius:6px}section{break-inside:auto}.pb{break-before:page}.foot{margin-top:30px;border-top:1px solid #e5d3a1;padding-top:8px;font-size:11px;color:#7a6a55}
-${cover?.css ?? ''}</style></head><body>${cover?.html ?? ''}<main class="doc">
+${extrasCss(cover?.extras)}${cover?.css ?? ''}</style></head><body>${cover?.html ?? ''}<main class="doc">
 <div class="head"><p class="brand">${esc(SITE_NAME)} · ${hi ? 'व्यवसाय अंक ज्योतिष' : 'Business numerology'}</p><h1>${esc(R.title)}</h1><p style="margin:6px 0 0"><b style="font-size:18px">${esc(d.owner.name)}</b> · ${esc(d.names.map((n) => n.text).join(' · '))}<br><small>${hi ? 'द्वारा तैयार' : 'Prepared by'} ${esc(by)} · ${date}</small></p></div>
+${contentsAndGuide(R.sections.map((s) => s.title), lang, cover?.extras)}
 ${R.sections.map((s, i) => `<section${i === 6 ? ' class="pb"' : ''}><h2>${i + 1}. ${esc(s.title)}</h2>${s.blocks.map(blockHtml).join('')}</section>`).join('')}
+${endCta(cover?.extras)}
 <p class="foot">${hi ? 'द्वारा तैयार' : 'Prepared by'} ${esc(by)} · ${esc(SITE_NAME)}. ${hi ? 'अंक ज्योतिष पारंपरिक मार्गदर्शन है; यह वित्तीय, कानूनी या पेशेवर सलाह का विकल्प नहीं है।' : 'Numerology is traditional guidance; it does not replace financial, legal or professional advice.'}</p></main></body></html>`;
   w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 800);
 }

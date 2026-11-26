@@ -10,6 +10,7 @@ import { verdictOf, type BizAnalytics } from '@/lib/business/engine';
 import { matchCategories } from '@/lib/business/match';
 import { SITE_NAME } from '@/lib/seo/site';
 import type { Order } from '@/components/admin/services-admin';
+import { contentsAndGuide, endCta, extrasCss, type CoverWithExtras } from '@/lib/report/print-extras';
 import type { BizReport } from '@/lib/business/agent';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n/hi-terms';
@@ -73,8 +74,8 @@ async function printReport(name: string, r: Result, opts: { by: string; appendix
   // Open the window first (inside the click) so the browser does not block it, then fetch the branded cover page.
   const w = window.open('', '_blank'); if (!w) return;
   w.document.write(`<p style="font-family:Georgia,serif;padding:40px;color:#7a1f2b">${B.preparing}</p>`);
-  const coverPage = await api<{ css: string; html: string }>('/api/admin/report-cover', { method: 'POST', json: {
-    title: B.title, subtitle: B.subtitle, clientName: name, preparedBy: opts.by, lang: L,
+  const coverPage = await api<CoverWithExtras>('/api/admin/report-cover', { method: 'POST', json: {
+    extras: 'compat', title: B.title, subtitle: B.subtitle, clientName: name, preparedBy: opts.by, lang: L,
     facts: [[B.dob, opts.meta.dob], [B.place, opts.meta.place], [B.bizName, opts.meta.business ?? ''], [B.reportDate, new Date(r.generatedAt).toLocaleDateString(loc, { day: 'numeric', month: 'long', year: 'numeric' })]],
   } }).catch(() => null);
   const d = r.data, p = r.report;
@@ -83,6 +84,7 @@ async function printReport(name: string, r: Result, opts: { by: string; appendix
   const grid = LOSHU.map((row) => `<tr>${row.map((n) => `<td class="${d.grid.counts[n] ? '' : 'miss'}">${d.grid.counts[n] ? String(n).repeat(d.grid.counts[n]) : '–'}</td>`).join('')}</tr>`).join('');
   const appendix = opts.appendix ? `<section class="pb"><h2>${B.appendix(fmt(d.totals.analysed))}</h2><p><small>${B.appendixNote(esc(name))}</small></p>
     <table class="app"><thead><tr><th>#</th><th>${B.category}</th><th>${B.group}</th><th>${B.score}</th></tr></thead><tbody>${d.all.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.label)}</td><td>${esc(x.group)}</td><td style="color:${VERDICT_CSS[verdictOf(x.score).key]}"><b>${x.score}</b></td></tr>`).join('')}</tbody></table></section>` : '';
+  const toc = [p.headline, d.checked.length ? B.considering : '', B.top, B.yourTop(d.top.length, fmt(d.totals.analysed)), B.sectors, B.least, B.timingH, B.remedies, B.plan, opts.appendix ? B.appendix(fmt(d.totals.analysed)) : ''].filter(Boolean);
   const html = `<!doctype html><html lang="${L}"><head><meta charset="utf-8"><title>${B.title} – ${esc(name)}</title><style>
 @page{size:A4;margin:16mm 14mm}${coverPage ? '@page:first{margin:0}' : ''}body{font-family:Georgia,'Noto Serif Devanagari',serif;color:#2a1a10;margin:0;padding:0;line-height:1.55;-webkit-print-color-adjust:exact;print-color-adjust:exact}.doc{max-width:860px;margin:0 auto;padding:0 18px}
 h1{color:#7a1f2b;margin:0;font-size:30px}h2{color:#7a1f2b;border-bottom:2px solid #c9a227;padding-bottom:4px;margin-top:28px;font-size:20px}h3{margin:14px 0 4px;color:#5a2a10}
@@ -94,10 +96,11 @@ table{border-collapse:collapse;width:100%;font-size:13px}td,th{border:1px solid 
 .lo td{width:52px;height:46px;text-align:center;font-size:18px;font-weight:bold;color:#7a1f2b}.lo td.miss{color:#bbb;background:#fafafa}.lo{width:auto}
 .v{display:inline-block;border-radius:99px;padding:1px 9px;color:#fff;font-size:12px}.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 .app{font-size:10.5px}.app td,.app th{padding:2px 6px}.pb{break-before:page}.foot{margin-top:30px;border-top:1px solid #e5d3a1;padding-top:8px;font-size:11px;color:#7a6a55}
-@media print{.noprint{display:none}}${coverPage?.css ?? ''}</style></head><body>${coverPage?.html ?? ''}<main class="doc">
+@media print{.noprint{display:none}}${extrasCss(coverPage?.extras)}${coverPage?.css ?? ''}</style></head><body>${coverPage?.html ?? ''}<main class="doc">
 <div class="cover"><p class="brand">${esc(SITE_NAME)} · ${B.brandLine}</p><h1>${B.title}</h1>
 <p style="margin:6px 0 0"><b style="font-size:18px">${esc(name)}</b><br>${B.dob} ${esc(opts.meta.dob)}${opts.meta.place ? ` · ${B.place} ${esc(opts.meta.place)}` : ''}${opts.meta.business ? ` · ${B.bizName} “${esc(opts.meta.business)}”` : ''}<br><small>${B.by} ${esc(opts.by)} · ${date} · ${B.analysed(fmt(d.totals.analysed))}</small></p>
 <div class="k"><div>${B.moolank}<b>${d.person.moolank}</b></div><div>${B.bhagyank}<b>${d.person.bhagyankMaster ? `${d.person.bhagyankMaster}/${d.person.bhagyank}` : d.person.bhagyank}</b></div><div>${B.nameNo}<b>${d.person.nameCompound}/${d.person.nameNumber}</b></div><div>${B.py}<b>${d.currentYear.personalYear}</b></div><div>${B.bestSector}<b>${d.sectorScores[0].score}</b></div><div>${B.bestMatch}<b>${d.top[0].score}</b></div></div></div>
+${contentsAndGuide(toc, L, coverPage?.extras)}
 
 <h2>${esc(p.headline)}</h2><p>${esc(p.summary)}</p><ul>${p.businessPersonality.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
 <div class="two"><div><h3>${B.loshu}</h3><table class="lo">${grid}</table><p><small>${B.missing}: ${d.grid.missing.join(', ') || B.none}${d.grid.yogs.length ? ` · ${esc(d.grid.yogs.join(', '))}` : ''}</small></p></div>
@@ -116,6 +119,7 @@ ${d.checked.length ? `<h2>${B.considering}</h2><table><thead><tr><th>${B.busines
 <p><b>${B.placeDir}:</b> ${esc(p.placeAdvice)}</p><p><b>${B.partner}:</b> ${esc(p.partnership)}</p>
 <h2>${B.remedies}</h2><ul>${p.remedies.map((x) => `<li>${esc(x)}</li>`).join('')}</ul><h2>${B.plan}</h2><ol>${p.actionPlan.map((x) => `<li>${esc(x)}</li>`).join('')}</ol><p><i>${esc(p.closing)}</i></p>
 ${appendix}
+${endCta(coverPage?.extras)}
 <p class="foot">${B.by} ${esc(opts.by)} · ${esc(SITE_NAME)}. ${B.disclaimer}</p></main></body></html>`;
   w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 800);
 }

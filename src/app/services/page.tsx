@@ -37,7 +37,7 @@ const STEPS = [
 ];
 
 const FAQ: { en: [string, string]; hi: [string, string] }[] = [
-  { en: ['How do I pay?', 'Online through Cashfree Payments by UPI, debit or credit card or net banking. Every fee includes 18% GST and you get a GST invoice. Clients outside India can pay by international card, in US dollars where a $ fee is shown.'], hi: ['भुगतान कैसे करें?', 'Cashfree Payments के माध्यम से UPI, डेबिट या क्रेडिट कार्ड अथवा नेट बैंकिंग द्वारा ऑनलाइन। हर शुल्क में 18% GST शामिल है और आपको GST इनवॉइस मिलता है। भारत के बाहर के क्लाइंट अंतरराष्ट्रीय कार्ड से भुगतान कर सकते हैं (जहाँ $ शुल्क दिखाया गया है, वहाँ अमेरिकी डॉलर में)।'] },
+  { en: ['How do I pay?', 'Online through Cashfree Payments by UPI, debit or credit card or net banking. You get an invoice receipt immediately. Clients outside India can pay by international card, in US dollars where a $ fee is shown.'], hi: ['भुगतान कैसे करें?', 'Cashfree Payments के माध्यम से UPI, डेबिट या क्रेडिट कार्ड अथवा नेट बैंकिंग द्वारा ऑनलाइन। भुगतान के साथ आपको तुरंत इनवॉइस रसीद मिलती है। भारत के बाहर के क्लाइंट अंतरराष्ट्रीय कार्ड से भुगतान कर सकते हैं (जहाँ $ शुल्क दिखाया गया है, वहाँ अमेरिकी डॉलर में)।'] },
   { en: ['How will I receive my analysis?', 'On the email and WhatsApp number you give while booking, within the delivery time shown for the service. You can also see the status under My account.'], hi: ['मुझे विश्लेषण कैसे मिलेगा?', 'बुकिंग के समय दिए गए ईमेल और WhatsApp नंबर पर, सेवा के लिए बताए गए समय में। स्थिति "मेरा खाता" में भी देख सकते हैं।'] },
   { en: ['In which language?', 'English, Hindi or Hinglish – mention your choice in the notes.'], hi: ['किस भाषा में?', 'अंग्रेज़ी, हिंदी या हिंग्लिश – अपनी पसंद टिप्पणी में लिखें।'] },
   { en: ['How is this different from the Complete Life Report plans?', 'The Complete Life Report follows a standard format and is ready about 2 hours after you submit it. These services are prepared personally by Acharya Nandram and answer your own questions.'], hi: ['संपूर्ण जीवन रिपोर्ट प्लान से क्या अंतर है?', 'संपूर्ण जीवन रिपोर्ट एक मानक प्रारूप में होती है और जमा करने के लगभग 2 घंटे बाद तैयार होती है। ये सेवाएँ आचार्य नंदराम स्वयं तैयार करते हैं और आपके अपने प्रश्नों के उत्तर देती हैं।'] },
@@ -96,7 +96,7 @@ export default async function ServicesPage() {
             <a href="#samples" className="inline-flex h-12 items-center gap-2 rounded-md border border-gold/60 px-5 font-medium hover:bg-gold/10"><Eye className="h-4 w-4" /><Bi en="View sample reports" hi="नमूना रिपोर्ट देखें" /></a>
           </div>
           <div className="flex flex-wrap justify-center gap-2 text-xs lg:justify-start">
-            {[[ShieldCheck, 'Secure payment by Cashfree', 'Cashfree द्वारा सुरक्षित भुगतान'], [FileText, 'GST invoice', 'GST इनवॉइस'], [Languages, 'English · हिंदी · Hinglish', 'अंग्रेज़ी · हिंदी · हिंग्लिश'], [LockKeyhole, 'Private & encrypted', 'गोपनीय और एन्क्रिप्टेड']].map(([I, en, hi]) => { const Icon = I as typeof ShieldCheck; return <span key={en as string} className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 px-3 py-1"><Icon className="h-3.5 w-3.5 text-gold" /><Bi en={en as string} hi={hi as string} /></span>; })}
+            {[[ShieldCheck, 'Secure payment by Cashfree', 'Cashfree द्वारा सुरक्षित भुगतान'], [FileText, 'Invoice receipt', 'इनवॉइस रसीद'], [Languages, 'English · हिंदी · Hinglish', 'अंग्रेज़ी · हिंदी · हिंग्लिश'], [LockKeyhole, 'Private & encrypted', 'गोपनीय और एन्क्रिप्टेड']].map(([I, en, hi]) => { const Icon = I as typeof ShieldCheck; return <span key={en as string} className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 px-3 py-1"><Icon className="h-3.5 w-3.5 text-gold" /><Bi en={en as string} hi={hi as string} /></span>; })}
           </div>
         </div>
         <div id="free-reading" className="glass scroll-mt-24 rounded-2xl border-2 border-gold/50 p-5 shadow-2xl sm:p-6">
@@ -112,7 +112,7 @@ export default async function ServicesPage() {
       <section id="services" aria-labelledby="svc-h" className="scroll-mt-20 space-y-6">
         <div className="text-center">
           <h2 id="svc-h" className="font-cinzel text-3xl font-bold"><Bi en="Choose Your Service" hi="अपनी सेवा चुनें" /></h2>
-          <p className="mt-2 text-muted-foreground"><Bi en="Real price, offer price and your saving – all fees include GST." hi="वास्तविक मूल्य, ऑफ़र मूल्य और आपकी बचत – सभी शुल्क GST सहित।" /></p>
+          <p className="mt-2 text-muted-foreground"><Bi en="Real price, offer price and your saving – complete transparent pricing." hi="वास्तविक मूल्य, ऑफ़र मूल्य और आपकी बचत – पूर्ण पारदर्शी मूल्य।" /></p>
         </div>
         <div className="grid gap-6 md:grid-cols-2">
           {list.map((s, i) => { const off = pctOff(s); return (

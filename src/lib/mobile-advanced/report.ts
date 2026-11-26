@@ -11,12 +11,11 @@ import { esc, gridSvg, mandala, monogram, numberMedallion, radarSvg, ringSvg, sc
 import { baseCss } from '@/lib/pdf/template';
 import { COLOUR_HEX, DEFAULT_BRANDING, resolveTheme, type Branding, type PdfTheme, type ThemeId } from '@/lib/pdf/themes';
 import { renderSheetPdf } from '@/lib/pdf/render';
-import { DEFAULT_SERVICES } from '@/lib/billing/services';
 import { compoundMeaningHi } from '@/lib/signature/hindi';
 import { brandWordmark, DEFAULT_CONTACT, type ReportContact } from '@/lib/signature/report';
-import { humaniseDeep } from '@/lib/signature/humanise';
 import { tr } from '@/lib/i18n/hi-terms';
 import { LOSHU_NUMBER_INFO } from '@/lib/numerology/data/grids';
+import { guideCss, readingGuideHtml, servicesCss, servicesCtaHtml } from '@/lib/report/guide-cta';
 import type { Relation } from '@/lib/numerology/data/relations';
 import type { MobileAdvancedResult } from './analysis';
 import { catText, checkText, digitNoteText, L, pairEffect, relText, TOTAL_MEANING, type Lab, type Lang } from './text';
@@ -43,7 +42,7 @@ const fmtDate = (iso: string, lang: Lang) => {
 const dobText = (d: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d); return m ? `${m[3]}-${m[2]}-${m[1]}` : d; };
 const titleCase = (s: string) => s.toLowerCase().replace(/(^|\s)\S/g, (x) => x.toUpperCase());
 const firstName = (full: string) => titleCase(full.trim().split(/\s+/)[0] ?? full);
-const waLink = (phone: string) => `https://wa.me/${phone.replace(/\D/g, '').replace(/^(?=\d{10}$)/, '91')}`;
+const tgLink = (handle: string) => `https://t.me/${handle.trim().replace(/^@/, '').replace(/^https?:\/\/t\.me\//, '')}`;
 const relScore = (r: Relation | null) => (r === 'friend' ? 100 : r === 'enemy' ? 20 : 60);
 export const mobileDisplay = (r: MobileAdvancedResult, full = true) => { const n = full ? r.mobile.number : r.mobile.masked; return `+91 ${n.slice(0, 5)} ${n.slice(5)}`; };
 
@@ -208,7 +207,8 @@ export function buildMobileReportHtml(r: MobileAdvancedResult, t: PdfTheme, b: B
   </div>
   <div class="letter"><div class="sal">${esc(l.dear(firstName(r.client.fullName)))}</div>${esc(l.letter({ total: `${mo.total.compound}/${mo.total.single}`, b: c.bhagyank.value, rel: l.relWord[mo.relB], score: r.score, good, bad, advice: l.advice[r.advice] }))}<div class="sgn">${esc(expert)}</div></div>
   <div class="kicker" style="margin-top:5mm">${esc(l.inside)}</div>
-  <ol class="toc">${sections.map((x, i) => `<li><b>${i + 1}</b><span>${esc(x)}</span></li>`).join('')}</ol>`;
+  <ol class="toc">${sections.map((x, i) => `<li><b>${i + 1}</b><span>${esc(x)}</span></li>`).join('')}</ol>
+  ${readingGuideHtml(lang, 'mobile', t)}`;
 
   // ---------- 1. Birth numbers ----------
   const s1 = `<section class="page">${secHead(1, l.s1)}<p class="intro">${esc(l.s1d)}</p>
@@ -332,22 +332,19 @@ export function buildMobileReportHtml(r: MobileAdvancedResult, t: PdfTheme, b: B
   const photo = b.photoDataUrl ? `<img src="${esc(b.photoDataUrl)}" alt="">` : monogram(b.expertName, t, 140);
   const bio = contact.bio?.trim() || (isHouseExpert ? l.bioDefault(b.expertName) : l.bioOther(b.expertName));
   const why = (code: string) => code === 'SVC_MOBILE_NUMBER' ? l.whyMobile : code === 'SVC_NAME_CORRECTION' ? l.whyName(c.bhagyank.value) : code === 'SVC_PERSONAL_YEAR' ? l.whyYear(c.personalYear.number) : '';
-  const svcs = CTA_SERVICES.map((code) => DEFAULT_SERVICES.find((x) => x.code === code)).filter((x): x is (typeof DEFAULT_SERVICES)[number] => !!x);
   const site = (contact.website || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
   const s8 = `<section class="page">${secHead(8, l.s8)}
     <div class="prof">${photo}<div><h3>${esc(b.expertName)}</h3><div class="small muted">${esc(b.expertTitle ?? '')}</div><p>${esc(bio)}</p></div></div>
-    <h3 class="sub" style="margin-top:5mm">${esc(l.services)}</h3><p class="intro" style="margin-bottom:1mm">${esc(l.servicesD)}</p>
-    <div class="svc">${svcs.map((x) => { const txt = humaniseDeep(lang === 'hi' ? x.hi : x.en); const w = why(x.code); return `<div class="s"><h4>${esc(txt.name)}</h4><p>${esc(txt.short)}</p>${w ? `<div class="why">${esc(w)}</div>` : ''}</div>`; }).join('')}</div>
+    ${servicesCtaHtml({ lang, theme: t, branding: b, contact, recommend: CTA_SERVICES, why, noProfile: true, noContactBox: true, preparedBy: expert })}
     <div class="cta"><div><h4>${esc(l.ctaH)}</h4><div class="lead">${esc(l.ctaD)}</div>
-        ${contact.whatsapp ? `<div class="ln"><b>${esc(l.whatsapp)}</b>${esc(contact.whatsapp)}</div>` : ''}
         ${contact.telegram ? `<div class="ln"><b>${esc(l.telegram)}</b>${esc(contact.telegram)}</div>` : ''}
         ${site ? `<div class="ln"><b>${esc(l.website)}</b>${esc(site)}</div>` : ''}</div>
-      ${extras.qrWhatsapp ? `<div><div class="qr">${extras.qrWhatsapp}</div><div class="cap">${esc(l.scanWa)}</div></div>` : '<div></div>'}
+      ${extras.qrWhatsapp ? `<div><div class="qr">${extras.qrWhatsapp}</div><div class="cap">${esc(lang === 'hi' ? 'टेलीग्राम पर बात करने के लिए स्कैन करें' : 'Scan to chat on Telegram')}</div></div>` : '<div></div>'}
       ${extras.qrWebsite ? `<div><div class="qr">${extras.qrWebsite}</div><div class="cap">${esc(l.scanWeb)}</div></div>` : '<div></div>'}
     </div>
     <p class="disc">${esc(l.disclaimer)} <b>${esc(l.madeLine(expert))}.</b></p></section>`;
 
-  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${baseCss(t, lang)}${css(t)}</style></head><body>${summary}${s1}${s2}${s3}${s4}${s5}${s6}${s7}${s8}</body></html>`;
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${baseCss(t, lang)}${css(t)}${guideCss(t)}${servicesCss(t)}</style></head><body>${summary}${s1}${s2}${s3}${s4}${s5}${s6}${s7}${s8}</body></html>`;
 }
 
 const PLANET_BY_N = ['', 'Sun', 'Moon', 'Jupiter', 'Rahu', 'Mercury', 'Venus', 'Ketu', 'Saturn', 'Mars'];
@@ -421,7 +418,7 @@ export function buildMobileCoverHtml(r: MobileAdvancedResult, t: PdfTheme, b: Br
     <div class="sg"><div class="dg"><span class="cc">+91</span>${n.split('').map((ch, i) => `${i === 5 ? '<span class="gp"></span>' : ''}<i>${ch === 'X' ? '•' : esc(ch)}</i>`).join('')}</div><span class="l">${esc(l.mobile)}</span></div>
     <div class="ex">${photo}<div><div class="lab">${esc(l.by)}</div><div class="nm">${esc(o.preparedBy || b.expertName)}</div><div class="ti">${esc(b.expertTitle ?? '')}</div>
       ${house ? `<div class="yr">${esc(l.years)}</div>` : ''}
-      <div class="ct">${[contact.whatsapp ? `WhatsApp ${esc(contact.whatsapp)}` : '', site ? esc(site) : ''].filter(Boolean).join('  ·  ')}</div></div></div>
+      <div class="ct">${[contact.telegram ? `Telegram ${esc(contact.telegram)}` : '', site ? esc(site) : ''].filter(Boolean).join('  ·  ')}</div></div></div>
     <div class="conf">${esc(l.conf)}</div>
   </div></body></html>`;
 }
@@ -433,7 +430,7 @@ export async function renderMobileAdvancedPdf(r: MobileAdvancedResult, o: Mobile
   const t = resolveTheme(o.theme, branding);
   const contact = { ...DEFAULT_CONTACT, ...(o.contact ?? {}) };
   const servicesUrl = `${(contact.website || 'https://www.mynumerologist.com').replace(/\/$/, '')}/services`;
-  const [qrWhatsapp, qrWebsite] = await Promise.all([contact.whatsapp ? qr(waLink(contact.whatsapp)) : Promise.resolve(''), qr(/^https?:\/\//.test(servicesUrl) ? servicesUrl : `https://${servicesUrl}`)]);
+  const [qrWhatsapp, qrWebsite] = await Promise.all([contact.telegram ? qr(tgLink(contact.telegram)) : Promise.resolve(''), qr(/^https?:\/\//.test(servicesUrl) ? servicesUrl : `https://${servicesUrl}`)]);
   const l = L[o.lang];
   const font = "font-family:Georgia,'Times New Roman',serif;";
   const header = `<div style="${font}width:100%;font-size:7.5px;color:${t.muted};padding:0 15mm;margin-top:8mm;display:flex;justify-content:space-between;letter-spacing:.12em;text-transform:uppercase"><span style="color:${t.primary}">${esc(branding.brandName)}</span><span>${esc(l.title)} · ${esc(titleCase(r.client.fullName))}</span></div>`;

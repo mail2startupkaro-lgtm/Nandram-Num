@@ -280,7 +280,7 @@ export async function ServiceLanding({ slug, children }: { slug: string; childre
       <div className="mt-5 flex flex-wrap items-end justify-between gap-3 border-t border-border/50 pt-4">
         <div>
           {svc.pricePaise ? (
-            <ServicePrice s={svc} note={{ en: 'incl. 18% GST · secure payment by Cashfree', hi: '18% GST सहित · Cashfree द्वारा सुरक्षित भुगतान' }} />
+            <ServicePrice s={svc} note={{ en: 'secure payment by Cashfree', hi: 'Cashfree द्वारा सुरक्षित भुगतान' }} />
           ) : (
             <div>
               <p className="font-serif text-xl font-semibold text-gold"><Bi en="Price on request" hi="मूल्य पूछताछ पर" /></p>

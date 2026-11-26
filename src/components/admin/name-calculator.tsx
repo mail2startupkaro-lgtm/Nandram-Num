@@ -10,6 +10,8 @@ import { calculateName, catText, nameCalcSummary, relText, VERDICT, type NameCal
 import type { Relation } from '@/lib/numerology/data/relations';
 import type { CompoundCategory } from '@/lib/numerology/data/tables';
 import { cn } from '@/lib/utils';
+import { contentsAndGuide, endCta, extrasCss, type CoverWithExtras } from '@/lib/report/print-extras';
+import { api } from '@/lib/client/api';
 
 type Lang = 'en' | 'hi';
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
@@ -239,8 +241,12 @@ function NameCardView({ c, lang, compact }: { c: NameCard; lang: Lang; compact?:
 /** Index of a word's first letter in the flat letter list. */
 function offset(words: { word: string }[], wi: number) { let n = 0; for (let i = 0; i < wi; i++) n += words[i].word.length; return n; }
 
-function printResult(r: NameCalcResult, lang: Lang, preparedBy: string) {
+async function printResult(r: NameCalcResult, lang: Lang, preparedBy: string) {
   const t = T[lang]; const hi = lang === 'hi';
+  // Open the window inside the click (so it is not blocked), then fetch the Reading Guide + services CTA.
+  const w = window.open('', '_blank'); if (!w) return;
+  w.document.write(`<p style="font-family:Georgia,serif;padding:40px;color:#7a1f2b">${hi ? 'रिपोर्ट तैयार हो रही है…' : 'Preparing the report…'}</p>`);
+  const ex = (await api<CoverWithExtras>('/api/admin/report-cover', { method: 'POST', json: { extras: 'name', title: t.title.slice(0, 80), clientName: title(r.main.chaldean.name).slice(0, 120) || 'Client', preparedBy: preparedBy.slice(0, 80), lang } }).catch(() => null))?.extras;
   const date = new Date().toLocaleDateString(hi ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
   const block = (c: NameCard) => {
     const ch = c.chaldean; const py = c.pythagorean;
@@ -265,7 +271,8 @@ ${c.score != null && c.verdict && c.relB && c.relM ? `<div class="cell"><small>$
   const cmp = r.variants.length > 1 ? `<h2>${t.cmp}</h2><table><tr><th>${t.spelling}</th><th>${t.nn}</th><th>${t.meaning}</th>${r.compat ? `<th>${t.comp}</th>` : ''}</tr>${r.variants.map((v) => `<tr${v.best ? ' class="best"' : ''}><td><b>${v.best ? '★ ' : ''}${esc(v.spelling)}</b>${v.current ? ` (${t.current})` : ''}</td><td>${v.compound}/${v.single} · ${catText(v.category, lang)}</td><td>${esc(hi ? v.meaning.hi : v.meaning.en)}</td>${r.compat ? `<td>${v.score}%</td>` : ''}</tr>`).join('')}</table>` : '';
   const lucky = r.lucky ? `<h2>${t.lucky}</h2><p><span class="big" style="font-size:24px">${r.lucky.singles.join(' · ')}</span><br><span class="muted">${t.best}: ${r.lucky.compounds.join(', ')}</span></p>` : '';
   const head = `<h1>${t.title}</h1><p><b>${esc(title(r.main.chaldean.name))}</b>${r.compat ? ` · ${t.dob} ${r.compat.dob.split('-').reverse().join('-')} · ${t.m} ${r.compat.moolank} · ${t.b} ${r.compat.bhagyank}` : ''}<br><span class="muted">${t.by} ${esc(preparedBy)} · ${date}</span></p>`;
-  const body = head + block(r.main) + (r.official ? block(r.official) : '') + lucky + corr + cmp + `<p class="muted" style="margin-top:20px">${t.note}</p>`;
+  const toc = [`${cardLabel(r.main, t)}: ${title(r.main.chaldean.name)}`, ...(r.official ? [`${cardLabel(r.official, t)}: ${title(r.official.chaldean.name)}`] : []), ...(r.lucky ? [t.lucky] : []), ...(r.compat ? [t.corr] : []), ...(r.variants.length > 1 ? [t.cmp] : [])];
+  const body = head + contentsAndGuide(toc, lang, ex) + block(r.main) + (r.official ? block(r.official) : '') + lucky + corr + cmp + endCta(ex) + `<p class="muted" style="margin-top:20px">${t.note}</p>`;
   const html = `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><title>${esc(t.title)} – ${esc(title(r.main.chaldean.name))}</title><style>
 body{font-family:Georgia,'Noto Sans Devanagari',serif;color:#2a1a10;max-width:820px;margin:28px auto;padding:0 20px;line-height:1.5}
 h1{color:#7a1f2b;margin:0 0 4px}h2{color:#7a1f2b;border-bottom:2px solid #c9a227;padding-bottom:3px;margin-top:22px;font-size:18px}h3{font-size:14px;margin:14px 0 4px}
@@ -273,7 +280,6 @@ h1{color:#7a1f2b;margin:0 0 4px}h2{color:#7a1f2b;border-bottom:2px solid #c9a227
 .big{font-size:28px;font-weight:bold;color:#b8860b}.g{color:#b8860b;font-weight:bold}.muted{color:#7a6a55;font-size:12px}
 table{width:100%;border-collapse:collapse;margin-top:6px}td,th{border:1px solid #e5d3a1;padding:5px 7px;text-align:left;vertical-align:top;font-size:13px}th{background:#fbf5e6}
 table.lt{width:auto;margin:4px 0}table.lt td{text-align:center;min-width:24px;padding:3px 5px}table.lt td.v{background:#fbf0cf}table.lt td.tot{text-align:left;border:none;padding-left:10px;font-size:12px}
-tr.best td{background:#fbf0cf}@media print{body{margin:0 auto}h2{break-after:avoid}table{break-inside:avoid}}</style></head><body>${body}</body></html>`;
-  const w = window.open('', '_blank'); if (!w) return;
-  w.document.write(html); w.document.close(); setTimeout(() => w.print(), 400);
+tr.best td{background:#fbf0cf}@media print{body{margin:0 auto}h2{break-after:avoid}table{break-inside:avoid}}${extrasCss(ex)}</style></head><body>${body}</body></html>`;
+  w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 600);
 }

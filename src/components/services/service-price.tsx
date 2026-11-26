@@ -58,7 +58,7 @@ function Block({ price, real, cur, note }: { price: number; real: number; cur: C
  * Service fee in ₹, plus a $ version for visitors outside India when the admin set one.
  * Both are rendered; CSS shows the one matching html[data-cur] (set before first paint), so cached pages work for everyone.
  */
-export function ServicePrice({ s, note = { en: 'incl. 18% GST · one-time', hi: '18% GST सहित · एक बार' } }: { s: PricedService; note?: { en: string; hi: string } }) {
+export function ServicePrice({ s, note = { en: 'one-time fee · invoice receipt included', hi: 'एकमुश्त शुल्क · इनवॉइस रसीद सहित' } }: { s: PricedService; note?: { en: string; hi: string } }) {
   if (!s.pricePaise) return null;
   const inr = <Block price={s.pricePaise} real={serviceReal(s, 'INR')} cur="INR" note={note} />;
   if (!s.usdCents) return inr;

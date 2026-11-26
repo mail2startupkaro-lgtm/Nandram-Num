@@ -311,7 +311,6 @@ function PayStep({ svc, details, forName, relation, personId, onBack, onDone, si
         <Field label={t.billName} htmlFor="py-bn"><Input id="py-bn" value={bill.name} onChange={(e) => setBill({ ...bill, name: e.target.value })} maxLength={120} /></Field>
         {!u.phone && <Field label={t.phone} htmlFor="py-ph" required><Input id="py-ph" type="tel" inputMode="tel" autoComplete="tel" placeholder={abroad ? '+1 555 123 4567' : '98765 43210'} value={bill.phone} onChange={(e) => setBill({ ...bill, phone: e.target.value })} maxLength={18} /></Field>}
         <Field label={t.state} htmlFor="py-st" required><Select id="py-st" value={bill.state} onChange={(e) => setBill({ ...bill, state: e.target.value })}><option value="">{t.select}</option><option value={OUTSIDE_INDIA}>{t.outside}</option>{INDIAN_STATES.map((s) => <option key={s}>{s}</option>)}</Select></Field>
-        {!abroad && <Field label={t.gstin} htmlFor="py-gst"><Input id="py-gst" maxLength={15} value={bill.gstin} onChange={(e) => setBill({ ...bill, gstin: e.target.value.toUpperCase() })} /></Field>}
       </div>
       <div className="flex items-center justify-between rounded-md bg-muted p-3 text-sm font-semibold"><span>{usd ? t.totalIntl : t.total}</span><span className="text-right">{price?.mrp && <s className="mr-2 font-normal text-muted-foreground">{price.mrp}</s>}{price?.fee}</span></div>
       <DisclaimerNote agree />

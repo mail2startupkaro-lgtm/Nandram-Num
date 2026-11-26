@@ -189,38 +189,38 @@ export default function PricingPage() {
     { label: L('White-label PDFs (logo, signature, colours)', 'व्हाइट-लेबल PDF (लोगो, हस्ताक्षर, रंग)'), cell: (c) => (c.f.whiteLabel ? 'yes' : 'no') },
     { label: L('Bulk import & export', 'बल्क इम्पोर्ट और एक्सपोर्ट'), cell: (c) => (c.f.bulk ? 'yes' : 'no') },
     { label: L('Share links for every report', 'हर रिपोर्ट के लिए शेयर लिंक'), cell: (c) => (c.f.share ? 'yes' : 'no') },
-    { label: L('GST invoice', 'GST इनवॉइस'), cell: (c) => (c.paid ? 'yes' : 'no') },
+    { label: L('Invoice', 'इनवॉइस'), cell: (c) => (c.paid ? 'yes' : 'no') },
   ];
   const cellView = (v: React.ReactNode) => v === 'yes' ? <Check className="mx-auto h-4 w-4 text-success" aria-label={L('Included', 'शामिल')} /> : v === 'no' ? <Minus className="mx-auto h-4 w-4 text-muted-foreground/50" aria-label={L('Not included', 'शामिल नहीं')} /> : <span className="font-medium">{v}</span>;
 
   const hours = workingHoursLabel(tz, hi);
   const trust = [
     { icon: ShieldCheck, title: L('Secure payment', 'सुरक्षित भुगतान'), text: usd ? L('International debit and credit cards, charged in US dollars through Cashfree Payments.', 'Cashfree Payments द्वारा अंतरराष्ट्रीय डेबिट और क्रेडिट कार्ड, अमेरिकी डॉलर में भुगतान।') : L('UPI, cards and net banking through Cashfree Payments.', 'Cashfree Payments द्वारा UPI, कार्ड और नेट बैंकिंग।') },
-    { icon: Receipt, title: usd ? L('Invoice in USD', 'USD में इनवॉइस') : L('GST invoice', 'GST इनवॉइस'), text: usd ? L('A proper tax invoice in US dollars for every paid order.', 'हर सशुल्क ऑर्डर के लिए अमेरिकी डॉलर में विधिवत इनवॉइस।') : L('A proper GST invoice for every paid order.', 'हर सशुल्क ऑर्डर के लिए विधिवत GST इनवॉइस।') },
+    { icon: Receipt, title: usd ? L('Invoice in USD', 'USD में इनवॉइस') : L('Invoice receipt', 'इनवॉइस रसीद'), text: usd ? L('A proper invoice receipt in US dollars for every paid order.', 'हर सशुल्क ऑर्डर के लिए अमेरिकी डॉलर में इनवॉइस रसीद।') : L('A proper invoice receipt for every paid order.', 'हर सशुल्क ऑर्डर के लिए विधिवत इनवॉइस रसीद।') },
     { icon: Languages, title: L('Hindi, English & Hinglish', 'हिंदी, अंग्रेज़ी और हिंग्लिश'), text: L('Choose the language of your report.', 'अपनी रिपोर्ट की भाषा स्वयं चुनें।') },
     { icon: Zap, title: L('Report in about 2 hours', 'लगभग 2 घंटे में रिपोर्ट'), text: L(`Prepared between ${hours} and ready about 2 hours after you submit.`, `${hours} के बीच तैयार, जमा करने के लगभग 2 घंटे बाद।`) },
   ];
   const payFaq: [string, string] = usd
     ? [L('Which payment methods can I use from outside India?', 'भारत के बाहर से मैं किन भुगतान तरीक़ों का उपयोग कर सकता हूँ?'), L('International Visa, Mastercard and other debit or credit cards, charged in US dollars and processed securely by Cashfree Payments. Your bank may show the charge from India.', 'अंतरराष्ट्रीय Visa, Mastercard और अन्य डेबिट या क्रेडिट कार्ड, अमेरिकी डॉलर में, Cashfree Payments द्वारा सुरक्षित रूप से संसाधित। आपके बैंक में भुगतान भारत से दिख सकता है।')]
-    : [L('Which payment methods can I use?', 'मैं किन भुगतान तरीक़ों का उपयोग कर सकता हूँ?'), L('UPI, debit and credit cards and net banking, processed securely by Cashfree Payments. All prices include 18% GST.', 'UPI, डेबिट और क्रेडिट कार्ड तथा नेट बैंकिंग — सभी Cashfree Payments द्वारा सुरक्षित रूप से संसाधित। सभी मूल्यों में 18% GST शामिल है।')];
+    : [L('Which payment methods can I use?', 'मैं किन भुगतान तरीक़ों का उपयोग कर सकता हूँ?'), L('UPI, debit and credit cards and net banking, processed securely by Cashfree Payments.', 'UPI, डेबिट और क्रेडिट कार्ड तथा नेट बैंकिंग — सभी Cashfree Payments द्वारा सुरक्षित रूप से संसाधित।')];
   const faq = hi ? [
     ['रिपोर्ट क्रेडिट क्या है?', 'एक क्रेडिट से किसी भी क्लाइंट की एक पूर्ण संपूर्ण जीवन रिपोर्ट PDF खुलती है। एकल रिपोर्ट में 1 क्रेडिट और 5-क्रेडिट पैक में 5 क्रेडिट मिलते हैं।'],
     ['मेरे लिए कौन-सा प्लान सही है?', 'अपने लिए या परिवार के एक सदस्य के लिए एकल रिपोर्ट चुनें, परिवार या कुछ परामर्शों के लिए 5-क्रेडिट पैक, और यदि आप नियमित रूप से रिपोर्ट बनाने वाले परामर्शदाता हैं और व्हाइट-लेबल PDF चाहते हैं तो प्रो चुनें।'],
     payFaq,
-    usd ? ['क्या मुझे इनवॉइस मिलेगा?', 'हाँ। चेकआउट पर "भारत के बाहर" चुनें, भुगतान के साथ अमेरिकी डॉलर में इनवॉइस बन जाएगा।'] : ['क्या मुझे GST इनवॉइस मिलेगा?', 'हाँ। चेकआउट पर अपना बिलिंग राज्य (और व्यावसायिक इनवॉइस के लिए GSTIN) दर्ज करें, भुगतान के साथ इनवॉइस बन जाएगा।'],
+    usd ? ['क्या मुझे इनवॉइस मिलेगा?', 'हाँ। चेकआउट पर "भारत के बाहर" चुनें, भुगतान के साथ अमेरिकी डॉलर में इनवॉइस बन जाएगा।'] : ['क्या मुझे इनवॉइस मिलेगा?', 'हाँ। भुगतान पूरा होते ही आपको डाउनलोड करने योग्य इनवॉइस रसीद मिल जाएगी।'],
   ] : [
     ['What is a report credit?', 'One credit unlocks one full Complete Life Report PDF for any client. Single Report gives 1 credit and the 5-credit pack gives 5.'],
     ['Which plan is right for me?', 'Choose Single Report for yourself or one family member, the 5-credit pack for a family or a few consultations, and Pro if you are a consultant who creates reports regularly and wants white-label PDFs.'],
     payFaq,
-    usd ? ['Do I get an invoice?', 'Yes. Choose "Outside India" at checkout and an invoice in US dollars is generated with your payment.'] : ['Do I get a GST invoice?', 'Yes. Enter your billing state (and GSTIN for a business invoice) at checkout and the invoice is generated with your payment.'],
+    usd ? ['Do I get an invoice?', 'Yes. Choose "Outside India" at checkout and an invoice in US dollars is generated with your payment.'] : ['Do I get an invoice?', 'Yes. A downloadable invoice receipt is generated immediately upon payment. You can also view it anytime under My account.'],
   ];
 
   return (
     <div className="container space-y-12 py-10 sm:py-14">
       <div className="mk-rise mx-auto max-w-2xl text-center">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold">{L('Simple · Transparent · GST included', 'सरल · पारदर्शी · GST सहित')}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-gold">{L('Simple · Transparent · All-inclusive', 'सरल · पारदर्शी · सर्वसमावेशी')}</p>
         <h1 className="mt-2 text-4xl font-bold sm:text-5xl"><span className="gold-text">{t.pricing.title}</span></h1>
-        <p className="mt-3 text-muted-foreground">{usd ? L('All prices in US dollars (USD) and include 18% GST. Pay securely by international debit or credit card via Cashfree Payments.', 'सभी मूल्य अमेरिकी डॉलर (USD) में और 18% GST सहित। Cashfree Payments द्वारा अंतरराष्ट्रीय डेबिट या क्रेडिट कार्ड से सुरक्षित भुगतान करें।') : t.pricing.sub}</p>
+        <p className="mt-3 text-muted-foreground">{usd ? L('All prices in US dollars (USD). Pay securely by international debit or credit card via Cashfree Payments.', 'सभी मूल्य अमेरिकी डॉलर (USD) में। Cashfree Payments द्वारा अंतरराष्ट्रीय डेबिट या क्रेडिट कार्ड से सुरक्षित भुगतान करें।') : t.pricing.sub}</p>
         {usdAvailable && (
           <div className="mt-5 inline-flex items-center gap-1 rounded-full border border-gold/40 p-1 text-sm" role="group" aria-label={L('Currency', 'मुद्रा')}>
             {(['INR', 'USD'] as const).map((c) => (
@@ -299,7 +299,6 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
   const [state, setState] = React.useState(me?.user?.billingState ?? (intl ? OUTSIDE_INDIA : ''));
   const [billingName, setBillingName] = React.useState(me?.user?.name ?? '');
   const [email, setEmail] = React.useState(me?.user?.email ?? '');
-  const [gstin, setGstin] = React.useState('');
   const [phone, setPhone] = React.useState(intl ? (me?.user?.phone ?? '') : (me?.user?.phone ?? '').replace(/^\+91/, ''));
   const [pending, setPending] = React.useState(false);
   const [coupon, setCoupon] = React.useState('');
@@ -331,7 +330,6 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
           billingState: state,
           billingName,
           email: email.trim() || undefined,
-          gstin: !intl && state !== OUTSIDE_INDIA ? gstin || undefined : undefined,
           coupon: discount ? coupon : undefined,
           phone: phone || undefined,
         },
@@ -371,7 +369,6 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
               </Field>
             )}
             <Field label={t.pricing.state} htmlFor="st" required><Select id="st" value={state} onChange={(e) => setState(e.target.value)}><option value="">{t.f.select}</option><option value={OUTSIDE_INDIA}>{hi ? 'भारत के बाहर' : 'Outside India'}</option>{INDIAN_STATES.map((s) => <option key={s}>{s}</option>)}</Select></Field>
-            {!intl && state !== OUTSIDE_INDIA && <Field label={t.pricing.gstin} htmlFor="gst"><Input id="gst" maxLength={15} value={gstin} onChange={(e) => setGstin(e.target.value.toUpperCase())} /></Field>}
             <Field label={t.pricing.phone} htmlFor="ph" required><Input id="ph" type="tel" inputMode="tel" autoComplete={intl || state === OUTSIDE_INDIA ? 'tel' : 'tel-national'} maxLength={18} placeholder={intl || state === OUTSIDE_INDIA ? '+1 555 123 4567' : '98765 43210'} value={phone} onChange={(e) => setPhone(e.target.value)} /></Field>
             <div className="flex items-end gap-2"><Field label={t.pricing.coupon} htmlFor="cp" className="flex-1"><Input id="cp" value={coupon} onChange={(e) => setCoupon(e.target.value.toUpperCase())} /></Field><Button variant="outline" onClick={applyCoupon} disabled={!coupon}>{t.pricing.apply}</Button></div>
             {couponMsg && <p className={`text-xs ${discount ? 'text-success' : 'text-danger'}`}>{couponMsg}</p>}
@@ -397,7 +394,7 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
                 </div>
               )}
               <div className="mt-2 flex justify-between border-t border-border/80 pt-2 font-bold text-base">
-                <span>{t.pricing.total} ({hi ? 'GST सहित' : 'incl. GST'})</span>
+                <span>{t.pricing.total}</span>
                 <span className="text-gold">{inr(pv.price - discount)}</span>
               </div>
             </div>

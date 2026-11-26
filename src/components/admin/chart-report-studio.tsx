@@ -12,6 +12,7 @@ import { api, ApiError } from '@/lib/client/api';
 import { SITE_NAME } from '@/lib/seo/site';
 import { blockHtml, escHtml as esc, fmtDob, type Blk, type WrittenReport } from '@/lib/report/blocks';
 import type { Order } from '@/components/admin/services-admin';
+import { contentsAndGuide, endCta, extrasCss, type CoverWithExtras } from '@/lib/report/print-extras';
 
 export type ChartKind = 'destiny' | 'psychomatrix';
 interface Result { kind: ChartKind; name: string; dob: string; report: { en: WrittenReport; hi: WrittenReport }; generatedAt: string }
@@ -46,8 +47,8 @@ async function printReport(r: Result, lang: 'en' | 'hi', by: string) {
   w.document.write(`<p style="font-family:Georgia,serif;padding:40px;color:#7a1f2b">${hi ? 'रिपोर्ट तैयार हो रही है…' : 'Preparing the report…'}</p>`);
   const date = new Date(r.generatedAt).toLocaleDateString(hi ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
   const tiles = R.sections[0]?.blocks.find((b): b is Extract<Blk, { k: 'tiles' }> => b.k === 'tiles')?.items ?? [];
-  const cover = await api<{ css: string; html: string }>('/api/admin/report-cover', { method: 'POST', json: {
-    title: R.title.slice(0, 80), subtitle: R.subtitle.slice(0, 120), clientName: r.name, preparedBy: by, lang,
+  const cover = await api<CoverWithExtras>('/api/admin/report-cover', { method: 'POST', json: {
+    extras: r.kind, title: R.title.slice(0, 80), subtitle: R.subtitle.slice(0, 120), clientName: r.name, preparedBy: by, lang,
     facts: [[hi ? 'जन्म तिथि' : 'Date of birth', fmtDob(r.dob, lang)], ...tiles.slice(0, 2).map((t) => [t.label.slice(0, 40), t.value.slice(0, 120)]), [hi ? 'रिपोर्ट तिथि' : 'Report date', date]],
   } }).catch(() => null);
   const html = `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><title>${esc(R.title)} – ${esc(r.name)}</title><style>
@@ -58,9 +59,11 @@ h1{color:#7a1f2b;margin:0;font-size:28px}h2{color:#7a1f2b;border-bottom:2px soli
 table{border-collapse:collapse;width:100%;font-size:12.5px;margin:8px 0}td,th{border:1px solid #e5d3a1;padding:5px 7px;text-align:left;vertical-align:top}th{background:#fbf1d9}tr{break-inside:avoid}tr.hl td{background:#f6e2a8;font-weight:700}
 .tip{border-left:4px solid #c9a227;background:#fbf1d9;padding:8px 12px;border-radius:6px}.chart{margin:10px auto;max-width:520px;text-align:center;break-inside:avoid}.chart figcaption{font-size:12px;color:#7a6a55}
 .foot{margin-top:30px;border-top:1px solid #e5d3a1;padding-top:8px;font-size:11px;color:#7a6a55}
-${cover?.css ?? ''}</style></head><body>${cover?.html ?? ''}<main class="doc">
+${extrasCss(cover?.extras)}${cover?.css ?? ''}</style></head><body>${cover?.html ?? ''}<main class="doc">
 <div class="head"><p class="brand">${esc(SITE_NAME)} · ${esc(m.brand[lang])}</p><h1>${esc(R.title)}</h1><p style="margin:6px 0 0"><b style="font-size:18px">${esc(r.name)}</b> · ${esc(R.subtitle)}<br><small>${hi ? 'द्वारा तैयार' : 'Prepared by'} ${esc(by)} · ${date}</small></p></div>
+${contentsAndGuide(R.sections.map((s) => s.title), lang, cover?.extras)}
 ${R.sections.map((s, i) => `<section><h2>${i + 1}. ${esc(s.title)}</h2>${s.blocks.map(blockHtml).join('')}</section>`).join('')}
+${endCta(cover?.extras)}
 <p class="foot">${hi ? 'द्वारा तैयार' : 'Prepared by'} ${esc(by)} · ${esc(SITE_NAME)}. ${hi ? 'अंक ज्योतिष पारंपरिक मार्गदर्शन है; यह चिकित्सा, वित्तीय, कानूनी या पेशेवर सलाह का विकल्प नहीं है।' : 'Numerology is traditional guidance; it does not replace medical, financial, legal or professional advice.'}</p></main></body></html>`;
   w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 800);
 }

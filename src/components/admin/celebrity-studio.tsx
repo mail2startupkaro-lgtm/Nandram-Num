@@ -13,6 +13,7 @@ import { CelebNumbersPanel } from '@/components/blog/celeb-numbers';
 import { api, ApiError } from '@/lib/client/api';
 import { SITE_NAME } from '@/lib/seo/site';
 import { escHtml as esc, fmtDob } from '@/lib/report/blocks';
+import { contentsAndGuide, endCta, extrasCss, type CoverWithExtras } from '@/lib/report/print-extras';
 import { relWord } from '@/lib/celebrity/numbers';
 import { hasPlaceholder, seoChecks, wordCount, type CelebContent, type CelebPost } from '@/lib/celebrity/post';
 import type { CelebListItem, CelebRow } from '@/lib/celebrity/store';
@@ -34,8 +35,8 @@ async function printPost(post: CelebPost, lang: Lang, by: string) {
   const hi = lang === 'hi', c = (hi ? post.hi : null) ?? post.en, n = post.numbers;
   w.document.write(`<p style="font-family:Georgia,serif;padding:40px;color:#7a1f2b">${hi ? 'रिपोर्ट तैयार हो रही है…' : 'Preparing the report…'}</p>`);
   const date = new Date().toLocaleDateString(hi ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
-  const cover = await api<{ css: string; html: string }>('/api/admin/report-cover', { method: 'POST', json: {
-    title: (hi ? 'सेलिब्रिटी अंक ज्योतिष रिपोर्ट' : 'Celebrity Numerology Report'), subtitle: (post.profile.profession || c.excerpt).slice(0, 120), clientName: post.name.slice(0, 120), preparedBy: by.slice(0, 80), lang,
+  const cover = await api<CoverWithExtras>('/api/admin/report-cover', { method: 'POST', json: {
+    extras: 'celebrity', title: (hi ? 'सेलिब्रिटी अंक ज्योतिष रिपोर्ट' : 'Celebrity Numerology Report'), subtitle: (post.profile.profession || c.excerpt).slice(0, 120), clientName: post.name.slice(0, 120), preparedBy: by.slice(0, 80), lang,
     facts: [[hi ? 'जन्म तिथि' : 'Date of birth', fmtDob(post.dob, lang)], [hi ? 'मूलांक · भाग्यांक' : 'Mulank · Bhagyank', `${n.moolank.value} · ${n.bhagyank.value}`], [hi ? 'नामांक' : 'Name number', `${n.chaldean.compound}/${n.chaldean.single}`], [hi ? 'रिपोर्ट तिथि' : 'Report date', date]],
   } }).catch(() => null);
   const grid = [[4, 9, 2], [3, 5, 7], [8, 1, 6]].map((r) => `<tr>${r.map((x) => { const k = n.loShu.counts[x] ?? 0; return `<td class="${k ? 'on' : ''}">${k ? String(x).repeat(Math.min(k, 4)) : '·'}</td>`; }).join('')}</tr>`).join('');
@@ -49,14 +50,16 @@ h1{color:#7a1f2b;margin:0;font-size:26px}h2{color:#7a1f2b;border-bottom:2px soli
 .k{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}.k div{border:1px solid #e5d3a1;border-radius:8px;padding:8px;text-align:center;background:#fff;font-size:11px}.k b{display:block;font-size:22px;color:#7a1f2b}
 .g{display:flex;gap:18px;align-items:center;break-inside:avoid}.g table{border-collapse:collapse}.g td{width:44px;height:44px;border:1px solid #c9a227;text-align:center;font-weight:700;color:#bbb}.g td.on{color:#7a1f2b;background:#fbf1d9}
 ul{margin:6px 0 6px 20px}.faq{break-inside:avoid;margin:8px 0}.faq b{color:#8a6d12}.tip{border-left:4px solid #c9a227;background:#fbf1d9;padding:8px 12px;border-radius:6px}
-.foot{margin-top:28px;border-top:1px solid #e5d3a1;padding-top:8px;font-size:11px;color:#7a6a55}${cover?.css ?? ''}</style></head><body>${cover?.html ?? ''}<main class="doc">
+.foot{margin-top:28px;border-top:1px solid #e5d3a1;padding-top:8px;font-size:11px;color:#7a6a55}${extrasCss(cover?.extras)}${cover?.css ?? ''}</style></head><body>${cover?.html ?? ''}<main class="doc">
 <div class="head"><p class="brand">${esc(SITE_NAME)} · ${hi ? 'सेलिब्रिटी अंक ज्योतिष' : 'Celebrity numerology'}</p><h1>${esc(c.h1)}</h1><p><small>${L.by} ${esc(by)} · ${date}</small></p></div>
+${contentsAndGuide([L.glance, ...c.sections.map((s) => s.h2), L.faq], lang, cover?.extras)}
 ${c.intro.map((p) => `<p>${esc(p)}</p>`).join('')}
 <h2>${L.glance}</h2><div class="k"><div>${L.m}<b>${n.moolank.value}</b></div><div>${L.b}<b>${n.bhagyank.value}</b></div><div>${L.nm}<b>${n.chaldean.compound}/${n.chaldean.single}</b></div><div>${L.py}<b>${n.personalYear.value}</b></div></div>
 <div class="g"><table>${grid}</table><div><p><b>${L.rel}:</b> ${esc(relWord(n.moolankBhagyank, lang))}</p><p><b>${L.sc}:</b> ${n.nameScore}/100</p><p><b>${L.miss}:</b> ${n.loShu.missing.join(', ') || L.none}</p></div></div>
 ${c.sections.map((s) => `<section><h2>${esc(s.h2)}</h2>${s.paras.map((p) => `<p>${esc(p)}</p>`).join('')}${s.bullets?.length ? `<ul>${s.bullets.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>` : ''}</section>`).join('')}
 <h2>${L.faq}</h2>${c.faqs.map((f) => `<div class="faq"><b>${esc(f.q)}</b><p>${esc(f.a)}</p></div>`).join('')}
 ${c.conclusion ? `<p class="tip">${esc(c.conclusion)}</p>` : ''}
+${endCta(cover?.extras)}
 <p class="foot">${L.by} ${esc(by)} · ${esc(SITE_NAME)}. ${L.note}</p></main></body></html>`;
   w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 800);
 }

@@ -14,6 +14,7 @@ import { generateNarrative, type Narrative } from '@/lib/narrative/service';
 import type { LlmProvider } from '@/lib/narrative/providers/llm';
 import type { NarrativeLanguage } from '@/lib/narrative/plan';
 import { buildBodyHtml, buildCoverHtml, headerFooter, labelsFor, type TemplateInput } from './template';
+import { contactQrs } from '@/lib/report/guide-cta';
 import { DEFAULT_BRANDING, resolveTheme, type Branding, type PdfTheme, type ThemeId } from './themes';
 
 export interface PdfRequest {
@@ -266,6 +267,7 @@ export async function renderReportPdf(req: PdfRequest): Promise<PdfOutput> {
 
   const inp: TemplateInput = { result: req.result, narrative, theme, branding, reportDate: req.reportDate ?? req.result.asOf, watermark: req.watermark, hiddenChapters: req.hiddenChapters, expertNote: req.expertNote, reportTitle: req.reportTitle };
   const qrSvg = await QRCode.toString(branding.bookingUrl || DEFAULT_BRANDING.bookingUrl || 'https://www.mynumerologist.com', { type: 'svg', margin: 0, width: 150, errorCorrectionLevel: 'M', color: { dark: '#111111', light: '#ffffff' } });
+  const qrs = await contactQrs();
   const hf = headerFooter(inp);
   const browser = await getBrowser();
 
@@ -290,7 +292,7 @@ export async function renderReportPdf(req: PdfRequest): Promise<PdfOutput> {
 
     console.log('[pdf] rendering pass1...');
     const tPass1 = Date.now();
-    pass1 = await printPageToPdf(page, buildBodyHtml(inp, null, qrSvg).html, hf);
+    pass1 = await printPageToPdf(page, buildBodyHtml(inp, null, qrSvg, qrs).html, hf);
     console.log(`[pdf] pass1 rendered in ${Date.now() - tPass1}ms`);
 
     console.log('[pdf] finding chapter pages...');
@@ -300,7 +302,7 @@ export async function renderReportPdf(req: PdfRequest): Promise<PdfOutput> {
 
     console.log('[pdf] rendering body with TOC...');
     const tBody = Date.now();
-    body = await printPageToPdf(page, buildBodyHtml(inp, tocPages, qrSvg).html, hf);
+    body = await printPageToPdf(page, buildBodyHtml(inp, tocPages, qrSvg, qrs).html, hf);
     console.log(`[pdf] body rendered in ${Date.now() - tBody}ms`);
   } catch (err) {
     browserPromise = null;

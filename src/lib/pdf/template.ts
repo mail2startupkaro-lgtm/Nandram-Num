@@ -3,6 +3,7 @@
  * highlight boxes), remedies and closing page. Rendered to PDF by render.ts.
  */
 import type { NumerologyResult } from '@/lib/numerology';
+import { guideCss, readingGuideHtml, RECOMMEND, servicesCss, servicesCtaHtml } from '@/lib/report/guide-cta';
 import { planetOf, NUMBER_PLANET } from '@/lib/numerology/data/planets';
 import type { Narrative, NarrativeSection } from '@/lib/narrative/service';
 import { fontFaceCss } from './fonts';
@@ -438,8 +439,18 @@ function disclaimerPanel(lang: Lang, t: PdfTheme) {
   </div>`;
 }
 
+/** Services shown first ("Recommended for you") in the closing chapter, based on what this report covered. */
+function recommendFor(r: NumerologyResult): string[] {
+  const mods = r.modules ?? ['complete'];
+  const out = [...RECOMMEND.personal];
+  if (mods.includes('couple')) out.unshift('SVC_COUPLE');
+  if (mods.includes('mobile')) out.unshift('SVC_MOBILE_NUMBER');
+  if (mods.includes('name')) out.unshift('SVC_NAME_CORRECTION', 'SVC_SIGNATURE');
+  return [...new Set(out)].slice(0, 6);
+}
+
 // ---------- Body (TOC + chapters + closing) ----------
-export function buildBodyHtml(inp: TemplateInput, pages: Record<string, number> | null, qrSvg: string): { html: string; chapterIds: string[] } {
+export function buildBodyHtml(inp: TemplateInput, pages: Record<string, number> | null, qrSvg: string, qrs: { qrTelegram?: string; qrWebsite?: string } = {}): { html: string; chapterIds: string[] } {
   const { theme: t, branding: b, narrative } = inp;
   const lang: Lang = narrative.language === 'hi' ? 'hi' : 'en';
   const lab = labelsFor(narrative.language);
@@ -461,15 +472,17 @@ export function buildBodyHtml(inp: TemplateInput, pages: Record<string, number> 
       </div>
       <div class="panel center" style="flex:0 0 62mm;text-align:center"><div class="serif" style="font-size:12pt;margin-bottom:2mm">${esc(lab.book)}</div><div style="background:#fff;padding:2mm;border-radius:2mm;line-height:0">${qrSvg}</div><div class="small muted" style="margin-top:1.5mm">${esc(lab.scan)}</div></div>
     </div>
+    ${servicesCtaHtml({ lang, theme: t, branding: b, recommend: recommendFor(inp.result), qrTelegram: qrs.qrTelegram, qrWebsite: qrs.qrWebsite })}
     ${disclaimerPanel(lang, t)}
   </section>`;
 
   const ids = [...chapters.map((c) => c.id), 'closing'];
   const toc = `<section id="toc"><h2 class="ch-title" style="text-align:center;margin-top:8mm">${esc(lab.contents)}</h2><div class="center" style="margin:3mm 0 8mm">${divider(t, 200)}</div>
     ${ids.map((id, i) => `<div class="toc-row"><span class="n">${String(i + 1).padStart(2, '0')}</span><span class="t">${esc(lab.ch[id])}</span><span class="d"></span><span class="pg">${pages?.[id] ?? '00'}</span></div>`).join('')}
+    ${readingGuideHtml(lang, 'personal', t)}
     ${methodPanel(inp, lab, lang)}</section>`;
 
-  const html = `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${baseCss(t, lang)}@page{size:A4;margin:22mm 18mm 20mm}</style></head><body>
+  const html = `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${baseCss(t, lang)}${guideCss(t)}${servicesCss(t)}@page{size:A4;margin:22mm 18mm 20mm}</style></head><body>
     <div class="bgm">${mandala(150 * 3.78, t.accent, 1, 24)}</div>
     ${inp.watermark ? `<div class="watermark">${esc(inp.watermark)}</div>` : ''}
     ${toc}
