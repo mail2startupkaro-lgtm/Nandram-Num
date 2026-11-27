@@ -6,7 +6,7 @@ import { Crown, Download, Palette } from 'lucide-react';
 import { useApp } from '@/components/layout/providers';
 import { buttonVariants, Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/misc';
-import { api, download } from '@/lib/client/api';
+import { api, download, ApiError } from '@/lib/client/api';
 import { SecurityPanel } from '@/components/account/security-panel';
 import { FamilyPanel } from '@/components/account/family-panel';
 import { formatMoney } from '@/lib/billing/currency';
@@ -32,7 +32,33 @@ export default function AccountPage() {
   const hi = lang === 'hi';
   const W = (x: string) => (hi ? HI_WORDS[x] ?? x : x);
   const [d, setD] = React.useState<Data | null>(null);
-  React.useEffect(() => { api<Data>('/api/account').then(setD).catch(() => setD(null)); }, []);
+  const [err, setErr] = React.useState<'unauth' | 'error' | null>(null);
+  React.useEffect(() => {
+    api<Data>('/api/account')
+      .then((res) => { setD(res); setErr(null); })
+      .catch((e) => {
+        setD(null);
+        setErr(e instanceof ApiError && e.status === 401 ? 'unauth' : 'error');
+      });
+  }, []);
+  if (err === 'unauth') {
+    return (
+      <div className="container max-w-md py-16 text-center space-y-4">
+        <h1 className="font-serif text-2xl font-bold">{t.account.title}</h1>
+        <p className="text-sm text-muted-foreground">{hi ? 'अपना खाता देखने के लिए कृपया साइन इन करें।' : 'Please sign in to view your account.'}</p>
+        <Link href="/login" className={buttonVariants({ variant: 'gold' })}>{hi ? 'साइन इन करें' : 'Sign in'}</Link>
+      </div>
+    );
+  }
+  if (err === 'error') {
+    return (
+      <div className="container max-w-md py-16 text-center space-y-4">
+        <h1 className="font-serif text-2xl font-bold">{t.account.title}</h1>
+        <p className="text-sm text-danger">{t.err.server}</p>
+        <Button variant="outline" onClick={() => window.location.reload()}>{hi ? 'पुनः प्रयास करें' : 'Try again'}</Button>
+      </div>
+    );
+  }
   if (!d) return <div className="container py-12"><div className="h-40 animate-pulse rounded-lg bg-muted" /></div>;
   return (
     <div className="container max-w-4xl space-y-6 py-8 sm:py-12">
