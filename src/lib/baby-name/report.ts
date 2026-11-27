@@ -18,7 +18,8 @@ import type { Relation } from '@/lib/numerology/data/relations';
 import type { CompoundCategory } from '@/lib/numerology/data/tables';
 import { reportSheetCss } from '@/lib/mobile-advanced/report';
 import { guideCss, readingGuideHtml, servicesCss, servicesCtaHtml } from '@/lib/report/guide-cta';
-import type { BabyNameResult, EvaluatedName, LetterClass } from './analysis';
+import type { Advice, BabyNameResult, EvaluatedName, LetterClass, NickEval } from './analysis';
+import { SAFETY } from './remedies';
 import { styleLabel } from './world-names';
 import { CHILD_NATURE, checkText, L, LIFE_PATH, NAME_NUMBER_TEXT, relText, type Lab, type Lang } from './text';
 
@@ -90,6 +91,26 @@ function css(t: PdfTheme) {
   .dates .d{border:.8px solid ${t.good};border-radius:2.5mm;padding:2.2mm 1.5mm;text-align:center;background:${t.good}0d;break-inside:avoid}
   .dates .d b{display:block;font-family:'Playfair Display',serif;font-size:11pt;color:${t.primary}}
   .dates .d span{font-size:7.6pt;color:${t.muted}}
+  .cur{display:grid;grid-template-columns:1fr auto;gap:4mm;align-items:center;border:1px solid ${t.accent}66;border-radius:3.5mm;padding:3.5mm 4.5mm;background:${t.paper};margin-bottom:3mm;break-inside:avoid}
+  .cur .nmc{font-size:17pt}
+  .cmp{display:grid;grid-template-columns:1fr 9mm 1fr;align-items:center;gap:2mm;margin:2mm 0 3mm;break-inside:avoid}
+  .cmp .side{border:1px solid ${t.border}88;border-radius:3mm;padding:2.6mm 3mm;text-align:center;background:#fff}
+  .cmp .side.new{border:1.4px solid ${t.good};background:${t.good}0d}
+  .cmp .side .k{font-size:7pt;letter-spacing:.14em;text-transform:uppercase;color:${t.accent};font-weight:600}
+  .cmp .side .nmc{font-size:14pt;margin:.8mm 0}
+  .cmp .arr{font-size:16pt;color:${t.accent};text-align:center}
+  .pair{display:grid;grid-template-columns:1fr 26mm 1fr;align-items:center;gap:3mm;margin:1mm 0 3mm;break-inside:avoid}
+  .pair .side{border:1px solid ${t.accent}77;border-radius:3.5mm;padding:3mm;text-align:center;background:linear-gradient(180deg,${t.soft},#fff)}
+  .pair .side .k{font-size:7pt;letter-spacing:.14em;text-transform:uppercase;color:${t.accent};font-weight:600}
+  .pair .side .nmc{font-size:16pt;margin:1mm 0 .5mm}
+  .pair .link{text-align:center;font-size:7.6pt;color:${t.muted}}
+  .pair .link b{display:block;font-size:20pt;color:${t.accent};line-height:1}
+  .quick{display:grid;grid-template-columns:1fr 1fr;gap:3mm;margin:3mm 0 0}
+  .quick .q{border:1px solid ${t.border}88;border-radius:3mm;padding:2.2mm 3mm;background:${t.paper};font-size:8.6pt;break-inside:avoid}
+  .quick .q .k{font-size:7pt;letter-spacing:.14em;text-transform:uppercase;color:${t.accent};font-weight:600;margin-bottom:.6mm}
+  .grow{display:grid;grid-template-columns:repeat(3,1fr);gap:3mm;margin:1mm 0 3mm}
+  .grow .box{margin:0}
+  :lang(hi) .cmp .side .k,:lang(hi) .pair .side .k,:lang(hi) .quick .q .k{letter-spacing:0;text-transform:none}
   :lang(hi) .lg .k,:lang(hi) .tw b.h{letter-spacing:0;text-transform:none}
   `;
 }
@@ -100,6 +121,7 @@ const catPill = (c: CompoundCategory, l: Lab) => `<span class="pill ${c === 'fav
 const clsPill = (c: LetterClass, l: Lab) => `<span class="pill ${c === 'lucky' ? 'positive' : c === 'avoid' ? 'bad' : 'neutral'}">${esc(l.cls[c])}</span>`;
 const chips = (xs: (number | string)[], kind: 'good' | 'bad' | 'neu' | 'warn', l: Lab) => `<div class="chips">${xs.length ? xs.map((x) => `<span class="chip ${kind}">${esc(x)}</span>`).join('') : `<span class="small muted">${esc(l.none)}</span>`}</div>`;
 const vPill = (e: EvaluatedName, l: Lab) => `<span class="pill ${e.verdict === 'excellent' || e.verdict === 'good' ? 'positive' : e.verdict === 'average' ? 'neutral' : 'watch'}">${esc(l.verdict[e.verdict])}</span>`;
+const srcOf = (e: EvaluatedName, l: Lab) => (e.tag === 'current' ? l.cur.formal : e.tag === 'corrected' ? l.cur.corrected : e.source === 'family' ? l.fromFamily : l.fromBank);
 const meaningOf = (e: EvaluatedName, lang: Lang) => (e.bank ? (lang === 'hi' ? e.bank.hm : e.bank.en) : '');
 /** Devanagari spellings help Indian families; an English report for a family abroad shows the Latin spelling only. */
 const showDevanagari = (r: BabyNameResult, lang: Lang) => lang === 'hi' || r.nameStyle.style === 'indian' || r.nameStyle.mix;
@@ -145,13 +167,24 @@ export function buildBabyReportHtml(r: BabyNameResult, t: PdfTheme, b: Branding,
 
   // Section list (numbered in order; optional ones drop out).
   const plan: { key: keyof Lab['sec']; on: boolean }[] = [
-    { key: 'birth', on: true }, { key: 'blueprint', on: true }, { key: 'ranking', on: true }, { key: 'top', on: true },
-    { key: 'runners', on: runners.length > 0 }, { key: 'family', on: hasParents }, { key: 'bank', on: bankList.length > 0 }, { key: 'ceremony', on: true }, { key: 'about', on: true },
+    { key: 'birth', on: true }, { key: 'blueprint', on: true }, { key: 'current', on: !!(r.current || r.nickname?.current) }, { key: 'ranking', on: true }, { key: 'top', on: true },
+    { key: 'runners', on: runners.length > 0 }, { key: 'nickname', on: !!r.nickname }, { key: 'family', on: hasParents }, { key: 'bank', on: bankList.length > 0 },
+    { key: 'remedies', on: true }, { key: 'ceremony', on: true }, { key: 'about', on: true },
   ];
   const active = plan.filter((x) => x.on).map((x) => x.key);
   const no = (k: keyof Lab['sec']) => active.indexOf(k) + 1;
   const parentsLine = [r.parents.father?.name, r.parents.mother?.name].filter(Boolean).join(' & ');
   const genderText = r.client.gender === 'boy' ? l.boy : r.client.gender === 'girl' ? l.girl : l.any;
+
+  const advTitle = (a: Advice) => (a === 'keep' ? l.cur.keepH : a === 'spelling' ? l.cur.spellingH : l.cur.changeH);
+  const nickRec = r.nickname?.recommended ?? null;
+  const quickItems: string[] = [];
+  if (r.current && r.correction) quickItems.push(`<div class="q"><div class="k">${esc(l.cur.formal)}</div><b>${esc(r.current.first)}</b> · ${r.current.score}/100 → <b>${esc(advTitle(r.correction.advice))}</b>${r.correction.advice !== 'keep' ? `: <b style="color:${t.good}">${esc(r.correction.recommended.first)}</b> (${r.correction.recommended.score})` : ''}</div>`);
+  if (nickRec) quickItems.push(`<div class="q"><div class="k">${esc(r.nickname?.current ? l.cur.nick : l.nick.recommendedNick)}</div>${r.nickname?.current && r.nickname.advice ? `<b>${esc(r.nickname.current.name)}</b> · ${r.nickname.current.score}/100 → <b>${esc(advTitle(r.nickname.advice))}</b>${r.nickname.advice !== 'keep' ? `: <b style="color:${t.good}">${esc(nickRec.name)}</b> (${nickRec.score})` : ''}` : `<b>${esc(nickRec.name)}</b> · ${nn(nickRec.num)} · ${nickRec.score}/100 · ${esc(l.nick.with)} ${esc(best.first)}: ${esc(relText(nickRec.relFormal, l))}`}</div>`);
+  // Already named: say plainly how the recommendation relates to the current name and whether a new name would score higher.
+  const higher = r.correction ? r.ranked.find((x) => x !== r.correction!.recommended && x !== r.current && x.score > r.correction!.recommended.score + 5) : undefined;
+  const curNote = r.current && r.correction ? ` ${l.letterCur(r.correction.advice, r.current.first, r.correction.recommended.first, higher ? `${higher.first} (${higher.score})` : '')}` : '';
+  const quick = quickItems.length ? `<div class="quick" style="${quickItems.length === 1 ? 'grid-template-columns:1fr' : ''}">${quickItems.join('')}</div>` : '';
 
   // ---------- Summary ----------
   const meta: [string, string][] = [
@@ -172,9 +205,10 @@ export function buildBabyReportHtml(r: BabyNameResult, t: PdfTheme, b: Branding,
       </div></div></div>
   <div class="kicker" style="margin-top:3mm">${esc(l.topPicks)}</div>
   <div class="podium">${r.top.map(pod).join('')}</div>
-  <div class="letter"><div class="sal">${esc(l.dear(fam))}</div>${esc(l.letter({ name: best.full, score: best.score, b: c.bhagyank.value, m: c.moolank.value, n: mainNum(best).single, fam: hasParents ? 'y' : null }))}<div class="sgn">${esc(expert)}</div></div>
+  ${quick}
+  <div class="letter"><div class="sal">${esc(l.dear(fam))}</div>${esc(l.letter({ name: best.full, score: best.score, b: c.bhagyank.value, m: c.moolank.value, n: mainNum(best).single, fam: hasParents ? 'y' : null }))}${curNote}<div class="sgn">${esc(expert)}</div></div>
   <div class="kicker" style="margin-top:4mm">${esc(l.inside)}</div>
-  <ol class="toc">${active.map((k, i) => `<li><b>${i + 1}</b><span>${esc(l.sec[k])}</span></li>`).join('')}</ol>
+  <ol class="toc" style="${active.length > 9 ? 'columns:3;font-size:8.4pt' : ''}">${active.map((k, i) => `<li><b>${i + 1}</b><span>${esc(l.sec[k])}</span></li>`).join('')}</ol>
   ${readingGuideHtml(lang, 'baby', t)}`;
 
   // ---------- Birth numbers ----------
@@ -214,7 +248,7 @@ export function buildBabyReportHtml(r: BabyNameResult, t: PdfTheme, b: Branding,
     <td><span class="nmc">${esc(e.first)}${hiName(e) ? ` <small>${esc(hiName(e))}</small>` : ''}</span></td><td class="small">${esc(meaningOf(e, lang)) || '–'}</td>
     <td>${nn(e.firstNum)}</td><td>${e.fullNum ? `${nn(e.fullNum)} ${catPill(e.fullNum.category, l)}` : catPill(e.firstNum.category, l)}</td>
     <td>${esc(e.initial.letter)} ${clsPill(e.initial.cls, l)}</td><td><span class="scb" style="color:${scoreColour(e.score, t)}">${e.score}</span></td>
-    <td class="small">${esc(e.source === 'family' ? l.fromFamily : l.fromBank)}${e.matchesLetters && r.prefLetters.length ? ` · ${esc(l.prefMark)}` : ''}</td></tr>`).join('');
+    <td class="small">${esc(srcOf(e, l))}${e.matchesLetters && r.prefLetters.length ? ` · ${esc(l.prefMark)}` : ''}</td></tr>`).join('');
   const sRank = `<section class="page">${secHead(no('ranking'), l.sec.ranking)}<p class="intro">${esc(l.secD.ranking)}</p>
     <table class="ftab flow"><thead><tr><th>${l.rank}</th><th>${esc(l.name)}</th><th>${esc(l.meaning)}</th><th>${esc(l.firstN)}</th><th>${esc(r.client.surname ? l.fullN : l.compound)}</th><th>${esc(l.initial)}</th><th>${esc(l.score)}</th><th>${esc(l.source)}</th></tr></thead><tbody>${rows}</tbody></table>
     ${r.invalid.length ? `<p class="small muted" style="margin-top:1.5mm">${esc(lang === 'hi' ? 'जाँच नहीं हुई (अंग्रेज़ी अक्षरों में लिखें)' : 'Not checked (write in English letters)')}: ${esc(r.invalid.join(', '))}</p>` : ''}
@@ -240,13 +274,13 @@ export function buildBabyReportHtml(r: BabyNameResult, t: PdfTheme, b: Branding,
       <tr><td>${esc(l.vowel)}</td>${best.letters.map((x) => `<td>${x.vowel ? '●' : ''}</td>`).join('')}<td>${best.soul}</td></tr>
     </tbody></table>
     <h3 class="sub">${esc(l.checklist)}</h3><div class="chkgrid">${checklist(best, l, lang)}</div>
-    ${tweakList(best, l, lang, t)}
+    ${best.tag === 'corrected' ? '' : tweakList(best, l, lang, t)}
   </section>`;
 
   // ---------- Runners-up ----------
   const runnerCard = (e: EvaluatedName, i: number) => {
     const m = mainNum(e);
-    return `<div class="runner"><div class="hd"><div><span class="kicker">${i + 2} · ${esc(e.source === 'family' ? l.fromFamily : l.fromBank)}</span><div class="nmc">${esc(e.full)}${hiName(e) ? ` <small style="display:inline;font-size:10pt">${esc(hiName(e))}</small>` : ''}</div>${meaningOf(e, lang) ? `<div class="small muted">${esc(meaningOf(e, lang))}</div>` : ''}</div>
+    return `<div class="runner"><div class="hd"><div><span class="kicker">${i + 2} · ${esc(srcOf(e, l))}</span><div class="nmc">${esc(e.full)}${hiName(e) ? ` <small style="display:inline;font-size:10pt">${esc(hiName(e))}</small>` : ''}</div>${meaningOf(e, lang) ? `<div class="small muted">${esc(meaningOf(e, lang))}</div>` : ''}</div>
       <div class="center">${ringSvg(e.score, t, l.score, 70)}</div></div>
       <div class="three" style="margin:1mm 0 2mm"><div class="stat"><div class="k">${esc(l.firstN)} · ${esc(e.fullNum ? l.fullN : l.compound)}</div><div class="v" style="font-size:14pt">${nn(e.firstNum)}${e.fullNum ? ` · ${nn(e.fullNum)}` : ''}</div><div class="s">${catPill(m.category, l)} ${esc(T(e.planet))}</div></div>
         <div class="stat"><div class="k">${esc(l.bhagyank)} · ${esc(l.moolank)}</div><div class="v" style="font-size:12pt">${relPill(e.relB, l)} ${relPill(e.relM, l)}</div></div>
@@ -296,6 +330,84 @@ export function buildBabyReportHtml(r: BabyNameResult, t: PdfTheme, b: Branding,
     <div class="close"><div class="q">“${esc(l.closing)}”</div><div class="sgn">${b.signatureDataUrl ? `<img src="${esc(b.signatureDataUrl)}" style="max-height:14mm;display:block;margin:0 auto -10mm">` : ''}<div class="ln">${esc(expert)}<br><span class="muted">${esc(b.brandName)}</span></div></div></div>
   </section>`;
 
+
+  // ---------- Current name: check and correction ----------
+  const issues = (checks: EvaluatedName['checks']) => checks.filter((ck) => ck.status !== 'pass').map((ck) => { const x = checkText(ck, l, lang); return `<li><b>${esc(x.title)}:</b> ${esc(x.detail)}</li>`; }).join('');
+  const goods = (checks: EvaluatedName['checks']) => checks.filter((ck) => ck.status === 'pass').map((ck) => `<li>${esc(checkText(ck, l, lang).title)}</li>`).join('');
+  const advClass = (a: Advice) => (a === 'keep' ? 'strength' : a === 'spelling' ? 'advice' : 'watch');
+  const nickTiles = (n: NickEval) => `<div class="tiles">${n.letters.map((x) => `<span class="tl${x.vowel ? ' v' : ''}"><b>${esc(x.letter)}</b><i>${x.ch}</i></span>`).join('')}</div>`;
+  let sCur = '';
+  if (r.current || r.nickname?.current) {
+    const cu = r.current, co = r.correction;
+    const formalPart = cu && co ? `
+      <div class="cur"><div><span class="kicker">${esc(l.cur.formal)}</span><div class="nmc">${esc(cu.full)}</div>
+        <div class="small muted">${esc(l.firstN)} ${nn(cu.firstNum)}${cu.fullNum ? ` · ${esc(l.fullN)} ${nn(cu.fullNum)}` : ''} · ${esc(T(cu.planet))} · ${vPill(cu, l)}</div>
+        <div style="margin-top:2mm">${tiles(cu)}</div></div>
+        <div class="center">${ringSvg(cu.score, t, l.score, 92)}</div></div>
+      <div class="box ${advClass(co.advice)}"><div class="bt">${esc(advTitle(co.advice))}</div><p>${esc(co.advice === 'keep' ? l.cur.keep(cu.first, cu.score) : co.advice === 'spelling' ? l.cur.spelling(cu.first, cu.score, co.recommended.first, co.recommended.score) : l.cur.change(cu.first, cu.score, co.recommended.first))}</p></div>
+      <div class="two" style="margin-top:3mm">
+        <div><h3 class="sub" style="margin-top:0">${esc(l.cur.issues)}</h3>${issues(cu.checks) ? `<ul class="lst">${issues(cu.checks)}</ul>` : `<p class="small muted">${esc(l.none)}</p>`}</div>
+        <div><h3 class="sub" style="margin-top:0">${esc(l.cur.good)}</h3><ul class="lst">${goods(cu.checks) || `<li>${esc(l.none)}</li>`}</ul></div></div>
+      ${co.advice !== 'keep' && co.recommended !== cu ? `<div class="cmp">
+        <div class="side"><div class="k">${esc(l.cur.formal)}</div><div class="nmc">${esc(cu.full)}</div><div class="small">${nn(mainNum(cu))} · <b style="color:${scoreColour(cu.score, t)}">${cu.score}</b>/100</div></div>
+        <div class="arr">→</div>
+        <div class="side new"><div class="k">${esc(co.advice === 'spelling' ? l.cur.corrected : l.recommended)}</div><div class="nmc">${esc(co.recommended.full)}</div><div class="small">${nn(mainNum(co.recommended))} · <b style="color:${scoreColour(co.recommended.score, t)}">${co.recommended.score}</b>/100 · ${esc(l.verdict[co.recommended.verdict])}</div></div></div>` : ''}
+      ${cu.tweaks.length > 1 ? tweakList(cu, l, lang, t) : ''}
+      ${co.advice === 'change' && co.sameLetter.length ? `<h3 class="sub">${esc(l.cur.sameSound)}</h3><table class="ftab"><thead><tr><th>${esc(l.name)}</th><th>${esc(l.meaning)}</th><th>${esc(r.client.surname ? l.fullN : l.compound)}</th><th>${esc(l.score)}</th></tr></thead><tbody>
+        ${co.sameLetter.map((e) => `<tr><td><span class="nmc">${esc(e.first)}${hiName(e) ? ` <small>${esc(hiName(e))}</small>` : ''}</span></td><td class="small">${esc(meaningOf(e, lang)) || '–'}</td><td>${nn(mainNum(e))}</td><td><span class="scb" style="color:${scoreColour(e.score, t)}">${e.score}</span></td></tr>`).join('')}</tbody></table>` : ''}
+      ${co.advice !== 'keep' ? `<div class="box remedy" style="margin-top:3mm"><div class="bt">${esc(l.cur.applyH)}</div><ul class="lst" style="margin-top:1mm">${l.cur.apply.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>` : ''}` : '';
+    const nk = r.nickname, nc = nk?.current;
+    const nickPart = nk && nc && nk.advice ? `<div style="break-inside:avoid">
+      <div class="cur" style="margin-top:4mm"><div><span class="kicker">${esc(l.cur.nick)}</span><div class="nmc">${esc(nc.name)}</div>
+        <div class="small muted">${nn(nc.num)} · ${esc(T(nc.planet))} · ${esc(l.nick.with)}: ${relPill(nc.relFormal, l)} ${vPill(nc as unknown as EvaluatedName, l)}</div></div>
+        <div class="center">${ringSvg(nc.score, t, l.score, 80)}</div></div>
+      <div class="box ${advClass(nk.advice)}"><div class="bt">${esc(nk.advice === 'change' ? l.cur.nchangeH : advTitle(nk.advice))}</div><p>${esc(nk.advice === 'keep' ? l.cur.nkeep(nc.name, nc.score) : nk.advice === 'spelling' ? l.cur.nspelling(nc.name, nc.score, nk.recommended!.name, nk.recommended!.score) : l.cur.nchange(nc.name, nc.score, nk.recommended?.name ?? '–'))}</p></div>
+      ${issues(nc.checks) ? `<ul class="lst" style="margin-top:2mm">${issues(nc.checks)}</ul>` : ''}</div>` : '';
+    sCur = `<section class="page">${secHead(no('current'), l.sec.current)}<p class="intro">${esc(l.secD.current)}</p>${formalPart}${nickPart}</section>`;
+  }
+
+  // ---------- Formal name and nickname ----------
+  let sNick = '';
+  if (r.nickname) {
+    const nk = r.nickname, rec = nk.recommended;
+    const petMeaning = (n: NickEval) => (n.pet ? (lang === 'hi' ? n.pet.hm : n.pet.en) : n.source === 'short' ? `${l.nick.short} (${best.first})` : '');
+    const petHi = (n: NickEval) => (n.pet?.hi && showDevanagari(r, lang) ? n.pet.hi : '');
+    const srcText = (n: NickEval) => (n.source === 'short' ? l.nick.short : n.source === 'pet' ? l.nick.pet : n.source === 'current' ? l.cur.nick : l.cur.corrected);
+    sNick = `<section class="page">${secHead(no('nickname'), l.sec.nickname)}<p class="intro">${esc(l.secD.nickname)}</p>
+      ${rec ? `<div class="pair">
+        <div class="side"><div class="k">${esc(l.nick.formalH)}</div><div class="nmc">${esc(best.full)}</div><div class="small">${nn(mainNum(best))} · ${esc(T(best.planet))}</div><div style="margin-top:1mm">${vPill(best, l)}</div></div>
+        <div class="link"><b>⟷</b>${esc(l.nick.harmony)}<div style="margin-top:1mm">${relPill(rec.relFormal, l)}</div></div>
+        <div class="side"><div class="k">${esc(l.nick.nickH)}</div><div class="nmc">${esc(rec.name)}${petHi(rec) ? ` <small style="display:inline;font-size:10pt">${esc(petHi(rec))}</small>` : ''}</div><div class="small">${nn(rec.num)} · ${esc(T(rec.planet))} · <b style="color:${scoreColour(rec.score, t)}">${rec.score}</b>/100</div><div style="margin-top:1mm">${vPill(rec as unknown as EvaluatedName, l)}</div></div></div>
+      <div class="numcard"><span class="tag">${esc(l.nick.recommendedNick)}</span>${nickTiles(rec)}
+        <div class="eqn">${esc(rec.name)}: ${rec.letters.map((x) => x.ch).join(' + ')} = <b>${rec.num.compound}</b> → <b>${rec.num.single}</b>${petMeaning(rec) ? ` · “${esc(petMeaning(rec))}”` : ''}</div></div>
+      <h3 class="sub">${esc(l.checklist)} – ${esc(rec.name)}</h3><div class="chkgrid">${checklist(rec as unknown as EvaluatedName, l, lang)}</div>` : `<p class="muted">${esc(l.nick.none)}</p>`}
+      ${nk.suggestions.length ? `<div style="break-inside:avoid"><h3 class="sub">${esc(l.nick.suggestH)}</h3><p class="intro" style="margin-bottom:1mm">${esc(l.nick.suggestD(best.full))}</p>
+      <table class="ftab"><thead><tr><th>${esc(l.name)}</th><th>${esc(l.meaning)}</th><th>${esc(l.compound)}</th><th>${esc(l.nick.with)}</th><th>${esc(l.score)}</th><th>${esc(l.verdictH)}</th></tr></thead><tbody>
+      ${nk.suggestions.map((n, i) => `<tr class="rk-row${n === rec ? ' top' : ''}"><td><span class="nmc">${esc(n.name)}${i === 0 && n === rec ? ' <span class="star">★</span>' : ''}${petHi(n) ? ` <small>${esc(petHi(n))}</small>` : ''}</span></td><td class="small">${esc(petMeaning(n) || srcText(n))}</td><td>${nn(n.num)}</td><td>${relPill(n.relFormal, l)}</td><td><span class="scb" style="color:${scoreColour(n.score, t)}">${n.score}</span></td><td>${vPill(n as unknown as EvaluatedName, l)}</td></tr>`).join('')}
+      </tbody></table></div>` : ''}
+      <div class="box advice" style="margin-top:4mm"><div class="bt">${esc(l.nick.tipsH)}</div><ul class="lst" style="margin-top:1mm">${l.nick.tips.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>
+    </section>`;
+  }
+
+  // ---------- Remedies for the child's development ----------
+  const rm = r.remedies;
+  const vedic = !foreign(r) || r.nameStyle.mix;
+  const sRem = `<section class="page">${secHead(no('remedies'), l.sec.remedies)}<p class="intro">${esc(l.secD.remedies)}</p>
+    <h3 class="sub" style="margin-top:1mm">${esc(l.rem.growthH)} – ${esc(l.moolank)} ${c.moolank.value}</h3>
+    <div class="grow">
+      <div class="box strength"><div class="bt">${esc(l.rem.health)}</div><p>${esc(rm.growth.health[lang])}</p></div>
+      <div class="box advice"><div class="bt">${esc(l.rem.learning)}</div><p>${esc(rm.growth.learning[lang])}</p></div>
+      <div class="box remedy"><div class="bt">${esc(l.rem.emotion)}</div><p>${esc(rm.growth.emotion[lang])}</p></div></div>
+    <h3 class="sub">${esc(l.rem.missingH)}</h3>
+    ${rm.missing.length ? `<table class="ftab"><thead><tr><th>#</th><th>${esc(l.rem.area)}</th><th>${esc(l.rem.activity)}</th><th>${esc(l.rem.home)}</th></tr></thead><tbody>
+      ${rm.missing.map((x) => `<tr><td class="big">${x.n}</td><td><b>${esc(x.area[lang])}</b></td><td class="small">${esc(x.activity[lang])}</td><td class="small">${esc(x.home[lang])}</td></tr>`).join('')}</tbody></table>` : `<p class="small muted">${esc(l.rem.noMissing)}</p>`}
+    <h3 class="sub">${esc(vedic ? l.rem.planetsH : l.rem.colourDay)}</h3>
+    <table class="ftab"><thead><tr><th>${esc(l.planet)}</th><th>${esc(l.rem.day)}</th><th>${esc(l.colours)}</th>${vedic ? `<th>${esc(l.rem.daan)}</th><th>${esc(l.rem.practice)}</th>` : ''}</tr></thead><tbody>
+      ${rm.planets.map((p) => `<tr><td><b>${esc(T(p.planet))}</b> <span class="small muted">(${p.n === c.moolank.value ? esc(l.moolank) : ''}${p.n === c.moolank.value && p.n === c.bhagyank.value ? ' · ' : ''}${p.n === c.bhagyank.value ? esc(l.bhagyank) : ''} ${p.n})</span></td><td>${esc(T(p.weekday))}</td><td>${p.colours.slice(0, 3).map(sw).join('')}</td>${vedic ? `<td class="small">${esc(p.daan[lang])}</td><td class="small">${esc(p.practice[lang])}${p.mantra ? ` <span class="muted">· ${esc(l.rem.mantra)}: ${esc(p.mantra)}</span>` : ''}</td>` : ''}</tr>`).join('')}
+    </tbody></table>
+    <div class="box watch" style="margin-top:4mm"><div class="bt">${esc(l.rem.safetyH)}</div><ul class="lst" style="margin-top:1mm">${SAFETY.map((x) => `<li>${esc(x[lang])}</li>`).join('')}</ul></div>
+  </section>`;
+
   // ---------- About + services CTA ----------
   const photo = b.photoDataUrl ? `<img src="${esc(b.photoDataUrl)}" alt="">` : monogram(b.expertName, t, 140);
   const bio = contact.bio?.trim() || (isHouseExpert ? l.bioDefault(b.expertName) : l.bioOther(b.expertName));
@@ -312,7 +424,7 @@ export function buildBabyReportHtml(r: BabyNameResult, t: PdfTheme, b: Branding,
     </div>
     <p class="disc">${esc(l.disclaimer)} <b>${esc(l.madeLine(expert))}.</b></p></section>`;
 
-  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${baseCss(t, lang)}${css(t)}${guideCss(t)}${servicesCss(t)}</style></head><body>${summary}${sBirth}${sBlue}${sRank}${sTop}${sRun}${sFam}${sBank}${sCer}${sAbout}</body></html>`;
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${baseCss(t, lang)}${css(t)}${guideCss(t)}${servicesCss(t)}</style></head><body>${summary}${sBirth}${sBlue}${sCur}${sRank}${sTop}${sRun}${sNick}${sFam}${sBank}${sRem}${sCer}${sAbout}</body></html>`;
 }
 
 /** Full-page cover – same design family as the signature and mobile report covers, with the recommended name as letter tiles. */
@@ -382,7 +494,8 @@ export function buildBabyCoverHtml(r: BabyNameResult, t: PdfTheme, b: Branding, 
     <div class="pf"><div class="k">${esc(l.preparedFor)}</div><div class="n">${esc(l.babyOf(fam))}</div>
       <div class="facts">${facts.map(([k, v]) => `<div><span>${esc(k)}</span>${esc(v)}</div>`).join('')}</div></div>
     <div class="sg"><div class="dg">${best.letters.map((x) => `<i>${esc(x.letter)}<small>${x.ch}</small></i>`).join('')}</div>
-      <div class="nb">${esc(best.full)}${best.bank && showDevanagari(r, o.lang) ? ` · ${esc(best.bank.hi)}` : ''} · ${nn(mainNum(best))}</div><span class="l">${esc(l.recommended)}</span></div>
+      <div class="nb">${esc(best.full)}${best.bank && showDevanagari(r, o.lang) ? ` · ${esc(best.bank.hi)}` : ''} · ${nn(mainNum(best))}</div><span class="l">${esc(l.recommended)}</span>
+      ${r.nickname?.recommended ? `<div class="nb" style="margin-top:1.6mm;border-top:.6px solid #e3d3a8;padding-top:1.4mm">${esc(r.nickname.recommended.name)} · ${nn(r.nickname.recommended.num)}</div><span class="l">${esc(l.nick.recommendedNick)}</span>` : ''}</div>
     <div class="ex">${photo}<div><div class="lab">${esc(l.by)}</div><div class="nm">${esc(o.preparedBy || b.expertName)}</div><div class="ti">${esc(b.expertTitle ?? '')}</div>
       ${house ? `<div class="yr">${esc(l.years)}</div>` : ''}
       <div class="ct">${[contact.telegram ? `Telegram ${esc(contact.telegram)}` : '', site ? esc(site) : ''].filter(Boolean).join('  ·  ')}</div></div></div>

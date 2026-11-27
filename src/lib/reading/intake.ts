@@ -88,5 +88,7 @@ export function missingIntake(fields: ServiceIntakeField[], d: Record<string, st
 export function cleanIntake(fields: ServiceIntakeField[], d: Record<string, string>): Record<string, string> {
   const res = Object.fromEntries(fields.map((k) => [k, (d[k] ?? '').trim()]).filter(([, v]) => v));
   if (d.country && d.country.trim()) res.country = d.country.trim();
+  // Baby Name extras (sent only by the baby form): current name and Formal / Nickname / Both.
+  for (const k of ['babyName', 'nameType'] as const) if (d[k]?.trim()) res[k] = d[k].trim();
   return res;
 }

@@ -461,3 +461,65 @@ export const serviceOrders = pgTable('service_orders', {
 }, (t) => ({ statusIdx: index('service_orders_status_idx').on(t.status, t.createdAt), userIdx: index('service_orders_user_idx').on(t.userId) }));
 export type Service = typeof services.$inferSelect;
 export type ServiceOrder = typeof serviceOrders.$inferSelect;
+
+/**
+ * Affiliate program. Affiliates are customers who promote the services with a link (?ref=CODE) or their coupon code and
+ * earn a commission on paid orders. These tables are also created on first use (see lib/affiliate/store.ts), so the
+ * site keeps working before `db:migrate` is run. Payout details (UPI / bank) are stored encrypted.
+ */
+export const affiliates = pgTable('affiliates', {
+  id: id(),
+  userId: text('user_id').notNull().unique().references(() => users.id, { onDelete: 'cascade' }),
+  code: varchar('code', { length: 20 }).notNull().unique(),
+  status: varchar('status', { length: 12 }).notNull().default('pending'), // pending | approved | rejected | suspended
+  name: text('name'),
+  phone: varchar('phone', { length: 20 }),
+  channel: text('channel'),
+  audience: varchar('audience', { length: 40 }),
+  promotion: text('promotion'),
+  payoutMethod: varchar('payout_method', { length: 10 }),
+  payoutEnc: text('payout_enc'),
+  commissionPercent: integer('commission_percent'),
+  adminNote: text('admin_note'),
+  approvedAt: timestamp('approved_at', { withTimezone: true }),
+  createdAt: created(),
+  updatedAt: updated(),
+});
+
+export const affiliateClicks = pgTable('affiliate_clicks', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()::text`),
+  affiliateId: text('affiliate_id').notNull().references(() => affiliates.id, { onDelete: 'cascade' }),
+  path: varchar('path', { length: 200 }),
+  createdAt: created(),
+}, (t) => ({ aff: index('affiliate_clicks_aff_idx').on(t.affiliateId, t.createdAt) }));
+
+export const affiliateCommissions = pgTable('affiliate_commissions', {
+  id: id(),
+  affiliateId: text('affiliate_id').notNull().references(() => affiliates.id, { onDelete: 'cascade' }),
+  paymentId: text('payment_id').notNull().unique().references(() => payments.id, { onDelete: 'cascade' }),
+  buyerUserId: text('buyer_user_id'),
+  planCode: varchar('plan_code', { length: 30 }).notNull(),
+  source: varchar('source', { length: 10 }).notNull(), // link | coupon
+  currency: varchar('currency', { length: 3 }).notNull().default('INR'),
+  salePaise: integer('sale_paise').notNull(), // order value excluding GST, after discount
+  ratePercent: integer('rate_percent').notNull(),
+  commissionPaise: integer('commission_paise').notNull(),
+  status: varchar('status', { length: 12 }).notNull().default('awaiting'), // awaiting (order not paid) | pending | paid | cancelled
+  earnedAt: timestamp('earned_at', { withTimezone: true }),
+  paidAt: timestamp('paid_at', { withTimezone: true }),
+  payoutId: text('payout_id'),
+  createdAt: created(),
+}, (t) => ({ aff: index('affiliate_commissions_aff_idx').on(t.affiliateId, t.status) }));
+
+export const affiliatePayouts = pgTable('affiliate_payouts', {
+  id: id(),
+  affiliateId: text('affiliate_id').notNull().references(() => affiliates.id, { onDelete: 'cascade' }),
+  currency: varchar('currency', { length: 3 }).notNull().default('INR'),
+  amountPaise: integer('amount_paise').notNull(),
+  method: varchar('method', { length: 20 }),
+  reference: varchar('reference', { length: 80 }),
+  note: text('note'),
+  createdAt: created(),
+}, (t) => ({ aff: index('affiliate_payouts_aff_idx').on(t.affiliateId, t.createdAt) }));
+export type Affiliate = typeof affiliates.$inferSelect;
+export type AffiliateCommission = typeof affiliateCommissions.$inferSelect;

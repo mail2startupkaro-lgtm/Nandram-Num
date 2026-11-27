@@ -17,9 +17,15 @@ const en = {
   dear: (s: string) => (s ? `Dear ${s} family,` : 'Dear parents,'),
   letter: (o: { name: string; score: number; b: number; m: number; n: number; fam: string | null }) =>
     `Congratulations on your little one. I have checked every name against your baby's date of birth – Moolank ${o.m} and Bhagyank ${o.b} – using the Chaldean letter values, the compound number, the first letter, the soul urge, the Lo Shu grid${o.fam ? ' and both parents’ names' : ''}. The name that suits your baby best is ${o.name}, with a score of ${o.score} out of 100. Its number ${o.n} supports the path your baby is born with. On the next pages you will find why, how the other names compare, the lucky letters and numbers, small spelling changes that improve a name without changing its sound, and good dates for the naming ceremony.`,
+  letterCur: (a: 'keep' | 'spelling' | 'change', cur: string, rec: string, alt: string) =>
+    (a === 'keep' ? `Your baby is already called ${cur}, and the name suits the numbers well, so I recommend keeping it.`
+      : a === 'spelling' ? `Your baby is already called ${cur}; I have kept the same sound and corrected the spelling to ${rec}.`
+        : `The current name ${cur} does not suit the birth numbers, so I suggest ${rec} if a new name is possible.`)
+    + (alt && a !== 'change' ? ` If you are open to a completely new name, ${alt} scores higher.` : ''),
   sec: {
     birth: 'Your baby’s birth numbers', blueprint: 'Lucky name blueprint', ranking: 'All names compared', top: 'The recommended name in depth',
     runners: 'Second and third choices', family: 'Family name harmony', bank: 'More names that suit your baby', ceremony: 'Naming ceremony and guidance', about: 'About your numerologist',
+    current: 'Your baby’s current name – check and correction', nickname: 'Formal name and nickname', remedies: 'Remedies for your child’s development',
   },
   secD: {
     birth: 'Every name is checked against two numbers from the date of birth: the Moolank (from the day) shapes nature and habits, and the Bhagyank (from the full date) shows the path of life. A good name is a friend of both.',
@@ -30,6 +36,9 @@ const en = {
     family: 'A child’s name sits best in the family when its number is friendly with the parents’ name numbers. This page shows how each top name sits with mother and father.',
     bank: 'From my list of meaningful Indian names, these suit your baby’s date of birth' ,
     ceremony: 'Good dates to name your baby, colours and days that support the child, and simple tips for using the name.',
+    current: 'Your baby already has a name. Here I check it with the same method as every other name and tell you plainly whether to keep it, correct its spelling, or choose a new name.',
+    nickname: 'The formal name goes on the birth certificate and school records. The nickname is the name your child hears many times every day at home, so its sound works on the child daily. Both should be friends of the birth numbers and of each other.',
+    remedies: 'Simple, safe practices chosen from your baby’s numbers to support health, learning and a happy, confident nature. Small daily habits work better than big one-time rituals.',
   },
   nature: 'Nature (from Moolank)', path: 'Life path (from Bhagyank)', mb: 'Moolank and Bhagyank',
   grid: 'Lo Shu grid from the date of birth', missing: 'Missing numbers', repeated: 'Repeated numbers', none: 'None',
@@ -53,7 +62,7 @@ const en = {
   colours: 'Lucky colours for the baby', luckyDay: 'Lucky day', mantra: 'Mantra for blessings', nursery: 'For the nursery (missing numbers)',
   useH: 'Using the name', useList: [
     'Write the name in the same spelling everywhere – this is the spelling that carries the number.',
-    'Call the child by the full first name at home as well; nicknames are fine but should not replace it on paper.',
+    'If you use a nickname at home, choose one whose number also suits the baby (see the nickname page); on paper always use the formal name.',
     'If you change a spelling, update it before the birth certificate is made – later changes need affidavits.',
   ],
   expertNote: 'Note from your numerologist', closing: 'A name is the first gift you give your child. May it bring health, wisdom and happiness all life long.',
@@ -67,6 +76,39 @@ const en = {
   whyBaby: 'For brothers and sisters, or a second opinion on the rashi letters.',
   whyReport: 'A full life report for your baby – nature, studies, health tips and lucky years.',
   whyName: 'Make the parents’ own names match their numbers too.',
+  cur: {
+    formal: 'Current formal name', nick: 'Current nickname', keepH: 'Keep this name', spellingH: 'Correct the spelling', changeH: 'A new name is better', nchangeH: 'A new nickname is better',
+    keep: (n: string, sc: number) => `${n} scores ${sc} out of 100 and suits your baby. Keep it – no change is needed.`,
+    spelling: (n: string, sc: number, c: string, cs: number) => `${n} scores ${sc}. A small spelling change keeps the same sound and lifts the score: ${c} scores ${cs}. Use ${c} on the birth certificate and all documents.`,
+    change: (n: string, sc: number, c: string) => `${n} scores ${sc} – its number is not friendly with your baby’s birth numbers, and no spelling change fixes it fully. If a new name is possible, ${c} is my recommendation; names with the same starting sound are listed below.`,
+    nkeep: (n: string, sc: number) => `The nickname ${n} scores ${sc} out of 100. It suits your baby – keep calling the child ${n}.`,
+    nspelling: (n: string, sc: number, c: string, cs: number) => `The nickname ${n} scores ${sc}. Written and said as ${c} it scores ${cs}, with almost the same sound.`,
+    nchange: (n: string, sc: number, c: string) => `The nickname ${n} scores ${sc} – its number clashes with the birth numbers or with the formal name. Slowly move to ${c} or another nickname from the list.`,
+    issues: 'What needs attention', good: 'What works well', corrected: 'Corrected spelling', sameSound: 'New names with the same starting sound',
+    applyH: 'How to make the change', apply: [
+      'Before the birth certificate is made: simply register the corrected spelling.',
+      'After it is made: the birth registrar can correct the name, usually with a request letter and the parents’ ID; later changes may need an affidavit or a gazette notice. Rules differ by state and country – ask your registrar.',
+      'Use the new spelling everywhere at once: birth certificate, Aadhaar or passport, school and bank records.',
+    ],
+  },
+  nick: {
+    formalH: 'Formal name (for documents)', nickH: 'Nickname (calling name)', harmony: 'Formal name and nickname harmony', with: 'With formal name',
+    suggestH: 'Nicknames that suit your baby', suggestD: (f: string) => `Each nickname is checked on its own and with the formal name ${f}.`,
+    short: 'Short form of the formal name', pet: 'Loving pet name', recommendedNick: 'Recommended nickname',
+    tipsH: 'Using the nickname', tips: [
+      'Use one main nickname at home so the child hears one steady sound; many different nicknames scatter it.',
+      'A nickname is for the home and family – keep the formal name on every document.',
+      'Short forms of the formal name (like Abhi for Abhinav) keep both names connected.',
+    ],
+    none: 'No suitable nickname found – write to me and I will make one for you.',
+  },
+  rem: {
+    growthH: 'Nurture by nature', health: 'Health and sleep', learning: 'Learning and memory', emotion: 'Feelings and confidence',
+    missingH: 'Missing numbers – simple remedies', area: 'Area', activity: 'What to do', home: 'At home / nursery',
+    planetsH: 'Planet remedies for the parents', day: 'Day', daan: 'Charity (daan)', practice: 'Practice', mantra: 'Mantra (parents)',
+    colourDay: 'Colours and day', safetyH: 'Safety first',
+    noMissing: 'No number is missing from your baby’s Lo Shu grid – a balanced chart. The tips above are enough.',
+  },
   verdict: { excellent: 'Excellent', good: 'Good', average: 'Average', weak: 'Weak' } as Record<Verdict, string>,
   headline: { excellent: 'A very good name for your baby', good: 'A good, supportive name', average: 'Workable – a small spelling change will help', weak: 'Better to choose another name' } as Record<Verdict, string>,
   rel: { friend: 'Friendly', neutral: 'Neutral', enemy: 'Against' } as Record<Relation, string>,
@@ -89,9 +131,15 @@ const hi: Lab = {
   dear: (s: string) => (s ? `प्रिय ${s} परिवार,` : 'प्रिय माता-पिता,'),
   letter: (o) =>
     `आपके नन्हे शिशु के आगमन पर हार्दिक बधाई। मैंने हर नाम को आपके शिशु की जन्म तिथि – मूलांक ${o.m} और भाग्यांक ${o.b} – से मिलाकर जाँचा है: कैल्डियन अक्षर-मान, कंपाउंड अंक, पहला अक्षर, सोल अर्ज, लो शू ग्रिड${o.fam ? ' और माता-पिता दोनों के नाम' : ''}। आपके शिशु के लिए सबसे उपयुक्त नाम ${o.name} है, जिसका स्कोर 100 में से ${o.score} है। इसका अंक ${o.n} शिशु के जीवन-पथ का साथ देता है। अगले पन्नों में आप पढ़ेंगे कि ऐसा क्यों है, बाकी नाम कैसे हैं, शुभ अक्षर और अंक, आवाज़ बदले बिना स्पेलिंग के छोटे सुधार, और नामकरण के शुभ दिन।`,
+  letterCur: (a, cur, rec, alt) =>
+    (a === 'keep' ? `आपके शिशु का नाम पहले से ${cur} है, और यह अंकों के अनुकूल है, इसलिए मेरा सुझाव है कि यही नाम रखें।`
+      : a === 'spelling' ? `आपके शिशु का नाम पहले से ${cur} है; मैंने वही ध्वनि रखते हुए स्पेलिंग सुधारकर ${rec} की है।`
+        : `वर्तमान नाम ${cur} जन्म अंकों के अनुकूल नहीं है, इसलिए नया नाम संभव हो तो ${rec} रखें।`)
+    + (alt && a !== 'change' ? ` यदि आप बिल्कुल नया नाम रखना चाहें, तो ${alt} का स्कोर अधिक है।` : ''),
   sec: {
     birth: 'आपके शिशु के जन्म अंक', blueprint: 'शुभ नाम का खाका', ranking: 'सभी नामों की तुलना', top: 'सुझाया गया नाम – विस्तार से',
     runners: 'दूसरा और तीसरा विकल्प', family: 'परिवार के नामों से तालमेल', bank: 'आपके शिशु के लिए और उपयुक्त नाम', ceremony: 'नामकरण और मार्गदर्शन', about: 'आपके अंक ज्योतिषी के बारे में',
+    current: 'शिशु का वर्तमान नाम – जाँच और सुधार', nickname: 'औपचारिक नाम और निकनेम', remedies: 'बच्चे के विकास के लिए उपाय',
   },
   secD: {
     birth: 'हर नाम को जन्म तिथि के दो अंकों से जाँचा जाता है: मूलांक (जन्म दिन से) स्वभाव और आदतें बनाता है, और भाग्यांक (पूरी तिथि से) जीवन का रास्ता दिखाता है। अच्छा नाम दोनों का मित्र होता है।',
@@ -102,6 +150,9 @@ const hi: Lab = {
     family: 'बच्चे का नाम परिवार में तब सबसे अच्छा बैठता है जब उसका अंक माता-पिता के नामांक से मित्रता रखता हो। यह पन्ना दिखाता है कि हर मुख्य नाम माता और पिता के साथ कैसा है।',
     bank: 'मेरी अर्थपूर्ण भारतीय नामों की सूची में से ये नाम आपके शिशु की जन्म तिथि के अनुकूल हैं',
     ceremony: 'नामकरण के शुभ दिन, शिशु के लिए शुभ रंग और दिन, और नाम के उपयोग के सरल सुझाव।',
+    current: 'आपके शिशु का नाम पहले से रखा हुआ है। यहाँ मैंने उसे उसी पद्धति से जाँचा है जिससे बाकी नाम, और साफ़ बताया है कि नाम रखें, उसकी स्पेलिंग सुधारें या नया नाम चुनें।',
+    nickname: 'औपचारिक नाम जन्म प्रमाण पत्र और स्कूल के रिकॉर्ड में जाता है। निकनेम वह नाम है जिससे घर में बच्चे को दिन में कई बार पुकारा जाता है, इसलिए उसकी ध्वनि रोज़ बच्चे पर असर करती है। दोनों जन्म अंकों के और आपस में भी मित्र होने चाहिए।',
+    remedies: 'शिशु के अंकों से चुने गए सरल और सुरक्षित उपाय, जो स्वास्थ्य, पढ़ाई और ख़ुशमिज़ाज, आत्मविश्वासी स्वभाव में सहायक हैं। बड़े एक-बार के अनुष्ठानों से ज़्यादा छोटी रोज़ की आदतें काम करती हैं।',
   },
   nature: 'स्वभाव (मूलांक से)', path: 'जीवन पथ (भाग्यांक से)', mb: 'मूलांक और भाग्यांक',
   grid: 'जन्म तिथि का लो शू ग्रिड', missing: 'अनुपस्थित अंक', repeated: 'दोहराए अंक', none: 'कोई नहीं',
@@ -125,7 +176,7 @@ const hi: Lab = {
   colours: 'शिशु के शुभ रंग', luckyDay: 'शुभ दिन', mantra: 'आशीर्वाद के लिए मंत्र', nursery: 'शिशु के कमरे के लिए (अनुपस्थित अंक)',
   useH: 'नाम का उपयोग', useList: [
     'नाम हर जगह एक ही स्पेलिंग में लिखें – यही स्पेलिंग अंक की ऊर्जा रखती है।',
-    'घर पर भी बच्चे को पूरे पहले नाम से पुकारें; उपनाम (निकनेम) ठीक है, पर काग़ज़ों पर वह नाम की जगह न ले।',
+    'घर में निकनेम से पुकारें तो ऐसा निकनेम चुनें जिसका अंक भी शिशु के अनुकूल हो (निकनेम वाला पन्ना देखें); काग़ज़ों पर हमेशा औपचारिक नाम ही लिखें।',
     'स्पेलिंग बदलनी हो तो जन्म प्रमाण पत्र बनने से पहले बदलें – बाद में बदलाव के लिए शपथ-पत्र लगता है।',
   ],
   expertNote: 'आपके अंक ज्योतिषी का संदेश', closing: 'नाम वह पहला उपहार है जो आप अपने बच्चे को देते हैं। यह जीवन भर स्वास्थ्य, बुद्धि और ख़ुशियाँ लाए।',
@@ -139,6 +190,39 @@ const hi: Lab = {
   whyBaby: 'भाई-बहनों के लिए, या राशि अक्षरों पर दूसरी राय के लिए।',
   whyReport: 'आपके शिशु के लिए पूरी जीवन रिपोर्ट – स्वभाव, पढ़ाई, स्वास्थ्य सुझाव और शुभ वर्ष।',
   whyName: 'माता-पिता के अपने नाम भी उनके अंकों के अनुकूल बनाएँ।',
+  cur: {
+    formal: 'वर्तमान औपचारिक नाम', nick: 'वर्तमान निकनेम', keepH: 'यही नाम रखें', spellingH: 'स्पेलिंग सुधारें', changeH: 'नया नाम बेहतर रहेगा', nchangeH: 'नया निकनेम बेहतर रहेगा',
+    keep: (n, sc) => `${n} का स्कोर 100 में से ${sc} है और यह आपके शिशु के अनुकूल है। यही नाम रखें – कोई बदलाव ज़रूरी नहीं।`,
+    spelling: (n, sc, c, cs) => `${n} का स्कोर ${sc} है। स्पेलिंग का छोटा बदलाव आवाज़ वही रखता है और स्कोर बढ़ाता है: ${c} का स्कोर ${cs} है। जन्म प्रमाण पत्र और सभी दस्तावेज़ों में ${c} लिखें।`,
+    change: (n, sc, c) => `${n} का स्कोर ${sc} है – इसका अंक शिशु के जन्म अंकों का मित्र नहीं है, और स्पेलिंग बदलने से भी पूरा सुधार नहीं होता। यदि नया नाम रखना संभव हो, तो मेरा सुझाव ${c} है; उसी आरंभिक ध्वनि वाले नाम नीचे दिए हैं।`,
+    nkeep: (n, sc) => `निकनेम ${n} का स्कोर 100 में से ${sc} है। यह शिशु के अनुकूल है – बच्चे को ${n} ही पुकारते रहें।`,
+    nspelling: (n, sc, c, cs) => `निकनेम ${n} का स्कोर ${sc} है। ${c} लिखने और बोलने पर स्कोर ${cs} हो जाता है, ध्वनि लगभग वही रहती है।`,
+    nchange: (n, sc, c) => `निकनेम ${n} का स्कोर ${sc} है – इसका अंक जन्म अंकों या औपचारिक नाम से मेल नहीं खाता। धीरे-धीरे ${c} या सूची का कोई दूसरा निकनेम अपनाएँ।`,
+    issues: 'किन बातों पर ध्यान दें', good: 'क्या अच्छा है', corrected: 'सुधरी हुई स्पेलिंग', sameSound: 'उसी आरंभिक ध्वनि वाले नए नाम',
+    applyH: 'बदलाव कैसे करें', apply: [
+      'जन्म प्रमाण पत्र बनने से पहले: सीधे सुधरी हुई स्पेलिंग दर्ज कराएँ।',
+      'बनने के बाद: जन्म रजिस्ट्रार नाम सुधार सकते हैं, प्रायः आवेदन पत्र और माता-पिता के पहचान पत्र से; बाद में बदलाव के लिए शपथ-पत्र या गज़ट सूचना लग सकती है। नियम राज्य और देश के अनुसार अलग हैं – रजिस्ट्रार से पूछें।',
+      'नई स्पेलिंग हर जगह एक साथ लिखें: जन्म प्रमाण पत्र, आधार या पासपोर्ट, स्कूल और बैंक रिकॉर्ड।',
+    ],
+  },
+  nick: {
+    formalH: 'औपचारिक नाम (दस्तावेज़ों के लिए)', nickH: 'निकनेम (पुकारने का नाम)', harmony: 'औपचारिक नाम और निकनेम का तालमेल', with: 'औपचारिक नाम से',
+    suggestH: 'शिशु के अनुकूल निकनेम', suggestD: (f) => `हर निकनेम को अलग से और औपचारिक नाम ${f} के साथ जाँचा गया है।`,
+    short: 'औपचारिक नाम का छोटा रूप', pet: 'प्यार का नाम', recommendedNick: 'सुझाया गया निकनेम',
+    tipsH: 'निकनेम का उपयोग', tips: [
+      'घर में एक ही मुख्य निकनेम रखें ताकि बच्चा एक स्थिर ध्वनि सुने; कई अलग-अलग निकनेम उसे बिखेर देते हैं।',
+      'निकनेम घर और परिवार के लिए है – हर दस्तावेज़ में औपचारिक नाम ही रखें।',
+      'औपचारिक नाम का छोटा रूप (जैसे अभिनव के लिए अभि) दोनों नामों को जोड़े रखता है।',
+    ],
+    none: 'उपयुक्त निकनेम नहीं मिला – मुझे लिखें, मैं आपके लिए बना दूँगा।',
+  },
+  rem: {
+    growthH: 'स्वभाव के अनुसार पालन', health: 'स्वास्थ्य और नींद', learning: 'पढ़ाई और याददाश्त', emotion: 'भावनाएँ और आत्मविश्वास',
+    missingH: 'अनुपस्थित अंक – सरल उपाय', area: 'क्षेत्र', activity: 'क्या करें', home: 'घर / शिशु कक्ष में',
+    planetsH: 'माता-पिता के लिए ग्रह उपाय', day: 'दिन', daan: 'दान', practice: 'अभ्यास', mantra: 'मंत्र (माता-पिता)',
+    colourDay: 'रंग और दिन', safetyH: 'सुरक्षा पहले',
+    noMissing: 'शिशु के लो शू ग्रिड में कोई अंक अनुपस्थित नहीं – संतुलित चार्ट। ऊपर के सुझाव पर्याप्त हैं।',
+  },
   verdict: { excellent: 'उत्तम', good: 'अच्छा', average: 'सामान्य', weak: 'कमज़ोर' },
   headline: { excellent: 'आपके शिशु के लिए बहुत अच्छा नाम', good: 'अच्छा, सहयोगी नाम', average: 'चल सकता है – स्पेलिंग का छोटा बदलाव मदद करेगा', weak: 'दूसरा नाम चुनना बेहतर' },
   rel: { friend: 'मित्र', neutral: 'सम', enemy: 'विरोधी' },
@@ -248,5 +332,6 @@ export function checkText(c: Check, l: Lab, lang: Lang): { title: string; detail
       ? { title: 'लो शू ग्रिड', detail: v.none ? 'जन्म ग्रिड में कोई अंक अनुपस्थित नहीं है।' : v.fills ? `नामांक ${v.n} जन्म ग्रिड का अनुपस्थित अंक भरता है (${v.missing})।` : `अनुपस्थित अंक ${v.missing} – यह नाम उन्हें नहीं भरता।` }
       : { title: 'Lo Shu grid', detail: v.none ? 'No number is missing from the birth grid.' : v.fills ? `Name number ${v.n} fills a number missing from the birth grid (${v.missing}).` : `Missing numbers ${v.missing} – this name does not fill them.` };
     case 'family': return H ? { title: 'परिवार से तालमेल', detail: `पिता से ${rel(v.f)}, माता से ${rel(v.mo)}।` } : { title: 'Family harmony', detail: `With father: ${rel(v.f).toLowerCase()}, with mother: ${rel(v.mo).toLowerCase()}.` };
+    case 'formalH': return H ? { title: 'औपचारिक नाम से तालमेल', detail: `निकनेम अंक ${v.n}, औपचारिक नाम ${v.name} (${v.f}) से ${rel(v.rel)}।` } : { title: 'Harmony with formal name', detail: `Nickname number ${v.n} is ${rel(v.rel).toLowerCase()} with the formal name ${v.name} (${v.f}).` };
   }
 }

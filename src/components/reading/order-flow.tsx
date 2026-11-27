@@ -166,7 +166,8 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
     setD((x) => ({ ...x, partnerName: p?.fullName ?? '', partnerDob: toIsoDate(p?.dob) }));
   }
 
-  const missing = missingIntake(fields, d).length > 0 || (baby && !babyName.trim() && !d.clientName);
+  // The baby's current name is optional ("if any") – many babies are not named yet.
+  const missing = missingIntake(fields, d).length > 0;
 
   /** Saves the person (new or existing) to the account – details are always kept for later readings. */
   async function savePerson(list: Person[]): Promise<string | null> {
@@ -234,10 +235,10 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
             {baby && (
               <div className="grid gap-3 sm:grid-cols-2">
                 <Field label={lang === 'hi' ? 'शिशु का वर्तमान नाम (यदि हो)' : 'Baby Current Name (if any)'} htmlFor="of-baby">
-                  <Input id="of-baby" value={babyName} onChange={(e) => setBabyName(e.target.value)} maxLength={120} placeholder={lang === 'hi' ? 'औपचारिक नाम या निकनेम' : 'Formal name or nickname'} />
+                  <Input id="of-baby" value={babyName} onChange={(e) => { setBabyName(e.target.value); setD((x) => ({ ...x, babyName: e.target.value })); }} maxLength={120} placeholder={lang === 'hi' ? 'औपचारिक नाम या निकनेम' : 'Formal name or nickname'} />
                 </Field>
                 <Field label={lang === 'hi' ? 'नाम का प्रकार (औपचारिक या निकनेम)' : 'Name Type (Formal Name or Nickname)'} htmlFor="of-baby-type">
-                  <Select id="of-baby-type" value={d.concerns || 'both'} onChange={(e) => setD((x) => ({ ...x, concerns: e.target.value }))}>
+                  <Select id="of-baby-type" value={d.nameType || 'both'} onChange={(e) => setD((x) => ({ ...x, nameType: e.target.value }))}>
                     <option value="both">{lang === 'hi' ? 'दोनों (औपचारिक नाम व निकनेम)' : 'Both (Formal Name & Nickname)'}</option>
                     <option value="formal">{lang === 'hi' ? 'औपचारिक नाम (Formal Name)' : 'Formal Name'}</option>
                     <option value="nickname">{lang === 'hi' ? 'निकनेम / पुकारने का नाम (Nickname)' : 'Nickname (Calling Name)'}</option>
@@ -475,8 +476,8 @@ function PayStep({ svc, details, forName, relation, personId, onBack, onDone, si
   const [error, setError] = React.useState<string | null>(null);
   const missing = !bill.state || (!u.phone && !bill.phone.trim());
   const shown = cleanIntake(svc.intake, details);
-  const lab = (k: string) => (k === 'country' ? (lang === 'hi' ? 'देश' : 'Country') : k === 'mobile' && svc.code === 'SVC_BUSINESS_COMPLETE' ? L.mobileBiz : k === 'businesses' && svc.code === 'SVC_BUSINESS_COMPLETE' ? L.bizType : k === 'currentName' && sig ? L.signedAs : k === 'currentName' && svc.code === 'SVC_BUSINESS_NAME' ? L.business : k === 'dob' && svc.intake.includes('parents') ? L.dobBaby : (L as Record<string, string>)[k] ?? k).replace(/ \((optional|वैकल्पिक)\)$/, '');
-  const show = (k: string, v: string) => (k === 'gender' ? (v === 'female' ? L.female : L.male) : /Dob$|^dob$/.test(k) ? v.split('-').reverse().join('-') : v);
+  const lab = (k: string) => (k === 'babyName' ? (lang === 'hi' ? 'शिशु का वर्तमान नाम' : 'Baby current name') : k === 'nameType' ? (lang === 'hi' ? 'नाम का प्रकार' : 'Name type') : k === 'country' ? (lang === 'hi' ? 'देश' : 'Country') : k === 'mobile' && svc.code === 'SVC_BUSINESS_COMPLETE' ? L.mobileBiz : k === 'businesses' && svc.code === 'SVC_BUSINESS_COMPLETE' ? L.bizType : k === 'currentName' && sig ? L.signedAs : k === 'currentName' && svc.code === 'SVC_BUSINESS_NAME' ? L.business : k === 'dob' && svc.intake.includes('parents') ? L.dobBaby : (L as Record<string, string>)[k] ?? k).replace(/ \((optional|वैकल्पिक)\)$/, '');
+  const show = (k: string, v: string) => (k === 'nameType' ? (v === 'formal' ? (lang === 'hi' ? 'औपचारिक नाम' : 'Formal name') : v === 'nickname' ? (lang === 'hi' ? 'निकनेम' : 'Nickname') : (lang === 'hi' ? 'दोनों (औपचारिक नाम व निकनेम)' : 'Both (formal name & nickname)')) : k === 'gender' ? (v === 'female' ? L.female : L.male) : /Dob$|^dob$/.test(k) ? v.split('-').reverse().join('-') : v);
 
   async function pay() {
     setBusy(true); setError(null);

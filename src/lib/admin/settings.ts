@@ -20,6 +20,20 @@ export interface AnalyticsSettings {
 /** Limited-time offer shown on /services and the service pages. Counts down to a REAL end date set by the owner; never resets. */
 export interface OfferSettings { enabled: boolean; endsAt: string; labelEn: string; labelHi: string }
 
+/** Affiliate program rules (Admin → Affiliate Marketing → Program settings). Money in rupees / dollars, not paise. */
+export interface AffiliateSettings {
+  enabled: boolean;
+  /** Commission on the order value excluding GST. An affiliate can have their own rate. */
+  defaultPercent: number;
+  /** How long a referral link is remembered after the click. */
+  cookieDays: number;
+  /** Days after payment before a commission can be paid (refund window). */
+  holdDays: number;
+  minPayoutInr: number;
+  minPayoutUsd: number;
+  /** Discount the affiliate's coupon code gives the customer (0 = no coupon). */
+  customerDiscountPercent: number;
+}
 export const SETTING_DEFAULTS = {
   seller: {
     legalName: process.env.SELLER_LEGAL_NAME || '[Legal business name]', gstin: process.env.SELLER_GSTIN || '', address: process.env.SELLER_ADDRESS || '[Registered address]',
@@ -40,6 +54,7 @@ export const SETTING_DEFAULTS = {
   } as AnalyticsSettings,
   offer: { enabled: false, endsAt: '', labelEn: 'Limited-time offer', labelHi: 'सीमित समय का ऑफ़र' } as OfferSettings,
   testimonials: DEFAULT_TESTIMONIALS as TestimonialSettings,
+  affiliate: { enabled: true, defaultPercent: 20, cookieDays: 30, holdDays: 7, minPayoutInr: 500, minPayoutUsd: 10, customerDiscountPercent: 10 } as AffiliateSettings,
 };
 export type SettingKey = keyof typeof SETTING_DEFAULTS;
 

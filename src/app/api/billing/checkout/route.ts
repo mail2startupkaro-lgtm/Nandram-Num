@@ -8,6 +8,7 @@ import { currencyForRequest, intlPhone, OUTSIDE_INDIA } from '@/lib/billing/curr
 import { INDIAN_STATES } from '@/components/wizard/state';
 import { clientIp, json, readJson } from '@/lib/server/http';
 import { getOptionalUser } from '@/lib/auth/current-user';
+import { cookieFrom, REF_COOKIE } from '@/lib/affiliate/program';
 import { createSession, sessionCookie } from '@/lib/auth/session';
 import { getDb } from '@/lib/db/client';
 import { users } from '@/lib/db/schema';
@@ -76,7 +77,7 @@ export async function POST(req: Request) {
       sessionToken = await createSession(user.id, req.headers.get('user-agent'), db);
     }
 
-    const order = await createCheckout(user!, { ...body, currency });
+    const order = await createCheckout(user!, { ...body, currency, refCookie: cookieFrom(req.headers.get('cookie'), REF_COOKIE) });
     const headers: Record<string, string> = {};
     if (sessionToken) {
       headers['set-cookie'] = sessionCookie(sessionToken);

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { REF_COOKIE, REF_COOKIE_MAX_DAYS, REF_PARAM, refCookieValue } from '@/lib/affiliate/program';
 
 const PRIVATE = ['/dashboard', '/admin', '/account', '/settings'];
 const isPrivate = (p: string) => PRIVATE.some((x) => p === x || p.startsWith(`${x}/`));
@@ -29,6 +30,11 @@ export function middleware(req: NextRequest) {
     res.headers.set('X-Robots-Tag', 'noindex, nofollow');
   } else {
     res = NextResponse.next();
+  }
+  // 3. Affiliate links (?ref=CODE on any page): remember the code and click time; the last click wins.
+  const ref = (req.nextUrl.searchParams.get(REF_PARAM) || '').trim().toUpperCase();
+  if (/^[A-Z0-9]{4,20}$/.test(ref)) {
+    res.cookies.set(REF_COOKIE, refCookieValue(ref), { path: '/', maxAge: REF_COOKIE_MAX_DAYS * 86_400, sameSite: 'lax', httpOnly: true, secure: req.nextUrl.protocol === 'https:' });
   }
   const country = (req.headers.get('x-vercel-ip-country') || req.headers.get('cf-ipcountry') || '').toUpperCase();
   if (/^[A-Z]{2}$/.test(country) && country !== 'XX' && req.cookies.get('mn_geo')?.value !== country) {

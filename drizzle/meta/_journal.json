@@ -92,6 +92,13 @@
       "when": 1795752000000,
       "tag": "0012_service_delivery",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1795838400000,
+      "tag": "0013_affiliates",
+      "breakpoints": true
     }
   ]
 }

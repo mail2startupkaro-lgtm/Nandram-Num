@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { analyseBabyName, letterClass } from '@/lib/baby-name/analysis';
 import { buildBabyCoverHtml, buildBabyReportHtml } from '@/lib/baby-name/report';
 import { NAME_BANK, parseLetters, startsWithAny } from '@/lib/baby-name/names';
+import { shortForms } from '@/lib/baby-name/nicknames';
 import { DEFAULT_BRANDING, resolveTheme } from '@/lib/pdf/themes';
 
 // Hand-checked: 14-10-2026 → Moolank 1+4 = 5, Bhagyank 1+4+1+0+2+0+2+6 = 16 → 7.
@@ -57,11 +58,47 @@ describe('baby name analysis', () => {
     const t = resolveTheme('royal-gold-maroon');
     for (const lang of ['en', 'hi'] as const) {
       const html = buildBabyReportHtml(r, t, DEFAULT_BRANDING, { lang, preparedBy: 'Acharya Nandram' });
-      expect((html.match(/<section class="page">/g) ?? []).length).toBe(9);
+      // 9 earlier sections + formal & nickname page (default "both") + remedies page.
+      expect((html.match(/<section class="page">/g) ?? []).length).toBe(11);
       expect(html).toContain('class="cta"');
       const cover = buildBabyCoverHtml(r, t, DEFAULT_BRANDING, { lang, preparedBy: 'Acharya Nandram' });
       expect(cover).toContain(r.top[0].full);
     }
+  });
+});
+
+describe('formal name, nickname, correction and remedies', () => {
+  const r = analyseBabyName({ ...base, candidates: [], currentName: 'Aarav', currentNickname: 'Golu' });
+  it('checks the current name and recommends a corrected spelling with the same sound', () => {
+    expect(r.current?.first).toBe('Aarav');
+    expect(r.current?.score).toBeLessThanOrEqual(55); // 27/9 – against Bhagyank 7
+    expect(r.correction?.advice).toBe('spelling');
+    expect(r.correction?.recommended.first.startsWith('Aarav')).toBe(true);
+    expect(r.correction!.recommended.score).toBeGreaterThanOrEqual(65);
+    expect(r.top[0]).toBe(r.correction?.recommended); // the corrected name leads the report
+  });
+  it('does not keep a nickname that clashes with the formal name', () => {
+    const n = r.nickname!;
+    expect(n.current?.name).toBe('Golu');
+    expect(n.current?.relFormal).toBe('enemy');
+    expect(n.advice).toBe('change');
+    expect(n.recommended?.name).not.toBe('Golu');
+    expect(n.suggestions.length).toBeGreaterThan(2);
+    expect(n.suggestions.every((x) => x.relFormal !== 'enemy' && x.relB !== 'enemy')).toBe(true);
+  });
+  it('makes natural short forms', () => {
+    expect(shortForms('Abhinav')).toContain('Abhi');
+    expect(shortForms('Aarav')).toContain('Aaru');
+    expect(shortForms('Abhinav')).not.toContain('Abu');
+  });
+  it('remedies follow the birth numbers; formal-only has no nickname page', () => {
+    expect(r.remedies.missing.map((x) => x.n)).toEqual([3, 8, 9]);
+    expect(r.remedies.planets.map((x) => x.n)).toEqual([5, 7]);
+    const f = analyseBabyName({ ...base, nameFor: 'formal' });
+    expect(f.nickname).toBeNull();
+    const html = buildBabyReportHtml(r, resolveTheme('royal-gold-maroon'), DEFAULT_BRANDING, { lang: 'en', preparedBy: 'Acharya Nandram' });
+    expect((html.match(/<section class="page">/g) ?? []).length).toBe(12); // + current name page
+    expect(html).toContain('No gemstones');
   });
 });
 

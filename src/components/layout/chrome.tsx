@@ -312,6 +312,7 @@ export function Footer() {
               <li><Link href="/services" className="hover:text-gold transition-colors font-medium text-gold"><Bi en="All services & fees →" hi="सभी सेवाएँ और शुल्क →" /></Link></li>
               <li><Link href="/international-numerology" className="hover:text-gold transition-colors text-amber-400/90"><Bi en="International Clients (USD)" hi="अंतरराष्ट्रीय सेवाएँ (USD)" /></Link></li>
               <li><Link href="/white-label-numerology-reports" className="group inline-flex items-center gap-1.5 hover:text-gold transition-colors font-semibold text-foreground/90"><span className="rounded bg-gold/15 px-1 text-[9.5px] font-bold uppercase tracking-wider text-gold">Pro</span><Bi en="For Numerologists – White-Label Reports" hi="अंक ज्योतिषियों के लिए – व्हाइट-लेबल रिपोर्ट" /></Link></li>
+              <li><Link href="/affiliate-program" className="group inline-flex items-center gap-1.5 hover:text-gold transition-colors font-semibold text-foreground/90"><span className="rounded bg-gold/15 px-1 text-[9.5px] font-bold uppercase tracking-wider text-gold">Earn</span><Bi en="Affiliate Program – Refer & Earn" hi="एफ़िलिएट प्रोग्राम – रेफ़र करें और कमाएँ" /></Link></li>
             </ul>
           </div>
 
@@ -405,6 +406,8 @@ export function Footer() {
             <Link href="/contact" className="hover:text-gold transition-colors"><Bi en="Support" hi="सहायता" /></Link>
             <span className="text-gold/30">·</span>
             <Link href="/white-label-numerology-reports" className="hover:text-gold transition-colors"><Bi en="For Professionals" hi="पेशेवरों के लिए" /></Link>
+            <span className="text-gold/30">·</span>
+            <Link href="/affiliate-program" className="hover:text-gold transition-colors"><Bi en="Affiliates" hi="एफ़िलिएट" /></Link>
           </div>
         </div>
       </div>

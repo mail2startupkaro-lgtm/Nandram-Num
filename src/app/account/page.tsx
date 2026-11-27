@@ -70,6 +70,10 @@ export default function AccountPage() {
         </div>
         {d.account.features.whiteLabel && <Link href="/settings/branding" className={buttonVariants({ variant: 'outline', size: 'sm' })}><Palette /> {t.account.branding}</Link>}
       </div>
+      <Link href="/account/affiliate" className="glass flex items-center justify-between gap-3 rounded-lg border border-gold/30 p-4 hover:border-gold/60">
+        <span><span className="block font-semibold">{hi ? 'एफ़िलिएट प्रोग्राम – रेफ़र करें और कमाएँ' : 'Affiliate program – refer & earn'}</span><span className="text-sm text-muted-foreground">{hi ? 'अपना लिंक साझा करें और हर बिक्री पर कमीशन पाएँ।' : 'Share your link and earn a commission on every sale.'}</span></span>
+        <span className="text-gold">→</span>
+      </Link>
       <FamilyPanel />
       <section className="glass rounded-lg p-5">
         <h2 className="mb-3 text-xl font-semibold">{t.account.payments}</h2>

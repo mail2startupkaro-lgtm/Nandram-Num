@@ -7,6 +7,7 @@ import { Footer, Header } from '@/components/layout/chrome';
 import { CosmicBackground } from '@/components/layout/cosmic-bg';
 import { GoogleAnalytics } from '@/components/analytics/google-analytics';
 import { VisitTracker } from '@/components/analytics/visit-tracker';
+import { AffiliateRefClick } from '@/components/affiliate/ref-click';
 import { SecretAdminLogin } from '@/components/auth/secret-admin-login';
 import { EbookLeadPopup } from '@/components/layout/ebook-lead-popup';
 import { TestimonialsSection } from '@/components/home/testimonials-section';
@@ -78,6 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Suspense fallback={null}>
             <GoogleAnalytics />
             <VisitTracker />
+            <AffiliateRefClick />
           </Suspense>
           <SecretAdminLogin />
           <EbookLeadPopup />

@@ -21,11 +21,15 @@ import { compoundMeaningHi } from '@/lib/signature/hindi';
 import { luckyNameTotals } from '@/lib/name-calculator';
 import { parseLetters, startsWithAny, type BankName, type NameGender } from './names';
 import { resolveNameStyle, WORLD_BANKS, type NameStyle, type NameStyleChoice } from './world-names';
+import { INDIAN_PET_NAMES, shortForms, soundKey, WORLD_PET_NAMES, type PetName } from './nicknames';
+import { GROWTH, MISSING_DEV, PLANET_REMEDY } from './remedies';
 
 /** Every curated name (all cultures) – used to show the meaning of a family-chosen name from any culture. */
 const ALL_BANK_NAMES: BankName[] = Object.values(WORLD_BANKS).flat();
 
 export type BabyGender = 'boy' | 'girl' | 'any';
+/** What the family wants: a formal (documents) name, a nickname (calling name), or both. */
+export type NameFor = 'formal' | 'nickname' | 'both';
 export interface BabyNameInput {
   /** YYYY-MM-DD or DD-MM-YYYY */
   dob: string;
@@ -48,12 +52,18 @@ export interface BabyNameInput {
   nameStyle?: NameStyleChoice;
   /** Report "as of" date (YYYY-MM-DD) – defaults to today in India. */
   asOf?: string;
+  /** Formal name, nickname or both (default both). */
+  nameFor?: NameFor;
+  /** The baby's current formal first name, if already named – checked and corrected if needed. */
+  currentName?: string;
+  /** The nickname the family already uses, if any. */
+  currentNickname?: string;
 }
 
 export type Verdict = 'excellent' | 'good' | 'average' | 'weak';
 export const verdictOf = (s: number): Verdict => (s >= 80 ? 'excellent' : s >= 65 ? 'good' : s >= 50 ? 'average' : 'weak');
 export type CheckStatus = 'pass' | 'warn' | 'fail';
-export type CheckId = 'fullB' | 'firstB' | 'moolank' | 'compound' | 'heavy' | 'initial' | 'soul' | 'grid' | 'family';
+export type CheckId = 'fullB' | 'firstB' | 'moolank' | 'compound' | 'heavy' | 'initial' | 'soul' | 'grid' | 'family' | 'formalH';
 export interface Check { id: CheckId; status: CheckStatus; v: Record<string, string | number> }
 export type LetterClass = 'lucky' | 'neutral' | 'avoid';
 
@@ -62,6 +72,8 @@ export interface EvaluatedName {
   first: string;
   full: string;
   source: 'family' | 'bank';
+  /** current = the name the baby already has; corrected = its improved spelling. */
+  tag?: 'current' | 'corrected';
   bank: BankName | null;
   firstNum: NameNum;
   fullNum: NameNum | null;
@@ -84,6 +96,27 @@ export interface EvaluatedName {
   /** Spelling tweaks (same sound) re-scored with the full method – only for the family's own names below 80. */
   tweaks: { first: string; full: string; changes: string[]; score: number; compound: number; single: number }[];
 }
+
+/** A nickname checked on its own (no surname – it is spoken, not written on documents) and against the formal name. */
+export interface NickEval {
+  name: string;
+  source: 'current' | 'short' | 'pet' | 'corrected';
+  pet: PetName | null;
+  num: NameNum;
+  soul: number;
+  planet: string;
+  initial: { letter: string; value: number; rel: Relation; cls: LetterClass };
+  relB: Relation;
+  relM: Relation;
+  /** Relation of the nickname number with the formal (full) name number. */
+  relFormal: Relation;
+  score: number;
+  verdict: Verdict;
+  checks: Check[];
+  letters: { letter: string; ch: number; vowel: boolean }[];
+  tweaks: { name: string; changes: string[]; score: number; compound: number; single: number }[];
+}
+export type Advice = 'keep' | 'spelling' | 'change';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const weekdayOf = (p: DateParts) => WEEKDAYS[new Date(Date.UTC(p.year, p.month - 1, p.day)).getUTCDay()];
@@ -127,7 +160,7 @@ export function analyseBabyName(input: BabyNameInput) {
   const father = parent(input.fatherName), mother = parent(input.motherName);
   const prefLetters = parseLetters(input.letters);
 
-  function evaluate(rawFirst: string, source: 'family' | 'bank', bank: BankName | null, withTweaks = true): EvaluatedName {
+  function evaluate(rawFirst: string, source: 'family' | 'bank', bank: BankName | null, withTweaks = true, tag?: 'current' | 'corrected'): EvaluatedName {
     const firstN = normalizeName(rawFirst).split(' ')[0];
     const first = titleCase(firstN);
     const full = surname ? `${first} ${surname}` : first;
@@ -175,7 +208,7 @@ export function analyseBabyName(input: BabyNameInput) {
     ];
     const scoreN = score;
     return {
-      first, full, source, bank, firstNum, fullNum,
+      first, full, source, tag, bank, firstNum, fullNum,
       pythagorean: { compound: py.nameNumber.compound, single: py.nameNumber.single },
       soul: ch.soulUrge.single, personality: ch.personality.single, planet: planetOf(main.single).name,
       initial, relB: relFullB, relM: relMm, parts, fillsMissing, family: { father: famF, mother: famM },
@@ -193,7 +226,8 @@ export function analyseBabyName(input: BabyNameInput) {
   const names = resolveNameStyle(input.nameStyle, input.country);
   const seen = new Set<string>();
   const family: EvaluatedName[] = [];
-  for (const raw of input.candidates ?? []) {
+  const curFirst = input.currentName?.trim() ? normalizeName(input.currentName).split(' ')[0] ?? '' : '';
+  for (const raw of [...(curFirst ? [curFirst] : []), ...(input.candidates ?? [])]) {
     const t = raw.trim(); if (!t) continue;
     const n = normalizeName(t).split(' ')[0];
     if (!n || n.length < 2) { invalid.push(t); continue; }
@@ -220,8 +254,115 @@ export function analyseBabyName(input: BabyNameInput) {
   const band = (x: EvaluatedName) => (x.score >= 65 && (x.source === 'family' || x.matchesLetters) ? 0 : 1);
   const ranked = [...family, ...suggestions].sort((x, y) => band(x) - band(y) || y.score - x.score || Number(y.source === 'family') - Number(x.source === 'family') || x.first.localeCompare(y.first));
   if (!ranked.length) throw new NumerologyInputError('NO_NAMES', 'Add at least one name to check, or tick “suggest names”.');
+
+  // ---------- Current name: check and correction ----------
+  const nameFor: NameFor = input.nameFor === 'formal' || input.nameFor === 'nickname' ? input.nameFor : 'both';
+  const current = curFirst ? family.find((x) => x.first === titleCase(curFirst)) ?? null : null;
+  let correction: null | { advice: Advice; corrected: EvaluatedName | null; sameLetter: EvaluatedName[]; recommended: EvaluatedName } = null;
+  if (current) {
+    current.tag = 'current';
+    const tw = current.tweaks[0];
+    const corrected = tw ? evaluate(tw.first, 'family', current.bank, false, 'corrected') : null;
+    // Names with the same starting sound (first two letters, else the first letter) – for families open to a new name.
+    const pool = names.banks.filter((x) => allow.includes(x.g) && normalizeName(x.n) !== normalizeName(current.first));
+    const two = current.first.slice(0, 2).toUpperCase();
+    const byTwo = pool.filter((x) => x.n.toUpperCase().startsWith(two));
+    const sameLetter = (byTwo.length >= 3 ? byTwo : pool.filter((x) => x.n[0].toUpperCase() === current.first[0].toUpperCase()))
+      .map((x) => evaluate(x.n, 'bank', x, false)).filter((x) => x.score >= 70 && x.score > current.score).sort((x, y) => y.score - x.score).slice(0, 4);
+    const advice: Advice = current.score >= 80 ? 'keep'
+      : corrected && corrected.score >= 65 && corrected.score >= current.score + 5 ? 'spelling'
+        : current.score >= 65 ? 'keep' : 'change';
+    const recommended = advice === 'keep' ? current : advice === 'spelling' ? corrected! : sameLetter[0] ?? ranked.find((x) => x !== current) ?? current;
+    correction = { advice, corrected, sameLetter, recommended };
+    // The recommended formal name leads the report.
+    const i = ranked.indexOf(recommended);
+    if (i >= 0) ranked.splice(i, 1);
+    ranked.unshift(recommended);
+  }
   const top = ranked.slice(0, 3);
   const bestFamily = family.length ? [...family].sort((x, y) => y.score - x.score)[0] : null;
+
+  // ---------- Nickname (calling name) ----------
+  const formalRef = top[0];
+  const refNum = formalRef.fullNum ?? formalRef.firstNum;
+  function evalNick(raw: string, source: NickEval['source'], pet: PetName | null, withTweaks = true): NickEval {
+    const n = normalizeName(raw).replace(/\s+/g, '');
+    const name = titleCase(n);
+    const ch = analyseNameSystem(n, 'chaldean');
+    const nm = num(n);
+    const iv = CHALDEAN[n[0]];
+    const initial = { letter: n[0], value: iv, rel: relationOf(b, iv), cls: letterClass(iv, m, b) };
+    const relB = relationOf(b, nm.single), relM = relationOf(m, nm.single), relFormal = relationOf(refNum.single, nm.single);
+    const soulRel = relationOf(m, ch.soulUrge.single || m);
+    const fills = missing.includes(nm.single);
+    // Weights: own number 45, harmony with the formal name 20, first letter 15, soul urge 10, Lo Shu grid 10.
+    let score = Math.round((nameCompatibilityScore(nm.single, nm.compound, m, b) * 45 + relPts(relFormal) * 20
+      + (initial.cls === 'lucky' ? 100 : initial.cls === 'neutral' ? 60 : 20) * 15 + relPts(soulRel) * 10 + (missing.length === 0 ? 80 : fills ? 100 : 55) * 10) / 100);
+    if (nm.category === 'unfavourable') score = Math.min(score, 60);
+    if (relB === 'enemy') score = Math.min(score, 55);
+    const st = (good: boolean, bad: boolean): CheckStatus => (good ? 'pass' : bad ? 'fail' : 'warn');
+    const heavy = (nm.single === 4 || nm.single === 8) && ![4, 8].includes(m) && ![4, 8].includes(b);
+    const checks: Check[] = [
+      { id: 'firstB', status: st(relB === 'friend', relB === 'enemy'), v: { n: nm.single, b, rel: relB } },
+      { id: 'moolank', status: st(relM === 'friend', relM === 'enemy'), v: { n: nm.single, m, rel: relM } },
+      { id: 'formalH', status: st(relFormal === 'friend', relFormal === 'enemy'), v: { n: nm.single, f: refNum.single, name: formalRef.full, rel: relFormal } },
+      { id: 'compound', status: st(nm.category === 'favourable', nm.category === 'unfavourable'), v: { c: nm.compound, cat: nm.category } },
+      { id: 'heavy', status: heavy ? 'fail' : 'pass', v: { n: nm.single } },
+      { id: 'initial', status: initial.cls === 'lucky' ? 'pass' : initial.cls === 'avoid' ? 'fail' : 'warn', v: { l: initial.letter, n: iv, rel: initial.rel } },
+      { id: 'soul', status: st(soulRel === 'friend', soulRel === 'enemy'), v: { n: ch.soulUrge.single, m, rel: soulRel } },
+    ];
+    return {
+      name, source, pet, num: nm, soul: ch.soulUrge.single, planet: planetOf(nm.single).name, initial, relB, relM, relFormal,
+      score, verdict: verdictOf(score), checks, letters: ch.letters.map((x) => ({ letter: x.letter, ch: x.value, vowel: x.vowel })),
+      tweaks: withTweaks && score < 80
+        ? readableTweaks(n, m, b, nameCompatibilityScore(nm.single, nm.compound, m, b)).map((t) => { const e = evalNick(t.spelling, 'corrected', null, false); return { name: e.name, changes: t.changes, score: e.score, compound: e.num.compound, single: e.num.single }; }).filter((t) => t.score > score).sort((x, y) => y.score - x.score)
+        : [],
+    };
+  }
+  let nickname: null | { current: NickEval | null; advice: Advice | null; corrected: NickEval | null; suggestions: NickEval[]; recommended: NickEval | null } = null;
+  if (nameFor !== 'formal') {
+    const curNick = input.currentNickname?.trim() && normalizeName(input.currentNickname).replace(/\s+/g, '').length >= 2 ? evalNick(input.currentNickname, 'current', null) : null;
+    const used = new Set<string>([curNick?.name.toUpperCase() ?? '', formalRef.first.toUpperCase()]);
+    const pets = names.style === 'indian' ? INDIAN_PET_NAMES : names.mix ? [...WORLD_PET_NAMES, ...INDIAN_PET_NAMES] : WORLD_PET_NAMES;
+    const pool: NickEval[] = [];
+    // Short forms only for Indian-style names (Abhinav → Abhi); other cultures use their own well-known short forms from the list.
+    const shortsFrom = [formalRef.first, ...(current && current !== formalRef ? [current.first] : [])];
+    if (names.style === 'indian' || names.mix) for (const f of shortsFrom) for (const s of shortForms(f)) if (!used.has(s.toUpperCase())) { used.add(s.toUpperCase()); pool.push(evalNick(s, 'short', null, false)); }
+    for (const p of pets) if (allow.includes(p.g) && !used.has(p.n.toUpperCase())) { used.add(p.n.toUpperCase()); pool.push(evalNick(p.n, 'pet', p, false)); }
+    const good = pool.filter((x) => x.relB !== 'enemy' && x.relFormal !== 'enemy' && x.num.category !== 'unfavourable');
+    // Pet names that start like the formal name feel natural (Olivia → Ollie), so they come first among equals.
+    const sameStart = (x: NickEval) => Number(x.name[0] === formalRef.first[0]);
+    const sorted0 = (good.length ? good : pool).sort((x, y) => y.score - x.score || Number(y.source === 'short') - Number(x.source === 'short') || sameStart(y) - sameStart(x) || x.name.localeCompare(y.name));
+    const sounds = new Set<string>();
+    const sorted = sorted0.filter((x) => { const k = soundKey(x.name); if (sounds.has(k)) return false; sounds.add(k); return true; });
+    // Up to 3 short forms of the formal name (they feel natural), then the best pet names – 6 in all.
+    const shorts = sorted.filter((x) => x.source === 'short' && x.score >= 65).slice(0, 3);
+    const alike = names.style === 'indian' ? [] : sorted.filter((x) => x.source === 'pet' && sameStart(x) && x.score >= 65).slice(0, 2);
+    const lead = [...shorts, ...alike];
+    const all = [...lead, ...sorted.filter((x) => !lead.includes(x))];
+    const strong = all.filter((x) => x.score >= 65);
+    const suggestions = (strong.length >= 3 ? strong : all).slice(0, 6).sort((x, y) => y.score - x.score);
+    let advice: Advice | null = null, corrected: NickEval | null = null, recommended: NickEval | null = suggestions[0] ?? null;
+    if (curNick) {
+      const tw = curNick.tweaks[0];
+      corrected = tw ? evalNick(tw.name, 'corrected', null, false) : null;
+      // A nickname that works against the birth number or the formal name is not kept, whatever its score.
+      const clash = curNick.relB === 'enemy' || curNick.relFormal === 'enemy';
+      advice = !clash && curNick.score >= 75 ? 'keep'
+        : corrected && corrected.score >= 65 && corrected.score >= curNick.score + 5 && corrected.relFormal !== 'enemy' && corrected.relB !== 'enemy' ? 'spelling'
+          : !clash && curNick.score >= 60 ? 'keep' : 'change';
+      recommended = advice === 'keep' ? curNick : advice === 'spelling' ? corrected : suggestions[0] ?? curNick;
+    }
+    nickname = { current: curNick, advice, corrected, suggestions, recommended };
+  }
+
+  // ---------- Remedies for the child's development ----------
+  const planetNums = [...new Set([m, b])];
+  const remedies = {
+    growth: GROWTH[m],
+    missing: missing.map((n) => ({ n, ...MISSING_DEV[n] })),
+    planets: planetNums.map((n) => { const p = planetOf(n); return { n, planet: p.name, weekday: p.weekday, colours: p.colours, mantra: p.mantra.beej, ...PLANET_REMEDY[n] }; }),
+  };
 
   // ---------- Lucky blueprint ----------
   const lucky = luckyNameTotals(m, b);
@@ -254,6 +395,7 @@ export function analyseBabyName(input: BabyNameInput) {
     prefLetters, prefCheck,
     lucky, letterGroups,
     family, suggestions, ranked, top, bestFamily, invalid,
+    nameFor, current, correction, nickname, remedies,
     ceremony,
     guidance: { weekday: mp.weekday, colours: mp.colours, mantra: mp.mantra.beej, bColours: bp.colours },
   };

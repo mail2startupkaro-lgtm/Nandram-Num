@@ -35,6 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${base()}/about`, lastModified: now, priority: 0.7 },
     { url: `${base()}/international-numerology`, lastModified: now, priority: 0.7 },
     { url: `${base()}/white-label-numerology-reports`, lastModified: now, priority: 0.7 },
+    { url: `${base()}/affiliate-program`, lastModified: now, priority: 0.6 },
     ...SERVICE_PAGES.map((x) => ({ url: `${base()}/${x.slug}`, lastModified: now, changeFrequency: 'monthly' as const, priority: 0.8 })),
     ...TOPIC_POSTS.map((p) => ({ url: `${base()}/blog/${p.slug}`, lastModified: new Date('2026-11-20'), changeFrequency: 'monthly' as const, priority: p.cat === 'guide' ? 0.8 : 0.7 })),
     ...NUMBER_POSTS.map((p) => ({ url: `${base()}/blog/${p.slug}`, lastModified: c, changeFrequency: 'monthly' as const, priority: 0.7 })),

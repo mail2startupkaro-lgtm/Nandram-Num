@@ -62,7 +62,7 @@ function OrderCard({ o, name, onChanged, onGenerateReport }: { o: Order; name: s
   const [msg, setMsg] = React.useState<string | null>(null);
   const patch = async (b: Record<string, unknown>, ok: string) => { setMsg(null); try { await api('/api/admin/service-orders', { method: 'PATCH', json: { id: o.id, ...b } }); setMsg(ok); onChanged(); } catch { setMsg('Could not save'); } };
   const d = o.details; const wa = (d.mobile ?? '').replace(/\D/g, '');
-  const rows = [...(d.forRelation ? [['Reading for', d.forRelation === 'self' ? 'Customer themself' : `Customer's ${d.forRelation} (saved in their family list)`]] : []), ...INTAKE.filter((f) => d[f.k]).map((f) => [f.label, d[f.k]])];
+  const rows = [...(d.forRelation ? [['Reading for', d.forRelation === 'self' ? 'Customer themself' : `Customer's ${d.forRelation} (saved in their family list)`]] : []), ...(d.babyName ? [['Baby current name', d.babyName]] : []), ...(d.nameType ? [['Name wanted', d.nameType === 'formal' ? 'Formal name' : d.nameType === 'nickname' ? 'Nickname' : 'Formal name & nickname']] : []), ...INTAKE.filter((f) => d[f.k]).map((f) => [f.label, d[f.k]])];
   return (
     <article className={cn('glass rounded-xl border p-4', o.status === 'paid' ? 'border-gold/60' : 'border-border')}>
       <div className="flex flex-wrap items-start justify-between gap-2">

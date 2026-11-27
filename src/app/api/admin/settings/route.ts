@@ -17,6 +17,7 @@ export const GET = withAdmin(async () => json({
   analytics: await getSetting('analytics'),
   offer: await getSetting('offer'),
   testimonials: await getSetting('testimonials'),
+  affiliate: await getSetting('affiliate'),
 }));
 
 const THEME_IDS = ['royal-gold-maroon', 'cosmic-blue', 'saffron-cream', 'minimal-white'] as const;
@@ -28,6 +29,10 @@ const TestimonialItem = z.object({
   consent: z.boolean(), active: z.boolean(),
 });
 const Body = z.discriminatedUnion('key', [
+  z.object({ key: z.literal('affiliate'), value: z.object({
+    enabled: z.boolean(), defaultPercent: z.number().int().min(1).max(90), cookieDays: z.number().int().min(1).max(90), holdDays: z.number().int().min(0).max(60),
+    minPayoutInr: z.number().min(0).max(100000), minPayoutUsd: z.number().min(0).max(2000), customerDiscountPercent: z.number().int().min(0).max(50),
+  }) }),
   z.object({ key: z.literal('testimonials'), value: z.object({ enabled: z.boolean(), items: z.array(TestimonialItem).max(100) }) }),
   z.object({ key: z.literal('seller'), value: z.object({ legalName: z.string().max(160), gstin: z.string().refine((g) => g === '' || GSTIN_RE.test(g), 'Invalid GSTIN'), address: z.string().max(300), state: z.string().max(60), stateCode: z.string().regex(/^\d{2}$/), sac: z.string().regex(/^\d{6}$/), email: z.string().max(200), phone: z.string().max(30), invoicePrefix: z.string().regex(/^[A-Z0-9-]{1,10}$/) }) }),
   z.object({ key: z.literal('themes'), value: z.object({ defaultTheme: z.enum(THEME_IDS), enabled: z.array(z.enum(THEME_IDS)).min(1), overrides: z.record(z.enum(THEME_IDS), z.object({ primary: hex, accent: hex, border: hex })) }) }),
@@ -62,6 +67,7 @@ export const PUT = withAdmin(async (req) => {
   if (b.key === 'offer' && b.value.enabled && !(new Date(b.value.endsAt).getTime() > Date.now())) return json({ error: 'VALIDATION', issues: [{ path: 'endsAt', message: 'Set an end date in the future to switch the offer on.' }] }, 422);
   await setSetting(b.key, b.value as never);
   if (b.key === 'testimonials') { revalidateTag(TESTIMONIALS_TAG); revalidatePath('/', 'layout'); }
+  if (b.key === 'affiliate') revalidatePath('/affiliate-program');
   if (b.key === 'offer') { revalidatePath('/services'); for (const p of SERVICE_PAGES) revalidatePath(`/${p.slug}`); }
   return json({ ok: true });
 });

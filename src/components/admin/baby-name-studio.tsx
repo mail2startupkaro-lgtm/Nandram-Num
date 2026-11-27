@@ -37,7 +37,7 @@ function Ring({ value, label }: { value: number; label: string }) {
 
 export function BabyNameStudio({ preloadedOrder, onClearPreloadedOrder }: { preloadedOrder?: Order | null; onClearPreloadedOrder?: () => void }) {
   const today = iso(todayIST());
-  const [f, setF] = React.useState({ dob: '', gender: 'any', country: 'India', nameStyle: 'auto' as NameStyleChoice, surname: '', timeOfBirth: '', placeOfBirth: '', fatherName: '', motherName: '', letters: '', asOf: today, language: 'en' as 'en' | 'hi', theme: 'royal-gold-maroon', preparedBy: 'Acharya Nandram', expertNote: '' });
+  const [f, setF] = React.useState({ dob: '', gender: 'any', country: 'India', nameStyle: 'auto' as NameStyleChoice, surname: '', timeOfBirth: '', placeOfBirth: '', fatherName: '', motherName: '', letters: '', nameFor: 'both' as 'formal' | 'nickname' | 'both', currentName: '', currentNickname: '', asOf: today, language: 'en' as 'en' | 'hi', theme: 'royal-gold-maroon', preparedBy: 'Acharya Nandram', expertNote: '' });
   const [names, setNames] = React.useState<string[]>(['']);
   const [suggest, setSuggest] = React.useState(true);
   const [res, setRes] = React.useState<BabyNameResult | null>(null);
@@ -53,7 +53,12 @@ export function BabyNameStudio({ preloadedOrder, onClearPreloadedOrder }: { prel
     const parents = (dt.parents ?? '').split(/\s*(?:&|,|\/|\band\b)\s*/i).map((x) => x.trim()).filter(Boolean);
     const surname = parents[0]?.split(/\s+/).length > 1 ? parents[0].split(/\s+/).pop() ?? '' : '';
     const g = (dt.gender ?? '').toLowerCase();
-    setF((x) => ({ ...x, country: dt.country || 'India', nameStyle: 'auto', dob: dt.dob ? toIsoDob(dt.dob) : '', gender: g === 'male' || g === 'boy' ? 'boy' : g === 'female' || g === 'girl' ? 'girl' : 'any', timeOfBirth: dt.tob ?? '', placeOfBirth: dt.pob ?? '', fatherName: parents[0] ?? '', motherName: parents[1] ?? '', surname, letters: dt.letters ?? '' }));
+    // Baby's current name from the order: a nickname, a formal name, or "Formal / Nickname" when both were typed.
+    const nt = dt.nameType === 'formal' || dt.nameType === 'nickname' ? dt.nameType : 'both';
+    const bn = (dt.babyName ?? '').trim();
+    const [p1, p2] = bn.split(/\s*(?:\/|,|\(|\)|\balias\b|\bnickname\b)\s*/i).filter(Boolean);
+    const cur = nt === 'nickname' ? { currentName: '', currentNickname: p1 ?? '' } : { currentName: p1 ?? '', currentNickname: nt === 'both' ? p2 ?? '' : '' };
+    setF((x) => ({ ...x, nameFor: nt, ...cur, country: dt.country || 'India', nameStyle: 'auto', dob: dt.dob ? toIsoDob(dt.dob) : '', gender: g === 'male' || g === 'boy' ? 'boy' : g === 'female' || g === 'girl' ? 'girl' : 'any', timeOfBirth: dt.tob ?? '', placeOfBirth: dt.pob ?? '', fatherName: parents[0] ?? '', motherName: parents[1] ?? '', surname, letters: dt.letters ?? '' }));
     setNames(['']); setRes(null);
     setFromOrder(`ordered ${new Date(preloadedOrder.createdAt).toLocaleDateString('en-IN')}${dt.parents ? ` · parents: ${dt.parents}` : ''}${dt.questions ? ` · questions: ${dt.questions}` : ''} – check father / mother / surname below`);
     onClearPreloadedOrder?.();
@@ -62,6 +67,7 @@ export function BabyNameStudio({ preloadedOrder, onClearPreloadedOrder }: { prel
   const payload = () => ({
     dob: f.dob, gender: f.gender as 'boy' | 'girl' | 'any', surname: f.surname, timeOfBirth: f.timeOfBirth, placeOfBirth: f.placeOfBirth, fatherName: f.fatherName, motherName: f.motherName,
     letters: f.letters, candidates: names.map((n) => n.trim()).filter(Boolean), suggest, asOf: f.asOf || undefined, country: f.country, nameStyle: f.nameStyle,
+    nameFor: f.nameFor, currentName: f.currentName.trim() || undefined, currentNickname: f.nameFor === 'formal' ? undefined : f.currentNickname.trim() || undefined,
   });
 
   function analyse(e?: React.FormEvent) {
@@ -94,7 +100,7 @@ export function BabyNameStudio({ preloadedOrder, onClearPreloadedOrder }: { prel
     <div className="space-y-6">
       <div className="glass rounded-lg p-5">
         <h2 className="flex items-center gap-2 text-2xl font-semibold"><Baby className="h-6 w-6 text-gold" />Advanced Baby Name Analysis</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Scores every name the family is considering against the baby&apos;s date of birth: first name and full name with surname (Chaldean), compound number, first letter, soul urge, Lo Shu grid and harmony with the parents&apos; names. Adds well-suited names from a list of meaningful Indian names (in the letters you give), suggests spelling tweaks that keep the sound, lucky letters and numbers, and good naming-ceremony dates. Download a branded PDF with cover page, every section on a fresh page, and your profile and services at the end. Nothing is saved.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Scores every name the family is considering against the baby&apos;s date of birth: first name and full name with surname (Chaldean), compound number, first letter, soul urge, Lo Shu grid and harmony with the parents&apos; names. Checks the baby&apos;s current name and nickname (keep / correct spelling / new name), suggests nicknames that suit both the birth numbers and the formal name, adds remedies for the child&apos;s development, adds well-suited names from a list of meaningful names (in the letters you give), suggests spelling tweaks that keep the sound, lucky letters and numbers, and good naming-ceremony dates. Download a branded PDF with cover page, every section on a fresh page, and your profile and services at the end. Nothing is saved.</p>
       </div>
 
       {fromOrder && <p className="rounded-lg border border-gold/40 bg-gold/10 p-3 text-sm" role="status">From order: {fromOrder}</p>}
@@ -123,6 +129,11 @@ export function BabyNameStudio({ preloadedOrder, onClearPreloadedOrder }: { prel
             <Field label="Father's name" htmlFor="bn-fa"><Input id="bn-fa" value={f.fatherName} onChange={set('fatherName')} autoComplete="off" /></Field>
             <Field label="Mother's name" htmlFor="bn-mo"><Input id="bn-mo" value={f.motherName} onChange={set('motherName')} autoComplete="off" /></Field>
             <Field label="Preferred starting letters" htmlFor="bn-let" hint="e.g. A, Sh, K (rashi letters)"><Input id="bn-let" value={f.letters} onChange={set('letters')} placeholder="A, Sh" autoComplete="off" /></Field>
+            <Field label="Name wanted" htmlFor="bn-for" hint="Nickname page is added for Nickname / Both">
+              <Select id="bn-for" value={f.nameFor} onChange={set('nameFor')}><option value="both">Formal name &amp; nickname</option><option value="formal">Formal name only</option><option value="nickname">Nickname only</option></Select>
+            </Field>
+            <Field label="Current formal name (if already named)" htmlFor="bn-cur" hint="Checked and corrected; first name only"><Input id="bn-cur" value={f.currentName} onChange={set('currentName')} placeholder="e.g. Aarav" autoComplete="off" /></Field>
+            {f.nameFor !== 'formal' && <Field label="Current nickname (if any)" htmlFor="bn-nick" hint="Checked with the formal name"><Input id="bn-nick" value={f.currentNickname} onChange={set('currentNickname')} placeholder="e.g. Golu" autoComplete="off" /></Field>}
           </div>
         </section>
         <section className="space-y-2">
@@ -150,7 +161,7 @@ export function BabyNameStudio({ preloadedOrder, onClearPreloadedOrder }: { prel
         </section>
         {err && <p className="text-sm text-danger" role="alert">{err}</p>}
         <div className="flex flex-wrap gap-2">
-          <Button type="submit" variant="gold" disabled={!f.dob || (!suggest && !names.some((n) => n.trim()))}><Baby className="mr-1 h-4 w-4" />Analyse names</Button>
+          <Button type="submit" variant="gold" disabled={!f.dob || (!suggest && !names.some((n) => n.trim()) && !f.currentName.trim())}><Baby className="mr-1 h-4 w-4" />Analyse names</Button>
           {res && <Button type="button" onClick={downloadPdf} disabled={busy}>{busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Download className="mr-1 h-4 w-4" />}Download PDF report</Button>}
         </div>
       </form>
@@ -201,7 +212,25 @@ export function BabyNameStudio({ preloadedOrder, onClearPreloadedOrder }: { prel
               {res.parents.father || res.parents.mother ? <p className="text-sm">Parents: {[res.parents.father && `${res.parents.father.name} ${res.parents.father.compound}/${res.parents.father.single}`, res.parents.mother && `${res.parents.mother.name} ${res.parents.mother.compound}/${res.parents.mother.single}`].filter(Boolean).join(' · ')}</p> : <p className="text-sm text-muted-foreground">Add the parents&apos; names to include the family harmony page.</p>}
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">PDF: cover (recommended name as letter tiles) · summary with top-3 · birth numbers & Lo Shu · lucky name blueprint · all names compared · recommended name in depth{res.top.length > 1 ? ' · second and third choices' : ''}{res.parents.father || res.parents.mother ? ' · family harmony' : ''}{res.suggestions.length ? ' · more suitable names' : ''} · naming ceremony & guidance · about the numerologist, services, WhatsApp/website QR codes. Each section starts on a new page.</p>
+          {(res.correction || res.nickname) && (
+            <div className="grid gap-5 lg:grid-cols-2">
+              {res.current && res.correction && (
+                <div className="glass space-y-2 rounded-lg p-5">
+                  <h3 className="font-serif text-lg font-semibold text-gold">Current name – {res.current.full}</h3>
+                  <p className="text-sm">Score <b>{res.current.score}</b> · <Badge tone={res.correction.advice === 'keep' ? 'good' : res.correction.advice === 'spelling' ? 'gold' : 'bad'}>{res.correction.advice === 'keep' ? 'Keep' : res.correction.advice === 'spelling' ? 'Correct spelling' : 'New name better'}</Badge>{res.correction.advice !== 'keep' && <> → <b>{res.correction.recommended.full}</b> ({res.correction.recommended.score})</>}</p>
+                  {res.correction.sameLetter.length > 0 && <p className="text-sm text-muted-foreground">Same starting sound: {res.correction.sameLetter.map((x) => `${x.first} (${x.score})`).join(', ')}</p>}
+                </div>
+              )}
+              {res.nickname && (
+                <div className="glass space-y-2 rounded-lg p-5">
+                  <h3 className="font-serif text-lg font-semibold text-gold">Nickname</h3>
+                  {res.nickname.current && <p className="text-sm">Current <b>{res.nickname.current.name}</b> {res.nickname.current.num.compound}/{res.nickname.current.num.single} · score <b>{res.nickname.current.score}</b> · with formal: {l.rel[res.nickname.current.relFormal]} · <Badge tone={res.nickname.advice === 'keep' ? 'good' : res.nickname.advice === 'spelling' ? 'gold' : 'bad'}>{res.nickname.advice === 'keep' ? 'Keep' : res.nickname.advice === 'spelling' ? 'Correct spelling' : 'New nickname better'}</Badge></p>}
+                  <p className="text-sm">Recommended: <b className="text-gold">{res.nickname.recommended?.name ?? '–'}</b> · Suggestions: {res.nickname.suggestions.map((x) => `${x.name} (${x.score})`).join(', ') || '–'}</p>
+                </div>
+              )}
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">PDF: cover (recommended name as letter tiles) · summary with top-3 · birth numbers & Lo Shu · lucky name blueprint · all names compared · recommended name in depth{res.top.length > 1 ? ' · second and third choices' : ''}{res.parents.father || res.parents.mother ? ' · family harmony' : ''}{res.suggestions.length ? ' · more suitable names' : ''} {res.current || res.nickname?.current ? ' · current name check & correction' : ''}{res.nickname ? ' · formal name & nickname' : ''} · remedies for child development · naming ceremony & guidance · about the numerologist, services, WhatsApp/website QR codes. Each section starts on a new page.</p>
         </div>
       )}
     </div>

@@ -9,6 +9,7 @@ import { intlPhone, OUTSIDE_INDIA, planPrice, serviceUsd, type Currency } from '
 import { getPerson } from '@/lib/db/repo/people';
 import { createServiceOrder, getService, isPayable, isServiceCode, markServiceOrderPaid, parseIntake } from './services';
 import { CASHFREE_ORDER_PREFIX, cashfreeConfig, cashfreePhone, createCashfreeOrder, getCashfreeOrder, getCashfreePayments, isCashfreeOrder, newCashfreeOrderId, toPaise } from './cashfree';
+import { attributeCheckout, markCommissionEarned } from '@/lib/affiliate/store';
 import { createRazorpayOrder, getRazorpayOrder, getRazorpayOrderPayments, isRazorpayOrder, razorpayConfig, verifyRazorpayPaymentSignature } from './razorpay';
 
 export class CheckoutError extends Error { constructor(public code: string) { super(code); } }
@@ -26,7 +27,7 @@ export async function validateCoupon(code: string, plan: Pick<Plan, 'code' | 'pr
   return { coupon: c, discountPaise: Math.max(0, discountPaise) };
 }
 
-export interface CheckoutInput { planCode: string; coupon?: string; billingName?: string; billingState: string; gstin?: string; phone?: string; intake?: unknown; currency?: Currency; /** Saved person (self / family member) the service is for. */ profileId?: string; /** One signature photo (data URL), Signature Analysis only. */ signatureImage?: string }
+export interface CheckoutInput { planCode: string; coupon?: string; billingName?: string; billingState: string; gstin?: string; phone?: string; intake?: unknown; currency?: Currency; /** Saved person (self / family member) the service is for. */ profileId?: string; /** One signature photo (data URL), Signature Analysis only. */ signatureImage?: string; /** The visitor's affiliate referral cookie (mn_ref), if any. */ refCookie?: string | null }
 
 /** What is being bought: a report plan (credits / Pro) or an expert service (SVC_…). */
 export async function getPurchasable(code: string, db: Db = getDb(), want: Currency = 'INR') {
@@ -100,6 +101,10 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
     couponCode: coupon?.code ?? null, billingName, billingState: input.billingState, gstin,
   };
 
+  // Affiliate attribution (coupon code or referral link). Never blocks the checkout.
+  const attribute = (paymentId: string) => attributeCheckout({ paymentId, buyerUserId: user.id, planCode: plan.code, currency, taxablePaise: gst.taxablePaise, couponCode: coupon?.code, refCookie: input.refCookie }, db)
+    .catch((e) => { console.error('affiliate attribution failed:', e instanceof Error ? e.message : e); });
+
   const gateway = activeGateway(currency, input.billingState);
   if (!gateway) {
     console.error('[Billing] Payment gateway not configured. Please ensure CASHFREE_APP_ID/CASHFREE_SECRET_KEY or RAZORPAY_KEY_ID/RAZORPAY_KEY_SECRET are set.');
@@ -123,6 +128,7 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
     }
     const [inserted] = await db.insert(payments).values({ ...row, gatewayOrderId: order.id }).returning({ id: payments.id });
     if (intake) await createServiceOrder(inserted.id, user.id, plan.code, intake, db);
+    await attribute(inserted.id);
     if (user.billingState !== input.billingState) await db.update(users).set({ billingState: input.billingState }).where(eq(users.id, user.id));
 
     return {
@@ -148,6 +154,7 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
     // Insert first so a webhook can never arrive for an order we don't know.
     const [inserted] = await db.insert(payments).values({ ...row, gatewayOrderId: orderId }).returning({ id: payments.id });
     if (intake) await createServiceOrder(inserted.id, user.id, plan.code, intake, db);
+    await attribute(inserted.id);
     let order;
     try {
       order = await createCashfreeOrder(cf, {
@@ -172,6 +179,7 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
   const orderId = `${MOCK_ORDER_PREFIX}${newCashfreeOrderId().slice(CASHFREE_ORDER_PREFIX.length)}`;
   const [inserted] = await db.insert(payments).values({ ...row, gatewayOrderId: orderId }).returning({ id: payments.id });
   if (intake) await createServiceOrder(inserted.id, user.id, plan.code, intake, db);
+  await attribute(inserted.id);
   if (user.billingState !== input.billingState) await db.update(users).set({ billingState: input.billingState }).where(eq(users.id, user.id));
   return {
     gateway: 'mock' as const, mode: 'mock', paymentSessionId: '', mock: true,
@@ -182,6 +190,13 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
 
 /** Marks an order paid exactly once and grants what was bought. Safe to call from both the client callback and the webhook. */
 export async function fulfilPayment(orderId: string, paymentId: string, db: Db = getDb()) {
+  const r = await fulfilInTx(orderId, paymentId, db);
+  // Affiliate commission is earned once the payment is confirmed (idempotent; never blocks the payment).
+  await markCommissionEarned(r.payment.id, db).catch((e) => { console.error('affiliate commission failed:', e instanceof Error ? e.message : e); });
+  return r;
+}
+
+function fulfilInTx(orderId: string, paymentId: string, db: Db) {
   return db.transaction(async (tx) => {
     const locked = await tx.execute(sql`select id from payments where razorpay_order_id = ${orderId} for update`);
     if (!locked.rows.length) throw new CheckoutError('ORDER_NOT_FOUND');
