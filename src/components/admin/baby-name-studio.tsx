@@ -51,15 +51,18 @@ export function BabyNameStudio({ preloadedOrder, onClearPreloadedOrder }: { prel
     const dt = preloadedOrder.details ?? {};
     // "Rahul Sharma & Priya Sharma" → father, mother; surname from the first parent's last word.
     const parents = (dt.parents ?? '').split(/\s*(?:&|,|\/|\band\b)\s*/i).map((x) => x.trim()).filter(Boolean);
-    const surname = parents[0]?.split(/\s+/).length > 1 ? parents[0].split(/\s+/).pop() ?? '' : '';
+    const father = dt.fatherName?.trim() || parents[0] || '';
+    const mother = dt.motherName?.trim() || parents[1] || '';
+    const surname = dt.surname?.trim() || (father.split(/\s+/).length > 1 ? father.split(/\s+/).pop() ?? '' : '');
     const g = (dt.gender ?? '').toLowerCase();
     // Baby's current name from the order: a nickname, a formal name, or "Formal / Nickname" when both were typed.
     const nt = dt.nameType === 'formal' || dt.nameType === 'nickname' ? dt.nameType : 'both';
     const bn = (dt.babyName ?? '').trim();
     const [p1, p2] = bn.split(/\s*(?:\/|,|\(|\)|\balias\b|\bnickname\b)\s*/i).filter(Boolean);
     const cur = nt === 'nickname' ? { currentName: '', currentNickname: p1 ?? '' } : { currentName: p1 ?? '', currentNickname: nt === 'both' ? p2 ?? '' : '' };
-    setF((x) => ({ ...x, nameFor: nt, ...cur, country: dt.country || 'India', nameStyle: 'auto', dob: dt.dob ? toIsoDob(dt.dob) : '', gender: g === 'male' || g === 'boy' ? 'boy' : g === 'female' || g === 'girl' ? 'girl' : 'any', timeOfBirth: dt.tob ?? '', placeOfBirth: dt.pob ?? '', fatherName: parents[0] ?? '', motherName: parents[1] ?? '', surname, letters: dt.letters ?? '' }));
-    setNames(['']); setRes(null);
+    setF((x) => ({ ...x, nameFor: nt, ...cur, country: dt.country || 'India', nameStyle: 'auto', dob: dt.dob ? toIsoDob(dt.dob) : '', gender: g === 'male' || g === 'boy' ? 'boy' : g === 'female' || g === 'girl' ? 'girl' : 'any', timeOfBirth: dt.tob ?? '', placeOfBirth: dt.pob ?? '', fatherName: father, motherName: mother, surname, letters: dt.letters ?? '' }));
+    const preNames = (dt.consideredNames ?? '').split(/[\n,;]+/).map((s) => s.trim()).filter(Boolean);
+    setNames(preNames.length ? preNames : ['']); setRes(null);
     setFromOrder(`ordered ${new Date(preloadedOrder.createdAt).toLocaleDateString('en-IN')}${dt.parents ? ` · parents: ${dt.parents}` : ''}${dt.questions ? ` · questions: ${dt.questions}` : ''} – check father / mother / surname below`);
     onClearPreloadedOrder?.();
   }, [preloadedOrder]); // eslint-disable-line react-hooks/exhaustive-deps

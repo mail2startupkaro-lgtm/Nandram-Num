@@ -209,7 +209,7 @@ const FIELD: Record<ServiceIntakeField, z.ZodTypeAny> = {
 };
 const OPTIONAL: ServiceIntakeField[] = ['maritalStatus', 'partnerName', 'partnerDob', 'tob', 'pob', 'city', 'state', 'country', 'mobile', 'email', 'profession', 'education', 'concerns', 'language', 'currentName', 'parents', 'letters', 'businesses', 'launchDate', 'partners', 'brand', 'challenges', 'questions'];
 /** Booking details; `forProfileId` / `forRelation` link the order to the saved person (self or a family member). */
-export type IntakeDetails = Partial<Record<ServiceIntakeField | 'forProfileId' | 'forRelation' | 'signatureImage' | 'babyName' | 'nameType', string>>;
+export type IntakeDetails = Partial<Record<ServiceIntakeField | 'forProfileId' | 'forRelation' | 'signatureImage' | 'babyName' | 'nameType' | 'surname' | 'fatherName' | 'motherName' | 'consideredNames', string>>;
 
 /** One signature photo sent with a Signature Analysis booking: a JPEG/PNG/WEBP data URL, at most ~1 MB. */
 export const SIGNATURE_IMAGE_MAX = 1_400_000;
@@ -218,8 +218,17 @@ export const SignatureImage = z.string().max(SIGNATURE_IMAGE_MAX).regex(/^data:i
 /** Validates exactly the fields this service asks for; unknown keys are dropped. Aadhaar-like numbers are masked. */
 export function parseIntake(svc: Service, raw: unknown): IntakeDetails {
   const shape = Object.fromEntries(svc.intake.map((k) => [k, OPTIONAL.includes(k) ? FIELD[k].optional() : FIELD[k]]));
-  // Baby Name: the baby's current name (if any) and whether the family wants a formal name, a nickname or both.
-  const baby: Record<string, z.ZodTypeAny> = svc.code === 'SVC_BABY_NAME' ? { babyName: z.string().trim().max(120).optional(), nameType: z.enum(['formal', 'nickname', 'both']).optional() } : {};
+  // Baby Name: the baby's current name (if any), formal/nickname preference, surname, parents, and names being considered.
+  const baby: Record<string, z.ZodTypeAny> = svc.code === 'SVC_BABY_NAME'
+    ? {
+        babyName: z.string().trim().max(120).optional(),
+        nameType: z.enum(['formal', 'nickname', 'both']).optional(),
+        surname: z.string().trim().max(80).optional(),
+        fatherName: z.string().trim().max(120).optional(),
+        motherName: z.string().trim().max(120).optional(),
+        consideredNames: z.string().trim().max(500).optional(),
+      }
+    : {};
   const parsed = z.object({ ...shape, ...baby, country: z.string().trim().max(100).optional() }).parse(raw ?? {}) as IntakeDetails;
   const mask = (s: string) => s.replace(/\b(\d{4})[\s-]?(\d{4})[\s-]?(\d{4})\b/g, (_m, _a, _b, c) => `XXXX-XXXX-${c}`);
   return Object.fromEntries(Object.entries(parsed).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, mask(String(v))]));

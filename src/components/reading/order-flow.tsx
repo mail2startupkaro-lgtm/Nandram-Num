@@ -233,17 +233,27 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
           <fieldset className="space-y-3"><legend id="det-h" className="mb-1 text-sm font-semibold">{t.detailsTitle}</legend>
             <Field label={t.relation} htmlFor="of-rel"><Select id="of-rel" value={relation} onChange={(e) => setRelation(e.target.value as FamilyRelation)}>{FAMILY_RELATIONS.map((r) => <option key={r} value={r}>{RELATION_LABEL[r][lang]}</option>)}</Select></Field>
             {baby && (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Field label={lang === 'hi' ? 'शिशु का वर्तमान नाम (यदि हो)' : 'Baby Current Name (if any)'} htmlFor="of-baby">
-                  <Input id="of-baby" value={babyName} onChange={(e) => { setBabyName(e.target.value); setD((x) => ({ ...x, babyName: e.target.value })); }} maxLength={120} placeholder={lang === 'hi' ? 'औपचारिक नाम या निकनेम' : 'Formal name or nickname'} />
-                </Field>
-                <Field label={lang === 'hi' ? 'नाम का प्रकार (औपचारिक या निकनेम)' : 'Name Type (Formal Name or Nickname)'} htmlFor="of-baby-type">
-                  <Select id="of-baby-type" value={d.nameType || 'both'} onChange={(e) => setD((x) => ({ ...x, nameType: e.target.value }))}>
-                    <option value="both">{lang === 'hi' ? 'दोनों (औपचारिक नाम व निकनेम)' : 'Both (Formal Name & Nickname)'}</option>
-                    <option value="formal">{lang === 'hi' ? 'औपचारिक नाम (Formal Name)' : 'Formal Name'}</option>
-                    <option value="nickname">{lang === 'hi' ? 'निकनेम / पुकारने का नाम (Nickname)' : 'Nickname (Calling Name)'}</option>
-                  </Select>
-                </Field>
+              <div className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label={lang === 'hi' ? 'शिशु का वर्तमान नाम (यदि हो)' : 'Baby Current Name (if any)'} htmlFor="of-baby">
+                    <Input id="of-baby" value={babyName} onChange={(e) => { setBabyName(e.target.value); setD((x) => ({ ...x, babyName: e.target.value })); }} maxLength={120} placeholder={lang === 'hi' ? 'औपचारिक नाम या निकनेम' : 'Formal name or nickname'} />
+                  </Field>
+                  <Field label={lang === 'hi' ? 'नाम का प्रकार (औपचारिक या निकनेम)' : 'Name Type (Formal Name or Nickname)'} htmlFor="of-baby-type">
+                    <Select id="of-baby-type" value={d.nameType || 'both'} onChange={(e) => setD((x) => ({ ...x, nameType: e.target.value }))}>
+                      <option value="both">{lang === 'hi' ? 'दोनों (औपचारिक नाम व निकनेम)' : 'Both (Formal Name & Nickname)'}</option>
+                      <option value="formal">{lang === 'hi' ? 'औपचारिक नाम (Formal Name)' : 'Formal Name'}</option>
+                      <option value="nickname">{lang === 'hi' ? 'निकनेम / पुकारने का नाम (Nickname)' : 'Nickname (Calling Name)'}</option>
+                    </Select>
+                  </Field>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label={lang === 'hi' ? 'उपनाम / सरनेम (Surname)' : 'Surname / Family Name (optional)'} htmlFor="of-surname">
+                    <Input id="of-surname" value={d.surname ?? ''} onChange={set('surname')} maxLength={80} placeholder={lang === 'hi' ? 'जैसे: शर्मा, गुप्ता, वर्मा' : 'e.g. Sharma, Gupta, Verma'} />
+                  </Field>
+                  <Field label={lang === 'hi' ? 'परिवार द्वारा विचाराधीन नाम (वैकल्पिक)' : 'Names the family is considering (optional)'} htmlFor="of-considered">
+                    <Input id="of-considered" value={d.consideredNames ?? ''} onChange={set('consideredNames')} maxLength={500} placeholder={lang === 'hi' ? 'जैसे: आरव, विहान, रेयांश' : 'e.g. Aarav, Vihaan, Reyansh'} />
+                  </Field>
+                </div>
               </div>
             )}
             {has('currentName') && <Field label={label('currentName')} htmlFor="of-cn" required={svc.code !== 'SVC_PERSONAL_REPORT'}><Input id="of-cn" placeholder={svc.code === 'SVC_PERSONAL_REPORT' ? (lang === 'hi' ? 'जैसे: राहुल' : 'e.g. Rahul') : undefined} value={d.currentName ?? ''} onChange={set('currentName')} maxLength={sig ? 120 : 300} /></Field>}
@@ -321,7 +331,34 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
                 <ChipGroup multi options={LIFE_CONCERNS.map((c) => ({ value: c, label: CONCERNS_LABEL[c] ? CONCERNS_LABEL[c][lang] : c }))} value={d.concerns ? d.concerns.split(',').filter(Boolean) : []} onChange={(v) => setD((x) => ({ ...x, concerns: v.join(',') }))} />
               </Field>
             )}
-            {has('parents') && <Field label={L.parents} htmlFor="of-par"><Input id="of-par" value={d.parents ?? ''} onChange={set('parents')} maxLength={200} /></Field>}
+            {has('parents') && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label={lang === 'hi' ? 'पिता का नाम (वैकल्पिक)' : "Father's Name (optional)"} htmlFor="of-father">
+                  <Input
+                    id="of-father"
+                    value={d.fatherName ?? ''}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setD((x) => ({ ...x, fatherName: v, parents: [v, x.motherName].filter(Boolean).join(' & ') }));
+                    }}
+                    maxLength={120}
+                    placeholder={lang === 'hi' ? 'पिता का पूरा नाम' : "Father's full name"}
+                  />
+                </Field>
+                <Field label={lang === 'hi' ? 'माता का नाम (वैकल्पिक)' : "Mother's Name (optional)"} htmlFor="of-mother">
+                  <Input
+                    id="of-mother"
+                    value={d.motherName ?? ''}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setD((x) => ({ ...x, motherName: v, parents: [x.fatherName, v].filter(Boolean).join(' & ') }));
+                    }}
+                    maxLength={120}
+                    placeholder={lang === 'hi' ? 'माता का पूरा नाम' : "Mother's full name"}
+                  />
+                </Field>
+              </div>
+            )}
             {has('businessName') && <Field label={L.businessName} htmlFor="of-bn" required hint={lang === 'hi' ? 'अंग्रेज़ी अक्षरों में, जैसे: Sharma Interiors' : 'In English letters, e.g. Sharma Interiors'}><textarea id="of-bn" rows={3} maxLength={400} value={d.businessName ?? ''} onChange={set('businessName')} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></Field>}
             {has('launchDate') && <Field label={L.launchDate} htmlFor="of-ld"><Input id="of-ld" type="date" min="1900-01-01" max="2045-12-31" value={d.launchDate ?? ''} onChange={set('launchDate')} /></Field>}
             {has('partners') && <Field label={L.partners} htmlFor="of-pt" hint={lang === 'hi' ? 'जैसे: Arjun Mehta – 03-01-1990' : 'e.g. Arjun Mehta – 03-01-1990'}><textarea id="of-pt" rows={2} maxLength={800} value={d.partners ?? ''} onChange={set('partners')} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></Field>}
