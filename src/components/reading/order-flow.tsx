@@ -19,6 +19,7 @@ import { FAMILY_RELATIONS, LIFE_CONCERNS, type FamilyRelation } from '@/lib/nume
 import type { ServiceIntakeField } from '@/lib/db/schema';
 import { cleanIntake, intakeToPerson, missingIntake, personToIntake, toIsoDate, type PersonLite } from '@/lib/reading/intake';
 import { ALL_COUNTRIES, POPULAR_COUNTRIES, isIndia } from '@/lib/countries';
+import { NAME_STYLES } from '@/lib/baby-name/world-names';
 import type { PublicService } from '@/components/services/book-service';
 import { FIELD_LABEL, FLOW, RELATION_LABEL } from './labels';
 import { priceOf, SERVICE_ICON, StepBar } from './reading-picker';
@@ -269,6 +270,17 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
                   </optgroup>
                 </Select>
               </Field>
+              {baby && (
+                <Field label={lang === 'hi' ? 'नाम का देश / संस्कृति शैली' : 'Name Style (Country-wise)'} htmlFor="of-namestyle">
+                  <Select id="of-namestyle" value={d.nameStyle || 'auto'} onChange={(e) => setD((x) => ({ ...x, nameStyle: e.target.value }))}>
+                    <option value="auto">{lang === 'hi' ? `चयनित देश के अनुसार (${d.country || 'India'})` : `Match Selected Country (${d.country || 'India'})`}</option>
+                    <option value="mix">{lang === 'hi' ? 'देश + भारतीय मिश्रित (NRI परिवार)' : 'Country + Indian Mix (NRI Families)'}</option>
+                    {NAME_STYLES.map((st) => (
+                      <option key={st.id} value={st.id}>{lang === 'hi' ? st.hi : st.en}</option>
+                    ))}
+                  </Select>
+                </Field>
+              )}
               {has('state') && (
                 <Field label={isIndia(d.country) ? L.state : (lang === 'hi' ? 'राज्य / प्रांत' : 'State / Province')} htmlFor="of-state">
                   {isIndia(d.country) ? (
@@ -295,7 +307,11 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
                   </Select>
                 </Field>
               )}
-              {has('tob') && <Field label={L.tob} htmlFor="of-tob"><Input id="of-tob" type="time" value={d.tob ?? ''} onChange={set('tob')} /></Field>}
+              {has('tob') && (
+                <Field label={L.tob} htmlFor="of-tob">
+                  <TimeOfBirthInput id="of-tob" value={d.tob ?? ''} onChange={(v) => setD((x) => ({ ...x, tob: v }))} lang={lang} />
+                </Field>
+              )}
               {has('pob') && <Field label={label('pob')} htmlFor="of-pob" required={svc.code === 'SVC_PERSONAL_REPORT'}><Input id="of-pob" placeholder={!isIndia(d.country) ? (lang === 'hi' ? 'जैसे: New York, London, Dubai' : 'e.g. New York, London, Dubai') : (lang === 'hi' ? 'जैसे: Jaipur, Delhi, Mumbai' : 'e.g. Jaipur, Delhi, Mumbai')} value={d.pob ?? ''} onChange={set('pob')} maxLength={120} /></Field>}
               {has('profession') && <Field label={L.profession} htmlFor="of-prof"><Input id="of-prof" placeholder={lang === 'hi' ? 'जैसे: सॉफ्टवेयर इंजीनियर, व्यापारी, डॉक्टर' : 'e.g. Software Engineer, Business Owner, Doctor'} value={d.profession ?? ''} onChange={set('profession')} maxLength={100} /></Field>}
               {has('mobile') && <Field label={label('mobile')} htmlFor="of-mob" required={svc.code === 'SVC_PERSONAL_REPORT'}><Input id="of-mob" type="tel" inputMode="tel" placeholder={!isIndia(d.country) ? '+1 555 123 4567' : '98765 43210'} value={d.mobile ?? ''} onChange={set('mobile')} maxLength={25} /></Field>}
@@ -424,6 +440,68 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
             <Link href="/account#family" className={buttonVariants({ variant: 'ghost' })}><Users className="h-4 w-4" />{t.family}</Link>
           </div>
         </section>
+      )}
+    </div>
+  );
+}
+
+function TimeOfBirthInput({ id, value, onChange, lang }: { id: string; value: string; onChange: (v: string) => void; lang: 'en' | 'hi' }) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec((value || '').trim());
+  const h24 = m ? Number(m[1]) : null;
+  const minVal = m ? m[2] : '';
+  const periodVal = h24 !== null ? (h24 >= 12 ? 'PM' : 'AM') : 'AM';
+  const h12Val = h24 !== null ? String((h24 % 12) || 12).padStart(2, '0') : '';
+
+  const emit = (h12: string, min: string, per: string) => {
+    if (!h12 || !min) { onChange(''); return; }
+    let h = Number(h12) % 12;
+    if (per === 'PM') h += 12;
+    onChange(`${String(h).padStart(2, '0')}:${min}`);
+  };
+
+  return (
+    <div className="flex items-center gap-1.5" id={id}>
+      <Select
+        aria-label={lang === 'hi' ? 'घंटा' : 'Hour'}
+        value={h12Val}
+        onChange={(e) => emit(e.target.value, minVal || '00', periodVal)}
+        className="w-20"
+      >
+        <option value="">{lang === 'hi' ? 'घं' : 'HH'}</option>
+        {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map((h) => (
+          <option key={h} value={h}>{h}</option>
+        ))}
+      </Select>
+      <span className="text-muted-foreground">:</span>
+      <Select
+        aria-label={lang === 'hi' ? 'मिनट' : 'Minute'}
+        value={minVal}
+        onChange={(e) => emit(h12Val || '12', e.target.value, periodVal)}
+        className="w-20"
+      >
+        <option value="">{lang === 'hi' ? 'मि' : 'MM'}</option>
+        {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map((mm) => (
+          <option key={mm} value={mm}>{mm}</option>
+        ))}
+      </Select>
+      <Select
+        aria-label="AM / PM"
+        value={periodVal}
+        onChange={(e) => emit(h12Val || '12', minVal || '00', e.target.value)}
+        className="w-20"
+      >
+        <option value="AM">AM</option>
+        <option value="PM">PM</option>
+      </Select>
+      {value && (
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          aria-label={lang === 'hi' ? 'साफ़ करें' : 'Clear'}
+          className="px-1.5 text-xs text-muted-foreground hover:text-foreground"
+        >
+          ✕
+        </button>
       )}
     </div>
   );

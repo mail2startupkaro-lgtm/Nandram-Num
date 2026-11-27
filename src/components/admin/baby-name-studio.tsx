@@ -60,7 +60,7 @@ export function BabyNameStudio({ preloadedOrder, onClearPreloadedOrder }: { prel
     const bn = (dt.babyName ?? '').trim();
     const [p1, p2] = bn.split(/\s*(?:\/|,|\(|\)|\balias\b|\bnickname\b)\s*/i).filter(Boolean);
     const cur = nt === 'nickname' ? { currentName: '', currentNickname: p1 ?? '' } : { currentName: p1 ?? '', currentNickname: nt === 'both' ? p2 ?? '' : '' };
-    setF((x) => ({ ...x, nameFor: nt, ...cur, country: dt.country || 'India', nameStyle: 'auto', dob: dt.dob ? toIsoDob(dt.dob) : '', gender: g === 'male' || g === 'boy' ? 'boy' : g === 'female' || g === 'girl' ? 'girl' : 'any', timeOfBirth: dt.tob ?? '', placeOfBirth: dt.pob ?? '', fatherName: father, motherName: mother, surname, letters: dt.letters ?? '' }));
+    setF((x) => ({ ...x, nameFor: nt, ...cur, country: dt.country || 'India', nameStyle: (dt.nameStyle as NameStyleChoice) || 'auto', dob: dt.dob ? toIsoDob(dt.dob) : '', gender: g === 'male' || g === 'boy' ? 'boy' : g === 'female' || g === 'girl' ? 'girl' : 'any', timeOfBirth: dt.tob ?? '', placeOfBirth: dt.pob ?? '', fatherName: father, motherName: mother, surname, letters: dt.letters ?? '' }));
     const preNames = (dt.consideredNames ?? '').split(/[\n,;]+/).map((s) => s.trim()).filter(Boolean);
     setNames(preNames.length ? preNames : ['']); setRes(null);
     setFromOrder(`ordered ${new Date(preloadedOrder.createdAt).toLocaleDateString('en-IN')}${dt.parents ? ` · parents: ${dt.parents}` : ''}${dt.questions ? ` · questions: ${dt.questions}` : ''} – check father / mother / surname below`);

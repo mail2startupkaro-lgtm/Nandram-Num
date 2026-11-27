@@ -209,7 +209,7 @@ const FIELD: Record<ServiceIntakeField, z.ZodTypeAny> = {
 };
 const OPTIONAL: ServiceIntakeField[] = ['maritalStatus', 'partnerName', 'partnerDob', 'tob', 'pob', 'city', 'state', 'country', 'mobile', 'email', 'profession', 'education', 'concerns', 'language', 'currentName', 'parents', 'letters', 'businesses', 'launchDate', 'partners', 'brand', 'challenges', 'questions'];
 /** Booking details; `forProfileId` / `forRelation` link the order to the saved person (self or a family member). */
-export type IntakeDetails = Partial<Record<ServiceIntakeField | 'forProfileId' | 'forRelation' | 'signatureImage' | 'babyName' | 'nameType' | 'surname' | 'fatherName' | 'motherName' | 'consideredNames', string>>;
+export type IntakeDetails = Partial<Record<ServiceIntakeField | 'forProfileId' | 'forRelation' | 'signatureImage' | 'babyName' | 'nameType' | 'nameStyle' | 'surname' | 'fatherName' | 'motherName' | 'consideredNames', string>>;
 
 /** One signature photo sent with a Signature Analysis booking: a JPEG/PNG/WEBP data URL, at most ~1 MB. */
 export const SIGNATURE_IMAGE_MAX = 1_400_000;
@@ -223,6 +223,7 @@ export function parseIntake(svc: Service, raw: unknown): IntakeDetails {
     ? {
         babyName: z.string().trim().max(120).optional(),
         nameType: z.enum(['formal', 'nickname', 'both']).optional(),
+        nameStyle: z.enum(['auto', 'mix', 'indian', 'english', 'arabic', 'spanish', 'portuguese', 'french', 'german', 'dutch', 'italian', 'russian', 'malay']).optional(),
         surname: z.string().trim().max(80).optional(),
         fatherName: z.string().trim().max(120).optional(),
         motherName: z.string().trim().max(120).optional(),
