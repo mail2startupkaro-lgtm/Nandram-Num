@@ -103,7 +103,7 @@ export interface LeadFormLabels {
 export function LeadForm({ services, defaultService = '', magnet = 'mini-reading', whatsapp, onDone, compact, bookHref = '#services', labels }: { services: FunnelService[]; defaultService?: string; magnet?: 'mini-reading' | 'sample-report'; whatsapp: string; onDone?: () => void; compact?: boolean; bookHref?: string; labels?: LeadFormLabels }) {
   const { lang } = useApp();
   const [, unlock] = useUnlocked();
-  const [f, setF] = React.useState({ name: '', nameType: 'formal' as 'formal' | 'nickname' | 'both', phone: '', dob: '', country: 'India', service: defaultService, consent: false, website: '' });
+  const [f, setF] = React.useState({ name: '', gender: 'male' as 'male' | 'female', nameType: 'formal' as 'formal' | 'nickname' | 'both', phone: '', dob: '', country: 'India', service: defaultService, consent: false, website: '' });
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
   const [res, setRes] = React.useState<{ moolank: number; bhagyank: number } | null>(null);
@@ -114,13 +114,14 @@ export function LeadForm({ services, defaultService = '', magnet = 'mini-reading
   const ok = f.name.trim().length >= 2 && (isIntl ? f.phone.replace(/\D/g, '').length >= 7 : f.phone.replace(/\D/g, '').length >= 10) && !!f.dob && f.consent;
 
   const isBaby = f.service === 'SVC_BABY_NAME' || defaultService === 'SVC_BABY_NAME';
+  const genderLabel = f.gender === 'female' ? (isBaby ? (hi ? 'बालिका (Girl)' : 'Girl') : (hi ? 'महिला' : 'Female')) : (isBaby ? (hi ? 'बालक (Boy)' : 'Boy') : (hi ? 'पुरुष' : 'Male'));
   const nameTypeLabel = f.nameType === 'nickname' ? (hi ? 'निकनेम' : 'Nickname') : f.nameType === 'both' ? (hi ? 'औपचारिक व निकनेम दोनों' : 'Formal & Nickname') : (hi ? 'औपचारिक नाम' : 'Formal Name');
 
   async function submit(e: React.FormEvent) {
     e.preventDefault(); if (!ok) return;
     setBusy(true); setErr(null);
     try {
-      const leadName = isBaby ? `${f.name.trim()} [${nameTypeLabel}]` : f.name.trim();
+      const leadName = isBaby ? `${f.name.trim()} [${genderLabel}, ${nameTypeLabel}]` : `${f.name.trim()} [${genderLabel}]`;
       const r = await api<{ moolank: number; bhagyank: number }>('/api/leads', { method: 'POST', json: { name: leadName, phone: f.phone.trim(), dob: f.dob, service: f.service || undefined, magnet, language: lang, consent: true, website: f.website, page: window.location.pathname, referrer: document.referrer || undefined, ...utmFromUrl() } });
       setRes(r); unlock();
       trackEvent('generate_lead', { lead_magnet: magnet, service: f.service || 'none' });
@@ -157,6 +158,12 @@ export function LeadForm({ services, defaultService = '', magnet = 'mini-reading
     <form onSubmit={submit} className="space-y-3" noValidate>
       <div className={cn('grid gap-3', !compact && 'sm:grid-cols-2')}>
         <Field label={nameLabel} htmlFor="ld-name" required><Input id="ld-name" autoComplete="name" maxLength={120} placeholder={isBaby ? (hi ? 'औपचारिक नाम या निकनेम लिखें' : 'Enter formal name or nickname') : undefined} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
+        <Field label={hi ? 'लिंग (Gender)' : 'Gender'} htmlFor="ld-gender" required>
+          <Select id="ld-gender" value={f.gender} onChange={(e) => setF({ ...f, gender: e.target.value as 'male' | 'female' })}>
+            <option value="male">{isBaby ? (hi ? 'बालक (Boy)' : 'Boy (Male)') : (hi ? 'पुरुष (Male)' : 'Male')}</option>
+            <option value="female">{isBaby ? (hi ? 'बालिका (Girl)' : 'Girl (Female)') : (hi ? 'महिला (Female)' : 'Female')}</option>
+          </Select>
+        </Field>
         {isBaby && (
           <Field label={hi ? 'नाम का प्रकार (औपचारिक या निकनेम)' : 'Name Type (Formal Name or Nickname)'} htmlFor="ld-ntype">
             <Select id="ld-ntype" value={f.nameType} onChange={(e) => setF({ ...f, nameType: e.target.value as 'formal' | 'nickname' | 'both' })}>
