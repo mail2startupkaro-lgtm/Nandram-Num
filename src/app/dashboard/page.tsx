@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import Link from 'next/link';
-import { Clock, Copy, FileJson, FileSpreadsheet, Plus, Search, Trash2, Upload, Users } from 'lucide-react';
+import { Clock, Copy, Download, FileJson, FileSpreadsheet, Plus, Search, Trash2, Upload, Users } from 'lucide-react';
 import { useApp } from '@/components/layout/providers';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/form';
@@ -27,7 +27,7 @@ interface Item {
 interface ImportResult { created: { profileId: string; name: string; reports: number }[]; issues: { where: string; message: string }[]; warnings: { where: string; message: string }[] }
 
 export default function Dashboard() {
-  const { t, me, lang } = useApp();
+  const { t, me, lang, refreshMe } = useApp();
   const hi = lang === 'hi';
   const [q, setQ] = React.useState('');
   const [data, setData] = React.useState<{ items: Item[]; total: number } | null>(null);
@@ -35,7 +35,30 @@ export default function Dashboard() {
   const [error, setError] = React.useState<string | null>(null);
   const [imp, setImp] = React.useState<ImportResult | null>(null);
   const [busy, setBusy] = React.useState(false);
+  const [downloading, setDownloading] = React.useState<string | null>(null);
   const fileRef = React.useRef<HTMLInputElement>(null);
+
+  async function downloadReport(reportId: string) {
+    setDownloading(reportId);
+    try {
+      await download(`/api/reports/${reportId}/pdf?kind=report&theme=royal-gold-maroon`);
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 402) {
+        const reason = (e.body as { reason?: string })?.reason;
+        const credits = me?.account?.credits ?? 0;
+        if (reason === 'credit_required' && credits > 0 && confirm(`${t.account.unlockAsk} ${credits}.`)) {
+          await download(`/api/reports/${reportId}/pdf?kind=report&theme=royal-gold-maroon&useCredit=1`);
+          await refreshMe();
+        } else {
+          setError(t.account.unlockNone);
+        }
+      } else {
+        setError(e instanceof Error ? e.message : t.err.server);
+      }
+    } finally {
+      setDownloading(null);
+    }
+  }
 
   const load = React.useCallback(async (query = q) => {
     try {
@@ -141,9 +164,22 @@ export default function Dashboard() {
                   <p className="font-semibold text-foreground text-sm">{p.displayName} · v{p.latest!.version}</p>
                   <p className="text-xs text-muted-foreground">{new Date(p.latest!.createdAt).toLocaleDateString('en-IN')}</p>
                 </div>
-                <Link href={`/dashboard/${p.id}`} className={buttonVariants({ size: 'sm', variant: p.latest!.queue?.state === 'ready' ? 'gold' : 'outline' })}>
-                  {p.latest!.queue?.state === 'ready' ? (hi ? 'डाउनलोड करें' : 'Download') : (hi ? 'विवरण देखें' : 'View')}
-                </Link>
+                <div className="flex items-center gap-2">
+                  {p.latest!.queue?.state === 'ready' && (
+                    <Button
+                      size="sm"
+                      variant="gold"
+                      disabled={downloading === p.latest!.id}
+                      onClick={() => downloadReport(p.latest!.id)}
+                    >
+                      <Download className="h-3.5 w-3.5 mr-1" />
+                      {hi ? 'PDF डाउनलोड' : 'Download PDF'}
+                    </Button>
+                  )}
+                  <Link href={`/dashboard/${p.id}`} className={buttonVariants({ size: 'sm', variant: p.latest!.queue?.state === 'ready' ? 'outline' : 'gold' })}>
+                    {hi ? 'विवरण देखें' : 'View Details'}
+                  </Link>
+                </div>
               </div>
               <QueueTracker queue={p.latest!.queue!} />
             </div>
@@ -195,8 +231,20 @@ export default function Dashboard() {
                 )}
               </div>
             )}
-            <div className="mt-auto flex gap-1 pt-4">
+            <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-4">
               <Link href={`/dashboard/${p.id}`} className={buttonVariants({ size: 'sm', variant: 'outline' })}>{t.dash.open}</Link>
+              {p.latest && (
+                <Button
+                  size="sm"
+                  variant="gold"
+                  disabled={downloading === p.latest.id}
+                  onClick={() => downloadReport(p.latest!.id)}
+                  title={hi ? 'PDF रिपोर्ट डाउनलोड करें' : 'Download PDF Report'}
+                >
+                  <Download className="h-3.5 w-3.5 mr-1" />
+                  {downloading === p.latest.id ? (hi ? 'डाउनलोडिंग...' : 'Downloading...') : 'PDF'}
+                </Button>
+              )}
               <Button size="sm" variant="ghost" onClick={async () => { await api(`/api/profiles/${p.id}/duplicate`, { method: 'POST' }); load(); }}><Copy /> {t.dash.duplicate}</Button>
               <Button size="sm" variant="ghost" className="ml-auto text-danger" aria-label={t.dash.delete} onClick={async () => { if (confirm(t.dash.confirmDelete)) { await api(`/api/profiles/${p.id}`, { method: 'DELETE' }); load(); } }}><Trash2 /></Button>
             </div>

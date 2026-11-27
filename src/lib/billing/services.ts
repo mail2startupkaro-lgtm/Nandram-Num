@@ -11,7 +11,7 @@ import { decryptJson, encryptJson } from '@/lib/security/crypto';
 
 export const SERVICE_PREFIX = 'SVC_';
 export const isServiceCode = (code: string) => code.startsWith(SERVICE_PREFIX);
-export const INTAKE_FIELDS: ServiceIntakeField[] = ['clientName', 'dob', 'gender', 'maritalStatus', 'partnerName', 'partnerDob', 'tob', 'pob', 'mobile', 'currentName', 'parents', 'letters', 'businesses', 'businessName', 'launchDate', 'partners', 'brand', 'challenges', 'questions'];
+export const INTAKE_FIELDS: ServiceIntakeField[] = ['clientName', 'dob', 'gender', 'maritalStatus', 'partnerName', 'partnerDob', 'tob', 'pob', 'city', 'state', 'country', 'mobile', 'email', 'profession', 'education', 'concerns', 'language', 'currentName', 'parents', 'letters', 'businesses', 'businessName', 'launchDate', 'partners', 'brand', 'challenges', 'questions'];
 export const SERVICE_ORDER_STATUSES = ['awaiting_payment', 'paid', 'in_progress', 'delivered', 'cancelled'] as const;
 export type ServiceOrderStatus = (typeof SERVICE_ORDER_STATUSES)[number];
 
@@ -19,8 +19,9 @@ const t = (name: string, short: string, includes: string[], delivery: string): S
 
 export const DEFAULT_SERVICES: (typeof services.$inferInsert)[] = [
   {
-    code: 'SVC_PERSONAL_REPORT', sort: 1, featured: true, pricePaise: 2_100_00, mrpPaise: 4_200_00, intake: ['clientName', 'dob', 'gender', 'maritalStatus', 'partnerName', 'partnerDob', 'tob', 'pob', 'mobile', 'challenges', 'questions'],
-    en: t('Full Complete Life Report by Acharya Nandram', 'Your complete chart read personally by Acharya Nandram, with answers to your own questions and remedies that fit your life.',
+    code: 'SVC_PERSONAL_REPORT', sort: 1, featured: true, pricePaise: 2_100_00, mrpPaise: 4_200_00,
+    intake: ['clientName', 'currentName', 'dob', 'gender', 'maritalStatus', 'partnerName', 'partnerDob', 'tob', 'pob', 'city', 'state', 'mobile', 'email', 'profession', 'concerns', 'language', 'challenges', 'questions'],
+    en: t('Complete Life Report by Acharya Nandram', 'Your complete chart read personally by Acharya Nandram, with answers to your own questions and remedies that fit your life.',
       ['Moolank, Bhagyank, Kua and Lo Shu grid analysis', 'Name number and mobile number check', 'Destiny Matrix analysis', 'Current personal year and the next 3 years', 'Answers to up to 3 questions you send', 'Personal remedies: colours, days, mantra, daan', 'PDF in English, Hindi or Hinglish'], 'Delivered as a PDF within 3 hours'),
     hi: t('आचार्य नंदराम द्वारा संपूर्ण जीवन अंक ज्योतिष रिपोर्ट', 'आपका पूरा चार्ट स्वयं आचार्य नंदराम द्वारा पढ़ा जाता है, आपके अपने प्रश्नों के उत्तर और आपके जीवन के अनुकूल उपायों के साथ।',
       ['मूलांक, भाग्यांक, कुआ और लो शू ग्रिड विश्लेषण', 'नामांक और मोबाइल नंबर की जाँच', 'डेस्टिनी मैट्रिक्स विश्लेषण', 'वर्तमान व्यक्तिगत वर्ष और अगले 3 वर्ष', 'आपके भेजे गए अधिकतम 3 प्रश्नों के उत्तर', 'व्यक्तिगत उपाय: रंग, दिन, मंत्र, दान', 'अंग्रेज़ी, हिंदी या हिंग्लिश में PDF'], '3 घंटे के भीतर PDF के रूप में'),
@@ -135,7 +136,7 @@ export async function ensureServices(db: Db = getDb()) {
   }
   // Sync delivery promise across existing seeded rows
   for (const s of DEFAULT_SERVICES) {
-    await db.update(services).set({ en: s.en, hi: s.hi, updatedAt: new Date() }).where(eq(services.code, s.code));
+    await db.update(services).set({ en: s.en, hi: s.hi, intake: s.intake, updatedAt: new Date() }).where(eq(services.code, s.code));
   }
   if (done !== SEED_BATCHES.length) await db.insert(appSettings).values({ key: 'servicesSeed', value: SEED_BATCHES.length }).onConflictDoUpdate({ target: appSettings.key, set: { value: SEED_BATCHES.length, updatedAt: new Date() } });
   seeded = true;
@@ -185,8 +186,12 @@ const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((s) => { const d 
 const FIELD: Record<ServiceIntakeField, z.ZodTypeAny> = {
   clientName: z.string().trim().min(2).max(120), dob: isoDate, gender: z.enum(['male', 'female', 'other']),
   maritalStatus: z.string().trim().max(50).optional(),
-  tob: z.string().trim().max(10).optional(), pob: z.string().trim().max(120).optional(), mobile: z.string().trim().max(25).optional(),
-  currentName: z.string().trim().min(2).max(300), partnerName: z.string().trim().min(2).max(120).optional(), partnerDob: isoDate.optional(), parents: z.string().trim().max(200).optional(), letters: z.string().trim().max(60).optional(),
+  tob: z.string().trim().max(10).optional(), pob: z.string().trim().max(120).optional(),
+  city: z.string().trim().max(100).optional(), state: z.string().trim().max(100).optional(), country: z.string().trim().max(100).optional(),
+  mobile: z.string().trim().max(25).optional(), email: z.string().trim().max(100).optional(),
+  profession: z.string().trim().max(120).optional(), education: z.string().trim().max(120).optional(),
+  concerns: z.string().trim().max(500).optional(), language: z.string().trim().max(20).optional(),
+  currentName: z.string().trim().min(1).max(300).optional(), partnerName: z.string().trim().min(2).max(120).optional(), partnerDob: isoDate.optional(), parents: z.string().trim().max(200).optional(), letters: z.string().trim().max(60).optional(),
   businesses: z.string().trim().max(600).optional(),
   businessName: z.string().trim().min(2).max(400).regex(/[A-Za-z]/, 'Write the business name in English letters'),
   launchDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((s) => s >= '1900-01-01' && s <= '2045-12-31', 'Enter a valid date').optional(),
@@ -194,7 +199,7 @@ const FIELD: Record<ServiceIntakeField, z.ZodTypeAny> = {
   challenges: z.string().trim().max(3000).optional(),
   questions: z.string().trim().max(2000).optional(),
 };
-const OPTIONAL: ServiceIntakeField[] = ['maritalStatus', 'partnerName', 'partnerDob', 'tob', 'pob', 'mobile', 'parents', 'letters', 'businesses', 'launchDate', 'partners', 'brand', 'challenges', 'questions'];
+const OPTIONAL: ServiceIntakeField[] = ['maritalStatus', 'partnerName', 'partnerDob', 'tob', 'pob', 'city', 'state', 'country', 'mobile', 'email', 'profession', 'education', 'concerns', 'language', 'currentName', 'parents', 'letters', 'businesses', 'launchDate', 'partners', 'brand', 'challenges', 'questions'];
 /** Booking details; `forProfileId` / `forRelation` link the order to the saved person (self or a family member). */
 export type IntakeDetails = Partial<Record<ServiceIntakeField | 'forProfileId' | 'forRelation' | 'signatureImage', string>>;
 

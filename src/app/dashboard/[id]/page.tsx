@@ -74,6 +74,16 @@ export default function ProfilePage() {
           {p.input.fullName} · {fmtDate(p.input.dob)} · {[p.input.city, p.input.state].filter(Boolean).join(', ')}{p.input.email ? ` · ✉ ${p.input.email}` : ''}{p.input.mobile ? ` · ${p.input.mobile}` : ''}{p.aadhaarLast4 ? ` · Aadhaar XXXX-XXXX-${p.aadhaarLast4}` : ''}{p.input.partner ? ` · ♥ ${p.input.partner.name}` : ''}
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
+          {data.reports.length > 0 && (
+            <Button
+              variant="gold"
+              disabled={!!busy}
+              onClick={() => run(`pdf-${data.reports[0].id}`, () => downloadReport(data.reports[0].id))}
+            >
+              <Download className={busy === `pdf-${data.reports[0].id}` ? 'animate-bounce' : ''} />
+              {hi ? 'PDF रिपोर्ट डाउनलोड' : 'Download PDF Report'}
+            </Button>
+          )}
           <Link href={`/reading?profile=${p.id}`} className={buttonVariants({ variant: 'outline' })}><Pencil /> {t.dash.editDetails}</Link>
           <Button variant="gold" disabled={!!busy} onClick={() => run('regen', async () => { await api(`/api/profiles/${p.id}/reports`, { method: 'POST', json: { mode: 'regenerate', theme } }); await load(); })}>
             <RefreshCw className={busy === 'regen' ? 'animate-spin' : ''} /> {t.dash.newVersion}
@@ -118,8 +128,8 @@ export default function ProfilePage() {
                         ? <span className="min-w-[260px]"><QueueTracker queue={r.queue} compact /></span>
                         : <Button size="sm" variant="gold" disabled={!!busy} onClick={() => run(`req-${r.id}`, async () => { try { await api(`/api/reports/${r.id}/request`, { method: 'POST' }); await refreshMe(); } catch (e) { if (e instanceof ApiError && e.status === 402) { setError(t.account.unlockNone); return; } throw e; } await load(); })}><Send /> {hi ? 'रिपोर्ट के लिए जमा करें' : 'Submit for report'}</Button>
                     ) : (<>
-                    <Button size="sm" variant="ghost" disabled={!!busy || r.status === 'awaiting_review'} title={r.status === 'awaiting_review' ? t.pdf.reviewFirst : undefined} onClick={() => run(`pdf-${r.id}`, () => downloadReport(r.id))}>
-                      <Download className={busy === `pdf-${r.id}` ? 'animate-bounce' : ''} /> PDF
+                    <Button size="sm" variant="gold" disabled={!!busy || r.status === 'awaiting_review'} title={r.status === 'awaiting_review' ? t.pdf.reviewFirst : undefined} onClick={() => run(`pdf-${r.id}`, () => downloadReport(r.id))}>
+                      <Download className={busy === `pdf-${r.id}` ? 'animate-bounce' : ''} /> {hi ? 'डाउनलोड PDF' : 'Download PDF'}
                     </Button>
                     <Button size="sm" variant="ghost" disabled={!!busy || r.status === 'awaiting_review'} title={hi ? 'ईमेल पर भेजें' : 'Send to email'} onClick={() => run(`em-${r.id}`, async () => { const res = await api<{ ok: boolean; sentTo: string }>(`/api/reports/${r.id}/email`, { method: 'POST', json: { theme } }); alert(hi ? `रिपोर्ट ${res.sentTo} पर भेज दी गई है!` : `Report successfully emailed to ${res.sentTo}!`); })}>
                       <Mail className={busy === `em-${r.id}` ? 'animate-pulse' : ''} /> {hi ? 'ईमेल' : 'Email'}

@@ -14,13 +14,24 @@ import { confirmRazorpayPayment, openRazorpayCheckout } from '@/lib/client/razor
 import { useDisplayCurrency } from '@/lib/client/currency';
 import { OUTSIDE_INDIA } from '@/lib/billing/currency';
 import { todayIST, toIso } from '@/lib/numerology';
-import { FAMILY_RELATIONS, type FamilyRelation } from '@/lib/numerology/schemas';
+import { FAMILY_RELATIONS, LIFE_CONCERNS, type FamilyRelation } from '@/lib/numerology/schemas';
 import type { ServiceIntakeField } from '@/lib/db/schema';
 import { cleanIntake, intakeToPerson, missingIntake, personToIntake, toIsoDate, type PersonLite } from '@/lib/reading/intake';
 import { ALL_COUNTRIES, POPULAR_COUNTRIES, isIndia } from '@/lib/countries';
 import type { PublicService } from '@/components/services/book-service';
 import { FIELD_LABEL, FLOW, RELATION_LABEL } from './labels';
 import { priceOf, SERVICE_ICON, StepBar } from './reading-picker';
+
+const CONCERNS_LABEL: Record<string, { en: string; hi: string }> = {
+  career: { en: 'Career', hi: 'करियर' },
+  business: { en: 'Business', hi: 'व्यापार' },
+  marriage: { en: 'Marriage', hi: 'विवाह' },
+  money: { en: 'Wealth', hi: 'धन लाभ' },
+  health: { en: 'Health', hi: 'स्वास्थ्य' },
+  education: { en: 'Education', hi: 'शिक्षा' },
+  family: { en: 'Family Peace', hi: 'पारिवारिक सुख' },
+  spirituality: { en: 'Spirituality', hi: 'अध्यात्म' },
+};
 
 type Person = PersonLite & { id: string };
 interface Order { gateway: 'cashfree' | 'razorpay' | 'mock'; keyId?: string; mode: string; paymentSessionId: string; mock: boolean; orderId: string; amountPaise: number; currency?: string }
@@ -144,8 +155,8 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
   const sig = svc.code === 'SVC_SIGNATURE';
   const baby = svc.code === 'SVC_BABY_NAME';
   const bizFull = svc.code === 'SVC_BUSINESS_COMPLETE';
-  const label = (k: ServiceIntakeField) => (bizFull && k === 'mobile' ? L.mobileBiz : bizFull && k === 'businesses' ? L.bizType : sig && k === 'currentName' ? L.signedAs : sig && k === 'questions' ? L.sigQuestions : k === 'dob' && has('parents') ? L.dobBaby : k === 'mobile' && svc.code === 'SVC_MOBILE_NUMBER' ? L.mobileMain : k === 'currentName' && svc.code === 'SVC_BUSINESS_NAME' ? L.business : k === 'questions' && has('businesses') ? L.bizQuestions : L[k]);
-  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setD((x) => ({ ...x, [k]: e.target.value }));
+  const label = (k: ServiceIntakeField) => (bizFull && k === 'mobile' ? L.mobileBiz : bizFull && k === 'businesses' ? L.bizType : sig && k === 'currentName' ? L.signedAs : sig && k === 'questions' ? L.sigQuestions : k === 'dob' && has('parents') ? L.dobBaby : k === 'mobile' && svc.code === 'SVC_MOBILE_NUMBER' ? L.mobileMain : k === 'currentName' && svc.code === 'SVC_BUSINESS_NAME' ? L.business : k === 'questions' && has('businesses') ? L.bizQuestions : (L as Record<string, string>)[k] ?? k);
+  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setD((x) => ({ ...x, [k]: e.target.value }));
   const spouseCandidates = people.filter((p) => p.id !== pick);
 
   function choosePartner(id: string) {
@@ -220,7 +231,7 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
           <fieldset className="space-y-3"><legend id="det-h" className="mb-1 text-sm font-semibold">{t.detailsTitle}</legend>
             <Field label={t.relation} htmlFor="of-rel"><Select id="of-rel" value={relation} onChange={(e) => setRelation(e.target.value as FamilyRelation)}>{FAMILY_RELATIONS.map((r) => <option key={r} value={r}>{RELATION_LABEL[r][lang]}</option>)}</Select></Field>
             {baby && <Field label={t.babyName} htmlFor="of-baby"><Input id="of-baby" value={babyName} onChange={(e) => setBabyName(e.target.value)} maxLength={120} placeholder="Baby" /></Field>}
-            {has('currentName') && <Field label={label('currentName')} htmlFor="of-cn" required><Input id="of-cn" value={d.currentName ?? ''} onChange={set('currentName')} maxLength={sig ? 120 : 300} /></Field>}
+            {has('currentName') && <Field label={label('currentName')} htmlFor="of-cn" required={svc.code !== 'SVC_PERSONAL_REPORT'}><Input id="of-cn" placeholder={svc.code === 'SVC_PERSONAL_REPORT' ? (lang === 'hi' ? 'जैसे: राहुल' : 'e.g. Rahul') : undefined} value={d.currentName ?? ''} onChange={set('currentName')} maxLength={sig ? 120 : 300} /></Field>}
             {has('clientName') && <Field label={L.clientName} htmlFor="of-name" required><Input id="of-name" value={d.clientName ?? ''} onChange={set('clientName')} maxLength={120} autoComplete="name" /></Field>}
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label={lang === 'hi' ? 'देश' : 'Country'} htmlFor="of-country">
@@ -233,6 +244,19 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
                   </optgroup>
                 </Select>
               </Field>
+              {has('state') && (
+                <Field label={isIndia(d.country) ? L.state : (lang === 'hi' ? 'राज्य / प्रांत' : 'State / Province')} htmlFor="of-state">
+                  {isIndia(d.country) ? (
+                    <Select id="of-state" value={d.state ?? ''} onChange={set('state')}>
+                      <option value="">{lang === 'hi' ? 'चुनें…' : 'Select…'}</option>
+                      {INDIAN_STATES.map((st) => <option key={st} value={st}>{st}</option>)}
+                    </Select>
+                  ) : (
+                    <Input id="of-state" placeholder={lang === 'hi' ? 'जैसे: California, London' : 'e.g. California, London'} value={d.state ?? ''} onChange={set('state')} maxLength={80} />
+                  )}
+                </Field>
+              )}
+              {has('city') && <Field label={L.city} htmlFor="of-city"><Input id="of-city" placeholder={lang === 'hi' ? 'जैसे: जयपुर, मुंबई' : 'e.g. Jaipur, Mumbai'} value={d.city ?? ''} onChange={set('city')} maxLength={80} /></Field>}
               {has('dob') && <Field label={label('dob')} htmlFor="of-dob" required><Input id="of-dob" type="date" min="1900-01-01" max={toIso(todayIST())} value={d.dob ?? ''} onChange={set('dob')} /></Field>}
               {has('gender') && <Field label={L.gender}><ChipGroup options={[{ value: 'male', label: L.male }, { value: 'female', label: L.female }]} value={[d.gender ?? 'male']} onChange={(v) => setD((x) => ({ ...x, gender: v[0] ?? 'male' }))} /></Field>}
               {has('maritalStatus') && (
@@ -248,7 +272,14 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
               )}
               {has('tob') && <Field label={L.tob} htmlFor="of-tob"><Input id="of-tob" type="time" value={d.tob ?? ''} onChange={set('tob')} /></Field>}
               {has('pob') && <Field label={label('pob')} htmlFor="of-pob" required={svc.code === 'SVC_PERSONAL_REPORT'}><Input id="of-pob" placeholder={!isIndia(d.country) ? (lang === 'hi' ? 'जैसे: New York, London, Dubai' : 'e.g. New York, London, Dubai') : (lang === 'hi' ? 'जैसे: Jaipur, Delhi, Mumbai' : 'e.g. Jaipur, Delhi, Mumbai')} value={d.pob ?? ''} onChange={set('pob')} maxLength={120} /></Field>}
-              {has('mobile') && <Field label={label('mobile')} htmlFor="of-mob"><Input id="of-mob" type="tel" inputMode="tel" placeholder={!isIndia(d.country) ? '+1 555 123 4567' : '98765 43210'} value={d.mobile ?? ''} onChange={set('mobile')} maxLength={25} /></Field>}
+              {has('profession') && <Field label={L.profession} htmlFor="of-prof"><Input id="of-prof" placeholder={lang === 'hi' ? 'जैसे: सॉफ्टवेयर इंजीनियर, व्यापारी, डॉक्टर' : 'e.g. Software Engineer, Business Owner, Doctor'} value={d.profession ?? ''} onChange={set('profession')} maxLength={100} /></Field>}
+              {has('mobile') && <Field label={label('mobile')} htmlFor="of-mob" required={svc.code === 'SVC_PERSONAL_REPORT'}><Input id="of-mob" type="tel" inputMode="tel" placeholder={!isIndia(d.country) ? '+1 555 123 4567' : '98765 43210'} value={d.mobile ?? ''} onChange={set('mobile')} maxLength={25} /></Field>}
+              {has('email') && <Field label={L.email} htmlFor="of-em" required={svc.code === 'SVC_PERSONAL_REPORT'}><Input id="of-em" type="email" placeholder="client@example.com" value={d.email ?? ''} onChange={set('email')} maxLength={100} /></Field>}
+              {has('language') && (
+                <Field label={L.language}>
+                  <ChipGroup options={[{ value: 'en', label: 'English' }, { value: 'hi', label: 'हिंदी' }, { value: 'hinglish', label: 'Hinglish' }]} value={[d.language || 'en']} onChange={(v) => setD((x) => ({ ...x, language: v[0] ?? 'en' }))} />
+                </Field>
+              )}
               {has('letters') && <Field label={L.letters} htmlFor="of-let"><Input id="of-let" value={d.letters ?? ''} onChange={set('letters')} maxLength={60} /></Field>}
             </div>
             {has('partnerName') && (!has('maritalStatus') || d.maritalStatus === 'married' || d.maritalStatus === 'relationship') && (
@@ -269,6 +300,11 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
                   )}
                 </div>
               </div>
+            )}
+            {has('concerns') && (
+              <Field label={L.concerns}>
+                <ChipGroup multi options={LIFE_CONCERNS.map((c) => ({ value: c, label: CONCERNS_LABEL[c] ? CONCERNS_LABEL[c][lang] : c }))} value={d.concerns ? d.concerns.split(',').filter(Boolean) : []} onChange={(v) => setD((x) => ({ ...x, concerns: v.join(',') }))} />
+              </Field>
             )}
             {has('parents') && <Field label={L.parents} htmlFor="of-par"><Input id="of-par" value={d.parents ?? ''} onChange={set('parents')} maxLength={200} /></Field>}
             {has('businessName') && <Field label={L.businessName} htmlFor="of-bn" required hint={lang === 'hi' ? 'अंग्रेज़ी अक्षरों में, जैसे: Sharma Interiors' : 'In English letters, e.g. Sharma Interiors'}><textarea id="of-bn" rows={3} maxLength={400} value={d.businessName ?? ''} onChange={set('businessName')} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></Field>}

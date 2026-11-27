@@ -37,7 +37,9 @@ export function personToIntake(code: string, fields: ServiceIntakeField[], p: Pe
   if (has('tob') && p.timeOfBirth) d.tob = p.timeOfBirth;
   if (has('pob') && p.placeOfBirth) d.pob = p.placeOfBirth;
   if (p.country) d.country = p.country;
+  if (has('state') && p.state) d.state = p.state;
   if (has('mobile') && p.mobile) d.mobile = p.mobile;
+  if (has('email') && p.email) d.email = p.email;
   if (has('currentName') && !CURRENT_NAME_IS_NOT_PERSON.includes(code)) d.currentName = code === 'SVC_SIGNATURE' ? (p.signedName || p.fullName) : p.fullName;
   const pt = partner ? { name: partner.fullName, dob: partner.dob } : p.partner ? { name: p.partner.name, dob: p.partner.dob } : null;
   if (pt && has('partnerName')) d.partnerName = pt.name;

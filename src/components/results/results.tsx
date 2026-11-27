@@ -1,6 +1,7 @@
 'use client';
 import * as React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Check, Compass, Feather, Download, FileJson, Flower2, Gem, Grid3x3, Heart, IdCard, Lock, MessageCircle, Pencil, Printer, RotateCcw, Save, Smartphone, Sparkles, Type } from 'lucide-react';
 import type { NumerologyResult } from '@/lib/numerology';
@@ -108,12 +109,12 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
             <Lock className="h-6 w-6" />
           </div>
           <h2 id="unlock-h" className="mt-3 font-serif text-2xl font-bold sm:text-3xl text-gold">
-            {hi ? 'विस्तृत 30+ पेज AI अंकज्योतिष भविष्यफल' : 'Complete 30+ Page Numerology & Destiny Report'}
+            {hi ? 'आचार्य नंदराम द्वारा तैयार संपूर्ण जीवन रिपोर्ट' : 'Complete Report Personally Prepared by Acharya Nandram'}
           </h2>
           <p className="mx-auto mt-2 max-w-2xl text-sm text-muted-foreground">
             {hi
-              ? 'यह मुफ़्त सारांश केवल बुनियादी अंक (मूलांक, भाग्यांक, लो शू ग्रिड) दर्शाता है। संपूर्ण करियर विश्लेषण, विवाह अनुकूलता, धन योग, आगामी 10 वर्षों का भविष्यफल और अचूक उपाय PDF रिपोर्ट में शामिल हैं।'
-              : 'This free summary covers your basic numbers (Moolank, Bhagyank, Lo Shu grid). In-depth career destiny, marriage compatibility, wealth yogas, upcoming 10-year timeline, and personalized remedies are in the full PDF report.'}
+              ? 'यह मुफ़्त सारांश केवल बुनियादी अंक (मूलांक, भाग्यांक, लो शू ग्रिड) दर्शाता है। संपूर्ण 30+ पेज विश्लेषण, विवाह व संबंध, धन योग, 10-वर्षीय भविष्यफल और अचूक व्यक्तिगत उपाय PDF रिपोर्ट में शामिल हैं।'
+              : 'This free summary covers only your basic numbers (Moolank, Bhagyank, Lo Shu grid). In-depth career destiny, marriage compatibility, wealth yogas, upcoming 10-year timeline, and personalized remedies are in the full PDF report.'}
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2 text-xs">
             {[(hi ? 'करियर व नौकरी-व्यवसाय' : 'Career & Business'), (hi ? 'विवाह व संबंध' : 'Marriage & Love'), (hi ? 'स्वास्थ्य प्रवृत्तियां' : 'Health Tendencies'), (hi ? '10-वर्षीय भविष्यफल' : '10-Year Timeline'), (hi ? 'रत्न व मंत्र उपाय' : 'Gemstones & Remedies'), (hi ? 'हस्ताक्षर व नाम विश्लेषण' : 'Signature & Name')].map((ch) => (
@@ -122,9 +123,9 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
           </div>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link href="/reading?type=SVC_PERSONAL_REPORT" className={buttonVariants({ variant: 'gold', size: 'lg' })}>
-              <Sparkles className="h-4 w-4" /> {hi ? 'संपूर्ण व्यक्तिगत रिपोर्ट अनलॉक करें (₹499)' : 'Unlock Complete Report (₹499)'}
+              <Sparkles className="h-4 w-4" /> {hi ? 'संपूर्ण जीवन रिपोर्ट प्राप्त करें (PDF)' : 'Get Complete Life Report (PDF)'}
             </Link>
-            <a href="https://wa.me/918819999374" target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
+            <a href="https://wa.me/918819999374?text=Hello%20Acharya%20Nandram,%20I%20would%20like%20to%20know%20more%20about%20the%20Complete%20Life%20Report." target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
               <MessageCircle className="h-4 w-4" /> {hi ? 'आचार्य नंदराम से WhatsApp पर बात करें' : 'Chat with Acharya Nandram'}
             </a>
           </div>
@@ -275,8 +276,87 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
 
       <RemediesSection rm={remedies} isFree={isFree} />
 
+      {isFree && <CompleteReportPitch />}
+
       <DisclaimerNote className="print:border-0" />
     </div>
+  );
+}
+
+function CompleteReportPitch() {
+  const { lang } = useApp();
+  const hi = lang === 'hi';
+  return (
+    <section className="glass rounded-2xl border-2 border-gold/60 bg-gradient-to-b from-gold/15 via-background to-gold/5 p-6 sm:p-10 shadow-xl print:hidden">
+      <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
+        <div className="relative shrink-0 text-center">
+          <div className="relative h-28 w-28 sm:h-36 sm:w-36 overflow-hidden rounded-full border-2 border-gold shadow-lg shadow-gold/20 mx-auto">
+            <Image
+              src="/images/acharya-nandram-512.png"
+              alt="Acharya Nandram"
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
+          <span className="mt-2 inline-block rounded-full bg-gold px-3 py-0.5 text-xs font-bold text-black shadow">
+            {hi ? '15+ वर्ष अनुभव' : '15+ Yrs Experience'}
+          </span>
+        </div>
+        <div className="flex-1 text-center md:text-left space-y-2">
+          <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3 py-0.5 text-xs font-semibold text-gold">
+            <Sparkles className="h-3.5 w-3.5" />
+            {hi ? 'व्यक्तिगत परामर्श एवं संपूर्ण विश्लेषण' : 'Personal Consultation & Full Life Blueprint'}
+          </div>
+          <h2 className="font-serif text-2xl font-bold sm:text-3xl text-foreground">
+            {hi ? 'आचार्य नंदराम द्वारा तैयार संपूर्ण जीवन रिपोर्ट' : 'Complete Report Personally Prepared by Acharya Nandram'}
+          </h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {hi
+              ? 'आपकी जन्म तिथि, जन्म समय, स्थान, नाम, जीवनसाथी व जीवन की वास्तविक समस्याओं के आधार पर आचार्य नंदराम स्वयं आपका पूरा चार्ट पढ़ते हैं और आपके 3 व्यक्तिगत प्रश्नों के उत्तर व सटीक उपाय प्रदान करते हैं।'
+              : 'Acharya Nandram personally evaluates your complete birth chart, marriage & partner details, profession, life challenges, and directly answers your 3 personal questions with step-by-step remedies.'}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-xl border border-gold/30 bg-background/60 p-4 space-y-1.5">
+          <p className="text-sm font-semibold text-gold">📄 {hi ? '30+ पेज संपूर्ण विश्लेषण' : '30+ Page Blueprint'}</p>
+          <p className="text-xs text-muted-foreground leading-snug">
+            {hi ? 'मूलांक, भाग्यांक, नाम अंक, लो शू ग्रिड, वैदिक ग्रिड, 81 योग व 10-वर्षीय भविष्यफल।' : 'Moolank, Bhagyank, Name vibrations, Lo Shu & Vedic grids, master numbers & 10-year timeline.'}
+          </p>
+        </div>
+        <div className="rounded-xl border border-gold/30 bg-background/60 p-4 space-y-1.5">
+          <p className="text-sm font-semibold text-gold">❓ {hi ? '3 व्यक्तिगत प्रश्नों के उत्तर' : 'Answers to 3 Questions'}</p>
+          <p className="text-xs text-muted-foreground leading-snug">
+            {hi ? 'करियर, धन, विवाह, स्वास्थ्य या व्यवसाय से जुड़े अपने मुख्य प्रश्नों पर सीधा मार्गदर्शन।' : 'Direct specific answers by Acharya Nandram to your questions on career, wealth, love, or health.'}
+          </p>
+        </div>
+        <div className="rounded-xl border border-gold/30 bg-background/60 p-4 space-y-1.5">
+          <p className="text-sm font-semibold text-gold">💎 {hi ? 'अचूक व्यक्तिगत उपाय' : 'Personalized Remedies'}</p>
+          <p className="text-xs text-muted-foreground leading-snug">
+            {hi ? 'सटीक रत्न (रत्ती व धातु), रुद्राक्ष, सिद्ध दैनिक मंत्र, दान व वास्तु दिशा संतुलन।' : 'Exact gemstone weight, metal, Rudraksha combinations, Vedic mantras, and directional remedies.'}
+          </p>
+        </div>
+        <div className="rounded-xl border border-gold/30 bg-background/60 p-4 space-y-1.5">
+          <p className="text-sm font-semibold text-gold">⚡ {hi ? '3 घंटे में PDF डिलीवरी' : '3-Hour Turnaround'}</p>
+          <p className="text-xs text-muted-foreground leading-snug">
+            {hi ? 'आपके खाते, ईमेल व WhatsApp पर 3 घंटे के भीतर प्रिंटेबल A4 PDF रिपोर्ट प्राप्त करें।' : 'Delivered directly to your Client Profile, WhatsApp & Email as a keepsake A4 PDF within 3 hours.'}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+        <Link href="/reading?type=SVC_PERSONAL_REPORT" className={cn(buttonVariants({ variant: 'gold', size: 'lg' }), 'shadow-lg shadow-gold/20 text-base font-bold px-8')}>
+          <Sparkles className="h-5 w-5 mr-1" />
+          {hi ? 'संपूर्ण जीवन रिपोर्ट प्राप्त करें' : 'Get Complete Life Report'}
+        </Link>
+        <a href="https://wa.me/918819999374?text=Hello%20Acharya%20Nandram,%20I%20would%20like%20to%20get%20my%20Complete%20Life%20Report." target="_blank" rel="noopener noreferrer" className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'text-base')}>
+          <MessageCircle className="h-5 w-5 mr-1 text-success" />
+          {hi ? 'WhatsApp पर बात करें' : 'Chat on WhatsApp'}
+        </a>
+      </div>
+    </section>
   );
 }
 
