@@ -42,10 +42,10 @@ export const DEFAULT_SERVICES: (typeof services.$inferInsert)[] = [
   },
   {
     code: 'SVC_BABY_NAME', sort: 5, featured: false, pricePaise: 1_100_00, mrpPaise: 2_100_00, intake: ['dob', 'gender', 'tob', 'pob', 'parents', 'letters', 'questions'],
-    en: t('Baby Name Numerology', 'Meaningful baby names whose numbers suit your child\'s date of birth, in the starting letters you prefer.',
-      ['7 shortlisted names with meanings', 'Name number of each and how it matches the date of birth', 'Spelling advice for documents', 'Lucky colours and numbers for the child'], 'Delivered within 3 hours'),
-    hi: t('शिशु नाम अंक ज्योतिष', 'अर्थपूर्ण शिशु नाम जिनके अंक आपके बच्चे की जन्म तिथि के अनुकूल हों, आपके पसंदीदा आरंभिक अक्षरों में।',
-      ['अर्थ सहित 7 चुने हुए नाम', 'हर नाम का नामांक और जन्म तिथि से उसका मेल', 'दस्तावेज़ों के लिए वर्तनी संबंधी सलाह', 'बच्चे के शुभ रंग और अंक'], '3 घंटे के भीतर'),
+    en: t('Baby Name Numerology', 'Meaningful baby names (Formal Name & Nickname) whose numbers suit your child\'s date of birth, in the starting letters you prefer.',
+      ['7 shortlisted names with meanings', 'Formal name & auspicious nickname (calling name) compatibility', 'Name number of each and how it matches the date of birth', 'Spelling advice for documents', 'Lucky colours and numbers for the child'], 'Delivered within 3 hours'),
+    hi: t('शिशु नाम अंक ज्योतिष', 'अर्थपूर्ण शिशु नाम (औपचारिक नाम व निकनेम) जिनके अंक आपके बच्चे की जन्म तिथि के अनुकूल हों, आपके पसंदीदा आरंभिक अक्षरों में।',
+      ['अर्थ सहित 7 चुने हुए नाम', 'औपचारिक नाम व शुभ निकनेम (पुकारने के नाम) का सामंजस्य', 'हर नाम का नामांक और जन्म तिथि से उसका मेल', 'दस्तावेज़ों के लिए वर्तनी संबंधी सलाह', 'बच्चे के शुभ रंग और अंक'], '3 घंटे के भीतर'),
   },
   {
     code: 'SVC_LOSHU', sort: 3, featured: false, pricePaise: 1_100_00, mrpPaise: 2_100_00, intake: ['clientName', 'dob', 'gender', 'questions'],

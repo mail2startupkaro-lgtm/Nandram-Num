@@ -95,16 +95,25 @@ export const SERVICE_PAGES: ServicePage[] = [
     description: 'Baby name suggestions by numerology: meaningful names whose numbers suit your baby\'s date of birth, in your preferred letters, by Acharya Nandram.',
     h1: { en: 'Baby Name Numerology', hi: 'शिशु नाम अंक ज्योतिष' },
     intro: {
-      en: ['A name stays with a child for life. In numerology, a name whose number is friendly with the child\'s Moolank and Bhagyank supports confidence, health and growth.', 'Tell us the date of birth, your preferred starting letters or sounds and any family traditions. Acharya Nandram shortlists meaningful names that suit the numbers – and you choose.'],
-      hi: ['नाम जीवनभर बच्चे के साथ रहता है। अंक ज्योतिष में ऐसा नाम जिसका अंक बच्चे के मूलांक और भाग्यांक का मित्र हो, आत्मविश्वास, स्वास्थ्य और विकास में सहायक होता है।', 'हमें जन्म तिथि, अपने पसंदीदा आरंभिक अक्षर या ध्वनियाँ और पारिवारिक परंपराएँ बताएँ। आचार्य नंदराम अंकों के अनुकूल अर्थपूर्ण नाम चुनते हैं – और अंतिम चयन आप करते हैं।'],
+      en: [
+        'A name stays with a child for life. In numerology, a name whose number is friendly with the child\'s Moolank and Bhagyank supports confidence, health and growth.',
+        'Your child\'s nickname (pet name / calling name) is just as important as their formal school or birth-certificate name. In Vedic and Chaldean numerology, the name a child hears and responds to dozens of times every day at home creates their active daily sound vibration. If a nickname carries an unfriendly compound number, it can weaken the support of an auspicious formal name — which is why Acharya Nandram checks and harmonises both.',
+        'Tell us the date of birth, whether you are choosing a Formal Name, a Nickname, or both, your preferred starting letters or sounds and any family traditions. Acharya Nandram shortlists meaningful names that suit the numbers – and you choose.',
+      ],
+      hi: [
+        'नाम जीवनभर बच्चे के साथ रहता है। अंक ज्योतिष में ऐसा नाम जिसका अंक बच्चे के मूलांक और भाग्यांक का मित्र हो, आत्मविश्वास, स्वास्थ्य और विकास में सहायक होता है।',
+        'बच्चे का निकनेम (पुकारने का नाम) भी उसके औपचारिक या स्कूल के नाम जितना ही महत्वपूर्ण होता है। वैदिक और कैल्डियन अंक ज्योतिष के अनुसार, घर में जिस नाम से बच्चे को दिन भर बार-बार पुकारा जाता है, वही उसकी सक्रिय दैनिक ध्वनि-तरंग (vibration) बनाता है। यदि निकनेम का अंक जन्म तिथि के अनुकूल न हो, तो वह शुभ औपचारिक नाम के सकारात्मक प्रभाव को भी कम कर सकता है — इसलिए आचार्य नंदराम दोनों नामों का सामंजस्य जाँचते हैं।',
+        'हमें जन्म तिथि, औपचारिक नाम या निकनेम की आवश्यकता, आपके पसंदीदा आरंभिक अक्षर या ध्वनियाँ और पारिवारिक परंपराएँ बताएँ। आचार्य नंदराम अंकों के अनुकूल अर्थपूर्ण नाम चुनते हैं – और अंतिम चयन आप करते हैं।',
+      ],
     },
-    forWho: { en: ['Parents naming a newborn', 'Families following a starting-letter tradition', 'Parents who want a name that is modern and meaningful', 'Anyone checking a name already chosen'], hi: ['नवजात का नाम रखने वाले माता-पिता', 'आरंभिक अक्षर की परंपरा मानने वाले परिवार', 'आधुनिक और अर्थपूर्ण नाम चाहने वाले माता-पिता', 'पहले से चुना हुआ नाम जाँचने वाले'] },
-    calculator: { kind: 'name', title: { en: 'Check a name you like (free)', hi: 'पसंदीदा नाम जाँचें (मुफ़्त)' } },
+    forWho: { en: ['Parents naming a newborn (Formal Name & Nickname)', 'Families following a starting-letter tradition', 'Parents who want a name that is modern and meaningful', 'Anyone checking a formal name or child nickname already chosen'], hi: ['नवजात का नाम (औपचारिक व निकनेम) रखने वाले माता-पिता', 'आरंभिक अक्षर की परंपरा मानने वाले परिवार', 'आधुनिक और अर्थपूर्ण नाम चाहने वाले माता-पिता', 'पहले से चुना हुआ औपचारिक नाम या निकनेम जाँचने वाले'] },
+    calculator: { kind: 'name', title: { en: 'Check a name or nickname you like (free)', hi: 'पसंदीदा नाम या निकनेम जाँचें (मुफ़्त)' } },
     related: [{ href: '/name-numerology', label: { en: 'Name numerology', hi: 'नाम अंक ज्योतिष' } }, { href: '/calculators/moolank-calculator', label: { en: 'Moolank calculator', hi: 'मूलांक कैलकुलेटर' } }],
     faq: [
+      { en: ['Why is a child\'s nickname important in numerology?', 'A child is called by their nickname dozens of times every day at home, so its sound vibration directly shapes their daily mood, confidence and energy. Checking both the Formal Name and Nickname ensures there is no hidden clash with their Moolank or Bhagyank.'], hi: ['अंक ज्योतिष में बच्चे का निकनेम (पुकारने का नाम) क्यों महत्वपूर्ण है?', 'घर में बच्चे को दिन में दर्जनों बार उसके निकनेम से पुकारा जाता है, इसलिए उस नाम की ध्वनि-ऊर्जा सीधे उसके स्वभाव, आत्मविश्वास और ऊर्जा को प्रभावित करती है। औपचारिक नाम और निकनेम दोनों की जाँच करने से मूलांक या भाग्यांक के साथ कोई टकराव नहीं रहता।'] },
       { en: ['Can you suggest names before the baby is born?', 'The date of birth is needed for an exact match. You can book now and send the date after the birth.'], hi: ['क्या बच्चे के जन्म से पहले नाम सुझा सकते हैं?', 'सटीक मेल के लिए जन्म तिथि ज़रूरी है। आप अभी बुक कर सकते हैं और जन्म के बाद तिथि भेज सकते हैं।'] },
       { en: ['Do you consider the starting letter from the horoscope?', 'Yes. Mention the letters or syllables suggested by your family astrologer and we will work within them.'], hi: ['क्या आप कुंडली के अनुसार आरंभिक अक्षर का ध्यान रखते हैं?', 'हाँ। अपने पारिवारिक ज्योतिषी द्वारा सुझाए अक्षर या शब्दांश बताएँ, हम उन्हीं में नाम चुनेंगे।'] },
-      { en: ['How many names will I get?', 'Seven shortlisted names with meanings and their numbers.'], hi: ['मुझे कितने नाम मिलेंगे?', 'अर्थ और अंकों सहित सात चुने हुए नाम।'] },
+      { en: ['How many names will I get?', 'Seven shortlisted names with meanings and their numbers, plus guidance for both formal name and nickname harmony.'], hi: ['मुझे कितने नाम मिलेंगे?', 'अर्थ और अंकों सहित सात चुने हुए नाम, साथ ही औपचारिक नाम और निकनेम के सामंजस्य का मार्गदर्शन।'] },
     ],
   },
   {

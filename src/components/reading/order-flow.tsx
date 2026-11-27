@@ -231,7 +231,20 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
           )}
           <fieldset className="space-y-3"><legend id="det-h" className="mb-1 text-sm font-semibold">{t.detailsTitle}</legend>
             <Field label={t.relation} htmlFor="of-rel"><Select id="of-rel" value={relation} onChange={(e) => setRelation(e.target.value as FamilyRelation)}>{FAMILY_RELATIONS.map((r) => <option key={r} value={r}>{RELATION_LABEL[r][lang]}</option>)}</Select></Field>
-            {baby && <Field label={t.babyName} htmlFor="of-baby"><Input id="of-baby" value={babyName} onChange={(e) => setBabyName(e.target.value)} maxLength={120} placeholder="Baby" /></Field>}
+            {baby && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Field label={lang === 'hi' ? 'शिशु का वर्तमान नाम (यदि हो)' : 'Baby Current Name (if any)'} htmlFor="of-baby">
+                  <Input id="of-baby" value={babyName} onChange={(e) => setBabyName(e.target.value)} maxLength={120} placeholder={lang === 'hi' ? 'औपचारिक नाम या निकनेम' : 'Formal name or nickname'} />
+                </Field>
+                <Field label={lang === 'hi' ? 'नाम का प्रकार (औपचारिक या निकनेम)' : 'Name Type (Formal Name or Nickname)'} htmlFor="of-baby-type">
+                  <Select id="of-baby-type" value={d.concerns || 'both'} onChange={(e) => setD((x) => ({ ...x, concerns: e.target.value }))}>
+                    <option value="both">{lang === 'hi' ? 'दोनों (औपचारिक नाम व निकनेम)' : 'Both (Formal Name & Nickname)'}</option>
+                    <option value="formal">{lang === 'hi' ? 'औपचारिक नाम (Formal Name)' : 'Formal Name'}</option>
+                    <option value="nickname">{lang === 'hi' ? 'निकनेम / पुकारने का नाम (Nickname)' : 'Nickname (Calling Name)'}</option>
+                  </Select>
+                </Field>
+              </div>
+            )}
             {has('currentName') && <Field label={label('currentName')} htmlFor="of-cn" required={svc.code !== 'SVC_PERSONAL_REPORT'}><Input id="of-cn" placeholder={svc.code === 'SVC_PERSONAL_REPORT' ? (lang === 'hi' ? 'जैसे: राहुल' : 'e.g. Rahul') : undefined} value={d.currentName ?? ''} onChange={set('currentName')} maxLength={sig ? 120 : 300} /></Field>}
             {has('clientName') && <Field label={L.clientName} htmlFor="of-name" required><Input id="of-name" value={d.clientName ?? ''} onChange={set('clientName')} maxLength={120} autoComplete="name" /></Field>}
             <div className="grid gap-3 sm:grid-cols-2">

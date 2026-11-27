@@ -103,7 +103,7 @@ export interface LeadFormLabels {
 export function LeadForm({ services, defaultService = '', magnet = 'mini-reading', whatsapp, onDone, compact, bookHref = '#services', labels }: { services: FunnelService[]; defaultService?: string; magnet?: 'mini-reading' | 'sample-report'; whatsapp: string; onDone?: () => void; compact?: boolean; bookHref?: string; labels?: LeadFormLabels }) {
   const { lang } = useApp();
   const [, unlock] = useUnlocked();
-  const [f, setF] = React.useState({ name: '', phone: '', dob: '', country: 'India', service: defaultService, consent: false, website: '' });
+  const [f, setF] = React.useState({ name: '', nameType: 'formal' as 'formal' | 'nickname' | 'both', phone: '', dob: '', country: 'India', service: defaultService, consent: false, website: '' });
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
   const [res, setRes] = React.useState<{ moolank: number; bhagyank: number } | null>(null);
@@ -113,11 +113,15 @@ export function LeadForm({ services, defaultService = '', magnet = 'mini-reading
   const isIntl = !isIndia(f.country);
   const ok = f.name.trim().length >= 2 && (isIntl ? f.phone.replace(/\D/g, '').length >= 7 : f.phone.replace(/\D/g, '').length >= 10) && !!f.dob && f.consent;
 
+  const isBaby = f.service === 'SVC_BABY_NAME' || defaultService === 'SVC_BABY_NAME';
+  const nameTypeLabel = f.nameType === 'nickname' ? (hi ? 'निकनेम' : 'Nickname') : f.nameType === 'both' ? (hi ? 'औपचारिक व निकनेम दोनों' : 'Formal & Nickname') : (hi ? 'औपचारिक नाम' : 'Formal Name');
+
   async function submit(e: React.FormEvent) {
     e.preventDefault(); if (!ok) return;
     setBusy(true); setErr(null);
     try {
-      const r = await api<{ moolank: number; bhagyank: number }>('/api/leads', { method: 'POST', json: { name: f.name.trim(), phone: f.phone.trim(), dob: f.dob, service: f.service || undefined, magnet, language: lang, consent: true, website: f.website, page: window.location.pathname, referrer: document.referrer || undefined, ...utmFromUrl() } });
+      const leadName = isBaby ? `${f.name.trim()} [${nameTypeLabel}]` : f.name.trim();
+      const r = await api<{ moolank: number; bhagyank: number }>('/api/leads', { method: 'POST', json: { name: leadName, phone: f.phone.trim(), dob: f.dob, service: f.service || undefined, magnet, language: lang, consent: true, website: f.website, page: window.location.pathname, referrer: document.referrer || undefined, ...utmFromUrl() } });
       setRes(r); unlock();
       trackEvent('generate_lead', { lead_magnet: magnet, service: f.service || 'none' });
       onDone?.();
@@ -152,7 +156,16 @@ export function LeadForm({ services, defaultService = '', magnet = 'mini-reading
   return (
     <form onSubmit={submit} className="space-y-3" noValidate>
       <div className={cn('grid gap-3', !compact && 'sm:grid-cols-2')}>
-        <Field label={nameLabel} htmlFor="ld-name" required><Input id="ld-name" autoComplete="name" maxLength={120} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
+        <Field label={nameLabel} htmlFor="ld-name" required><Input id="ld-name" autoComplete="name" maxLength={120} placeholder={isBaby ? (hi ? 'औपचारिक नाम या निकनेम लिखें' : 'Enter formal name or nickname') : undefined} value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></Field>
+        {isBaby && (
+          <Field label={hi ? 'नाम का प्रकार (औपचारिक या निकनेम)' : 'Name Type (Formal Name or Nickname)'} htmlFor="ld-ntype">
+            <Select id="ld-ntype" value={f.nameType} onChange={(e) => setF({ ...f, nameType: e.target.value as 'formal' | 'nickname' | 'both' })}>
+              <option value="formal">{hi ? 'औपचारिक नाम (Formal Name)' : 'Formal Name'}</option>
+              <option value="nickname">{hi ? 'निकनेम / पुकारने का नाम (Nickname)' : 'Nickname (Calling Name)'}</option>
+              <option value="both">{hi ? 'दोनों (औपचारिक व निकनेम)' : 'Both (Formal Name & Nickname)'}</option>
+            </Select>
+          </Field>
+        )}
         <Field label={hi ? 'देश' : 'Country'} htmlFor="ld-country">
           <Select id="ld-country" value={f.country} onChange={(e) => setF({ ...f, country: e.target.value })}>
             <optgroup label={hi ? 'प्रमुख देश' : 'Popular Countries'}>
