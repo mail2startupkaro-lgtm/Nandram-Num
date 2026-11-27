@@ -28,9 +28,13 @@ const T = {
  */
 export function BookService({ svc, className }: { svc: PublicService; className?: string; whatsapp?: string }) {
   const { lang } = useApp();
+  const [forId, setForId] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    setForId(new URLSearchParams(window.location.search).get('for'));
+  }, []);
   const t = T[lang];
   if (!svc.payable) return <Link href={`/contact?topic=service`} className={buttonVariants({ variant: 'outline', className })}><MessageCircle className="h-4 w-4" />{t.enquire}</Link>;
-  return <Link href={`/reading?type=${encodeURIComponent(svc.code)}`} className={buttonVariants({ variant: 'gold', className })}><Sparkles className="h-4 w-4" />{t.book}</Link>;
+  return <Link href={`/reading?type=${encodeURIComponent(svc.code)}${forId ? `&for=${encodeURIComponent(forId)}` : ''}`} className={buttonVariants({ variant: 'gold', className })}><Sparkles className="h-4 w-4" />{t.book}</Link>;
 }
 
 /** Shown on /services after a bank redirect (?cf_order=…). */

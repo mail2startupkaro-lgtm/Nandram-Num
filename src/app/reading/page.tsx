@@ -174,6 +174,11 @@ function ReadingRouter() {
       go(forId ? `/reading?profile=${encodeURIComponent(forId)}` : '/reading?type=free');
       return;
     }
+    const page = servicePageByCode(code);
+    if (page) {
+      go(`/${page.slug}${forId ? `?for=${encodeURIComponent(forId)}` : ''}`);
+      return;
+    }
     go(`/reading?type=${encodeURIComponent(code)}${keep}`);
   }} />;
 }
