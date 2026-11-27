@@ -1,5 +1,6 @@
 'use client';
 import * as React from 'react';
+import { PurchasedServices } from '@/components/account/purchased-services';
 import Link from 'next/link';
 import { Crown, Download, Palette } from 'lucide-react';
 import { useApp } from '@/components/layout/providers';
@@ -17,7 +18,6 @@ interface Data {
   ledger: { id: string; delta: number; reason: string; createdAt: string }[];
   serviceOrders?: { id: string; serviceCode: string; status: string; createdAt: string; deliveredAt: string | null; invoiceNumber: string | null }[];
 }
-const SVC_STATUS: Record<string, [string, string]> = { paid: ['Received – in queue', 'प्राप्त – क्रम में'], in_progress: ['In progress', 'प्रगति पर'], delivered: ['Delivered', 'डिलीवर हो गया'], cancelled: ['Cancelled', 'रद्द'] };
 const inr = (p: number) => `₹${(p / 100).toLocaleString('en-IN', { minimumFractionDigits: p % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;
 
 const HI_WORDS: Record<string, string> = {
@@ -67,12 +67,7 @@ export default function AccountPage() {
           <ul className="space-y-1 text-sm">{d.ledger.map((l) => <li key={l.id} className="flex justify-between border-b border-border/40 py-1"><span>{new Date(l.createdAt).toLocaleDateString('en-IN')} · {W(l.reason)}</span><span className={l.delta > 0 ? 'text-success' : 'text-muted-foreground'}>{l.delta > 0 ? '+' : ''}{l.delta}</span></li>)}</ul>
         </section>
       )}
-      {(d.serviceOrders?.length ?? 0) > 0 && (
-        <section className="glass rounded-lg p-5">
-          <h2 className="mb-3 text-xl font-semibold">{hi ? 'मेरी सेवाएँ' : 'My services'}</h2>
-          <ul className="space-y-2 text-sm">{d.serviceOrders!.map((o) => <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 py-1.5"><span>{new Date(o.createdAt).toLocaleDateString('en-IN')} · {o.serviceCode.replace(/^SVC_/, '').replace(/_/g, ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase())}{o.invoiceNumber ? ` · ${o.invoiceNumber}` : ''}</span><Badge tone={o.status === 'delivered' ? 'good' : o.status === 'cancelled' ? 'bad' : 'gold'}>{(SVC_STATUS[o.status] ?? [o.status, o.status])[hi ? 1 : 0]}</Badge></li>)}</ul>
-        </section>
-      )}
+      <PurchasedServices compact />
       <SecurityPanel hasPassword={d.user.hasPassword !== false} isAdmin={d.user.role === 'super_admin'} />
     </div>
   );

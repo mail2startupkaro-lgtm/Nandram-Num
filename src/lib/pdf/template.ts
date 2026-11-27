@@ -413,38 +413,104 @@ function methodPanel(inp: TemplateInput, lab: Labels, lang: Lang) {
 }
 
 // ---------- Cover ----------
+/** "myNumerologist.com" → my · Numerologist · .com (same wordmark as the service report covers). */
+function coverWordmark(brand: string): { pre: string; core: string; tld: string } {
+  const m = /^(my)?([^.]+)(\..+)?$/i.exec(brand.trim());
+  if (!m) return { pre: '', core: brand, tld: '' };
+  return { pre: m[1] ? 'my' : '', core: m[2].charAt(0).toUpperCase() + m[2].slice(1), tld: (m[3] ?? '').toLowerCase() };
+}
+const COVER_TXT = {
+  en: { tag: 'Numerology  ·  Lo Shu  ·  Remedies', kicker: 'Personalised numerology analysis', by: 'Your numerologist', years: '15+ years of practice', conf: 'Personal and confidential' },
+  hi: { tag: 'अंक ज्योतिष  ·  लो शू  ·  उपाय', kicker: 'व्यक्तिगत अंक ज्योतिष विश्लेषण', by: 'आपके अंक ज्योतिषी', years: '15+ वर्षों का अनुभव', conf: 'व्यक्तिगत एवं गोपनीय' },
+};
+/** Splits a report title into the big first line and the smaller second line ("Complete" / "Life Report"). */
+function splitCoverTitle(title: string): [string, string] {
+  const w = title.trim().split(/\s+/);
+  if (w.length < 2) return [title, ''];
+  return [w[0], w.slice(1).join(' ')];
+}
+
+/**
+ * Full-page cover of the main report (Complete Life Report and the other template reports).
+ * Same design as the service report covers (Signature / Advanced Mobile / Baby Name): brand wordmark,
+ * large two-line title, "Prepared for", key facts, the client's core numbers as tiles, and the numerologist's profile block.
+ */
 export function buildCoverHtml(inp: TemplateInput): string {
   const { result, theme: t, branding: b } = inp;
+  const language = inp.narrative.language === 'hi' ? 'hi' : 'en';
   const lab = labelsFor(inp.narrative.language);
-  const c = result.client;
-  const logo = b.logoDataUrl ? `<img src="${esc(b.logoDataUrl)}" style="height:20mm">` : monogram(b.brandName, t, 72, true);
-  const photo = b.photoDataUrl ? `<img src="${esc(b.photoDataUrl)}" style="width:26mm;height:26mm;border-radius:50%;object-fit:cover;border:1.5px solid ${t.coverAccent}">` : portraitPlaceholder(b.expertName, { ...t, soft: 'rgba(255,255,255,.12)', accent: t.coverAccent }, 98);
-  return `<!doctype html><html lang="${inp.narrative.language === 'hi' ? 'hi' : 'en'}"><head><meta charset="utf-8"><style>${baseCss(t, inp.narrative.language === 'hi' ? 'hi' : 'en')}
-    @page{size:A4;margin:0}
-    html,body{width:210mm;height:297mm;overflow:hidden}
-    .cv{position:relative;width:210mm;height:297mm;background:${t.coverBg};color:${t.coverInk};display:flex;flex-direction:column;align-items:center;text-align:center;padding:20mm 18mm 16mm}
-    .cv .frame{position:absolute;inset:8mm;border:1px solid ${t.coverAccent}88;border-radius:2mm}
-    .cv .frame2{position:absolute;inset:10mm;border:.4px solid ${t.coverAccent}55;border-radius:1.5mm}
-    .cv .md{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%)}
-    .cv h1{color:${t.coverInk};font-size:34pt;line-height:1.1;margin:0}
-    .cv .type{font-size:10pt;letter-spacing:.42em;text-transform:uppercase;color:${t.coverAccent};margin:6mm 0 3mm}
-    .cv .brand{font-family:'Playfair Display',serif;font-size:14pt;letter-spacing:.12em;margin-top:3mm}
-    .cv .meta{display:flex;gap:12mm;justify-content:center;font-size:9.5pt;margin-top:5mm}
-    .cv .meta div span{display:block;font-size:7.5pt;letter-spacing:.2em;text-transform:uppercase;color:${t.coverAccent};opacity:.9}
-    .cv .exp{position:absolute;bottom:22mm;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:5mm;font-size:9.5pt}
-    .cv .exp b{font-family:'Playfair Display',serif;font-size:13pt;display:block}
-  </style></head><body><div class="cv"><div class="frame"></div><div class="frame2"></div>
-    <div class="md">${mandala(560, t.coverAccent, 0.38, 32)}</div>
-    <div style="position:relative">${logo}<div class="brand">${esc(b.brandName)}</div></div>
-    <div style="position:relative;margin-top:62mm">
-      <div class="type">${esc(inp.reportTitle || reportType(result, lab))}</div>
-      <div style="font-size:9pt;letter-spacing:.3em;text-transform:uppercase;opacity:.8">${esc(lab.preparedFor)}</div>
-      <h1>${esc(titleCase(c.commonName || c.fullName))}</h1>
-      ${c.hindiName ? `<div style="font-family:'Noto Sans Devanagari';font-size:15pt;margin-top:1mm">${esc(c.hindiName)}</div>` : ''}
-      <div style="margin:5mm auto 0;width:60mm">${divider({ ...t, accent: t.coverAccent }, 220)}</div>
-      <div class="meta"><div><span>${esc(lab.dob)}</span>${fmtDate(result.results.dob.dob.iso)}</div><div><span>${esc(lab.reportDate)}</span>${fmtDate(inp.reportDate)}</div></div>
-    </div>
-    <div class="exp">${photo}<div style="text-align:left"><span style="font-size:7.5pt;letter-spacing:.2em;text-transform:uppercase;color:${t.coverAccent}">${esc(lab.by)}</span><b>${esc(b.expertName)}</b>${esc(b.expertTitle ?? '')}</div></div>
+  const ct = COVER_TXT[language];
+  const c = result.client, d = result.results.dob;
+  const ink = t.coverInk, acc = t.coverAccent;
+  const w = coverWordmark(b.brandName || 'mynumerologist.com');
+  const house = /nandram/i.test(b.expertName || '');
+  const telegram = process.env.EXPERT_TELEGRAM ?? '@MYNUMEROLOGIST8';
+  const site = (process.env.BRAND_WEBSITE || process.env.APP_URL || 'https://www.mynumerologist.com').replace(/^https?:\/\//, '').replace(/\/$/, '');
+  const photo = b.photoDataUrl ? `<img class="pf-img" src="${esc(b.photoDataUrl)}" alt="">` : `<div class="pf-img pf-mono">${monogram(b.expertName, t, 150, true)}</div>`;
+  const [t1, t2] = splitCoverTitle(inp.reportTitle || reportType(result, lab));
+  const facts: [string, string][] = [[lab.dob, fmtDate(d.dob.iso)], [lab.reportDate, fmtDate(inp.reportDate)], ...(c.placeOfBirth ? [[language === 'hi' ? 'जन्म स्थान' : 'Place of birth', c.placeOfBirth] as [string, string]] : [])];
+  const tiles: [string, number][] = [[lab.moolank, d.moolank.value], [lab.bhagyank, d.bhagyank.value], [lab.kua, d.kua.value],
+    ...(result.results.name ? [[lab.nameNo, result.results.name.chaldean.nameNumber.single] as [string, number]] : []), [lab.py, d.personalCycles.current.personalYear]];
+  return `<!doctype html><html lang="${language}"><head><meta charset="utf-8"><style>${baseCss(t, language)}
+  @page{size:A4;margin:0}
+  html,body{width:210mm;height:297mm;overflow:hidden;margin:0}
+  .sc{position:relative;width:210mm;height:297mm;overflow:hidden;background:${t.coverBg};color:${ink};box-sizing:border-box;padding:17mm 18mm 14mm;display:flex;flex-direction:column;align-items:center;text-align:center}
+  .sc .f1{position:absolute;inset:7mm;border:1.2px solid ${acc}aa;border-radius:2mm}
+  .sc .f2{position:absolute;inset:9.5mm;border:.5px solid ${acc}66;border-radius:1.5mm}
+  .sc .corner{position:absolute;width:9mm;height:9mm;border:1.6px solid ${acc}}
+  .sc .c1{top:5mm;left:5mm;border-right:none;border-bottom:none}.sc .c2{top:5mm;right:5mm;border-left:none;border-bottom:none}.sc .c3{bottom:5mm;left:5mm;border-right:none;border-top:none}.sc .c4{bottom:5mm;right:5mm;border-left:none;border-top:none}
+  .sc .md{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%)}
+  .wm{position:relative;line-height:1;white-space:nowrap;display:flex;align-items:baseline;justify-content:center}
+  .wm-pre{display:inline;font-family:'Playfair Display',serif;font-style:italic;font-weight:400;font-size:28pt;color:${acc};margin-right:1mm;vertical-align:.2em}
+  .wm-core{display:inline;font-family:'Playfair Display',serif;font-weight:700;font-size:46pt;letter-spacing:.01em;color:${ink}}
+  .wm-core:first-letter{color:${acc}}
+  .wm-tld{display:inline;font-family:'Playfair Display',serif;font-style:italic;font-size:20pt;color:${acc};margin-left:.4mm}
+  .wm-rule{position:relative;display:flex;align-items:center;gap:3mm;justify-content:center;margin:2.5mm auto 0;width:130mm}
+  .wm-rule i{flex:1;height:.8px;background:linear-gradient(90deg,transparent,${acc})}.wm-rule i:last-child{background:linear-gradient(90deg,${acc},transparent)}
+  .wm-rule b{width:2.4mm;height:2.4mm;background:${acc};transform:rotate(45deg)}
+  .wm-tag{font-size:8pt;letter-spacing:.32em;text-transform:uppercase;color:${ink};opacity:.85;margin-top:2.2mm}
+  .tt{position:relative;margin-top:15mm}
+  .tt .k{font-size:9pt;letter-spacing:.38em;text-transform:uppercase;color:${acc};margin-bottom:3mm}
+  .tt h1{color:${ink};font-family:'Playfair Display','Noto Sans Devanagari',serif;font-weight:700;margin:0;line-height:1.02}
+  .tt h1 .a{display:block;font-size:54pt;letter-spacing:.02em}
+  .tt h1 .b{display:block;font-size:${t2.length > 22 ? 19 : t2.length > 16 ? 23 : 28}pt;letter-spacing:.14em;text-transform:uppercase;color:${acc};margin-top:2mm;font-weight:600}
+  .pf{position:relative;margin-top:9mm}
+  .pf .k{font-size:8.5pt;letter-spacing:.3em;text-transform:uppercase;opacity:.85}
+  .pf .n{font-family:'Playfair Display',serif;font-size:27pt;font-weight:700;color:${ink};margin-top:1mm;line-height:1.1}
+  .pf .alt{font-family:'Noto Sans Devanagari';font-size:14pt;margin-top:1mm}
+  .facts{display:flex;gap:10mm;justify-content:center;font-size:9.5pt;margin-top:3.5mm}
+  .facts span{display:block;font-size:7.3pt;letter-spacing:.2em;text-transform:uppercase;color:${acc}}
+  .sg{position:relative;margin-top:9mm;background:#fff;border-radius:3mm;padding:3mm 5mm 2mm;border:1.2px solid ${acc};box-shadow:0 2mm 6mm rgba(0,0,0,.25)}
+  .sg .dg{display:flex;gap:2.6mm;align-items:flex-start;justify-content:center}
+  .sg .tl{display:flex;flex-direction:column;align-items:center;width:20mm}
+  .sg .tl i{font-style:normal;width:12mm;height:13mm;border-radius:1.8mm;background:#fbf5e6;border:.7px solid #d8c08a;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:700;font-size:19pt;color:#5a1220}
+  .sg .tl em{font-style:normal;font-size:6.6pt;letter-spacing:.08em;text-transform:uppercase;color:#7a6a55;margin-top:1mm;line-height:1.2}
+  .ex{position:absolute;left:14mm;right:14mm;bottom:20mm;display:flex;align-items:center;gap:7mm;padding:5mm 7mm;border-radius:4mm;background:rgba(0,0,0,.22);border:1px solid ${acc}88;text-align:left}
+  .pf-img{width:46mm;height:46mm;border-radius:50%;object-fit:cover;border:2.2px solid ${acc};box-shadow:0 0 0 2.2mm ${acc}33,0 0 0 2.8mm ${acc}88;flex:none;background:#fff}
+  .pf-mono{display:flex;align-items:center;justify-content:center;background:transparent}
+  .ex .lab{font-size:8pt;letter-spacing:.3em;text-transform:uppercase;color:${acc}}
+  .ex .nm{font-family:'Playfair Display',serif;font-size:26pt;font-weight:700;color:${ink};line-height:1.1;margin:1mm 0 1mm}
+  .ex .ti{font-size:10pt;opacity:.95}
+  .ex .yr{display:inline-block;margin-top:2.5mm;padding:1mm 3.5mm;border-radius:3mm;background:${acc};color:#2a1a08;font-size:8.6pt;font-weight:600;letter-spacing:.04em}
+  .ex .ct{font-size:9pt;margin-top:2.2mm;opacity:.95}
+  .conf{position:absolute;bottom:12.5mm;left:0;right:0;font-size:7.4pt;letter-spacing:.16em;text-transform:uppercase;opacity:.75}
+  ${language === 'hi' ? '.wm-tag,.tt .k,.tt h1 .b,.pf .k,.facts span,.ex .lab,.sg .tl em,.conf{letter-spacing:0!important}.tt h1 .b,.sg .tl em{text-transform:none}' : ''}
+  </style></head><body><div class="sc">
+    <div class="f1"></div><div class="f2"></div><div class="corner c1"></div><div class="corner c2"></div><div class="corner c3"></div><div class="corner c4"></div>
+    <div class="md">${mandala(620, acc, 0.22, 36)}</div>
+    ${b.logoDataUrl && !/numerologist/i.test(b.brandName) ? `<img src="${esc(b.logoDataUrl)}" style="position:relative;height:16mm;margin-bottom:2mm" alt="">` : ''}
+    <div class="wm">${w.pre ? `<span class="wm-pre">${esc(w.pre)}</span>` : ''}<span class="wm-core">${esc(w.core)}</span>${w.tld ? `<span class="wm-tld">${esc(w.tld)}</span>` : ''}</div>
+    <div class="wm-rule"><i></i><b></b><i></i></div>
+    <div class="wm-tag">${esc(ct.tag)}</div>
+    <div class="tt"><div class="k">${esc(ct.kicker)}</div><h1><span class="a">${esc(t1)}</span>${t2 ? `<span class="b">${esc(t2)}</span>` : ''}</h1></div>
+    <div class="pf"><div class="k">${esc(lab.preparedFor)}</div><div class="n">${esc(titleCase(c.commonName || c.fullName))}</div>
+      ${c.hindiName ? `<div class="alt">${esc(c.hindiName)}</div>` : ''}
+      <div class="facts">${facts.map(([k, v]) => `<div><span>${esc(k)}</span>${esc(v)}</div>`).join('')}</div></div>
+    <div class="sg"><div class="dg">${tiles.map(([k, v]) => `<div class="tl"><i>${v}</i><em>${esc(k)}</em></div>`).join('')}</div></div>
+    <div class="ex">${photo}<div><div class="lab">${esc(ct.by)}</div><div class="nm">${esc(b.expertName)}</div><div class="ti">${esc(b.expertTitle ?? '')}</div>
+      ${house ? `<div class="yr">${esc(ct.years)}</div>` : ''}
+      <div class="ct">${[telegram ? `Telegram ${esc(telegram)}` : '', site ? esc(site) : ''].filter(Boolean).join('  ·  ')}</div></div></div>
+    <div class="conf">${esc(ct.conf)}</div>
   </div></body></html>`;
 }
 

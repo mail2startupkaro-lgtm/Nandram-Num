@@ -9,16 +9,8 @@ import { Badge } from '@/components/ui/misc';
 import { api, download, ApiError } from '@/lib/client/api';
 
 import type { QueueState } from '@/lib/report-queue';
-import { QueueTracker } from '@/components/results/report-queue';
-
-interface ServiceOrderSummary {
-  id: string;
-  serviceCode: string;
-  status: string;
-  createdAt: string;
-  deliveredAt: string | null;
-  invoiceNumber: string | null;
-}
+import { QueueTracker, useQueued } from '@/components/results/report-queue';
+import { PurchasedServices } from '@/components/account/purchased-services';
 
 interface Item {
   id: string; displayName: string; aadhaarLast4: string | null; updatedAt: string; reportCount: number;
@@ -29,9 +21,9 @@ interface ImportResult { created: { profileId: string; name: string; reports: nu
 export default function Dashboard() {
   const { t, me, lang, refreshMe } = useApp();
   const hi = lang === 'hi';
+  const queuedClient = useQueued();
   const [q, setQ] = React.useState('');
   const [data, setData] = React.useState<{ items: Item[]; total: number } | null>(null);
-  const [serviceOrders, setServiceOrders] = React.useState<ServiceOrderSummary[]>([]);
   const [error, setError] = React.useState<string | null>(null);
   const [imp, setImp] = React.useState<ImportResult | null>(null);
   const [busy, setBusy] = React.useState(false);
@@ -71,11 +63,6 @@ export default function Dashboard() {
 
   React.useEffect(() => { const h = setTimeout(() => load(q), 250); return () => clearTimeout(h); }, [q, load]);
 
-  React.useEffect(() => {
-    api<{ serviceOrders?: ServiceOrderSummary[] }>('/api/account')
-      .then((r) => setServiceOrders(r.serviceOrders ?? []))
-      .catch(() => {});
-  }, []);
 
   async function doImport(file: File) {
     setBusy(true); setImp(null);
@@ -110,51 +97,18 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Purchased Reports & Delivery Queue Process */}
-      {((serviceOrders.length > 0) || (data?.items.some((p) => p.latest?.queue?.state === 'queued' || p.latest?.queue?.state === 'ready'))) && (
+      {/* Purchased services: live, animated delivery status + download when ready */}
+      <PurchasedServices />
+
+      {/* Saved readings submitted to the report queue (credit / plan reports) */}
+      {data?.items.some((p) => p.latest?.queue?.state === 'queued' || p.latest?.queue?.state === 'ready') && (
         <section className="glass rounded-xl border border-gold/40 bg-gold/5 p-5 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="font-serif text-lg font-bold flex items-center gap-2 text-gold">
               <Clock className="h-5 w-5 text-gold" />
-              {hi ? 'क्रय की गई रिपोर्ट व डिलीवरी प्रक्रिया' : 'Purchased Reports & Delivery Status Queue'}
+              {hi ? 'रिपोर्ट डिलीवरी स्थिति' : 'Report delivery status'}
             </h2>
-            <span className="rounded-full bg-gold/20 px-2.5 py-0.5 text-xs font-semibold text-gold">
-              {hi ? 'डिलीवरी समय: 3 घंटे' : '3-Hour Turnaround SLA'}
-            </span>
           </div>
-
-          {/* Service orders (e.g. Full Complete Life Report by Acharya Nandram) */}
-          {serviceOrders.map((o) => {
-            const isDone = o.status === 'delivered';
-            const svcName = o.serviceCode === 'SVC_PERSONAL_REPORT'
-              ? (hi ? 'आचार्य नंदराम द्वारा संपूर्ण जीवन अंक ज्योतिष रिपोर्ट' : 'Full Complete Life Report by Acharya Nandram')
-              : o.serviceCode.replace(/^SVC_/, '').replace(/_/g, ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase());
-            
-            const elapsedMin = Math.max(0, Math.round((Date.now() - new Date(o.createdAt).getTime()) / 60000));
-            const stage = (isDone ? 4 : elapsedMin >= 110 ? 3 : elapsedMin >= 45 ? 2 : 1) as 1 | 2 | 3 | 4;
-            const deliverAt = new Date(new Date(o.createdAt).getTime() + 180 * 60000).toISOString();
-            const mockQueue: QueueState = isDone || elapsedMin >= 180
-              ? { state: 'ready', stage: 4, requestedAt: o.createdAt, readyAt: deliverAt }
-              : { state: 'queued', stage: stage as 1 | 2 | 3, requestedAt: o.createdAt, deliverAt, paused: false, resumesAt: null, onHold: false };
-
-            return (
-              <div key={o.id} className="rounded-lg border border-border/80 bg-background/60 p-4 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="font-semibold text-foreground text-sm">{svcName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(o.createdAt).toLocaleString(hi ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}
-                      {o.invoiceNumber ? ` · ${o.invoiceNumber}` : ''}
-                    </p>
-                  </div>
-                  <Badge tone={isDone ? 'good' : 'gold'}>
-                    {isDone ? (hi ? '✓ तैयार व प्रेषित' : '✓ Ready & Delivered') : (hi ? '⏳ तैयारी जारी (In queue)' : '⏳ In Preparation Queue')}
-                  </Badge>
-                </div>
-                <QueueTracker queue={mockQueue} />
-              </div>
-            );
-          })}
 
           {/* Profile reports in queue */}
           {data?.items.filter((p) => p.latest?.queue?.state === 'queued' || p.latest?.queue?.state === 'ready').map((p) => (
@@ -233,7 +187,7 @@ export default function Dashboard() {
             )}
             <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-4">
               <Link href={`/dashboard/${p.id}`} className={buttonVariants({ size: 'sm', variant: 'outline' })}>{t.dash.open}</Link>
-              {p.latest && (
+              {p.latest && (!queuedClient || p.latest.queue?.state === 'ready') && (
                 <Button
                   size="sm"
                   variant="gold"

@@ -16,6 +16,7 @@ import { Gauge, LifeRadar, Ring, YearBars } from './charts';
 import { NarrativePanel } from './narrative';
 import { PdfButton } from './pdf-button';
 import { ReportRequestPanel, useQueued } from './report-queue';
+import { LifeReportPriceBlock, LifeReportPriceInline } from '@/components/services/life-report-price';
 import type { Narrative } from '@/lib/narrative/service';
 import { GridLegend, NumberGrid } from './grid';
 import { DisclaimerNote } from '@/components/legal/disclaimer-note';
@@ -77,7 +78,7 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
           <div className="flex flex-wrap gap-2 print:hidden">
             {isFree ? (
               <Link href="/reading?type=SVC_PERSONAL_REPORT" className={buttonVariants({ variant: 'gold' })}>
-                <Sparkles className="h-4 w-4" /> {hi ? 'संपूर्ण 30+ पेज रिपोर्ट प्राप्त करें (PDF)' : 'Get Complete 30+ Page Report (PDF)'}
+                <Sparkles className="h-4 w-4" /> {hi ? 'संपूर्ण जीवन रिपोर्ट प्राप्त करें' : 'Get Complete Life Report'} <LifeReportPriceInline className="ml-1 font-bold" struck={false} />
               </Link>
             ) : (
               <>
@@ -121,9 +122,10 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
               <span key={ch} className="rounded-full border border-border/80 bg-background/60 px-3 py-1 font-medium text-foreground/80">🔒 {ch}</span>
             ))}
           </div>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <div className="mt-6"><LifeReportPriceBlock /></div>
+          <div className="mt-4 flex flex-wrap justify-center gap-3">
             <Link href="/reading?type=SVC_PERSONAL_REPORT" className={buttonVariants({ variant: 'gold', size: 'lg' })}>
-              <Sparkles className="h-4 w-4" /> {hi ? 'संपूर्ण जीवन रिपोर्ट प्राप्त करें (PDF)' : 'Get Complete Life Report (PDF)'}
+              <Sparkles className="h-4 w-4" /> {hi ? 'संपूर्ण जीवन रिपोर्ट प्राप्त करें' : 'Get Complete Life Report'} <LifeReportPriceInline className="ml-1 font-bold" struck={false} />
             </Link>
             <a href="https://wa.me/918819999374?text=Hello%20Acharya%20Nandram,%20I%20would%20like%20to%20know%20more%20about%20the%20Complete%20Life%20Report." target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
               <MessageCircle className="h-4 w-4" /> {hi ? 'आचार्य नंदराम से WhatsApp पर बात करें' : 'Chat with Acharya Nandram'}
@@ -185,7 +187,7 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
                   {hi ? 'आपके जन्म तिथि के अनुसार 5+ शुभ वर्तनी विकल्प, हस्त रेखा व हस्ताक्षर सलाह नाम सुधार सेवा में उपलब्ध हैं।' : '5+ auspicious spelling variations aligned with your birth date and signature guidance are available in the Name Correction service.'}
                 </p>
                 <Link href="/reading?type=SVC_NAME_CORRECTION" className={cn(buttonVariants({ variant: 'gold', size: 'sm' }), 'mt-3')}>
-                  <Sparkles className="h-3.5 w-3.5" /> {hi ? 'नाम सुधार रिपोर्ट अनलॉक करें — ₹499' : 'Unlock Name Correction — ₹499'}
+                  <Sparkles className="h-3.5 w-3.5" /> {hi ? 'नाम सुधार रिपोर्ट अनलॉक करें' : 'Unlock Name Correction'}<LifeReportPriceInline code="SVC_NAME_CORRECTION" prefix=" — " struck={false} />
                 </Link>
               </div>
             </div>
@@ -228,7 +230,7 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
                     <p className="text-xs font-semibold">{hi ? 'विस्तृत अंक-जोड़े और लकी नंबर सुझाव (Locked)' : 'Digit Pairs & Lucky Number Analysis (Locked)'}</p>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">{hi ? 'दोषपूर्ण जोड़े, शुभ योग व नए सिम के लिए आदर्श योग संपूर्ण मोबाइल रिपोर्ट में हैं।' : 'Malefic digit pairs, business yogas and ideal compound recommendations are in the full report.'}</p>
                     <Link href="/reading?type=SVC_MOBILE_NUMBER" className={cn(buttonVariants({ variant: 'gold', size: 'sm' }), 'mt-2')}>
-                      <Sparkles className="h-3.5 w-3.5" /> {hi ? 'मोबाइल न्यूमरोलॉजी रिपोर्ट — ₹299' : 'Unlock Mobile Report — ₹299'}
+                      <Sparkles className="h-3.5 w-3.5" /> {hi ? 'मोबाइल न्यूमरोलॉजी रिपोर्ट' : 'Unlock Mobile Report'}<LifeReportPriceInline code="SVC_MOBILE_NUMBER" prefix=" — " struck={false} />
                     </Link>
                   </div>
                 </div>
@@ -349,7 +351,7 @@ function CompleteReportPitch() {
       <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
         <Link href="/reading?type=SVC_PERSONAL_REPORT" className={cn(buttonVariants({ variant: 'gold', size: 'lg' }), 'shadow-lg shadow-gold/20 text-base font-bold px-8')}>
           <Sparkles className="h-5 w-5 mr-1" />
-          {hi ? 'संपूर्ण जीवन रिपोर्ट प्राप्त करें' : 'Get Complete Life Report'}
+          {hi ? 'संपूर्ण जीवन रिपोर्ट प्राप्त करें' : 'Get Complete Life Report'} <LifeReportPriceInline className="ml-1.5" />
         </Link>
         <a href="https://wa.me/918819999374?text=Hello%20Acharya%20Nandram,%20I%20would%20like%20to%20get%20my%20Complete%20Life%20Report." target="_blank" rel="noopener noreferrer" className={cn(buttonVariants({ variant: 'outline', size: 'lg' }), 'text-base')}>
           <MessageCircle className="h-5 w-5 mr-1 text-success" />
@@ -466,7 +468,7 @@ function DobSection({ r, isFree = false }: { r: R; isFree?: boolean }) {
             {hi ? 'जीवन के 4 बड़े पड़ाव (Pinnacles & Challenges), 10-वर्षीय वार्षिक चार्ट और 9 जीवन क्षेत्रों का गहन विश्लेषण संपूर्ण रिपोर्ट में उपलब्ध है।' : 'Major life milestones (Pinnacles & Challenges), 10-year yearly forecast chart, and 9 life area radar analysis are available in the complete report.'}
           </p>
           <Link href="/reading?type=SVC_PERSONAL_REPORT" className={cn(buttonVariants({ variant: 'gold', size: 'sm' }), 'mt-4 inline-flex')}>
-            <Sparkles className="h-3.5 w-3.5" /> {hi ? 'संपूर्ण रिपोर्ट अनलॉक करें — ₹499' : 'Unlock Complete Report — ₹499'}
+            <Sparkles className="h-3.5 w-3.5" /> {hi ? 'संपूर्ण जीवन रिपोर्ट अनलॉक करें' : 'Unlock Complete Life Report'}<LifeReportPriceInline prefix=" — " struck={false} />
           </Link>
         </div>
       ) : (
@@ -582,7 +584,7 @@ function RemediesSection({ rm, isFree = false }: { rm: R['remedies']; isFree?: b
           </div>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Link href="/reading?type=SVC_PERSONAL_REPORT" className={cn(buttonVariants({ variant: 'gold', size: 'sm' }), 'px-5 py-2')}>
-              <Sparkles className="h-4 w-4" /> {hi ? 'संपूर्ण उपाय रिपोर्ट प्राप्त करें — ₹499' : 'Unlock Complete Remedies — ₹499'}
+              <Sparkles className="h-4 w-4" /> {hi ? 'संपूर्ण जीवन रिपोर्ट में सभी उपाय पाएँ' : 'Get all remedies in the Complete Life Report'} <LifeReportPriceInline className="ml-1 font-bold" struck={false} />
             </Link>
           </div>
         </div>

@@ -1,11 +1,12 @@
 'use client';
 import { STANDARD_USD } from '@/lib/billing/currency';
 import * as React from 'react';
-import { Download, ImageIcon, Mail, MessageCircle, Phone, Plus, RefreshCw, Save, Sparkles, Trash2 } from 'lucide-react';
+import { Download, FileUp, ImageIcon, Mail, MessageCircle, Pause, Phone, Play, Plus, RefreshCw, Save, Sparkles, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/form';
 import { Badge } from '@/components/ui/misc';
-import { api, ApiError } from '@/lib/client/api';
+import { api, ApiError, download } from '@/lib/client/api';
+import { deliveryState, isAutoService } from '@/lib/service-delivery';
 import type { Service, ServiceIntakeField } from '@/lib/db/schema';
 import { cn } from '@/lib/utils';
 import { formatMoney } from '@/lib/billing/currency';
@@ -36,7 +37,7 @@ export function ServicesAdmin({ onGenerateReport }: { onGenerateReport?: (order:
   );
 }
 
-export interface Order { id: string; serviceCode: string; status: string; adminNote: string | null; createdAt: string; deliveredAt: string | null; details: Record<string, string>; payment: { amountPaise: number; currency?: string; invoiceNumber: string | null; billingName: string | null; paidAt: string | null }; userId: string | null; /** The client uploaded a signature photo with the booking (fetch with ?image=<id>). */ hasSignatureImage?: boolean }
+export interface Order { id: string; serviceCode: string; status: string; adminNote: string | null; createdAt: string; deliveredAt: string | null; details: Record<string, string>; payment: { amountPaise: number; currency?: string; invoiceNumber: string | null; billingName: string | null; paidAt: string | null }; userId: string | null; /** The client uploaded a signature photo with the booking (fetch with ?image=<id>). */ hasSignatureImage?: boolean; /** A finished report PDF is stored on the order (client can download it). */ hasReportFile?: boolean; onHold?: boolean }
 
 function Orders({ onGenerateReport }: { onGenerateReport?: (order: Order) => void }) {
   const [status, setStatus] = React.useState('all');
@@ -77,6 +78,7 @@ function OrderCard({ o, name, onChanged, onGenerateReport }: { o: Order; name: s
         </div>
       </div>
       <dl className="mt-3 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">{rows.map(([k, v]) => <div key={k} className={k === 'Questions / notes' ? 'sm:col-span-2' : ''}><dt className="inline text-muted-foreground">{k}: </dt><dd className="inline whitespace-pre-wrap">{v}</dd></div>)}</dl>
+      <OrderDelivery o={o} onChanged={onChanged} patch={patch} />
       {o.hasSignatureImage && <OrderSignaturePhoto id={o.id} name={d.clientName ?? d.currentName ?? 'client'} />}
       {o.serviceCode === 'SVC_SIGNATURE' && !o.hasSignatureImage && <p className="mt-2 text-xs text-muted-foreground">No signature photo uploaded – ask the client to send it on WhatsApp.</p>}
       {wa.length >= 10 && <div className="mt-2 flex gap-3 text-sm"><a href={`tel:${d.mobile}`} className="inline-flex items-center gap-1 hover:text-gold"><Phone className="h-4 w-4 text-gold" />{d.mobile}</a><a href={`https://wa.me/${wa.length === 10 ? `91${wa}` : wa}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-success"><MessageCircle className="h-4 w-4" />WhatsApp</a></div>}
@@ -85,6 +87,50 @@ function OrderCard({ o, name, onChanged, onGenerateReport }: { o: Order; name: s
         <Button size="sm" variant="outline" disabled={note === (o.adminNote ?? '')} onClick={() => patch({ adminNote: note }, 'Note saved')}><Save className="h-4 w-4" /> Save note</Button></div>
       {msg && <p className="mt-1 text-xs text-muted-foreground" role="status">{msg}</p>}
     </article>
+  );
+}
+
+/** Client delivery: when the report reaches the client's report area, hold / release, and the finished PDF (upload, download, remove). */
+function OrderDelivery({ o, onChanged, patch }: { o: Order; onChanged: () => void; patch: (b: Record<string, unknown>, ok: string) => Promise<void> }) {
+  const auto = isAutoService(o.serviceCode);
+  const dl = deliveryState({ status: o.status, paidAt: o.payment.paidAt, deliveredAt: o.deliveredAt, onHold: o.onHold, hasFile: !!o.hasReportFile, auto });
+  const fileRef = React.useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState<string | null>(null);
+  const when = (s: string) => new Date(s).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+  async function upload(f: File) {
+    setErr(null);
+    if (f.type && f.type !== 'application/pdf') { setErr('Choose a PDF file.'); return; }
+    if (f.size > 15 * 1024 * 1024) { setErr('The PDF is larger than 15 MB.'); return; }
+    setBusy(true);
+    try {
+      const b64 = await new Promise<string>((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result).replace(/^data:[^,]*,/, '')); r.onerror = () => bad(r.error); r.readAsDataURL(f); });
+      await api('/api/admin/service-orders', { method: 'PUT', json: { id: o.id, fileName: f.name, pdf: b64 } });
+      onChanged();
+    } catch (e) { setErr(e instanceof ApiError && e.body.error === 'NOT_A_PDF' ? 'That file is not a PDF.' : e instanceof ApiError && e.status === 413 ? 'The file is too large for the server.' : 'Upload failed. Please try again.'); }
+    finally { setBusy(false); }
+  }
+  if (o.status === 'cancelled') return null;
+  return (
+    <div className="mt-3 space-y-2 rounded-lg border border-border/70 bg-background/40 p-3 text-sm">
+      <p className="font-medium">Client delivery {auto ? <Badge tone="gold" className="ml-1">Auto report</Badge> : <Badge className="ml-1">Upload PDF</Badge>}</p>
+      <p className="text-xs text-muted-foreground">
+        {dl.state === 'ready' ? (dl.download ? `Ready in the client's report area since ${when(dl.readyAt)}.` : 'Marked delivered – no PDF stored, so the client has no download. Upload the PDF to add one.')
+          : dl.state === 'preparing' ? `${o.onHold ? 'On hold – will not be released automatically. ' : ''}${auto ? `The system releases the report to the client at ${when(dl.readyAt)}.` : `Due ${when(dl.readyAt)} – upload the finished PDF to release it to the client.`}${dl.overdue && !auto ? ' (overdue)' : ''}`
+          : 'Waiting for payment.'}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {o.hasReportFile && <Button size="sm" variant="outline" onClick={() => download(`/api/admin/service-orders?report=${encodeURIComponent(o.id)}`).catch(() => setErr('Could not download.'))}><Download className="h-4 w-4" /> Report PDF</Button>}
+        <Button size="sm" variant={auto ? 'outline' : 'gold'} disabled={busy} onClick={() => fileRef.current?.click()}><FileUp className="h-4 w-4" /> {busy ? 'Uploading…' : o.hasReportFile ? 'Replace PDF' : 'Upload finished PDF'}</Button>
+        <input ref={fileRef} type="file" accept="application/pdf,.pdf" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ''; }} />
+        {o.hasReportFile && <Button size="sm" variant="ghost" className="text-danger" onClick={async () => { if (!confirm('Remove the stored report PDF from this order?')) return; try { await api(`/api/admin/service-orders?id=${encodeURIComponent(o.id)}`, { method: 'DELETE' }); onChanged(); } catch { setErr('Could not remove.'); } }}><Trash2 className="h-4 w-4" /> Remove PDF</Button>}
+        {dl.state === 'preparing' && (o.onHold
+          ? <Button size="sm" variant="ghost" onClick={() => patch({ onHold: false }, 'Hold removed')}><Play className="h-4 w-4" /> Remove hold</Button>
+          : <Button size="sm" variant="ghost" onClick={() => patch({ onHold: true }, 'On hold')}><Pause className="h-4 w-4" /> Hold</Button>)}
+        {dl.state === 'preparing' && auto && <Button size="sm" variant="ghost" onClick={() => patch({ status: 'delivered', onHold: false }, 'Released to the client')}>Release now</Button>}
+      </div>
+      {err && <p className="text-xs text-danger" role="alert">{err}</p>}
+    </div>
   );
 }
 

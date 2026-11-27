@@ -231,10 +231,47 @@ export async function listServiceOrders(filter: { status?: string; userId?: stri
       filter.status && filter.status !== 'all' ? eq(serviceOrders.status, filter.status) : filter.userId ? undefined : inArray(serviceOrders.status, ['paid', 'in_progress', 'delivered', 'cancelled'])))
     .orderBy(desc(serviceOrders.createdAt)).limit(300);
   // The signature photo is left out of the list (it can be ~1 MB per order) and fetched on its own with getServiceOrderImage.
-  return rows.map(({ o: { detailsEnc, ...o }, p }) => {
+  return rows.map(({ o: { detailsEnc, reportPdf, ...o }, p }) => {
     const { signatureImage, ...details } = decryptJson<IntakeDetails>(detailsEnc);
-    return { ...o, payment: p, details, hasSignatureImage: !!signatureImage };
+    return { ...o, payment: p, details, hasSignatureImage: !!signatureImage, hasReportFile: !!reportPdf };
   });
+}
+
+/** One order of this customer (details decrypted, PDF left out), or null. */
+export async function getUserServiceOrder(userId: string, id: string, db: Db = getDb()) {
+  const [row] = await db.select({ o: serviceOrders, paidAt: payments.paidAt, invoiceNumber: payments.invoiceNumber })
+    .from(serviceOrders).innerJoin(payments, eq(payments.id, serviceOrders.paymentId))
+    .where(and(eq(serviceOrders.id, id), eq(serviceOrders.userId, userId))).limit(1);
+  if (!row) return null;
+  const { detailsEnc, reportPdf, ...o } = row.o;
+  const { signatureImage: _img, ...details } = decryptJson<IntakeDetails>(detailsEnc);
+  void _img;
+  return { ...o, details, paidAt: row.paidAt, invoiceNumber: row.invoiceNumber, hasReportFile: !!reportPdf };
+}
+
+/** The stored report PDF of an order (bytes + file name), or null. */
+export async function getServiceOrderReport(id: string, db: Db = getDb()): Promise<{ pdf: Uint8Array; fileName: string } | null> {
+  const [row] = await db.select({ pdf: serviceOrders.reportPdf, name: serviceOrders.reportFileName }).from(serviceOrders).where(eq(serviceOrders.id, id)).limit(1);
+  if (!row?.pdf) return null;
+  return { pdf: new Uint8Array(Buffer.from(row.pdf, 'base64')), fileName: row.name || 'numerology-report.pdf' };
+}
+
+/** Max size of a report PDF stored on an order (base64 in the database). */
+export const SERVICE_REPORT_MAX_BYTES = 15 * 1024 * 1024;
+
+/** Stores the finished report on the order. `markDelivered` (admin upload) also sets the order to Delivered. */
+export async function saveServiceOrderReport(id: string, pdf: Uint8Array, fileName: string, opts: { markDelivered?: boolean } = {}, db: Db = getDb()) {
+  if (pdf.byteLength > SERVICE_REPORT_MAX_BYTES) throw new Error('REPORT_TOO_LARGE');
+  if (!(pdf[0] === 0x25 && pdf[1] === 0x50 && pdf[2] === 0x44 && pdf[3] === 0x46)) throw new Error('NOT_A_PDF'); // %PDF
+  const set: Partial<typeof serviceOrders.$inferInsert> = { reportPdf: Buffer.from(pdf).toString('base64'), reportFileName: fileName.slice(0, 160), reportSavedAt: new Date(), updatedAt: new Date() };
+  if (opts.markDelivered) { set.status = 'delivered'; set.deliveredAt = new Date(); }
+  const [r] = await db.update(serviceOrders).set(set).where(eq(serviceOrders.id, id)).returning({ id: serviceOrders.id });
+  return !!r;
+}
+
+export async function removeServiceOrderReport(id: string, db: Db = getDb()) {
+  const [r] = await db.update(serviceOrders).set({ reportPdf: null, reportFileName: null, reportSavedAt: null, updatedAt: new Date() }).where(eq(serviceOrders.id, id)).returning({ id: serviceOrders.id });
+  return !!r;
 }
 
 /** The signature photo the client uploaded with the order, or null. */
@@ -243,10 +280,11 @@ export async function getServiceOrderImage(id: string, db: Db = getDb()): Promis
   return row ? decryptJson<IntakeDetails>(row.detailsEnc).signatureImage ?? null : null;
 }
 
-export const ServiceOrderUpdate = z.object({ id: z.string().min(1), status: z.enum(SERVICE_ORDER_STATUSES).optional(), adminNote: z.string().max(2000).nullable().optional() });
+export const ServiceOrderUpdate = z.object({ id: z.string().min(1), status: z.enum(SERVICE_ORDER_STATUSES).optional(), adminNote: z.string().max(2000).nullable().optional(), onHold: z.boolean().optional() });
 export async function updateServiceOrder(u: z.infer<typeof ServiceOrderUpdate>, db: Db = getDb()) {
   const set: Partial<typeof serviceOrders.$inferInsert> = { updatedAt: new Date() };
-  if (u.status) { set.status = u.status; if (u.status === 'delivered') set.deliveredAt = new Date(); }
+  if (u.status) { set.status = u.status; set.deliveredAt = u.status === 'delivered' ? new Date() : null; }
+  if (u.onHold !== undefined) set.onHold = u.onHold;
   if (u.adminNote !== undefined) set.adminNote = u.adminNote?.trim() || null;
   const [r] = await db.update(serviceOrders).set(set).where(eq(serviceOrders.id, u.id)).returning({ id: serviceOrders.id });
   return !!r;

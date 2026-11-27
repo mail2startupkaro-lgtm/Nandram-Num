@@ -450,6 +450,12 @@ export const serviceOrders = pgTable('service_orders', {
   status: varchar('status', { length: 20 }).notNull().default('awaiting_payment'), // awaiting_payment | paid | in_progress | delivered | cancelled
   adminNote: text('admin_note'),
   deliveredAt: timestamp('delivered_at', { withTimezone: true }),
+  /** Finished report (base64 PDF): uploaded by the numerologist, or stored the first time the system generates it. */
+  reportPdf: text('report_pdf'),
+  reportFileName: varchar('report_file_name', { length: 160 }),
+  reportSavedAt: timestamp('report_saved_at', { withTimezone: true }),
+  /** Admin hold: the report is not released at the 3-hour mark while this is set. */
+  onHold: boolean('on_hold').notNull().default(false),
   createdAt: created(),
   updatedAt: updated(),
 }, (t) => ({ statusIdx: index('service_orders_status_idx').on(t.status, t.createdAt), userIdx: index('service_orders_user_idx').on(t.userId) }));

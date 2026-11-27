@@ -9,6 +9,7 @@ import type { QueueState } from '@/lib/report-queue';
 import { cn } from '@/lib/utils';
 import { useTimeZone } from '@/lib/client/currency';
 import { isIST, workingHoursLabel } from '@/lib/client/working-hours';
+import { LifeReportPriceInline } from '@/components/services/life-report-price';
 
 /** Is this visitor served by the delivery queue (general client) rather than instant PDFs (Pro / admin)? */
 export function useQueued() {
@@ -143,7 +144,8 @@ export function ReportRequestPanel({ reportId, saved, onSave, theme = 'royal-gol
   else if (!reportId || !saved) body = <div className="space-y-2"><p className="text-sm text-muted-foreground">{t.saveFirst}</p><Button variant="gold" onClick={() => onSave()}>{t.save}</Button></div>;
   else if (!queue) body = <div className="h-10 animate-pulse rounded bg-muted" />;
   else if (queue.state === 'not_requested') body = noCredit
-    ? <div className="space-y-2"><p className="text-sm text-muted-foreground">{lang === 'hi' ? 'इस रिपोर्ट के लिए क्रेडिट उपलब्ध नहीं है।' : 'No report credits remaining for this reading.'}</p></div>
+    ? <div className="space-y-2"><p className="text-sm text-muted-foreground">{lang === 'hi' ? 'इस रिपोर्ट के लिए क्रेडिट उपलब्ध नहीं है। आचार्य नंदराम की संपूर्ण जीवन रिपोर्ट लें – 3 घंटे के भीतर PDF।' : 'No report credits left for this reading. Get the Complete Life Report by Acharya Nandram instead – PDF within 3 hours.'}</p>
+      <Link href="/reading?type=SVC_PERSONAL_REPORT" className={buttonVariants({ variant: 'gold' })}>{lang === 'hi' ? 'संपूर्ण जीवन रिपोर्ट प्राप्त करें' : 'Get Complete Life Report'}<LifeReportPriceInline prefix=" — " struck={false} /></Link></div>
     : (
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">

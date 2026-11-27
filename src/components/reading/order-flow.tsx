@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import Link from 'next/link';
-import { CheckCircle2, ChevronLeft, Heart, ImageUp, LogIn, MessageCircle, RefreshCw, ShieldCheck, Sparkles, UserPlus, Users, X } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, Heart, ImageUp, Loader2, LogIn, MessageCircle, RefreshCw, ShieldCheck, Sparkles, UserPlus, Users, X } from 'lucide-react';
 import { shrink } from '@/lib/client/signature-image';
 import { useApp } from '@/components/layout/providers';
 import { INDIAN_STATES } from '@/components/wizard/state';
@@ -10,6 +10,7 @@ import { ChipGroup, Field, Input, Select } from '@/components/ui/form';
 import { DisclaimerNote } from '@/components/legal/disclaimer-note';
 import { api, ApiError } from '@/lib/client/api';
 import { confirmCashfreeOrder, loadCashfree } from '@/lib/client/cashfree';
+import { PurchasedServices } from '@/components/account/purchased-services';
 import { confirmRazorpayPayment, openRazorpayCheckout } from '@/lib/client/razorpay';
 import { useDisplayCurrency } from '@/lib/client/currency';
 import { OUTSIDE_INDIA } from '@/lib/billing/currency';
@@ -360,24 +361,14 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
           <p className="text-xl font-semibold">{t.ok}</p>
           <p className="text-sm text-muted-foreground">{t.okText}</p>
           
-          {/* Order / Report Status Queue Box */}
-          <div className="mx-auto max-w-md rounded-lg border border-gold/40 bg-gold/5 p-4 text-left space-y-2">
-            <div className="flex items-center justify-between text-xs font-semibold">
-              <span className="uppercase tracking-wider text-gold">{lang === 'hi' ? 'ऑर्डर व रिपोर्ट स्थिति' : 'Order & Report Status'}</span>
-              <span className="rounded bg-gold/20 px-2 py-0.5 text-gold">{lang === 'hi' ? 'क्रम में (In queue)' : 'In queue'}</span>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {lang === 'hi'
-                ? 'आपका ऑर्डर आचार्य नंदराम के डिलीवरी क्रम में दर्ज हो गया है। आप इसकी प्रगति अपने खाते या प्रोफाइल में देख सकते हैं।'
-                : 'Your order is recorded in the preparation queue. You can track progress and status under your Account.'}
-            </p>
-          </div>
+          {/* Live report status – the same tracker the client sees in My reports */}
+          <div className="text-left"><PurchasedServices compact /></div>
 
           {sig && sigImage && <p className="text-sm text-success">{SIG_T[lang].received}</p>}
           <div className="flex flex-wrap justify-center gap-2 pt-2">
             {sig && !sigImage && <a href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(lang === 'hi' ? `नमस्ते, मैंने हस्ताक्षर विश्लेषण बुक किया है (${forName})। मेरे हस्ताक्षर की फ़ोटो भेज रहा/रही हूँ।` : `Hello, I have booked Signature Analysis (${forName}). Sending my signature photos.`)}`} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: 'outline' })}><MessageCircle className="h-4 w-4" />{t.sigPhotos}</a>}
-            <Link href="/account" className={buttonVariants({ variant: 'gold' })}>{t.account}</Link>
-            <Link href="/dashboard" className={buttonVariants({ variant: 'outline' })}>{lang === 'hi' ? 'डैशबोर्ड' : 'Dashboard'}</Link>
+            <Link href="/dashboard" className={buttonVariants({ variant: 'gold' })}>{t.myReports}</Link>
+            <Link href="/account" className={buttonVariants({ variant: 'outline' })}>{t.account}</Link>
             <Link href="/reading" onClick={onChangeReading} className={buttonVariants({ variant: 'outline' })}>{t.another}</Link>
             <Link href="/account#family" className={buttonVariants({ variant: 'ghost' })}><Users className="h-4 w-4" />{t.family}</Link>
           </div>
@@ -466,7 +457,7 @@ function PayStep({ svc, details, forName, relation, personId, onBack, onDone, si
   const [bill, setBill] = React.useState({ name: u.name ?? '', phone: (u.phone ?? '').replace(/^\+91/, ''), state: u.billingState ?? ((usd || isForeign) ? OUTSIDE_INDIA : ''), gstin: '' });
   const abroad = usd || isForeign || bill.state === OUTSIDE_INDIA;
   const [busy, setBusy] = React.useState(false);
-  const [stage, setStage] = React.useState<'form' | 'confirming' | 'fail'>('form');
+  const [stage, setStage] = React.useState<'form' | 'confirming' | 'pending' | 'fail'>('form');
   const [order, setOrder] = React.useState<Order | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const missing = !bill.state || (!u.phone && !bill.phone.trim());
@@ -498,7 +489,7 @@ function PayStep({ svc, details, forName, relation, personId, onBack, onDone, si
           setStage('confirming');
           const st = await confirmRazorpayPayment(resp);
           if (st === 'paid') onDone();
-          else setStage(st === 'failed' ? 'fail' : 'confirming');
+          else setStage(st === 'failed' ? 'fail' : 'pending');
         } catch (err: unknown) {
           if ((err as Error)?.message !== 'PAYMENT_CANCELLED') {
             setError(lang === 'hi' ? 'भुगतान पूरा नहीं हुआ।' : 'Payment could not be completed.');
@@ -512,8 +503,11 @@ function PayStep({ svc, details, forName, relation, personId, onBack, onDone, si
         const r = await Cashfree({ mode: o.mode === 'production' ? 'production' : 'sandbox' }).checkout({ paymentSessionId: o.paymentSessionId, redirectTarget: '_modal' });
         if (r.redirect) return;
         setStage('confirming');
-        const st = await confirmCashfreeOrder(o.orderId);
-        if (st === 'paid') onDone(); else setStage(st === 'failed' || r.error ? 'fail' : 'confirming');
+        // The customer closed the payment window without paying: one quick check, then back to the form.
+        const st = await confirmCashfreeOrder(o.orderId, r.error ? 2 : 6);
+        if (st === 'paid') onDone();
+        else if (st === 'failed' || r.error) setStage('fail');
+        else setStage('pending');
       }
     } catch (e) {
       const code = e instanceof ApiError ? e.body.error ?? '' : '';
@@ -521,7 +515,14 @@ function PayStep({ svc, details, forName, relation, personId, onBack, onDone, si
     } finally { setBusy(false); }
   }
 
-  if (stage === 'confirming') return <p className="glass mt-4 rounded-xl p-6 text-center text-sm" role="status">{t.confirming}</p>;
+  if (stage === 'confirming') return <p className="glass mt-4 flex items-center justify-center gap-2 rounded-xl p-6 text-center text-sm" role="status"><Loader2 className="h-4 w-4 animate-spin text-gold" />{t.confirming}</p>;
+  // Bank confirmation is slow (UPI / net banking): the order is safe – the webhook and My reports finish it.
+  if (stage === 'pending') return (
+    <section className="glass mt-4 space-y-3 rounded-xl p-6 text-center" role="status">
+      <p className="text-sm">{t.pendingPay}</p>
+      <div className="flex flex-wrap justify-center gap-2"><Link href="/dashboard" className={buttonVariants({ variant: 'gold' })}>{t.myReports}</Link><Button variant="ghost" onClick={() => setStage('form')}>{t.back}</Button></div>
+    </section>
+  );
   return (
     <section className="glass mt-4 space-y-4 rounded-xl p-5 sm:p-6" aria-labelledby="pay-h">
       <h2 id="pay-h" className="font-serif text-xl font-semibold">{t.payTitle}</h2>
@@ -540,7 +541,7 @@ function PayStep({ svc, details, forName, relation, personId, onBack, onDone, si
       <DisclaimerNote agree />
       {order?.mock ? (
         <div className="space-y-2 rounded-md border border-warning/40 bg-warning/10 p-3"><p className="text-xs">{t.mock}</p>
-          <Button variant="gold" className="w-full" onClick={async () => { try { await api('/api/billing/mock-pay', { method: 'POST', json: { orderId: order.orderId } }); onDone(); } catch { setStage('fail'); } }}>{t.simulate}</Button></div>
+          <Button variant="gold" className="w-full" disabled={busy} onClick={async () => { setBusy(true); try { await api('/api/billing/mock-pay', { method: 'POST', json: { orderId: order.orderId } }); onDone(); } catch { setStage('fail'); } finally { setBusy(false); } }}>{t.simulate}</Button></div>
       ) : (
         <Button variant="gold" size="lg" className="w-full" disabled={busy || missing} onClick={pay}>{busy ? t.paying : t.pay(price?.fee ?? '')}</Button>
       )}

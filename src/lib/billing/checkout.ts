@@ -84,7 +84,8 @@ export async function createCheckout(user: User, input: CheckoutInput, opts: { f
   }
   // Added after parseIntake on purpose: its number masking must not touch the image data.
   if (intake && plan.kind === 'service' && plan.service.code === 'SVC_SIGNATURE' && input.signatureImage) intake.signatureImage = input.signatureImage;
-  const returnPath = plan.kind === 'service' ? '/services' : '/pricing';
+  // After a bank / UPI redirect the client lands where the order is shown: My reports (live status) for services.
+  const returnPath = plan.kind === 'service' ? '/dashboard' : '/pricing';
   const gstin = input.gstin?.trim().toUpperCase() || undefined;
   if (gstin && !GSTIN_RE.test(gstin)) throw new CheckoutError('GSTIN_INVALID');
   if (input.billingState === OUTSIDE_INDIA && gstin) throw new CheckoutError('GSTIN_INVALID');

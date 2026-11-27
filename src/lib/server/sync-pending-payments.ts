@@ -10,11 +10,19 @@ import { syncCashfreeOrder, syncRazorpayFromGateway } from '@/lib/billing/checko
  * If a customer completed a payment (via UPI app, redirect, or without the frontend callback firing),
  * this automatically verifies with Cashfree or Razorpay and credits their account / fulfils the service order.
  */
-export async function syncPendingUserPayments(userId: string) {
+/** Last check per user: My reports polls /api/account every 30 s, so the gateways are asked at most once a minute per user. */
+const lastSync = new Map<string, number>();
+const SYNC_EVERY_MS = 60_000;
+
+export async function syncPendingUserPayments(userId: string, opts: { force?: boolean } = {}) {
+  const now = Date.now();
+  if (!opts.force && now - (lastSync.get(userId) ?? 0) < SYNC_EVERY_MS) return;
+  lastSync.set(userId, now);
+  if (lastSync.size > 5000) for (const [k, t] of lastSync) if (now - t > SYNC_EVERY_MS) lastSync.delete(k);
   try {
     const db = getDb();
-    // Only check payments created in the last 7 days that are still in 'created' status
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    // Only check payments created in the last 3 days that are still in 'created' status (older checkouts were abandoned)
+    const sevenDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
     const pendingPayments = await db
       .select({ id: payments.id, gatewayOrderId: payments.gatewayOrderId })
       .from(payments)
