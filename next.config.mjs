@@ -1,19 +1,23 @@
 const isProd = process.env.NODE_ENV === 'production';
-/** Content Security Policy: only our own code plus Cashfree's checkout may run; no framing, no plugins. */
+/**
+ * Content Security Policy: only our own code plus the payment gateways (Cashfree for India, Razorpay for international
+ * clients) and Google Tag Manager may run; no framing of our pages, no plugins.
+ */
+const RZP = 'https://checkout.razorpay.com https://api.razorpay.com';
 const CSP = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' https://*.cashfree.com https://www.googletagmanager.com https://*.googletagmanager.com${isProd ? '' : " 'unsafe-eval'"}`,
+  `script-src 'self' 'unsafe-inline' https://*.cashfree.com https://checkout.razorpay.com https://www.googletagmanager.com https://*.googletagmanager.com${isProd ? '' : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self' https://*.cashfree.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com${isProd ? '' : ' ws: wss:'}`,
-  "frame-src 'self' https://*.cashfree.com https://www.googletagmanager.com",
+  `connect-src 'self' https://*.cashfree.com ${RZP} https://lumberjack.razorpay.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com${isProd ? '' : ' ws: wss:'}`,
+  `frame-src 'self' https://*.cashfree.com ${RZP} https://www.googletagmanager.com`,
   "worker-src 'self' blob:",
   "media-src 'self' blob: data:",
   "object-src 'none'",
   "base-uri 'self'",
   "frame-ancestors 'none'",
-  "form-action 'self' https://*.cashfree.com https://accounts.google.com",
+  `form-action 'self' https://*.cashfree.com ${RZP} https://accounts.google.com`,
   ...(isProd ? ['upgrade-insecure-requests'] : []),
 ].join('; ');
 
@@ -40,9 +44,9 @@ const nextConfig = {
     workerThreads: false,
     cpus: 2,
     optimizePackageImports: ['lucide-react', 'framer-motion', 'recharts'],
-    serverComponentsExternalPackages: ['playwright-core', '@sparticuz/chromium-min', 'pdfjs-dist', 'pdf-lib', 'qrcode', 'pg', 'papaparse'],
-    outputFileTracingIncludes: { '/api/**/*': ['./node_modules/@fontsource/{playfair-display,poppins,noto-sans-devanagari}/files/*.woff2', './drizzle/**/*', './node_modules/pdfjs-dist/**/*'] },
   },
+  serverExternalPackages: ['playwright-core', '@sparticuz/chromium-min', 'pdfjs-dist', 'pdf-lib', 'qrcode', 'pg', 'papaparse'],
+  outputFileTracingIncludes: { '/api/**/*': ['./node_modules/@fontsource/{playfair-display,poppins,noto-sans-devanagari}/files/*.woff2', './drizzle/**/*', './node_modules/pdfjs-dist/**/*'] },
   async redirects() { return hostRedirects(); },
   async headers() {
     return [

@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { CheckCircle2, Feather, PenLine, RefreshCw } from 'lucide-react';
 import type { NumerologyResult } from '@/lib/numerology';
 import type { Narrative } from '@/lib/narrative/service';
@@ -84,7 +84,7 @@ export function NarrativePanel({ result, narrative, onChange }: {
       {narrative && (
         <article className={cn('space-y-7', loading && 'opacity-50')} lang={narrative.language === 'hi' ? 'hi' : 'en'}>
           {narrative.sections.map((s, i) => (
-            <motion.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.04, 0.6) }}>
+            <m.div key={s.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(i * 0.04, 0.6) }}>
               <div className="mb-2 flex items-center gap-2">
                 <h3 className="font-serif text-xl font-semibold text-gold">{s.title}</h3>
                 {s.source === 'expert' && <Badge tone="gold">{t.n.edited}</Badge>}
@@ -104,7 +104,7 @@ export function NarrativePanel({ result, narrative, onChange }: {
               ) : (
                 s.text.split(/\n\s*\n/).map((p, j) => <p key={j} className="mb-3 text-[15px] leading-relaxed text-foreground/90">{p}</p>)
               )}
-            </motion.div>
+            </m.div>
           ))}
           {review && narrative.status !== 'final' && (
             <Button variant="gold" onClick={() => { onChange({ ...narrative, status: 'final' }); setReview(false); }}><CheckCircle2 /> {t.n.approve}</Button>

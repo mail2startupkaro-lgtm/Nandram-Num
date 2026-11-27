@@ -2,7 +2,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Check, Compass, Feather, Download, FileJson, Flower2, Gem, Grid3x3, Heart, IdCard, Lock, MessageCircle, Pencil, Printer, RotateCcw, Save, Smartphone, Sparkles, Type } from 'lucide-react';
 import type { NumerologyResult } from '@/lib/numerology';
 import { planetOf } from '@/lib/numerology/data/planets';
@@ -58,7 +58,7 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
   return (
     <div className="container space-y-6 py-8 sm:py-12">
       {/* Hero */}
-      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="glass rounded-lg p-5 sm:p-7">
+      <m.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="glass rounded-lg p-5 sm:p-7">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex flex-wrap items-center gap-2">
@@ -94,7 +94,7 @@ export function Results({ result, narrative, onNarrative, onEdit, onNew, onSave,
           {savedNote && <div className="w-full text-right text-sm print:hidden">{savedNote}</div>}
         </div>
         <CoreNumbers r={result.results} />
-      </motion.div>
+      </m.div>
 
       <nav className="sticky top-16 z-30 -mx-4 overflow-x-auto bg-background/80 px-4 py-2 backdrop-blur sm:mx-0 sm:rounded-lg sm:px-2 print:hidden">
         <ul className="flex gap-1">
@@ -377,13 +377,13 @@ function CoreNumbers({ r }: { r: R }) {
   return (
     <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       {cards.map((c, i) => (
-        <motion.div key={c.k} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.07 }}
+        <m.div key={c.k} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.07 }}
           className="rounded-lg border border-gold/30 bg-gradient-to-b from-gold/10 to-transparent p-4 text-center">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">{c.k}</p>
           <p className="num-badge gold-text text-5xl font-bold">{c.n}</p>
           <p className="text-xs font-medium">{lang === 'hi' ? T(planetOf(c.n).hindiName) : `${planetOf(c.n).name} · ${planetOf(c.n).hindiName}`}</p>
           <p className="mt-0.5 text-[11px] text-muted-foreground">{traits[c.n].keyword} · {c.sub}</p>
-        </motion.div>
+        </m.div>
       ))}
     </div>
   );
@@ -416,12 +416,12 @@ function DobSection({ r, isFree = false }: { r: R; isFree?: boolean }) {
         </div>
         <div className="space-y-4">
           {selCell ? (
-            <motion.div key={sel} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-md border border-gold/40 bg-gold/5 p-4 text-sm">
+            <m.div key={sel} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-md border border-gold/40 bg-gold/5 p-4 text-sm">
               <p className="font-serif text-xl font-semibold">{selCell.number} · {lang === 'hi' ? T(planetOf(selCell.number).hindiName) : `${planetOf(selCell.number).name} (${planetOf(selCell.number).hindiName})`} <Badge className="ml-1" tone={selCell.status === 'missing' ? 'warn' : selCell.status === 'repeated' ? 'gold' : 'good'}>{t.r[selCell.status]}{selCell.count > 1 ? ` ×${selCell.count}` : ''}</Badge></p>
               <p className="mt-1"><b>{NUMBER_TRAITS[lang][selCell.number].keyword}</b> · {NUMBER_TRAITS[lang][selCell.number].plus}</p>
               <p className="text-muted-foreground">{NUMBER_TRAITS[lang][selCell.number].minus}</p>
               {loShuRemedy && !isFree && <p className="mt-2"><b>{t.r.yourRemedy}:</b> {T(loShuRemedy.placement)} · {T(loShuRemedy.wristband)} · {T(loShuRemedy.colour)}</p>}
-            </motion.div>
+            </m.div>
           ) : <p className="text-sm text-muted-foreground">{t.r.tapHint}</p>}
           {tab === 'loshu' && (
             <div>

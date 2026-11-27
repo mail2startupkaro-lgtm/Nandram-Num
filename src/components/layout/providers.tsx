@@ -1,5 +1,6 @@
 'use client';
 import * as React from 'react';
+import { LazyMotion } from 'framer-motion';
 import { DICT, type Dict, type Lang } from '@/lib/i18n/dictionary';
 import { safeStorage } from '@/lib/utils';
 
@@ -11,6 +12,7 @@ export interface Me {
 }
 interface Ctx { lang: Lang; setLang: (l: Lang) => void; t: Dict; theme: Theme; setTheme: (t: Theme) => void; me: Me | null; refreshMe: () => Promise<void> }
 const AppCtx = React.createContext<Ctx | null>(null);
+const loadMotion = () => import('./motion-features').then((r) => r.default);
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = React.useState<Lang>('en');
@@ -43,7 +45,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
     setTheme: (t) => { setThemeState(t); safeStorage().set('theme', t); },
   }), [lang, theme, me, refreshMe]);
 
-  return <AppCtx.Provider value={value}>{children}</AppCtx.Provider>;
+  // Animations: only the small `m` component ships with the page; the animation engine loads in the background.
+  return <AppCtx.Provider value={value}><LazyMotion features={loadMotion} strict>{children}</LazyMotion></AppCtx.Provider>;
 }
 
 export function useApp() {

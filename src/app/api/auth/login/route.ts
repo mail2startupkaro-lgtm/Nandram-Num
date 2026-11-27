@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { AuthError, detectChannel, isSuperAdmin, normaliseIdentifier } from '@/lib/auth/otp';
+import { AuthError, detectChannel, isVerifiedSuperAdmin, normaliseIdentifier } from '@/lib/auth/otp';
 import { verifyPassword } from '@/lib/auth/password';
 import { createSession, destroySession, readCookie, sessionCookie } from '@/lib/auth/session';
 import { getDb } from '@/lib/db/client';
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     const oldToken = readCookie(req);
     if (oldToken) await destroySession(oldToken, db);
 
-    const role = isSuperAdmin(u.email, u.phone) ? ('super_admin' as const) : u.role;
+    const role = isVerifiedSuperAdmin(u) ? ('super_admin' as const) : u.role;
     await db.update(users).set({ lastLoginAt: new Date(), role, failedLogins: 0, lockedUntil: null }).where(eq(users.id, u.id));
     const token = await createSession(u.id, req.headers.get('user-agent'));
     return json({ user: { id: u.id, name: u.name, role } }, 200, { 'set-cookie': sessionCookie(token) });

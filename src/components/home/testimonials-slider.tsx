@@ -5,7 +5,7 @@
  * arrows, dots, keyboard ←/→ and swipe. The page's own service reviews come first.
  */
 import * as React from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { m, useReducedMotion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, MapPin, Pause, Play, Quote, Star } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { Bi } from '@/components/i18n/bi';
@@ -86,28 +86,28 @@ export function TestimonialsSlider({ items }: { items: Testimonial[] }) {
     <section aria-roledescription="carousel" aria-labelledby="testimonials-title" className="relative mx-auto mt-20 max-w-7xl px-4"
       onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)} onFocusCapture={() => setPaused(true)} onBlurCapture={() => setPaused(false)}
       onKeyDown={(e) => { if (e.key === 'ArrowRight') go(index + 1); if (e.key === 'ArrowLeft') go(index - 1); }}>
-      <motion.div initial={reduce ? false : { opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-80px' }} transition={{ duration: 0.6 }} className="mb-8 text-center">
+      <m.div initial={reduce ? false : { opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-80px' }} transition={{ duration: 0.6 }} className="mb-8 text-center">
         <p className="mb-2 text-xs font-semibold uppercase tracking-[0.25em] text-gold"><Bi en="Client stories" hi="क्लाइंट्स के अनुभव" /></p>
         <h2 id="testimonials-title" className="font-serif text-3xl font-bold sm:text-4xl"><Bi en="What Our Clients Say About Us" hi="हमारे क्लाइंट्स हमारे बारे में क्या कहते हैं" /></h2>
         <div aria-hidden className="mx-auto mt-3 h-px w-40 bg-gradient-to-r from-transparent via-gold to-transparent" />
-      </motion.div>
+      </m.div>
 
       <div className="relative">
         <div className="overflow-hidden px-1 py-3">
-          <motion.ul className="flex" animate={{ x: `-${(index * 100) / perView}%` }} transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 80, damping: 20 }}
+          <m.ul className="flex" animate={{ x: `-${(index * 100) / perView}%` }} transition={reduce ? { duration: 0 } : { type: 'spring', stiffness: 80, damping: 20 }}
             drag={pages > 1 ? 'x' : false} dragConstraints={{ left: 0, right: 0 }} dragElastic={0.15}
             onDragEnd={(_, info) => { if (info.offset.x < -60 || info.velocity.x < -400) go(index + 1); else if (info.offset.x > 60 || info.velocity.x > 400) go(index - 1); }}>
             {list.map((t, i) => {
               const visible = i >= index && i < index + perView;
               return (
                 <li key={t.id} role="group" aria-roledescription="slide" aria-label={`${i + 1} of ${list.length}`} aria-hidden={!visible} className="shrink-0 px-2.5" style={{ width: `${100 / perView}%` }}>
-                  <motion.div className="h-full" initial={reduce ? false : { opacity: 0, y: 30, scale: 0.96 }} whileInView={{ opacity: 1, y: 0, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: (i % perView) * 0.12 }}>
+                  <m.div className="h-full" initial={reduce ? false : { opacity: 0, y: 30, scale: 0.96 }} whileInView={{ opacity: 1, y: 0, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.5, delay: (i % perView) * 0.12 }}>
                     <Card t={t} active={visible} />
-                  </motion.div>
+                  </m.div>
                 </li>
               );
             })}
-          </motion.ul>
+          </m.ul>
         </div>
 
         {pages > 1 && (<>

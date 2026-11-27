@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AuthError, detectChannel, isSuperAdmin, verifyOtp } from '@/lib/auth/otp';
+import { AuthError, detectChannel, isVerifiedSuperAdmin, verifyOtp } from '@/lib/auth/otp';
 import { createSession, destroySession, readCookie, sessionCookie } from '@/lib/auth/session';
 import { assertSameOrigin, clientIp, errorResponse, json, readJson } from '@/lib/server/http';
 import { rateLimit, tooMany } from '@/lib/server/rate-limit';
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
     const oldToken = readCookie(req);
     if (oldToken) await destroySession(oldToken, db);
 
-    const role = isSuperAdmin(user.email, user.phone) ? ('super_admin' as const) : user.role;
+    const role = isVerifiedSuperAdmin(user) ? ('super_admin' as const) : user.role;
     if (role !== user.role) {
       await db.update(users).set({ role }).where(eq(users.id, user.id));
     }

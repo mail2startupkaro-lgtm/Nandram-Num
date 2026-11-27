@@ -1,6 +1,6 @@
 import { eq, or } from 'drizzle-orm';
 import { z } from 'zod';
-import { AuthError, isSuperAdmin, normaliseIdentifier } from '@/lib/auth/otp';
+import { AuthError, normaliseIdentifier } from '@/lib/auth/otp';
 import { hashPassword } from '@/lib/auth/password';
 import { createSession, destroySession, readCookie, sessionCookie } from '@/lib/auth/session';
 import { getDb } from '@/lib/db/client';
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     const passwordHash = await hashPassword(body.password);
     const [user] = await db.insert(users).values({
       name: body.name, email, phone, passwordHash, passwordUpdatedAt: now, lastLoginAt: now,
-      role: isSuperAdmin(email, phone) ? 'super_admin' : 'customer',
+      role: 'customer', // never admin here: the email is not verified yet (admin rights come after OTP / Google verification)
     }).returning();
     if (user.disabledAt) throw new AuthError('ACCOUNT_DISABLED', 403);
     const token = await createSession(user.id, req.headers.get('user-agent'));

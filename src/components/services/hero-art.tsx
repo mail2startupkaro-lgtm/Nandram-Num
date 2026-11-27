@@ -3,7 +3,7 @@
  * Styles and keyframes: `.ha` block in app/cosmic.css. Animations stop for visitors who prefer reduced motion.
  * Numbers shown are real calculations for the fictional sample client (DOB 14-08-1992 → Moolank 5, Bhagyank 7).
  */
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactElement } from 'react';
 import type { HeroIcon } from '@/lib/service-hero';
 
 const d = (s: number) => ({ '--d': `${s}s` }) as CSSProperties;
@@ -285,7 +285,7 @@ function SquareArt() {
   );
 }
 
-const ARTS: Record<HeroIcon, () => JSX.Element> = {
+const ARTS: Record<HeroIcon, () => ReactElement> = {
   matrix: MatrixArt, square: SquareArt,
   label: WhiteLabelArt,
   pen: SignatureArt, phone: PhoneArt, grid: LoShuArt, type: NameArt, user: PersonalArt, baby: BabyArt,

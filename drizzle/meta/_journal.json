@@ -99,6 +99,13 @@
       "when": 1795838400000,
       "tag": "0013_affiliates",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1795881600000,
+      "tag": "0014_security_indexes",
+      "breakpoints": true
     }
   ]
 }

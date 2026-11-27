@@ -6,7 +6,7 @@
  */
 import * as React from 'react';
 import Link from 'next/link';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import { Check, ClipboardCheck, Clock, Download, Feather, Loader2, Mail, PauseCircle, ShieldCheck, Sparkles } from 'lucide-react';
 import { useApp } from '@/components/layout/providers';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -101,14 +101,14 @@ export function DeliveryTracker({ delivery, auto }: { delivery: Extract<Delivery
           const n = i + 1; const done = n < stage || stage === 4; const current = n === stage && stage !== 4;
           const Icon = STEP_ICON[i];
           return (
-            <motion.li key={name} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
+            <m.li key={name} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.08 }}
               className={cn('relative flex gap-3 rounded-xl border p-3 sm:flex-col sm:items-center sm:text-center', done ? 'border-success/40 bg-success/10' : current ? 'border-gold bg-gold/10 shadow-[0_0_24px_-6px_rgba(212,175,55,.55)]' : 'border-border/60 opacity-60')}>
               <span className="relative flex h-10 w-10 shrink-0 items-center justify-center">
                 {current && <span className="absolute inset-0 animate-ping rounded-full bg-gold/30" />}
                 <span className={cn('relative flex h-10 w-10 items-center justify-center rounded-full border-2', done ? 'border-success bg-success text-background' : current ? 'border-gold bg-background text-gold' : 'border-border bg-background text-muted-foreground')}>
                   <AnimatePresence mode="wait" initial={false}>
-                    {done ? <motion.span key="d" initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 400, damping: 18 }}><Check className="h-5 w-5" /></motion.span>
-                      : <motion.span key="i" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>{current && n !== 1 ? <Icon className={cn('h-5 w-5', n === 2 && 'animate-pulse')} /> : <Icon className="h-5 w-5" />}</motion.span>}
+                    {done ? <m.span key="d" initial={{ scale: 0, rotate: -90 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 400, damping: 18 }}><Check className="h-5 w-5" /></m.span>
+                      : <m.span key="i" initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>{current && n !== 1 ? <Icon className={cn('h-5 w-5', n === 2 && 'animate-pulse')} /> : <Icon className="h-5 w-5" />}</m.span>}
                   </AnimatePresence>
                 </span>
               </span>
@@ -116,16 +116,16 @@ export function DeliveryTracker({ delivery, auto }: { delivery: Extract<Delivery
                 <p className="text-sm font-semibold leading-snug">{name}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">{text}</p>
                 {current && n === 2 && (
-                  <AnimatePresence mode="wait"><motion.p key={tick} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="mt-1 flex items-center gap-1 text-xs text-gold sm:justify-center"><Loader2 className="h-3 w-3 animate-spin" />{t.working[tick % t.working.length]}</motion.p></AnimatePresence>
+                  <AnimatePresence mode="wait"><m.p key={tick} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} className="mt-1 flex items-center gap-1 text-xs text-gold sm:justify-center"><Loader2 className="h-3 w-3 animate-spin" />{t.working[tick % t.working.length]}</m.p></AnimatePresence>
                 )}
               </div>
-            </motion.li>
+            </m.li>
           );
         })}
       </ol>
       <div className="relative h-2.5 overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-        <motion.div className={cn('absolute inset-y-0 left-0 rounded-full', preparing ? 'bg-gradient-to-r from-amber-600 via-gold to-amber-300' : 'bg-success')} initial={false} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, ease: 'easeOut' }} />
-        {preparing && <motion.div className="absolute inset-y-0 w-1/4 bg-gradient-to-r from-transparent via-white/40 to-transparent" animate={{ x: ['-100%', '450%'] }} transition={{ repeat: Infinity, duration: 2.2, ease: 'linear' }} />}
+        <m.div className={cn('absolute inset-y-0 left-0 rounded-full', preparing ? 'bg-gradient-to-r from-amber-600 via-gold to-amber-300' : 'bg-success')} initial={false} animate={{ width: `${pct}%` }} transition={{ duration: 0.8, ease: 'easeOut' }} />
+        {preparing && <m.div className="absolute inset-y-0 w-1/4 bg-gradient-to-r from-transparent via-white/40 to-transparent" animate={{ x: ['-100%', '450%'] }} transition={{ repeat: Infinity, duration: 2.2, ease: 'linear' }} />}
       </div>
       {preparing && (
         <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
@@ -152,7 +152,7 @@ function OrderCard({ o, onReload }: { o: MyServiceOrder; onReload: () => void })
     finally { setBusyLang(null); }
   }
   return (
-    <motion.article layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={cn('space-y-4 rounded-xl border bg-background/60 p-4 sm:p-5', ready ? 'border-success/50' : 'border-gold/40')}>
+    <m.article layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={cn('space-y-4 rounded-xl border bg-background/60 p-4 sm:p-5', ready ? 'border-success/50' : 'border-gold/40')}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="font-serif text-lg font-semibold leading-tight">{name}</p>
@@ -175,7 +175,7 @@ function OrderCard({ o, onReload }: { o: MyServiceOrder; onReload: () => void })
       {o.needsDetails && d.state !== 'cancelled' && <p className="rounded-md bg-warning/10 p-2 text-xs text-warning">{t.details}</p>}
       {ready && d.state === 'ready' && (d.download ? (
         <div className="space-y-1.5">
-          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300 }} className="flex flex-wrap gap-2">
+          <m.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300 }} className="flex flex-wrap gap-2">
             {o.auto ? (
               <>
                 <Button variant="gold" size="lg" disabled={busyLang !== null} onClick={() => get('en')} className="shadow-lg shadow-gold/30">
@@ -192,12 +192,12 @@ function OrderCard({ o, onReload }: { o: MyServiceOrder; onReload: () => void })
                 {busyLang !== null ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}{busyLang !== null ? t.downloading : t.download}
               </Button>
             )}
-          </motion.div>
+          </m.div>
           {busyLang !== null && <p className="text-xs text-muted-foreground">{t.firstTime}</p>}
         </div>
       ) : <p className="flex items-start gap-1.5 text-sm text-muted-foreground"><Mail className="mt-0.5 h-4 w-4 shrink-0 text-gold" />{t.emailed}</p>)}
       {err && <p className="text-sm text-danger" role="alert">{err}</p>}
-    </motion.article>
+    </m.article>
   );
 }
 

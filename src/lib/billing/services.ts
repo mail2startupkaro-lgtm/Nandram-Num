@@ -134,9 +134,17 @@ export async function ensureServices(db: Db = getDb()) {
     const rows = DEFAULT_SERVICES.filter((x) => SEED_BATCHES[b].includes(x.code));
     if (rows.length) await db.insert(services).values(rows).onConflictDoNothing();
   }
-  // Sync delivery promise across existing seeded rows
+  // Keep the built-in text and intake fields in step with the code – but only write rows that actually differ
+  // (this runs on every cold start; 13 blind UPDATEs to a database in another region slowed the first page load).
+  const current = await db.select({ code: services.code, en: services.en, hi: services.hi, intake: services.intake }).from(services);
+  // jsonb does not keep key order, so compare with sorted keys.
+  const stable = (v: unknown): string => (Array.isArray(v) ? `[${v.map(stable).join(',')}]` : v && typeof v === 'object' ? `{${Object.keys(v).sort().map((k) => `${JSON.stringify(k)}:${stable((v as Record<string, unknown>)[k])}`).join(',')}}` : JSON.stringify(v ?? null));
+  const same = (a: unknown, b: unknown) => stable(a) === stable(b);
   for (const s of DEFAULT_SERVICES) {
-    await db.update(services).set({ en: s.en, hi: s.hi, intake: s.intake, updatedAt: new Date() }).where(eq(services.code, s.code));
+    const row = current.find((r) => r.code === s.code);
+    if (row && !(same(row.en, s.en) && same(row.hi, s.hi) && same(row.intake, s.intake))) {
+      await db.update(services).set({ en: s.en, hi: s.hi, intake: s.intake, updatedAt: new Date() }).where(eq(services.code, s.code));
+    }
   }
   if (done !== SEED_BATCHES.length) await db.insert(appSettings).values({ key: 'servicesSeed', value: SEED_BATCHES.length }).onConflictDoUpdate({ target: appSettings.key, set: { value: SEED_BATCHES.length, updatedAt: new Date() } });
   seeded = true;

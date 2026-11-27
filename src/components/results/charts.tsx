@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { Bar, BarChart, Cell, PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
 const GOLD = 'hsl(var(--gold))';
@@ -52,7 +52,7 @@ export function Gauge({ value, label, sub }: { value: number; label: string; sub
     <div className="flex flex-col items-center">
       <svg viewBox="0 0 180 105" className="w-44" role="img" aria-label={`${label}: ${value} / 100`}>
         <path d="M20 95 A70 70 0 0 1 160 95" fill="none" stroke="hsl(var(--muted))" strokeWidth="14" strokeLinecap="round" />
-        <motion.path d="M20 95 A70 70 0 0 1 160 95" fill="none" stroke={colour} strokeWidth="14" strokeLinecap="round"
+        <m.path d="M20 95 A70 70 0 0 1 160 95" fill="none" stroke={colour} strokeWidth="14" strokeLinecap="round"
           strokeDasharray={c} initial={{ strokeDashoffset: c }} animate={{ strokeDashoffset: c * (1 - value / 100) }} transition={{ duration: 1.1, ease: 'easeOut' }} />
         <text x="90" y="85" textAnchor="middle" className="fill-foreground font-serif" fontSize="30" fontWeight="700">{value}</text>
       </svg>
@@ -69,7 +69,7 @@ export function Ring({ value, label }: { value: number; label: string }) {
     <svg viewBox="0 0 130 130" className="w-36" role="img" aria-label={`${label}: ${value}%`}>
       <defs><linearGradient id="ringGrad" x1="0" x2="1"><stop offset="0" stopColor={MAROON} /><stop offset="1" stopColor={GOLD} /></linearGradient></defs>
       <circle cx="65" cy="65" r={r} fill="none" stroke="hsl(var(--muted))" strokeWidth="12" />
-      <motion.circle cx="65" cy="65" r={r} fill="none" stroke="url(#ringGrad)" strokeWidth="12" strokeLinecap="round" transform="rotate(-90 65 65)"
+      <m.circle cx="65" cy="65" r={r} fill="none" stroke="url(#ringGrad)" strokeWidth="12" strokeLinecap="round" transform="rotate(-90 65 65)"
         strokeDasharray={c} initial={{ strokeDashoffset: c }} animate={{ strokeDashoffset: c * (1 - value / 100) }} transition={{ duration: 1.2 }} />
       <text x="65" y="70" textAnchor="middle" className="fill-foreground font-serif" fontSize="28" fontWeight="700">{value}%</text>
       <text x="65" y="90" textAnchor="middle" className="fill-muted-foreground" fontSize="10">{label}</text>

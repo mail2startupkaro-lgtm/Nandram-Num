@@ -31,7 +31,7 @@ export class PaymentRequiredError extends Error {}
 
 type Ctx<P> = { params: P };
 /** Next 15+ passes route params as a Promise; handlers keep receiving a plain object. */
-type RawCtx<P> = { params: P | Promise<P> };
+type RawCtx<P> = { params: Promise<P> };
 const resolveCtx = async <P,>(ctx: RawCtx<P> | undefined): Promise<Ctx<P>> => ({ params: (await ctx?.params) as P });
 
 /** Blocks cross-site state-changing requests (CSRF) – the browser always sends Origin on POST/PUT/PATCH/DELETE. */

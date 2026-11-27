@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -18,7 +18,7 @@ export function Badge({ className, tone = 'default', ...p }: React.HTMLAttribute
 export function Progress({ value, className }: { value: number; className?: string }) {
   return (
     <div className={cn('h-2 w-full overflow-hidden rounded-full bg-muted', className)} role="progressbar" aria-valuenow={Math.round(value)} aria-valuemin={0} aria-valuemax={100}>
-      <motion.div className="h-full rounded-full bg-gradient-to-r from-maroon to-gold" initial={false} animate={{ width: `${value}%` }} transition={{ type: 'spring', stiffness: 120, damping: 20 }} />
+      <m.div className="h-full rounded-full bg-gradient-to-r from-maroon to-gold" initial={false} animate={{ width: `${value}%` }} transition={{ type: 'spring', stiffness: 120, damping: 20 }} />
     </div>
   );
 }
@@ -29,7 +29,7 @@ export function Tabs({ tabs, value, onChange, className }: { tabs: { value: stri
       {tabs.map((t) => (
         <button key={t.value} role="tab" aria-selected={value === t.value} onClick={() => onChange(t.value)}
           className={cn('relative rounded px-3 py-1.5 text-sm transition-colors', value === t.value ? 'text-foreground' : 'text-muted-foreground hover:text-foreground')}>
-          {value === t.value && <motion.span layoutId={`tab-${tabs.map((x) => x.value).join()}`} className="absolute inset-0 rounded bg-card shadow" />}
+          {value === t.value && <m.span layoutId={`tab-${tabs.map((x) => x.value).join()}`} className="absolute inset-0 rounded bg-card shadow" />}
           <span className="relative">{t.label}</span>
         </button>
       ))}
@@ -53,9 +53,9 @@ export function Section({ id, title, subtitle, icon, defaultOpen = true, childre
       </button>
       <AnimatePresence initial={false}>
         {open && (
-          <motion.div id={`${id}-body`} initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
+          <m.div id={`${id}-body`} initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden">
             <div className="px-5 pb-5">{children}</div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </section>

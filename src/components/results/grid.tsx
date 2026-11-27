@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useApp } from '@/components/layout/providers';
 import { tr } from '@/lib/i18n/hi-terms';
@@ -25,7 +25,7 @@ export function NumberGrid({ cells, size = 'md', highlight = [], selected, onSel
     <div role="grid" aria-label={label} className={cn('grid grid-cols-3 gap-1.5', size === 'sm' ? 'w-[132px]' : 'w-full max-w-[340px]')}>
       {sorted.map((c, i) => {
         const hl = highlight.includes(c.number);
-        const Comp = onSelect ? motion.button : motion.div;
+        const Comp = onSelect ? m.button : m.div;
         return (
           <Comp key={c.number} role="gridcell" type={onSelect ? 'button' : undefined}
             onClick={onSelect ? () => onSelect(c.number) : undefined}

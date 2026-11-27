@@ -321,7 +321,7 @@ export function HomeClient() {
             const Icon = ICONS[i];
             return (
               <Reveal key={title} delay={0.08 * (i % 3)}>
-                <Link href={i === 3 ? '/business-compatibility-report' : i === 5 ? '/pricing' : '/reading'} className="cz-card cz-mod h-full" {...tilt}>
+                <Link href={i === 3 ? '/business-compatibility-numerology' : i === 5 ? '/pricing' : '/reading'} className="cz-card cz-mod h-full" {...tilt}>
                   <span className="cz-num">{i + 1}</span>
                   <span className="cz-ic"><Icon className="h-6 w-6" /></span>
                   <h3 className="font-cinzel text-xl font-bold">{title}</h3>

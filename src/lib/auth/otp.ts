@@ -67,6 +67,13 @@ export const superAdminMobiles = () => (process.env.SUPER_ADMIN_MOBILES ?? '').s
   .flatMap((m) => { try { return [`+91${normalizeIndianMobile(m)}`]; } catch { return []; } });
 export const isSuperAdmin = (email?: string | null, phone?: string | null) =>
   (!!email && superAdmins().includes(email.toLowerCase())) || (!!phone && superAdminMobiles().includes(phone));
+/**
+ * Super Admin only when the matching email / mobile has been PROVED (OTP, Google or an earlier verification).
+ * Sign-up with a password does not verify the email, so an unverified address in SUPER_ADMIN_EMAILS must never
+ * make an account admin – otherwise anyone could register the owner's address first and take over the admin panel.
+ */
+export const isVerifiedSuperAdmin = (u: Pick<User, 'email' | 'phone' | 'emailVerifiedAt' | 'phoneVerifiedAt' | 'role'>) =>
+  u.role === 'super_admin' || (!!u.emailVerifiedAt && isSuperAdmin(u.email, null)) || (!!u.phoneVerifiedAt && isSuperAdmin(null, u.phone));
 /** "a@b.com" → email, anything else → Indian mobile. */
 export const detectChannel = (raw: string): 'email' | 'sms' => (raw.includes('@') ? 'email' : 'sms');
 

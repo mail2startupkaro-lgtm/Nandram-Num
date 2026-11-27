@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { analyseDob, analyseNameSystem, normalizeIndianMobile, reduce, digitsOf, todayIST } from '@/lib/numerology';
 import { useApp } from '@/components/layout/providers';
@@ -39,7 +39,7 @@ export function LivePreview({ s }: { s: WizardState }) {
           <div key={it.k} className="rounded-md border border-gold/20 bg-background/40 p-2 text-center">
             <p className="text-[11px] text-muted-foreground">{it.k}</p>
             <AnimatePresence mode="popLayout">
-              <motion.p key={String(it.v)} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="num-badge text-2xl font-bold text-gold">{it.v ?? '–'}</motion.p>
+              <m.p key={String(it.v)} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="num-badge text-2xl font-bold text-gold">{it.v ?? '–'}</m.p>
             </AnimatePresence>
             <p className="h-4 text-[10px] text-muted-foreground">{it.sub}</p>
           </div>

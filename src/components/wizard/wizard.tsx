@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import { ArrowLeft, ArrowRight, FileJson, Lock, Pencil, Sparkles, Wand2 } from 'lucide-react';
 import { useApp } from '@/components/layout/providers';
 import { Button } from '@/components/ui/button';
@@ -191,9 +191,9 @@ export function Wizard({ value, onChange, onSubmit, onImport, submitting, server
         <div className="lg:order-2"><div className="lg:sticky lg:top-24"><LivePreview s={s} /></div></div>
         <div className="glass overflow-hidden rounded-lg p-5 sm:p-7 lg:order-1">
           <AnimatePresence mode="wait" custom={dir}>
-            <motion.div key={step} custom={dir} initial={{ opacity: 0, x: 30 * dir }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 * dir }} transition={{ duration: 0.22 }}>
+            <m.div key={step} custom={dir} initial={{ opacity: 0, x: 30 * dir }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 * dir }} transition={{ duration: 0.22 }}>
               {steps[step]}
-            </motion.div>
+            </m.div>
           </AnimatePresence>
           {serverError && <p className="mt-4 rounded-md bg-danger/10 p-3 text-sm text-danger" role="alert">{serverError}</p>}
           <div className="mt-8 flex justify-between gap-3">
