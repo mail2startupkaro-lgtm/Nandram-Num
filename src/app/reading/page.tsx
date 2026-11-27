@@ -174,8 +174,7 @@ function ReadingRouter() {
       go(forId ? `/reading?profile=${encodeURIComponent(forId)}` : '/reading?type=free');
       return;
     }
-    const page = servicePageByCode(code);
-    go(page ? `/${page.slug}${forId ? `?for=${encodeURIComponent(forId)}` : ''}` : `/reading?type=${encodeURIComponent(code)}${keep}`);
+    go(`/reading?type=${encodeURIComponent(code)}${keep}`);
   }} />;
 }
 

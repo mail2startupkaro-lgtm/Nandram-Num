@@ -28,8 +28,8 @@ export function priceOf(s: PublicService, usd: boolean) {
 /** Short "we will ask for" list per reading. */
 function asks(s: PublicService, lang: 'en' | 'hi') {
   const short: Record<string, string> = lang === 'hi'
-    ? { clientName: 'नाम', dob: 'जन्म तिथि', gender: 'लिंग', tob: 'जन्म समय', pob: 'जन्म स्थान', mobile: 'मोबाइल', currentName: s.code === 'SVC_SIGNATURE' ? 'हस्ताक्षर-नाम' : s.code === 'SVC_BUSINESS_NAME' ? 'व्यवसाय नाम' : 'वर्तमान नाम', parents: 'माता-पिता', letters: 'अक्षर', partnerName: 'जीवनसाथी', businesses: 'व्यवसाय', businessName: 'व्यवसाय नाम', launchDate: 'शुरुआत तिथि', partners: 'साझेदार', brand: 'ब्रांड', questions: 'प्रश्न' }
-    : { clientName: 'Name', dob: 'Date of birth', gender: 'Gender', tob: 'Birth time', pob: 'Birth place', mobile: 'Mobile', currentName: s.code === 'SVC_SIGNATURE' ? 'Signed name' : s.code === 'SVC_BUSINESS_NAME' ? 'Business names' : 'Current name', parents: 'Parents', letters: 'Letters', partnerName: 'Partner', businesses: 'Businesses', businessName: 'Business names', launchDate: 'Opening date', partners: 'Partners', brand: 'Brand', questions: 'Questions' };
+    ? { clientName: 'नाम', dob: 'जन्म तिथि', gender: 'लिंग', maritalStatus: 'विवाह', tob: 'जन्म समय', pob: 'जन्म स्थान', mobile: 'मोबाइल', currentName: s.code === 'SVC_SIGNATURE' ? 'हस्ताक्षर-नाम' : s.code === 'SVC_BUSINESS_NAME' ? 'व्यवसाय नाम' : 'वर्तमान नाम', parents: 'माता-पिता', letters: 'अक्षर', partnerName: 'जीवनसाथी', businesses: 'व्यवसाय', businessName: 'व्यवसाय नाम', launchDate: 'शुरुआत तिथि', partners: 'साझेदार', brand: 'ब्रांड', challenges: 'समस्याएँ व चुनौतियाँ', questions: 'प्रश्न' }
+    : { clientName: 'Name', dob: 'Date of birth', gender: 'Gender', maritalStatus: 'Marriage', tob: 'Birth time', pob: 'Birth place', mobile: 'Mobile', currentName: s.code === 'SVC_SIGNATURE' ? 'Signed name' : s.code === 'SVC_BUSINESS_NAME' ? 'Business names' : 'Current name', parents: 'Parents', letters: 'Letters', partnerName: 'Partner', businesses: 'Businesses', businessName: 'Business names', launchDate: 'Opening date', partners: 'Partners', brand: 'Brand', challenges: 'Problems & Challenges', questions: 'Questions' };
   return s.intake.filter((k) => k !== 'partnerDob').map((k) => short[k] ?? k);
 }
 
@@ -64,11 +64,9 @@ export function ReadingPicker({ onPick }: { onPick: (code: string) => void }) {
           const Icon = SERVICE_ICON[s.code] ?? Sparkles;
           const p = priceOf(s, usd);
           const text = s[lang];
-          const page = servicePageByCode(s.code);
-          const href = page ? `/${page.slug}` : `/services#${s.code.toLowerCase()}`;
           return (
             <article key={s.code} className="glass group relative flex flex-col rounded-xl border border-gold/30 p-5 transition hover:border-gold/70 hover:shadow-lg">
-              <Link href={href} className="absolute inset-0 z-0 rounded-xl focus:outline-none" aria-label={text.name} tabIndex={-1} />
+              <button type="button" onClick={() => onPick(s.code)} className="absolute inset-0 z-0 rounded-xl focus:outline-none" aria-label={text.name} tabIndex={-1} />
               {p?.off ? <span className="pointer-events-none absolute right-4 top-4 z-10 rounded-full bg-gold px-2.5 py-0.5 text-xs font-bold text-black">{p.off}% {t.off}</span> : null}
               <Icon className="relative z-10 h-8 w-8 text-gold transition-transform group-hover:scale-105" aria-hidden />
               <h2 className="relative z-10 mt-3 pr-14 font-serif text-lg font-semibold leading-snug transition-colors group-hover:text-gold">{text.name}</h2>
@@ -77,7 +75,7 @@ export function ReadingPicker({ onPick }: { onPick: (code: string) => void }) {
               <p className="relative z-10 mt-1 text-xs text-muted-foreground"><b className="text-foreground/80">{t.delivery}:</b> {text.delivery}</p>
               <div className="relative z-10 mt-3 flex items-baseline gap-2">{p ? <><span className="font-serif text-2xl font-bold text-gold">{p.fee}</span>{p.mrp && <s className="text-sm text-muted-foreground">{p.mrp}</s>}</> : <span className="text-sm text-muted-foreground">{t.priceSoon}</span>}</div>
               {s.payable
-                ? <Link href={href} className={buttonVariants({ variant: 'gold', className: 'relative z-10 mt-4 w-full' })}><Sparkles className="h-4 w-4" />{t.choose}</Link>
+                ? <button type="button" onClick={() => onPick(s.code)} className={buttonVariants({ variant: 'gold', className: 'relative z-10 mt-4 w-full' })}><Sparkles className="h-4 w-4" />{t.choose}</button>
                 : <Link href="/contact?topic=service" className={buttonVariants({ variant: 'outline', className: 'relative z-10 mt-4 w-full' })}><MessageCircle className="h-4 w-4" />{t.enquire}</Link>}
             </article>
           );

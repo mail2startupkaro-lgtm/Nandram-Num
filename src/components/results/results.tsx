@@ -358,21 +358,25 @@ function DobSection({ r, isFree = false }: { r: R; isFree?: boolean }) {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-3 md:grid-cols-2">
-        <Callout kind="strength" title={t.r.strengths}>{strengthsText.length ? strengthsText.join(' · ') : '–'}</Callout>
-        <Callout kind="watch" title={t.r.watch}>{watchText.length ? watchText.join(' · ') : '–'}</Callout>
-      </div>
-
-      <div className="mt-6">
-        <p className="mb-2 text-sm font-semibold">{t.r.relations}</p>
-        <div className="flex flex-wrap gap-1.5">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
-            const k = d.numberRelations.combined.friendly.includes(n) ? 'good' : d.numberRelations.combined.enemy.includes(n) ? 'bad' : 'default';
-            return <Badge key={n} tone={k} className="num-badge px-3 text-sm">{n}</Badge>;
-          })}
-          <span className="ml-2 self-center text-xs text-muted-foreground"><span className="text-success">■</span> {t.r.friendly} <span className="text-danger">■</span> {t.r.enemy}</span>
+      {!isFree && (
+        <div className="mt-6 grid gap-3 md:grid-cols-2">
+          <Callout kind="strength" title={t.r.strengths}>{strengthsText.length ? strengthsText.join(' · ') : '–'}</Callout>
+          <Callout kind="watch" title={t.r.watch}>{watchText.length ? watchText.join(' · ') : '–'}</Callout>
         </div>
-      </div>
+      )}
+
+      {!isFree && (
+        <div className="mt-6">
+          <p className="mb-2 text-sm font-semibold">{t.r.relations}</p>
+          <div className="flex flex-wrap gap-1.5">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => {
+              const k = d.numberRelations.combined.friendly.includes(n) ? 'good' : d.numberRelations.combined.enemy.includes(n) ? 'bad' : 'default';
+              return <Badge key={n} tone={k} className="num-badge px-3 text-sm">{n}</Badge>;
+            })}
+            <span className="ml-2 self-center text-xs text-muted-foreground"><span className="text-success">■</span> {t.r.friendly} <span className="text-danger">■</span> {t.r.enemy}</span>
+          </div>
+        </div>
+      )}
 
       {isFree ? (
         <div className="mt-6 rounded-xl border border-gold/40 bg-gold/5 p-6 text-center">
@@ -475,6 +479,37 @@ function RemediesSection({ rm, isFree = false }: { rm: R['remedies']; isFree?: b
   const { t, lang } = useApp();
   const hi = lang === 'hi';
   const T = (x: string | null | undefined) => tr(lang, x);
+
+  if (isFree) {
+    return (
+      <Section id="remedies" title={t.r.remedies} subtitle={hi ? 'व्यक्तिगत उपाय व वैदिक मार्गदर्शन (Locked)' : 'Personal Remedies & Guidance (Locked)'} icon={<Flower2 className="h-5 w-5" />}>
+        <div className="rounded-xl border border-gold/40 bg-gold/5 p-6 sm:p-8 text-center flex flex-col items-center justify-center">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gold/20 text-gold">
+            <Lock className="h-6 w-6" />
+          </div>
+          <h4 className="mt-3 font-serif text-xl font-bold sm:text-2xl text-gold">
+            {hi ? 'व्यक्तिगत रत्न, रुद्राक्ष, सिद्ध मंत्र और अचूक उपाय' : 'Personal Gemstones, Rudraksha, Mantras & Remedies'}
+          </h4>
+          <p className="mx-auto mt-2 max-w-lg text-sm text-muted-foreground">
+            {hi
+              ? 'सटीक रत्ती, धातु, उंगली, धारण विधि, रुद्राक्ष संयोजन, सिद्ध दैनिक मंत्र, लो शू ग्रिड संतुलन उपाय, शुभ रंग, दिन, दिशाएं व 90-दिन की कार्य-योजना संपूर्ण व्यक्तिगत रिपोर्ट में उपलब्ध हैं।'
+              : 'Exact gemstone weight, metal, finger, energization ritual, Rudraksha combination, Vedic mantra, missing grid remedies, lucky colors, days, directions and 90-day action plan are unlocked in the full personal report.'}
+          </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2 text-xs">
+            {[(hi ? 'शुभ अंक, दिन व रंग' : 'Lucky Numbers, Days & Colors'), (hi ? 'रत्न व रुद्राक्ष विधि' : 'Gemstone & Rudraksha Guide'), (hi ? 'दैनिक सिद्ध मंत्र' : 'Vedic Mantra & Daan'), (hi ? 'लो शू ग्रिड उपाय' : 'Lo Shu Grid Remedies'), (hi ? 'वास्तु व दिशाएं' : 'Vastu & Directions')].map((ch) => (
+              <span key={ch} className="rounded-full border border-border/80 bg-background/60 px-3 py-1 font-medium text-foreground/80">🔒 {ch}</span>
+            ))}
+          </div>
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
+            <Link href="/reading?type=SVC_PERSONAL_REPORT" className={cn(buttonVariants({ variant: 'gold', size: 'sm' }), 'px-5 py-2')}>
+              <Sparkles className="h-4 w-4" /> {hi ? 'संपूर्ण उपाय रिपोर्ट प्राप्त करें — ₹499' : 'Unlock Complete Remedies — ₹499'}
+            </Link>
+          </div>
+        </div>
+      </Section>
+    );
+  }
+
   const rows: [string, string][] = [
     [t.r.numbers, rm.lucky.numbers.join(', ')],
     [t.r.dates, rm.lucky.dates.join(', ')],
@@ -491,41 +526,26 @@ function RemediesSection({ rm, isFree = false }: { rm: R['remedies']; isFree?: b
           <dl className="grid grid-cols-[90px_1fr] gap-y-1.5 text-sm">{rows.map(([k, v]) => <React.Fragment key={k}><dt className="text-muted-foreground">{k}</dt><dd>{v}</dd></React.Fragment>)}</dl>
         </div>
 
-        {isFree ? (
-          <div className="rounded-md border border-gold/40 bg-gold/5 p-4 text-center lg:col-span-2 flex flex-col items-center justify-center">
-            <Lock className="h-6 w-6 text-gold" />
-            <p className="mt-2 font-serif text-lg font-bold">{hi ? 'व्यक्तिगत रत्न, रुद्राक्ष व वैदिक मंत्र उपाय' : 'Personalized Gemstone, Rudraksha & Vedic Mantra Remedies'}</p>
-            <p className="mt-1 max-w-md text-xs text-muted-foreground">
-              {hi ? 'सटीक रत्ती, धातु, उंगली, धारण विधि, रुद्राक्ष संयोजन, सिद्ध दैनिक मंत्र और लो शू ग्रिड संतुलन उपाय संपूर्ण व्यक्तिगत रिपोर्ट में दिए जाते हैं।' : 'Exact gemstone weight, metal, finger, energization ritual, Rudraksha combination, Vedic mantra and missing grid remedies are unlocked in the complete report.'}
-            </p>
-            <Link href="/reading?type=SVC_PERSONAL_REPORT" className={cn(buttonVariants({ variant: 'gold', size: 'sm' }), 'mt-4')}>
-              <Sparkles className="h-3.5 w-3.5" /> {hi ? 'संपूर्ण उपाय रिपोर्ट प्राप्त करें' : 'Unlock Complete Remedies'}
-            </Link>
-          </div>
-        ) : (
-          <>
-            <div className="rounded-md border border-gold/30 p-4">
-              <p className="mb-2 flex items-center gap-2 font-semibold"><Gem className="h-4 w-4 text-gold" />{t.r.gem}</p>
-              {rm.gemstones.map((g) => (
-                <div key={g.for} className="mb-2 text-sm">
-                  <p><b>{hi ? T(g.hindi) : g.name}</b>{hi ? '' : ` (${g.hindi})`} · {T(g.for)}</p>
-                  <p className="text-xs text-muted-foreground">{T(g.metal)} · {T(g.finger)} · {hi ? 'रुद्राक्ष' : 'Rudraksha'} {T(g.rudraksha)} · {hi ? 'विकल्प' : 'alt'}: {g.alternatives.map(T).join(', ')}</p>
-                </div>
-              ))}
-              <p className="text-xs text-warning">{T(rm.gemstones[0].caution)}</p>
+        <div className="rounded-md border border-gold/30 p-4">
+          <p className="mb-2 flex items-center gap-2 font-semibold"><Gem className="h-4 w-4 text-gold" />{t.r.gem}</p>
+          {rm.gemstones.map((g) => (
+            <div key={g.for} className="mb-2 text-sm">
+              <p><b>{hi ? T(g.hindi) : g.name}</b>{hi ? '' : ` (${g.hindi})`} · {T(g.for)}</p>
+              <p className="text-xs text-muted-foreground">{T(g.metal)} · {T(g.finger)} · {hi ? 'रुद्राक्ष' : 'Rudraksha'} {T(g.rudraksha)} · {hi ? 'विकल्प' : 'alt'}: {g.alternatives.map(T).join(', ')}</p>
             </div>
-            <div className="rounded-md border border-gold/30 p-4 text-sm">
-              <p className="mb-2 font-semibold">{t.r.mantra}</p>
-              <p className="font-serif text-base italic">“{T(rm.mantra.mantra)}”</p>
-              <p className="mt-1 text-muted-foreground">{rm.mantra.dailyCount}× · {T(rm.mantra.day)} · {T(rm.mantra.deity)}</p>
-              <p className="mt-3"><b>{t.r.daan}:</b> {rm.daan.map(T).join(', ')}</p>
-              <p><b>{t.r.fasting}:</b> {T(rm.fastingDay)}</p>
-            </div>
-          </>
-        )}
+          ))}
+          <p className="text-xs text-warning">{T(rm.gemstones[0].caution)}</p>
+        </div>
+        <div className="rounded-md border border-gold/30 p-4 text-sm">
+          <p className="mb-2 font-semibold">{t.r.mantra}</p>
+          <p className="font-serif text-base italic">“{T(rm.mantra.mantra)}”</p>
+          <p className="mt-1 text-muted-foreground">{rm.mantra.dailyCount}× · {T(rm.mantra.day)} · {T(rm.mantra.deity)}</p>
+          <p className="mt-3"><b>{t.r.daan}:</b> {rm.daan.map(T).join(', ')}</p>
+          <p><b>{t.r.fasting}:</b> {T(rm.fastingDay)}</p>
+        </div>
       </div>
 
-      {!isFree && rm.loShuRemedies.length > 0 && (
+      {rm.loShuRemedies.length > 0 && (
         <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {rm.loShuRemedies.map((x) => (
             <Callout key={x.number} kind="remedy" title={`${t.r.missing} ${x.number} · ${T(x.element)} · ${T(x.direction)}`}>
@@ -535,30 +555,28 @@ function RemediesSection({ rm, isFree = false }: { rm: R['remedies']; isFree?: b
         </div>
       )}
 
-      {!isFree && (
-        <div className="mt-4 grid gap-4 md:grid-cols-2">
-          <div className="text-sm">
-            <p className="mb-1 font-semibold">{t.r.habits}</p>
-            <ul className="list-disc space-y-1 pl-5">{rm.dailyHabits.map((h) => <li key={h}>{T(h)}</li>)}</ul>
-            <p className="mb-1 mt-3 font-semibold">{t.r.signature}</p>
-            <ul className="list-disc space-y-1 pl-5">{rm.signature.map((h) => <li key={h}>{T(h)}</li>)}</ul>
-          </div>
-          <div className="text-sm">
-            <p className="mb-1 font-semibold">{t.r.favYears}</p>
-            <table className="w-full">
-              <tbody>
-                {Object.entries(rm.favourableYears).map(([ev, ys]) => (
-                  <tr key={ev} className="border-b border-border/50">
-                    <td className="py-1.5 pr-2 text-muted-foreground">{t.r.events[ev as keyof typeof t.r.events] ?? ev}</td>
-                    <td className="py-1.5">{ys.map((y) => y.year).join(', ') || '–'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <p className="mt-3"><b>{t.r.career}:</b> {rm.career.suitableFields.map(T).join(', ')}</p>
-          </div>
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        <div className="text-sm">
+          <p className="mb-1 font-semibold">{t.r.habits}</p>
+          <ul className="list-disc space-y-1 pl-5">{rm.dailyHabits.map((h) => <li key={h}>{T(h)}</li>)}</ul>
+          <p className="mb-1 mt-3 font-semibold">{t.r.signature}</p>
+          <ul className="list-disc space-y-1 pl-5">{rm.signature.map((h) => <li key={h}>{T(h)}</li>)}</ul>
         </div>
-      )}
+        <div className="text-sm">
+          <p className="mb-1 font-semibold">{t.r.favYears}</p>
+          <table className="w-full">
+            <tbody>
+              {Object.entries(rm.favourableYears).map(([ev, ys]) => (
+                <tr key={ev} className="border-b border-border/50">
+                  <td className="py-1.5 pr-2 text-muted-foreground">{t.r.events[ev as keyof typeof t.r.events] ?? ev}</td>
+                  <td className="py-1.5">{ys.map((y) => y.year).join(', ') || '–'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-3"><b>{t.r.career}:</b> {rm.career.suitableFields.map(T).join(', ')}</p>
+        </div>
+      </div>
       <p className="mt-4 text-xs text-muted-foreground">{T(rm.disclaimer)}</p>
     </Section>
   );

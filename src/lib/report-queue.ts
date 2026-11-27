@@ -14,9 +14,9 @@ import type { Account } from '@/lib/billing/entitlements';
 
 import { WORK_END_H, WORK_START_H } from './report-queue-hours';
 export { WORK_END_H, WORK_START_H };
-export const REPORT_TURNAROUND_MIN = 115;
+export const REPORT_TURNAROUND_MIN = 180;
 /** Minutes of working time at which each stage starts. */
-export const STAGE_STARTS = [0, 25, 55, REPORT_TURNAROUND_MIN] as const;
+export const STAGE_STARTS = [0, 45, 110, REPORT_TURNAROUND_MIN] as const;
 
 const IST_MS = 330 * 60_000;
 const DAY = 86_400_000;

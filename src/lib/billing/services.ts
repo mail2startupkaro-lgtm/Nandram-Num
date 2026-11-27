@@ -11,7 +11,7 @@ import { decryptJson, encryptJson } from '@/lib/security/crypto';
 
 export const SERVICE_PREFIX = 'SVC_';
 export const isServiceCode = (code: string) => code.startsWith(SERVICE_PREFIX);
-export const INTAKE_FIELDS: ServiceIntakeField[] = ['clientName', 'dob', 'gender', 'tob', 'pob', 'mobile', 'currentName', 'parents', 'letters', 'partnerName', 'partnerDob', 'businesses', 'businessName', 'launchDate', 'partners', 'brand', 'questions'];
+export const INTAKE_FIELDS: ServiceIntakeField[] = ['clientName', 'dob', 'gender', 'maritalStatus', 'partnerName', 'partnerDob', 'tob', 'pob', 'mobile', 'currentName', 'parents', 'letters', 'businesses', 'businessName', 'launchDate', 'partners', 'brand', 'challenges', 'questions'];
 export const SERVICE_ORDER_STATUSES = ['awaiting_payment', 'paid', 'in_progress', 'delivered', 'cancelled'] as const;
 export type ServiceOrderStatus = (typeof SERVICE_ORDER_STATUSES)[number];
 
@@ -19,7 +19,7 @@ const t = (name: string, short: string, includes: string[], delivery: string): S
 
 export const DEFAULT_SERVICES: (typeof services.$inferInsert)[] = [
   {
-    code: 'SVC_PERSONAL_REPORT', sort: 1, featured: true, pricePaise: 2_100_00, mrpPaise: 4_200_00, intake: ['clientName', 'dob', 'gender', 'tob', 'pob', 'mobile', 'questions'],
+    code: 'SVC_PERSONAL_REPORT', sort: 1, featured: true, pricePaise: 2_100_00, mrpPaise: 4_200_00, intake: ['clientName', 'dob', 'gender', 'maritalStatus', 'partnerName', 'partnerDob', 'tob', 'pob', 'mobile', 'challenges', 'questions'],
     en: t('Personal Numerology Report by Acharya Nandram', 'Your complete chart read personally by Acharya Nandram, with answers to your own questions and remedies that fit your life.',
       ['Moolank, Bhagyank, Kua and Lo Shu grid analysis', 'Name number and mobile number check', 'Destiny Matrix analysis', 'Current personal year and the next 3 years', 'Answers to up to 3 questions you send', 'Personal remedies: colours, days, mantra, daan', 'PDF in English, Hindi or Hinglish'], 'Delivered as a PDF within 3 hours'),
     hi: t('आचार्य नंदराम द्वारा व्यक्तिगत अंक ज्योतिष रिपोर्ट', 'आपका पूरा चार्ट स्वयं आचार्य नंदराम द्वारा पढ़ा जाता है, आपके अपने प्रश्नों के उत्तर और आपके जीवन के अनुकूल उपायों के साथ।',
@@ -184,15 +184,17 @@ export async function deleteService(code: string, db: Db = getDb()) {
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((s) => { const d = new Date(`${s}T00:00:00Z`); return !Number.isNaN(d.getTime()) && d.toISOString().startsWith(s) && s >= '1900-01-01' && d.getTime() <= Date.now() + 86_400_000; }, 'Enter a valid date of birth');
 const FIELD: Record<ServiceIntakeField, z.ZodTypeAny> = {
   clientName: z.string().trim().min(2).max(120), dob: isoDate, gender: z.enum(['male', 'female', 'other']),
-  tob: z.string().trim().max(10).optional(), pob: z.string().trim().max(120).optional(), mobile: z.string().trim().max(20).optional(),
-  currentName: z.string().trim().min(2).max(300), partnerName: z.string().trim().min(2).max(120), partnerDob: isoDate, parents: z.string().trim().max(200).optional(), letters: z.string().trim().max(60).optional(),
+  maritalStatus: z.string().trim().max(50).optional(),
+  tob: z.string().trim().max(10).optional(), pob: z.string().trim().max(120).optional(), mobile: z.string().trim().max(25).optional(),
+  currentName: z.string().trim().min(2).max(300), partnerName: z.string().trim().min(2).max(120).optional(), partnerDob: isoDate.optional(), parents: z.string().trim().max(200).optional(), letters: z.string().trim().max(60).optional(),
   businesses: z.string().trim().max(600).optional(),
   businessName: z.string().trim().min(2).max(400).regex(/[A-Za-z]/, 'Write the business name in English letters'),
   launchDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((s) => s >= '1900-01-01' && s <= '2045-12-31', 'Enter a valid date').optional(),
   partners: z.string().trim().max(800).optional(), brand: z.string().trim().max(400).optional(),
+  challenges: z.string().trim().max(3000).optional(),
   questions: z.string().trim().max(2000).optional(),
 };
-const OPTIONAL: ServiceIntakeField[] = ['tob', 'pob', 'mobile', 'parents', 'letters', 'businesses', 'launchDate', 'partners', 'brand', 'questions'];
+const OPTIONAL: ServiceIntakeField[] = ['maritalStatus', 'partnerName', 'partnerDob', 'tob', 'pob', 'mobile', 'parents', 'letters', 'businesses', 'launchDate', 'partners', 'brand', 'challenges', 'questions'];
 /** Booking details; `forProfileId` / `forRelation` link the order to the saved person (self or a family member). */
 export type IntakeDetails = Partial<Record<ServiceIntakeField | 'forProfileId' | 'forRelation' | 'signatureImage', string>>;
 

@@ -12,7 +12,7 @@ export interface PersonLite {
   partner?: { name: string; gender: 'male' | 'female' | 'other'; dob: string; mobile?: string };
 }
 
-export const REQUIRED_INTAKE: ServiceIntakeField[] = ['clientName', 'dob', 'gender', 'currentName', 'partnerName', 'partnerDob', 'businessName'];
+export const REQUIRED_INTAKE: ServiceIntakeField[] = ['clientName', 'dob', 'gender', 'currentName', 'businessName'];
 
 /** Services whose "currentName" box is not a person's name (so it is not filled from / saved to the person). */
 const CURRENT_NAME_IS_NOT_PERSON = ['SVC_BUSINESS_NAME'];
@@ -66,7 +66,20 @@ export function intakeToPerson(code: string, d: Record<string, string>, relation
 
 /** Required boxes still empty for this reading type. */
 export function missingIntake(fields: ServiceIntakeField[], d: Record<string, string>): ServiceIntakeField[] {
-  return fields.filter((k) => REQUIRED_INTAKE.includes(k) && !(d[k] ?? '').trim());
+  const missing = fields.filter((k) => REQUIRED_INTAKE.includes(k) && !(d[k] ?? '').trim());
+
+  // Services with partner details (e.g. couple compatibility)
+  if (fields.includes('partnerName')) {
+    const hasMarital = fields.includes('maritalStatus');
+    const status = d.maritalStatus || 'married';
+    const coupled = !hasMarital || status === 'married' || status === 'relationship';
+    if (coupled) {
+      if (!d.partnerName?.trim()) missing.push('partnerName');
+      if (fields.includes('partnerDob') && !d.partnerDob?.trim()) missing.push('partnerDob');
+    }
+  }
+
+  return missing;
 }
 
 /** Only the boxes this reading type asks for, trimmed, empty ones dropped (what checkout receives). */

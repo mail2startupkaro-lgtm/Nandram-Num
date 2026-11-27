@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import Link from 'next/link';
-import { CheckCircle2, ChevronLeft, ImageUp, LogIn, MessageCircle, RefreshCw, ShieldCheck, Sparkles, UserPlus, Users, X } from 'lucide-react';
+import { CheckCircle2, ChevronLeft, Heart, ImageUp, LogIn, MessageCircle, RefreshCw, ShieldCheck, Sparkles, UserPlus, Users, X } from 'lucide-react';
 import { shrink } from '@/lib/client/signature-image';
 import { useApp } from '@/components/layout/providers';
 import { INDIAN_STATES } from '@/components/wizard/state';
@@ -94,7 +94,7 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
   const [people, setPeople] = React.useState<Person[]>([]);
   const [pick, setPick] = React.useState<string>('new'); // saved person id or 'new'
   const [relation, setRelation] = React.useState<FamilyRelation>('self');
-  const [d, setD] = React.useState<Record<string, string>>({ gender: 'male', country: 'India' });
+  const [d, setD] = React.useState<Record<string, string>>({ gender: 'male', country: 'India', maritalStatus: 'married' });
   const [babyName, setBabyName] = React.useState('');
   const [partnerPick, setPartnerPick] = React.useState('');
   const [sigImage, setSigImage] = React.useState<string | null>(null);
@@ -114,11 +114,11 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
 
   function choose(p: Person | null, list = people) {
     const s = svc!; setError(null);
-    if (!p) { setPick('new'); setRelation(list.some((x) => x.relation === 'self') ? (s.code === 'SVC_BABY_NAME' ? 'son' : 'spouse') : 'self'); setD({ gender: 'male', country: 'India' }); setBabyName(''); setPartnerPick(''); return; }
+    if (!p) { setPick('new'); setRelation(list.some((x) => x.relation === 'self') ? (s.code === 'SVC_BABY_NAME' ? 'son' : 'spouse') : 'self'); setD({ gender: 'male', country: 'India', maritalStatus: 'married' }); setBabyName(''); setPartnerPick(''); return; }
     setPick(p.id); setRelation(p.relation);
     const spouse = s.intake.includes('partnerName') ? list.find((x) => x.id !== p.id && (x.relation === 'spouse' || (p.relation === 'spouse' && x.relation === 'self'))) : undefined;
     setPartnerPick(spouse?.id ?? '');
-    setD({ gender: 'male', country: p.country || 'India', ...personToIntake(s.code, s.intake, p, spouse ?? null) });
+    setD((prev) => ({ gender: 'male', country: p.country || 'India', maritalStatus: prev.maritalStatus || 'married', ...personToIntake(s.code, s.intake, p, spouse ?? null) }));
     if (s.code === 'SVC_BABY_NAME') setBabyName(p.fullName);
   }
 
@@ -235,15 +235,39 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
               </Field>
               {has('dob') && <Field label={label('dob')} htmlFor="of-dob" required><Input id="of-dob" type="date" min="1900-01-01" max={toIso(todayIST())} value={d.dob ?? ''} onChange={set('dob')} /></Field>}
               {has('gender') && <Field label={L.gender}><ChipGroup options={[{ value: 'male', label: L.male }, { value: 'female', label: L.female }]} value={[d.gender ?? 'male']} onChange={(v) => setD((x) => ({ ...x, gender: v[0] ?? 'male' }))} /></Field>}
+              {has('maritalStatus') && (
+                <Field label={L.maritalStatus} htmlFor="of-ms">
+                  <Select id="of-ms" value={d.maritalStatus || 'married'} onChange={(e) => setD((x) => ({ ...x, maritalStatus: e.target.value }))}>
+                    <option value="married">{lang === 'hi' ? 'विवाहित (Married)' : 'Married'}</option>
+                    <option value="single">{lang === 'hi' ? 'अविवाहित (Single / Unmarried)' : 'Single / Unmarried'}</option>
+                    <option value="relationship">{lang === 'hi' ? 'रिश्ते में / सगाई (In Relationship / Engaged)' : 'In Relationship / Engaged'}</option>
+                    <option value="divorced">{lang === 'hi' ? 'तलाकशुदा / अलग (Divorced / Separated)' : 'Divorced / Separated'}</option>
+                    <option value="widowed">{lang === 'hi' ? 'विधवा / विधुर (Widowed)' : 'Widowed'}</option>
+                  </Select>
+                </Field>
+              )}
               {has('tob') && <Field label={L.tob} htmlFor="of-tob"><Input id="of-tob" type="time" value={d.tob ?? ''} onChange={set('tob')} /></Field>}
-              {has('pob') && <Field label={label('pob')} htmlFor="of-pob"><Input id="of-pob" placeholder={!isIndia(d.country) ? (lang === 'hi' ? 'जैसे: New York, London, Dubai' : 'e.g. New York, London, Dubai') : (lang === 'hi' ? 'जैसे: Jaipur, Delhi, Mumbai' : 'e.g. Jaipur, Delhi, Mumbai')} value={d.pob ?? ''} onChange={set('pob')} maxLength={120} /></Field>}
+              {has('pob') && <Field label={label('pob')} htmlFor="of-pob" required={svc.code === 'SVC_PERSONAL_REPORT'}><Input id="of-pob" placeholder={!isIndia(d.country) ? (lang === 'hi' ? 'जैसे: New York, London, Dubai' : 'e.g. New York, London, Dubai') : (lang === 'hi' ? 'जैसे: Jaipur, Delhi, Mumbai' : 'e.g. Jaipur, Delhi, Mumbai')} value={d.pob ?? ''} onChange={set('pob')} maxLength={120} /></Field>}
               {has('mobile') && <Field label={label('mobile')} htmlFor="of-mob"><Input id="of-mob" type="tel" inputMode="tel" placeholder={!isIndia(d.country) ? '+1 555 123 4567' : '98765 43210'} value={d.mobile ?? ''} onChange={set('mobile')} maxLength={25} /></Field>}
               {has('letters') && <Field label={L.letters} htmlFor="of-let"><Input id="of-let" value={d.letters ?? ''} onChange={set('letters')} maxLength={60} /></Field>}
             </div>
-            {has('partnerName') && (
-              <div className="space-y-3 rounded-lg border border-border/60 p-3">
+            {has('partnerName') && (!has('maritalStatus') || d.maritalStatus === 'married' || d.maritalStatus === 'relationship') && (
+              <div className="space-y-3 rounded-lg border border-gold/40 bg-gold/5 p-3.5">
+                <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  <Heart className="h-4 w-4 text-gold" />
+                  {lang === 'hi' ? 'जीवनसाथी / पार्टनर का विवरण (Spouse / Partner Details)' : 'Spouse / Partner Details'}
+                </p>
                 {spouseCandidates.length > 0 && <Field label={t.partnerPick} htmlFor="of-pp"><Select id="of-pp" value={partnerPick} onChange={(e) => choosePartner(e.target.value)}><option value="">{t.partnerTyped}</option>{spouseCandidates.map((p) => <option key={p.id} value={p.id}>{p.fullName} · {RELATION_LABEL[p.relation][lang]}</option>)}</Select></Field>}
-                <div className="grid gap-3 sm:grid-cols-2"><Field label={L.partnerName} htmlFor="of-pn" required><Input id="of-pn" value={d.partnerName ?? ''} onChange={set('partnerName')} maxLength={120} /></Field>{has('partnerDob') && <Field label={L.partnerDob} htmlFor="of-pd" required><Input id="of-pd" type="date" min="1900-01-01" max={toIso(todayIST())} value={d.partnerDob ?? ''} onChange={set('partnerDob')} /></Field>}</div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Field label={L.partnerName} htmlFor="of-pn" required>
+                    <Input id="of-pn" placeholder={lang === 'hi' ? 'जीवनसाथी का पूरा नाम' : "Spouse's full name"} value={d.partnerName ?? ''} onChange={set('partnerName')} maxLength={120} />
+                  </Field>
+                  {has('partnerDob') && (
+                    <Field label={L.partnerDob} htmlFor="of-pd" required>
+                      <Input id="of-pd" type="date" min="1900-01-01" max={toIso(todayIST())} value={d.partnerDob ?? ''} onChange={set('partnerDob')} />
+                    </Field>
+                  )}
+                </div>
               </div>
             )}
             {has('parents') && <Field label={L.parents} htmlFor="of-par"><Input id="of-par" value={d.parents ?? ''} onChange={set('parents')} maxLength={200} /></Field>}
@@ -253,7 +277,36 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
             {has('brand') && <Field label={L.brand} htmlFor="of-br"><Input id="of-br" value={d.brand ?? ''} onChange={set('brand')} maxLength={400} /></Field>}
             {has('businesses') && <Field label={label('businesses')} htmlFor="of-biz" hint={lang === 'hi' ? 'जैसे: कैफ़े, कपड़े की दुकान, CA प्रैक्टिस' : 'e.g. café, clothing store, CA practice'}><Input id="of-biz" value={d.businesses ?? ''} onChange={set('businesses')} maxLength={600} /></Field>}
             {sig && <SignaturePhoto value={sigImage} onChange={setSigImage} />}
-            {has('questions') && <Field label={label('questions')} htmlFor="of-q"><textarea id="of-q" rows={3} maxLength={2000} value={d.questions ?? ''} onChange={set('questions')} className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" /></Field>}
+            {has('challenges') && (
+              <Field label={L.challenges} htmlFor="of-ch" hint={L.challengesHint}>
+                <textarea
+                  id="of-ch"
+                  rows={3}
+                  maxLength={2500}
+                  placeholder={lang === 'hi' ? 'जैसे: करियर में तरक्की नहीं हो रही, व्यापार में धन हानि, विवाह में देरी या कलह, स्वास्थ्य संबंधी कष्ट…' : 'e.g. Career stagnation, loss in business, marriage delays or discord, health issues, recurring financial loss…'}
+                  value={d.challenges ?? ''}
+                  onChange={set('challenges')}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </Field>
+            )}
+            {has('questions') && (
+              <Field
+                label={label('questions')}
+                htmlFor="of-q"
+                hint={svc.code === 'SVC_PERSONAL_REPORT' ? (lang === 'hi' ? 'आचार्य नंदराम से व्यक्तिगत उत्तर हेतु अपने 3 मुख्य प्रश्न यहाँ लिखें' : 'Write up to 3 specific questions for Acharya Nandram to answer in your personal reading') : undefined}
+              >
+                <textarea
+                  id="of-q"
+                  rows={3}
+                  maxLength={2000}
+                  placeholder={svc.code === 'SVC_PERSONAL_REPORT' ? (lang === 'hi' ? '1. मेरे लिए कौन सा करियर या व्यवसाय सबसे अनुकूल रहेगा?\n2. मेरी पदोन्नति या विवाह की शुभ अवधि कब है?\n3. धन लाभ व रुकावटों को दूर करने के लिए कौन सा रत्न या उपाय करें?' : '1. Which career or business field will bring maximum success?\n2. What is the most auspicious period for marriage or promotion?\n3. Which gemstone or remedy will remove current obstacles?') : undefined}
+                  value={d.questions ?? ''}
+                  onChange={set('questions')}
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </Field>
+            )}
           </fieldset>
           <p className="flex gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-4 w-4 shrink-0 text-gold" />{t.savedNote}</p>
           {error && <p className="text-sm text-danger" role="alert">{error}</p>}

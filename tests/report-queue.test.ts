@@ -5,8 +5,8 @@ const ist = (s: string) => new Date(`${s}+05:30`);
 const fmt = (d: Date) => new Date(d.getTime() + 330 * 60_000).toISOString().slice(0, 16).replace('T', ' ');
 
 describe('report queue working-hours clock (08:00–22:00 IST)', () => {
-  it('day-time order is ready 1 h 55 min later', () => {
-    expect(fmt(addWorkingMinutes(ist('2026-11-12T10:00:00'), REPORT_TURNAROUND_MIN))).toBe('2026-11-12 11:55');
+  it('day-time order is ready 3 hours later', () => {
+    expect(fmt(addWorkingMinutes(ist('2026-11-12T10:00:00'), REPORT_TURNAROUND_MIN))).toBe('2026-11-12 13:00');
   });
   it('late-evening order pauses overnight and continues at 08:00', () => {
     expect(fmt(addWorkingMinutes(ist('2026-11-12T21:30:00'), 115))).toBe('2026-11-13 09:25'); // 30 min tonight + 85 min tomorrow
@@ -23,19 +23,19 @@ describe('report queue working-hours clock (08:00–22:00 IST)', () => {
       expect(Math.round(workingMinutesBetween(start, addWorkingMinutes(start, m)))).toBe(m);
     }
   });
-  it('stages move at 25 and 55 working minutes and the report is ready at the deliver time', () => {
-    const requestedAt = ist('2026-11-12T10:00:00'); const deliverAt = addWorkingMinutes(requestedAt, 115);
+  it('stages move at 45 and 110 working minutes and the report is ready at the deliver time', () => {
+    const requestedAt = ist('2026-11-12T10:00:00'); const deliverAt = addWorkingMinutes(requestedAt, REPORT_TURNAROUND_MIN);
     const s = (t: string) => queueState({ requestedAt, deliverAt, releasedAt: null, onHold: false }, ist(t));
     expect(s('2026-11-12T10:10:00')).toMatchObject({ state: 'queued', stage: 1, paused: false });
-    expect(s('2026-11-12T10:30:00')).toMatchObject({ stage: 2 });
-    expect(s('2026-11-12T11:00:00')).toMatchObject({ stage: 3 });
-    expect(s('2026-11-12T11:55:00')).toMatchObject({ state: 'ready', stage: 4 });
+    expect(s('2026-11-12T10:50:00')).toMatchObject({ stage: 2 });
+    expect(s('2026-11-12T12:00:00')).toMatchObject({ stage: 3 });
+    expect(s('2026-11-12T13:00:00')).toMatchObject({ state: 'ready', stage: 4 });
     expect(queueState({ requestedAt, deliverAt, releasedAt: null, onHold: true }, ist('2026-11-12T13:00:00'))).toMatchObject({ state: 'queued', stage: 3, onHold: true });
     expect(queueState({ requestedAt, deliverAt, releasedAt: ist('2026-11-12T10:05:00'), onHold: false }, ist('2026-11-12T10:06:00'))).toMatchObject({ state: 'ready' });
     expect(queueState({ requestedAt: null, deliverAt: null, releasedAt: null, onHold: false })).toEqual({ state: 'not_requested' });
   });
   it('shows "paused" at night', () => {
-    const requestedAt = ist('2026-11-12T21:30:00'); const deliverAt = addWorkingMinutes(requestedAt, 115);
-    expect(queueState({ requestedAt, deliverAt, releasedAt: null, onHold: false }, ist('2026-11-12T23:00:00'))).toMatchObject({ state: 'queued', stage: 2, paused: true });
+    const requestedAt = ist('2026-11-12T21:30:00'); const deliverAt = addWorkingMinutes(requestedAt, REPORT_TURNAROUND_MIN);
+    expect(queueState({ requestedAt, deliverAt, releasedAt: null, onHold: false }, ist('2026-11-12T23:00:00'))).toMatchObject({ state: 'queued', stage: 1, paused: true });
   });
 });
