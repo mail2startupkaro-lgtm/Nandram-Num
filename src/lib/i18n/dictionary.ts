@@ -61,13 +61,13 @@ const en = {
   },
   pdf: { theme: 'PDF theme', making: 'Creating PDF…', reviewFirst: 'Approve the expert review before downloading the PDF.', failed: 'PDF could not be created. Please try again.', themes: { 'royal-gold-maroon': 'Royal Gold & Maroon', 'cosmic-blue': 'Cosmic Blue', 'saffron-cream': 'Saffron & Cream', 'minimal-white': 'Minimal White' } as Record<string, string> },
   dash: {
-    title: 'My clients', sub: 'Saved profiles and report history', search: 'Search by name…', newReading: 'New reading', import: 'Import', exportJson: 'Export all (JSON)', exportCsv: 'Export all (CSV)',
+    title: 'My Reading', sub: 'Saved profiles and report history', search: 'Search by name…', newReading: 'New reading', import: 'Import', exportJson: 'Export all (JSON)', exportCsv: 'Export all (CSV)',
     empty: 'No saved clients yet. Create a reading and press Save.', reports: 'reports', report: 'report', open: 'Open', duplicate: 'Duplicate', delete: 'Delete', confirmDelete: 'Delete this client and all their reports permanently?',
     importDone: 'Imported', importIssues: 'Problems found', warnings: 'Notes', profile: 'Client profile', history: 'Report history', version: 'Version', module: 'Report', date: 'Date', status: 'Status',
     scores: 'Scores', actions: 'Actions', editDetails: 'Edit details', newVersion: 'Generate new version', inputSheet: 'Input Sheet', outputSheet: 'Snapshot', exportProfile: 'Export JSON',
     share: 'Share', shareTitle: 'Share report', expiresIn: 'Link expires in', days: 'days', password: 'Password (optional)', createLink: 'Create link', copy: 'Copy', copied: 'Copied', whatsapp: 'WhatsApp', email: 'Email',
     activeLinks: 'Links', revoke: 'Revoke', views: 'views', expired: 'Expired', revoked: 'Revoked', close: 'Close', back: 'All clients', aadhaarNote: 'Aadhaar is never stored, so a new version includes Aadhaar only if you enter it again.',
-    statuses: { draft: 'Draft', awaiting_review: 'In review', final: 'Final' } as Record<string, string>, saved: 'Saved', savedAs: 'Saved as version', viewProfile: 'View in My clients', updated: 'Changes saved',
+    statuses: { draft: 'Draft', awaiting_review: 'In review', final: 'Final' } as Record<string, string>, saved: 'Saved', savedAs: 'Saved as version', viewProfile: 'View in My Reading', updated: 'Changes saved',
   },
   share: { title: 'Numerology report', needPassword: 'This report is password protected.', unlock: 'Open report', wrong: 'Wrong password.', expired: 'This link has expired.', revoked: 'This link is no longer active.', notFound: 'Link not found.', download: 'Download PDF', notReady: 'The full report is being finalised by your numerologist.', validUntil: 'Link valid until' },
   auth: {

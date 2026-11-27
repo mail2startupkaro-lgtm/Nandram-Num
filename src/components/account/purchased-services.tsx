@@ -140,16 +140,16 @@ export function DeliveryTracker({ delivery, auto }: { delivery: Extract<Delivery
 
 function OrderCard({ o, onReload }: { o: MyServiceOrder; onReload: () => void }) {
   const { lang } = useApp(); const t = T[lang]; const hi = lang === 'hi';
-  const [busy, setBusy] = React.useState(false);
+  const [busyLang, setBusyLang] = React.useState<'en' | 'hi' | 'default' | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
   const d = o.delivery;
   const name = o.name ? o.name[lang] : fallbackName(o.serviceCode);
   const ready = d.state === 'ready';
-  async function get() {
-    setBusy(true); setErr(null);
-    try { await download(`/api/service-orders/${o.id}/pdf`); }
+  async function get(targetLang?: 'en' | 'hi') {
+    setBusyLang(targetLang ?? 'default'); setErr(null);
+    try { await download(`/api/service-orders/${o.id}/pdf${targetLang ? `?lang=${targetLang}` : ''}`); }
     catch (e) { setErr(e instanceof ApiError && e.body.error === 'DETAILS_INCOMPLETE' ? t.details : t.err); if (e instanceof ApiError && e.status === 409) onReload(); }
-    finally { setBusy(false); }
+    finally { setBusyLang(null); }
   }
   return (
     <motion.article layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={cn('space-y-4 rounded-xl border bg-background/60 p-4 sm:p-5', ready ? 'border-success/50' : 'border-gold/40')}>
@@ -175,12 +175,25 @@ function OrderCard({ o, onReload }: { o: MyServiceOrder; onReload: () => void })
       {o.needsDetails && d.state !== 'cancelled' && <p className="rounded-md bg-warning/10 p-2 text-xs text-warning">{t.details}</p>}
       {ready && d.state === 'ready' && (d.download ? (
         <div className="space-y-1.5">
-          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300 }}>
-            <Button variant="gold" size="lg" disabled={busy} onClick={get} className="shadow-lg shadow-gold/30">
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}{busy ? t.downloading : t.download}
-            </Button>
+          <motion.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300 }} className="flex flex-wrap gap-2">
+            {o.auto ? (
+              <>
+                <Button variant="gold" size="lg" disabled={busyLang !== null} onClick={() => get('en')} className="shadow-lg shadow-gold/30">
+                  {busyLang === 'en' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  {busyLang === 'en' ? t.downloading : (hi ? 'अंग्रेज़ी PDF डाउनलोड' : 'Download English (PDF)')}
+                </Button>
+                <Button variant="outline" size="lg" disabled={busyLang !== null} onClick={() => get('hi')} className="border-gold/60 text-gold hover:bg-gold/10">
+                  {busyLang === 'hi' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                  {busyLang === 'hi' ? t.downloading : (hi ? 'हिंदी PDF डाउनलोड' : 'Download Hindi (PDF)')}
+                </Button>
+              </>
+            ) : (
+              <Button variant="gold" size="lg" disabled={busyLang !== null} onClick={() => get()} className="shadow-lg shadow-gold/30">
+                {busyLang !== null ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}{busyLang !== null ? t.downloading : t.download}
+              </Button>
+            )}
           </motion.div>
-          {busy && <p className="text-xs text-muted-foreground">{t.firstTime}</p>}
+          {busyLang !== null && <p className="text-xs text-muted-foreground">{t.firstTime}</p>}
         </div>
       ) : <p className="flex items-start gap-1.5 text-sm text-muted-foreground"><Mail className="mt-0.5 h-4 w-4 shrink-0 text-gold" />{t.emailed}</p>)}
       {err && <p className="text-sm text-danger" role="alert">{err}</p>}

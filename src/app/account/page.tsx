@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { PurchasedServices } from '@/components/account/purchased-services';
 import Link from 'next/link';
-import { Crown, Download, Palette } from 'lucide-react';
+import { Download, Palette } from 'lucide-react';
 import { useApp } from '@/components/layout/providers';
 import { buttonVariants, Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/misc';
@@ -63,14 +63,12 @@ export default function AccountPage() {
   return (
     <div className="container max-w-4xl space-y-6 py-8 sm:py-12">
       <h1 className="text-3xl font-bold sm:text-4xl">{t.account.title}</h1>
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="glass rounded-lg p-5"><p className="text-xs uppercase tracking-wider text-muted-foreground">{t.account.plan}</p><p className="mt-1 flex items-center gap-2 font-serif text-2xl font-semibold">{d.account.planName && <Crown className="h-5 w-5 text-gold" />}{d.account.planName ? (hi && d.account.planCode && PLAN_EN[d.account.planCode] === d.account.planName ? W(d.account.planCode) : d.account.planName) : t.account.freePlan}</p>{d.account.proUntil && <p className="text-xs text-muted-foreground">{t.account.until} {new Date(d.account.proUntil).toLocaleDateString('en-IN')}</p>}</div>
-        <div className="glass rounded-lg p-5"><p className="text-xs uppercase tracking-wider text-muted-foreground">{t.account.credits}</p><p className="mt-1 font-serif text-4xl font-bold text-gold">{d.account.credits}</p></div>
-        <div className="glass flex flex-col gap-2 rounded-lg p-5">
-          <p className="truncate text-sm">{d.user.name}<br /><span className="text-muted-foreground">{d.user.email ?? d.user.phone}</span></p>
-          <Link href="/pricing" className={buttonVariants({ variant: 'gold', size: 'sm' })}>{t.account.upgrade}</Link>
-          {d.account.features.whiteLabel && <Link href="/settings/branding" className={buttonVariants({ variant: 'outline', size: 'sm' })}><Palette /> {t.account.branding}</Link>}
+      <div className="glass flex flex-wrap items-center justify-between gap-3 rounded-lg p-5">
+        <div className="min-w-0">
+          <p className="truncate font-serif text-xl font-semibold">{d.user.name}</p>
+          <p className="truncate text-sm text-muted-foreground">{d.user.email ?? d.user.phone}</p>
         </div>
+        {d.account.features.whiteLabel && <Link href="/settings/branding" className={buttonVariants({ variant: 'outline', size: 'sm' })}><Palette /> {t.account.branding}</Link>}
       </div>
       <FamilyPanel />
       <section className="glass rounded-lg p-5">

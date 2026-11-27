@@ -90,13 +90,6 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {me?.account && (
-        <div className="glass flex flex-wrap items-center gap-3 rounded-lg px-4 py-3 text-sm">
-          <span>{t.account.plan}: <b>{me.account.planName ?? t.account.freePlan}</b></span>
-          <span>{t.account.credits}: <b className="text-gold">{me.account.credits}</b></span>
-        </div>
-      )}
-
       {/* Purchased services: live, animated delivery status + download when ready */}
       <PurchasedServices />
 

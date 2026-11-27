@@ -34,12 +34,16 @@ function asks(s: PublicService, lang: 'en' | 'hi') {
 }
 
 /** Step 1 of "Get your reading": choose the type of reading. */
-export function ReadingPicker({ onPick }: { onPick: (code: string) => void }) {
+export function ReadingPicker({ onPick, initialServices }: { onPick: (code: string) => void; initialServices?: PublicService[] }) {
   const { lang } = useApp();
   const t = FLOW[lang];
   const usd = useDisplayCurrency() === 'USD';
-  const [list, setList] = React.useState<PublicService[] | null>(null);
-  React.useEffect(() => { api<{ services: PublicService[] }>('/api/services').then((r) => setList(r.services)).catch(() => setList([])); }, []);
+  const hasInitial = Boolean(initialServices && initialServices.length > 0);
+  const [list, setList] = React.useState<PublicService[] | null>(hasInitial ? initialServices! : null);
+  React.useEffect(() => {
+    if (hasInitial) return;
+    api<{ services: PublicService[] }>('/api/services').then((r) => setList(r.services)).catch(() => setList([]));
+  }, [hasInitial]);
 
   return (
     <div className="container max-w-6xl py-8 sm:py-12">
