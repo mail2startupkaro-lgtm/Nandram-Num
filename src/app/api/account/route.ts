@@ -15,15 +15,19 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export const GET = withUser(async (_req, user) => {
-  // Reconcile any pending gateway payments so credit is immediately visible
-  await syncPendingUserPayments(user.id);
+  // Reconcile pending gateway payments (throttled to once a minute per user; a slow gateway never blocks the page for long).
+  await Promise.race([syncPendingUserPayments(user.id), new Promise((ok) => setTimeout(ok, 4000))]);
 
   const db = getDb();
-  const pays = await db.select({ id: payments.id, planCode: payments.planCode, amountPaise: payments.amountPaise, currency: payments.currency, status: payments.status, invoiceNumber: payments.invoiceNumber, createdAt: payments.createdAt, paidAt: payments.paidAt })
-    .from(payments).where(eq(payments.userId, user.id)).orderBy(desc(payments.createdAt)).limit(50);
-  const ledger = await db.select().from(creditLedger).where(eq(creditLedger.userId, user.id)).orderBy(desc(creditLedger.createdAt)).limit(50);
-  return json({ user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, billingState: user.billingState, hasPassword: !!user.passwordHash }, account: await getAccount(user.id), payments: pays, ledger,
-    serviceOrders: await myServiceOrders(user.id, user.email) });
+  // All reads run in parallel; one failing section (e.g. service orders) never takes the whole page down.
+  const [pays, ledger, account, serviceOrders] = await Promise.all([
+    db.select({ id: payments.id, planCode: payments.planCode, amountPaise: payments.amountPaise, currency: payments.currency, status: payments.status, invoiceNumber: payments.invoiceNumber, createdAt: payments.createdAt, paidAt: payments.paidAt })
+      .from(payments).where(eq(payments.userId, user.id)).orderBy(desc(payments.createdAt)).limit(50),
+    db.select().from(creditLedger).where(eq(creditLedger.userId, user.id)).orderBy(desc(creditLedger.createdAt)).limit(50).catch(() => []),
+    getAccount(user.id),
+    myServiceOrders(user.id, user.email).catch((e) => { console.error('[account] service orders:', e instanceof Error ? e.message : e); return []; }),
+  ]);
+  return json({ user: { id: user.id, name: user.name, email: user.email, phone: user.phone, role: user.role, billingState: user.billingState, hasPassword: !!user.passwordHash }, account, payments: pays, ledger, serviceOrders });
 });
 
 /** Paid service orders with their live delivery status (shown in My reports and My account). */

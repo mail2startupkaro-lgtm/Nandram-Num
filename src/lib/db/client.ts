@@ -19,6 +19,10 @@ export function getDb(): Db {
     g.__numerologyPool = new Pool({
       connectionString: url,
       max: Number(process.env.DATABASE_POOL_MAX ?? 5),
+      // Fail fast instead of hanging a page when the database is unreachable; keep warm connections between requests.
+      connectionTimeoutMillis: 10_000,
+      idleTimeoutMillis: 30_000,
+      keepAlive: true,
       ssl: /sslmode=require|supabase\.co|neon\.tech/.test(url) ? { rejectUnauthorized: false } : undefined,
     });
     g.__numerologyDb = drizzle(g.__numerologyPool, { schema });
