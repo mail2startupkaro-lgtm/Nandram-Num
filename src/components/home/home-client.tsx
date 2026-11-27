@@ -4,6 +4,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Award, Baby, Briefcase, Building2, Calculator, CalendarDays, CheckCircle, ChevronLeft, ChevronRight, Grid3x3, Heart, Landmark, MapPin, Orbit, PenLine, ScrollText, Sigma, Signature, Smartphone, Sparkles, Type, UserRound } from 'lucide-react';
 import { SERVICE_PAGES } from '@/lib/service-pages';
+import { api } from '@/lib/client/api';
+import { useDisplayCurrency } from '@/lib/client/currency';
+import { priceOf } from '@/components/reading/reading-picker';
+import type { PublicService } from '@/components/services/book-service';
 import { useApp } from '@/components/layout/providers';
 import { Reveal } from '@/components/layout/cosmic-bg';
 import { YantraWheel } from '@/components/home/yantra-wheel';
@@ -149,18 +153,49 @@ function useTilt() {
 
 function ServicesSlider({ lang }: { lang: 'en' | 'hi' }) {
   const trackRef = React.useRef<HTMLDivElement>(null);
+  const [paused, setPaused] = React.useState(false);
+  const [svcMap, setSvcMap] = React.useState<Record<string, PublicService>>({});
+  const usd = useDisplayCurrency() === 'USD';
   const hi = lang === 'hi';
-  const scrollBy = (dir: -1 | 1) => {
+
+  React.useEffect(() => {
+    api<{ services: PublicService[] }>('/api/services')
+      .then((r) => {
+        const m: Record<string, PublicService> = {};
+        for (const s of r.services) m[s.code] = s;
+        setSvcMap(m);
+      })
+      .catch(() => {});
+  }, []);
+
+  const scrollBy = React.useCallback((dir: -1 | 1) => {
     const el = trackRef.current;
     if (!el) return;
-    el.scrollBy({ left: dir * Math.max(300, Math.round(el.clientWidth * 0.75)), behavior: 'smooth' });
-  };
+    if (dir === 1 && el.scrollLeft + el.clientWidth >= el.scrollWidth - 16) {
+      el.scrollTo({ left: 0, behavior: 'smooth' });
+      return;
+    }
+    el.scrollBy({ left: dir * Math.max(310, Math.round(el.clientWidth * 0.72)), behavior: 'smooth' });
+  }, []);
+
+  React.useEffect(() => {
+    if (paused) return;
+    const id = setInterval(() => scrollBy(1), 4000);
+    return () => clearInterval(id);
+  }, [paused, scrollBy]);
+
   return (
-    <section className="container pb-14 pt-2" aria-labelledby="svc-slider-h">
+    <section
+      className="container pb-10 pt-14"
+      aria-labelledby="svc-slider-h"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onTouchStart={() => setPaused(true)}
+    >
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <span className="cz-kicker">{hi ? 'व्यक्तिगत परामर्श' : 'Expert Consultations'}</span>
-          <h2 id="svc-slider-h" className="font-cinzel mt-1 text-2xl font-bold sm:text-3xl">
+          <h2 id="svc-slider-h" className="font-cinzel mt-1 text-2xl font-bold sm:text-4xl">
             {hi ? 'हमारी विशेषज्ञ सेवाएँ' : 'Explore Our Numerology Services'}
           </h2>
         </div>
@@ -194,20 +229,37 @@ function ServicesSlider({ lang }: { lang: 'en' | 'hi' }) {
       >
         {SERVICE_PAGES.map((sp) => {
           const Icon = SLIDER_ICONS[sp.serviceCode] ?? Sparkles;
+          const live = svcMap[sp.serviceCode];
+          const p = live ? priceOf(live, usd) : null;
+          const title = live ? live[lang].name : sp.menu[lang];
+          const desc = live ? live[lang].short : sp.menuSub[lang];
           return (
             <Link
               key={sp.slug}
               href={`/${sp.slug}`}
-              className="cz-card cz-mod group flex w-[280px] shrink-0 snap-start flex-col justify-between sm:w-[300px]"
+              className="cz-card cz-mod group relative flex w-[285px] shrink-0 snap-start flex-col justify-between sm:w-[315px]"
             >
+              {p?.off ? (
+                <span className="absolute right-4 top-4 rounded-full bg-gold px-2.5 py-0.5 text-[11px] font-bold text-black">
+                  {p.off}% {hi ? 'छूट' : 'OFF'}
+                </span>
+              ) : null}
               <div>
                 <span className="cz-ic"><Icon className="h-6 w-6" /></span>
-                <h3 className="font-cinzel text-lg font-bold leading-snug group-hover:text-gold">{sp.menu[lang]}</h3>
-                <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{sp.menuSub[lang]}</p>
+                <h3 className="font-cinzel pr-12 text-lg font-bold leading-snug group-hover:text-gold">{title}</h3>
+                <p className="mt-2 line-clamp-3 text-sm text-muted-foreground">{desc}</p>
               </div>
-              <span className="cz-go mt-4 inline-block text-[13px] tracking-wide text-gold">
-                {hi ? 'विवरण देखें →' : 'Explore →'}
-              </span>
+              <div className="mt-4 space-y-2 border-t border-gold/15 pt-3">
+                {p && (
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-serif text-xl font-bold text-gold">{p.fee}</span>
+                    {p.mrp && <s className="text-xs text-muted-foreground">{p.mrp}</s>}
+                  </div>
+                )}
+                <span className="cz-go inline-block text-[13px] font-medium tracking-wide text-gold">
+                  {hi ? 'सेवा पेज देखें →' : 'View Service Page →'}
+                </span>
+              </div>
             </Link>
           );
         })}
@@ -258,6 +310,9 @@ export function HomeClient() {
         </div>
       </section>
 
+      {/* SERVICES SLIDER */}
+      <ServicesSlider lang={lang} />
+
       {/* MODULES */}
       <section className="container py-20">
         <Head k={c.modK} h={c.modH} p={c.modP} />
@@ -278,9 +333,6 @@ export function HomeClient() {
           })}
         </div>
       </section>
-
-      {/* SERVICES SLIDER */}
-      <ServicesSlider lang={lang} />
 
       {/* EXPLORE – internal links to the free guides */}
       <section className="container pb-8">
