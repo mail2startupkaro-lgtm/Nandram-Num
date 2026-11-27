@@ -8,11 +8,15 @@ import { listServiceOrders } from '@/lib/billing/services';
 import { clearSessionCookie } from '@/lib/auth/session';
 import { json, readJson, withUser } from '@/lib/server/http';
 import { rateLimit, tooMany } from '@/lib/server/rate-limit';
+import { syncPendingUserPayments } from '@/lib/server/sync-pending-payments';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export const GET = withUser(async (_req, user) => {
+  // Reconcile any pending gateway payments so credit is immediately visible
+  await syncPendingUserPayments(user.id);
+
   const db = getDb();
   const pays = await db.select({ id: payments.id, planCode: payments.planCode, amountPaise: payments.amountPaise, currency: payments.currency, status: payments.status, invoiceNumber: payments.invoiceNumber, createdAt: payments.createdAt, paidAt: payments.paidAt })
     .from(payments).where(eq(payments.userId, user.id)).orderBy(desc(payments.createdAt)).limit(50);

@@ -266,13 +266,29 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
       {step === 'pay' && u && <PayStep svc={svc} details={d} forName={forName} relation={relation} personId={personId} onBack={() => setStep('details')} onDone={() => setStep('done')} sig={sig} signatureImage={sig ? sigImage : null} />}
 
       {step === 'done' && (
-        <section className="glass mt-4 space-y-3 rounded-xl p-6 text-center" role="status">
+        <section className="glass mt-4 space-y-4 rounded-xl p-6 text-center" role="status">
           <CheckCircle2 className="mx-auto h-12 w-12 text-success" />
-          <p className="text-lg font-semibold">{t.ok}</p><p className="text-sm text-muted-foreground">{t.okText}</p>
+          <p className="text-xl font-semibold">{t.ok}</p>
+          <p className="text-sm text-muted-foreground">{t.okText}</p>
+          
+          {/* Order / Report Status Queue Box */}
+          <div className="mx-auto max-w-md rounded-lg border border-gold/40 bg-gold/5 p-4 text-left space-y-2">
+            <div className="flex items-center justify-between text-xs font-semibold">
+              <span className="uppercase tracking-wider text-gold">{lang === 'hi' ? 'ऑर्डर व रिपोर्ट स्थिति' : 'Order & Report Status'}</span>
+              <span className="rounded bg-gold/20 px-2 py-0.5 text-gold">{lang === 'hi' ? 'क्रम में (In queue)' : 'In queue'}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {lang === 'hi'
+                ? 'आपका ऑर्डर आचार्य नंदराम के डिलीवरी क्रम में दर्ज हो गया है। आप इसकी प्रगति अपने खाते या प्रोफाइल में देख सकते हैं।'
+                : 'Your order is recorded in the preparation queue. You can track progress and status under your Account.'}
+            </p>
+          </div>
+
           {sig && sigImage && <p className="text-sm text-success">{SIG_T[lang].received}</p>}
           <div className="flex flex-wrap justify-center gap-2 pt-2">
             {sig && !sigImage && <a href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(lang === 'hi' ? `नमस्ते, मैंने हस्ताक्षर विश्लेषण बुक किया है (${forName})। मेरे हस्ताक्षर की फ़ोटो भेज रहा/रही हूँ।` : `Hello, I have booked Signature Analysis (${forName}). Sending my signature photos.`)}`} target="_blank" rel="noopener noreferrer" className={buttonVariants({ variant: 'outline' })}><MessageCircle className="h-4 w-4" />{t.sigPhotos}</a>}
             <Link href="/account" className={buttonVariants({ variant: 'gold' })}>{t.account}</Link>
+            <Link href="/dashboard" className={buttonVariants({ variant: 'outline' })}>{lang === 'hi' ? 'डैशबोर्ड' : 'Dashboard'}</Link>
             <Link href="/reading" onClick={onChangeReading} className={buttonVariants({ variant: 'outline' })}>{t.another}</Link>
             <Link href="/account#family" className={buttonVariants({ variant: 'ghost' })}><Users className="h-4 w-4" />{t.family}</Link>
           </div>

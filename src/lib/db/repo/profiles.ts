@@ -2,6 +2,7 @@
 import { and, desc, eq, ilike, inArray, sql } from 'drizzle-orm';
 import { StoredInputSchema, type ClientInput, type StoredInput } from '@/lib/numerology/schemas';
 import { decryptJson, encryptJson } from '@/lib/security/crypto';
+import { queueState, type QueueState } from '@/lib/report-queue';
 import { getDb, type Db } from '../client';
 import { clientProfiles, reports, type ReportSummary } from '../schema';
 
@@ -13,7 +14,7 @@ export interface ProfileListItem {
   aadhaarLast4: string | null;
   updatedAt: Date;
   reportCount: number;
-  latest: { id: string; module: string; version: number; status: string; summary: ReportSummary; createdAt: Date } | null;
+  latest: { id: string; module: string; version: number; status: string; summary: ReportSummary; createdAt: Date; queue?: QueueState } | null;
 }
 
 /** Strips the Aadhaar number and validates. Returns what is safe to store. */
@@ -65,13 +66,30 @@ export async function listProfiles(ownerId: string, opts: { q?: string; limit?: 
     .from(clientProfiles).where(where).orderBy(desc(clientProfiles.updatedAt)).limit(Math.min(opts.limit ?? 50, 200)).offset(opts.offset ?? 0);
   if (!rows.length) return { items: [], total };
 
-  const reps = await db.select({ id: reports.id, profileId: reports.profileId, module: reports.module, version: reports.version, status: reports.status, summary: reports.summary, createdAt: reports.createdAt })
-    .from(reports).where(inArray(reports.profileId, rows.map((r) => r.id))).orderBy(desc(reports.createdAt));
+  const reps = await db.select({
+    id: reports.id, profileId: reports.profileId, module: reports.module, version: reports.version,
+    status: reports.status, summary: reports.summary, createdAt: reports.createdAt,
+    requestedAt: reports.requestedAt, deliverAt: reports.deliverAt, releasedAt: reports.releasedAt, onHold: reports.onHold,
+  }).from(reports).where(inArray(reports.profileId, rows.map((r) => r.id))).orderBy(desc(reports.createdAt));
+  const now = new Date();
   return {
     total,
     items: rows.map((r) => {
       const mine = reps.filter((x) => x.profileId === r.id);
-      return { ...r, reportCount: mine.length, latest: mine[0] ? { id: mine[0].id, module: mine[0].module, version: mine[0].version, status: mine[0].status, summary: mine[0].summary, createdAt: mine[0].createdAt } : null };
+      const top = mine[0];
+      return {
+        ...r,
+        reportCount: mine.length,
+        latest: top ? {
+          id: top.id,
+          module: top.module,
+          version: top.version,
+          status: top.status,
+          summary: top.summary,
+          createdAt: top.createdAt,
+          queue: queueState({ requestedAt: top.requestedAt, deliverAt: top.deliverAt, releasedAt: top.releasedAt, onHold: top.onHold }, now),
+        } : null,
+      };
     }),
   };
 }

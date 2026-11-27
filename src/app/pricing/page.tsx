@@ -387,7 +387,17 @@ function CheckoutDialog({ plan, onClose, onPaid }: { plan: Plan; onClose: () => 
       <div className="glass w-full max-w-md rounded-lg bg-background p-5" onClick={(e) => e.stopPropagation()}>
         <div className="mb-3 flex items-center justify-between"><h2 className="text-xl font-semibold">{planName(plan, hi)}</h2><Button variant="ghost" size="icon" onClick={onClose} aria-label={hi ? 'बंद करें' : 'Close'}><X /></Button></div>
         {done === 'ok' ? (
-          <div className="space-y-4 text-center"><p className="text-success">{t.pricing.success}</p><Link href="/dashboard" className={buttonVariants({ variant: 'gold' })}>{t.nav.dashboard}</Link></div>
+          <div className="space-y-4 text-center">
+            <p className="text-success font-semibold">{t.pricing.success}</p>
+            <p className="text-sm text-muted-foreground">
+              {hi ? 'आपके खाते में क्रेडिट जोड़ दिए गए हैं। आप अपनी रिपोर्ट बना सकते हैं और स्थिति कतार में देख सकते हैं।' : 'Report credits have been added to your account. You can now generate your report and track queue status.'}
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 pt-2">
+              <Link href="/reading" className={buttonVariants({ variant: 'gold' })}>{t.nav.reading}</Link>
+              <Link href="/dashboard" className={buttonVariants({ variant: 'outline' })}>{t.nav.dashboard}</Link>
+              <Link href="/account" className={buttonVariants({ variant: 'ghost' })}>{hi ? 'मेरा खाता' : 'My Account'}</Link>
+            </div>
+          </div>
         ) : (
           <div className="space-y-3">
             <Field label={t.pricing.billingName} htmlFor="bn"><Input id="bn" value={billingName} onChange={(e) => setBillingName(e.target.value)} /></Field>

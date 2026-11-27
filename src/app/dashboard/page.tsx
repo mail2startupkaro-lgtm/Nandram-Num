@@ -8,14 +8,18 @@ import { Input } from '@/components/ui/form';
 import { Badge } from '@/components/ui/misc';
 import { api, download, ApiError } from '@/lib/client/api';
 
+import type { QueueState } from '@/lib/report-queue';
+import { QueueTracker } from '@/components/results/report-queue';
+
 interface Item {
   id: string; displayName: string; aadhaarLast4: string | null; updatedAt: string; reportCount: number;
-  latest: { id: string; module: string; version: number; status: string; summary: { moolank: number; bhagyank: number; nameNumber: number | null; personalYear: number }; createdAt: string } | null;
+  latest: { id: string; module: string; version: number; status: string; summary: { moolank: number; bhagyank: number; nameNumber: number | null; personalYear: number }; createdAt: string; queue?: QueueState } | null;
 }
 interface ImportResult { created: { profileId: string; name: string; reports: number }[]; issues: { where: string; message: string }[]; warnings: { where: string; message: string }[] }
 
 export default function Dashboard() {
-  const { t, me } = useApp();
+  const { t, me, lang } = useApp();
+  const hi = lang === 'hi';
   const [q, setQ] = React.useState('');
   const [data, setData] = React.useState<{ items: Item[]; total: number } | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -86,11 +90,24 @@ export default function Dashboard() {
               <p className="text-xs text-muted-foreground">{new Date(p.updatedAt).toLocaleDateString('en-IN')} · {p.reportCount} {p.reportCount === 1 ? t.dash.report : t.dash.reports}{p.aadhaarLast4 ? ` · XXXX-${p.aadhaarLast4}` : ''}</p>
             </Link>
             {p.latest && (
-              <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs">
-                <Badge tone="gold">{t.preview.moolank} {p.latest.summary.moolank}</Badge>
-                <Badge tone="gold">{t.preview.bhagyank} {p.latest.summary.bhagyank}</Badge>
-                {p.latest.summary.nameNumber && <Badge>{t.preview.nameNo} {p.latest.summary.nameNumber}</Badge>}
-                <Badge tone={p.latest.status === 'final' ? 'good' : p.latest.status === 'awaiting_review' ? 'warn' : 'default'}>{t.dash.statuses[p.latest.status]} · v{p.latest.version}</Badge>
+              <div className="mt-3 space-y-2">
+                <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                  <Badge tone="gold">{t.preview.moolank} {p.latest.summary.moolank}</Badge>
+                  <Badge tone="gold">{t.preview.bhagyank} {p.latest.summary.bhagyank}</Badge>
+                  {p.latest.summary.nameNumber && <Badge>{t.preview.nameNo} {p.latest.summary.nameNumber}</Badge>}
+                  {p.latest.queue?.state === 'queued' ? (
+                    <Badge tone="gold">⏳ {hi ? 'रिपोर्ट तैयार हो रही है (क्रम में)' : 'Report in queue'}</Badge>
+                  ) : p.latest.queue?.state === 'ready' ? (
+                    <Badge tone="good">✓ {hi ? 'रिपोर्ट तैयार' : 'Report ready'}</Badge>
+                  ) : (
+                    <Badge tone={p.latest.status === 'final' ? 'good' : p.latest.status === 'awaiting_review' ? 'warn' : 'default'}>{t.dash.statuses[p.latest.status]} · v{p.latest.version}</Badge>
+                  )}
+                </div>
+                {p.latest.queue?.state === 'queued' && (
+                  <div className="rounded border border-gold/40 bg-gold/5 p-2">
+                    <QueueTracker queue={p.latest.queue} compact />
+                  </div>
+                )}
               </div>
             )}
             <div className="mt-auto flex gap-1 pt-4">
