@@ -15,10 +15,10 @@ export interface ServicePage {
 export const SERVICE_PAGES: ServicePage[] = [
   {
     slug: 'personal-numerology-report', serviceCode: 'SVC_PERSONAL_REPORT',
-    menu: { en: 'Personal Numerology Report', hi: 'व्यक्तिगत अंक ज्योतिष रिपोर्ट' }, menuSub: { en: 'Your full chart, read by Acharya Nandram', hi: 'आचार्य नंदराम द्वारा पढ़ा गया आपका पूरा चार्ट' },
-    title: 'Personal Numerology Report by Acharya Nandram',
-    description: 'Personal numerology report by Acharya Nandram: Moolank, Bhagyank, Lo Shu grid, name, mobile, Destiny Matrix, year forecast and remedies.',
-    h1: { en: 'Personal Numerology Report', hi: 'व्यक्तिगत अंक ज्योतिष रिपोर्ट' },
+    menu: { en: 'Full Complete Life Report', hi: 'संपूर्ण जीवन अंक ज्योतिष रिपोर्ट' }, menuSub: { en: 'Your full chart, read by Acharya Nandram', hi: 'आचार्य नंदराम द्वारा पढ़ा गया आपका पूरा चार्ट' },
+    title: 'Full Complete Life Report by Acharya Nandram',
+    description: 'Full complete life numerology report by Acharya Nandram: Moolank, Bhagyank, Lo Shu grid, name, mobile, Destiny Matrix, year forecast and remedies.',
+    h1: { en: 'Full Complete Life Report', hi: 'संपूर्ण जीवन अंक ज्योतिष रिपोर्ट' },
     intro: {
       en: ['Free calculators show single numbers. A personal report reads all of them together – your date of birth, name and mobile number – the way an experienced numerologist does in a consultation.', 'Acharya Nandram prepares the report himself, answers up to three questions you send, and gives remedies you can actually follow in daily life.'],
       hi: ['मुफ़्त कैलकुलेटर अलग-अलग अंक दिखाते हैं। व्यक्तिगत रिपोर्ट इन सबको एक साथ पढ़ती है – आपकी जन्म तिथि, नाम और मोबाइल नंबर – जैसे एक अनुभवी अंक ज्योतिषी परामर्श में करता है।', 'आचार्य नंदराम यह रिपोर्ट स्वयं तैयार करते हैं, आपके भेजे गए अधिकतम तीन प्रश्नों के उत्तर देते हैं और ऐसे उपाय बताते हैं जिन्हें आप दैनिक जीवन में सच में अपना सकें।'],

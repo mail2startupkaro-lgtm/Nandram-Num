@@ -41,7 +41,7 @@ export default function ProfilePage() {
   const run = async (key: string, fn: () => Promise<unknown>) => {
     setBusy(key); setError(null);
     try { await fn(); } catch (e) {
-      if (e instanceof ApiError && e.status === 402) setError(`${t.account.unlockNone} → ${t.account.upgrade}: /pricing`);
+      if (e instanceof ApiError && e.status === 402) setError(t.account.unlockNone);
       else setError(e instanceof Error ? e.message : t.err.server);
     } finally { setBusy(null); }
   };
@@ -55,7 +55,7 @@ export default function ProfilePage() {
       const reason = (e.body as { reason?: string }).reason;
       const credits = me?.account?.credits ?? 0;
       if (reason === 'credit_required' && credits > 0 && confirm(`${t.account.unlockAsk} ${credits}.`)) { await download(`${url}&useCredit=1`); await refreshMe(); }
-      else if (reason !== 'credit_required' || credits === 0) router.push('/pricing');
+      else if (reason !== 'credit_required' || credits === 0) setError(t.account.unlockNone);
     }
     await load();
   }
@@ -116,7 +116,7 @@ export default function ProfilePage() {
                     {queued && r.queue?.state !== 'ready' ? (
                       r.queue?.state === 'queued'
                         ? <span className="min-w-[260px]"><QueueTracker queue={r.queue} compact /></span>
-                        : <Button size="sm" variant="gold" disabled={!!busy} onClick={() => run(`req-${r.id}`, async () => { try { await api(`/api/reports/${r.id}/request`, { method: 'POST' }); await refreshMe(); } catch (e) { if (e instanceof ApiError && e.status === 402) { router.push('/pricing'); return; } throw e; } await load(); })}><Send /> {hi ? 'रिपोर्ट के लिए जमा करें' : 'Submit for report'}</Button>
+                        : <Button size="sm" variant="gold" disabled={!!busy} onClick={() => run(`req-${r.id}`, async () => { try { await api(`/api/reports/${r.id}/request`, { method: 'POST' }); await refreshMe(); } catch (e) { if (e instanceof ApiError && e.status === 402) { setError(t.account.unlockNone); return; } throw e; } await load(); })}><Send /> {hi ? 'रिपोर्ट के लिए जमा करें' : 'Submit for report'}</Button>
                     ) : (<>
                     <Button size="sm" variant="ghost" disabled={!!busy || r.status === 'awaiting_review'} title={r.status === 'awaiting_review' ? t.pdf.reviewFirst : undefined} onClick={() => run(`pdf-${r.id}`, () => downloadReport(r.id))}>
                       <Download className={busy === `pdf-${r.id}` ? 'animate-bounce' : ''} /> PDF

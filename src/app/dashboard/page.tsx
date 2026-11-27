@@ -1,7 +1,7 @@
 'use client';
 import * as React from 'react';
 import Link from 'next/link';
-import { Copy, FileJson, FileSpreadsheet, Plus, Search, Trash2, Upload, Users } from 'lucide-react';
+import { Clock, Copy, FileJson, FileSpreadsheet, Plus, Search, Trash2, Upload, Users } from 'lucide-react';
 import { useApp } from '@/components/layout/providers';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/form';
@@ -10,6 +10,15 @@ import { api, download, ApiError } from '@/lib/client/api';
 
 import type { QueueState } from '@/lib/report-queue';
 import { QueueTracker } from '@/components/results/report-queue';
+
+interface ServiceOrderSummary {
+  id: string;
+  serviceCode: string;
+  status: string;
+  createdAt: string;
+  deliveredAt: string | null;
+  invoiceNumber: string | null;
+}
 
 interface Item {
   id: string; displayName: string; aadhaarLast4: string | null; updatedAt: string; reportCount: number;
@@ -22,21 +31,34 @@ export default function Dashboard() {
   const hi = lang === 'hi';
   const [q, setQ] = React.useState('');
   const [data, setData] = React.useState<{ items: Item[]; total: number } | null>(null);
+  const [serviceOrders, setServiceOrders] = React.useState<ServiceOrderSummary[]>([]);
   const [error, setError] = React.useState<string | null>(null);
   const [imp, setImp] = React.useState<ImportResult | null>(null);
   const [busy, setBusy] = React.useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
 
   const load = React.useCallback(async (query = q) => {
-    try { setData(await api(`/api/profiles?q=${encodeURIComponent(query)}`)); setError(null); } catch (e) { setError(e instanceof Error ? e.message : t.err.server); }
+    try {
+      setData(await api(`/api/profiles?q=${encodeURIComponent(query)}`));
+      setError(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t.err.server);
+    }
   }, [q, t.err.server]);
+
   React.useEffect(() => { const h = setTimeout(() => load(q), 250); return () => clearTimeout(h); }, [q, load]);
+
+  React.useEffect(() => {
+    api<{ serviceOrders?: ServiceOrderSummary[] }>('/api/account')
+      .then((r) => setServiceOrders(r.serviceOrders ?? []))
+      .catch(() => {});
+  }, []);
 
   async function doImport(file: File) {
     setBusy(true); setImp(null);
     const fd = new FormData(); fd.append('file', file);
     try { setImp(await api<ImportResult>('/api/import?generate=1', { method: 'POST', body: fd })); }
-    catch (e) { setImp(e instanceof ApiError ? { created: [], issues: e.status === 402 ? [{ where: 'plan', message: `${t.pricing.features.bulk} – ${t.account.upgrade}` }] : (e.body as ImportResult).issues ?? [{ where: 'file', message: e.message }], warnings: [] } : null); }
+    catch (e) { setImp(e instanceof ApiError ? { created: [], issues: e.status === 402 ? [{ where: 'plan', message: t.pricing.features.bulk }] : (e.body as ImportResult).issues ?? [{ where: 'file', message: e.message }], warnings: [] } : null); }
     finally { setBusy(false); load(); }
   }
 
@@ -62,8 +84,71 @@ export default function Dashboard() {
         <div className="glass flex flex-wrap items-center gap-3 rounded-lg px-4 py-3 text-sm">
           <span>{t.account.plan}: <b>{me.account.planName ?? t.account.freePlan}</b></span>
           <span>{t.account.credits}: <b className="text-gold">{me.account.credits}</b></span>
-          {!me.account.features.fullReports && <Link href="/pricing" className={buttonVariants({ size: 'sm', variant: 'gold', className: 'ml-auto' })}>{t.account.upgrade}</Link>}
         </div>
+      )}
+
+      {/* Purchased Reports & Delivery Queue Process */}
+      {((serviceOrders.length > 0) || (data?.items.some((p) => p.latest?.queue?.state === 'queued' || p.latest?.queue?.state === 'ready'))) && (
+        <section className="glass rounded-xl border border-gold/40 bg-gold/5 p-5 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-serif text-lg font-bold flex items-center gap-2 text-gold">
+              <Clock className="h-5 w-5 text-gold" />
+              {hi ? 'क्रय की गई रिपोर्ट व डिलीवरी प्रक्रिया' : 'Purchased Reports & Delivery Status Queue'}
+            </h2>
+            <span className="rounded-full bg-gold/20 px-2.5 py-0.5 text-xs font-semibold text-gold">
+              {hi ? 'डिलीवरी समय: 3 घंटे' : '3-Hour Turnaround SLA'}
+            </span>
+          </div>
+
+          {/* Service orders (e.g. Full Complete Life Report by Acharya Nandram) */}
+          {serviceOrders.map((o) => {
+            const isDone = o.status === 'delivered';
+            const svcName = o.serviceCode === 'SVC_PERSONAL_REPORT'
+              ? (hi ? 'आचार्य नंदराम द्वारा संपूर्ण जीवन अंक ज्योतिष रिपोर्ट' : 'Full Complete Life Report by Acharya Nandram')
+              : o.serviceCode.replace(/^SVC_/, '').replace(/_/g, ' ').toLowerCase().replace(/^./, (c) => c.toUpperCase());
+            
+            const elapsedMin = Math.max(0, Math.round((Date.now() - new Date(o.createdAt).getTime()) / 60000));
+            const stage = (isDone ? 4 : elapsedMin >= 110 ? 3 : elapsedMin >= 45 ? 2 : 1) as 1 | 2 | 3 | 4;
+            const deliverAt = new Date(new Date(o.createdAt).getTime() + 180 * 60000).toISOString();
+            const mockQueue: QueueState = isDone || elapsedMin >= 180
+              ? { state: 'ready', stage: 4, requestedAt: o.createdAt, readyAt: deliverAt }
+              : { state: 'queued', stage: stage as 1 | 2 | 3, requestedAt: o.createdAt, deliverAt, paused: false, resumesAt: null, onHold: false };
+
+            return (
+              <div key={o.id} className="rounded-lg border border-border/80 bg-background/60 p-4 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="font-semibold text-foreground text-sm">{svcName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(o.createdAt).toLocaleString(hi ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' })}
+                      {o.invoiceNumber ? ` · ${o.invoiceNumber}` : ''}
+                    </p>
+                  </div>
+                  <Badge tone={isDone ? 'good' : 'gold'}>
+                    {isDone ? (hi ? '✓ तैयार व प्रेषित' : '✓ Ready & Delivered') : (hi ? '⏳ तैयारी जारी (In queue)' : '⏳ In Preparation Queue')}
+                  </Badge>
+                </div>
+                <QueueTracker queue={mockQueue} />
+              </div>
+            );
+          })}
+
+          {/* Profile reports in queue */}
+          {data?.items.filter((p) => p.latest?.queue?.state === 'queued' || p.latest?.queue?.state === 'ready').map((p) => (
+            <div key={p.id} className="rounded-lg border border-border/80 bg-background/60 p-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="font-semibold text-foreground text-sm">{p.displayName} · v{p.latest!.version}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(p.latest!.createdAt).toLocaleDateString('en-IN')}</p>
+                </div>
+                <Link href={`/dashboard/${p.id}`} className={buttonVariants({ size: 'sm', variant: p.latest!.queue?.state === 'ready' ? 'gold' : 'outline' })}>
+                  {p.latest!.queue?.state === 'ready' ? (hi ? 'डाउनलोड करें' : 'Download') : (hi ? 'विवरण देखें' : 'View')}
+                </Link>
+              </div>
+              <QueueTracker queue={p.latest!.queue!} />
+            </div>
+          ))}
+        </section>
       )}
 
       {imp && (

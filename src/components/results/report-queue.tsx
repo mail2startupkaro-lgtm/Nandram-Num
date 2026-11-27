@@ -143,7 +143,7 @@ export function ReportRequestPanel({ reportId, saved, onSave, theme = 'royal-gol
   else if (!reportId || !saved) body = <div className="space-y-2"><p className="text-sm text-muted-foreground">{t.saveFirst}</p><Button variant="gold" onClick={() => onSave()}>{t.save}</Button></div>;
   else if (!queue) body = <div className="h-10 animate-pulse rounded bg-muted" />;
   else if (queue.state === 'not_requested') body = noCredit
-    ? <div className="space-y-2"><p className="text-sm">{t.noCredit}</p><Link href="/pricing" className={buttonVariants({ variant: 'gold' })}>{t.plans}</Link></div>
+    ? <div className="space-y-2"><p className="text-sm text-muted-foreground">{lang === 'hi' ? 'इस रिपोर्ट के लिए क्रेडिट उपलब्ध नहीं है।' : 'No report credits remaining for this reading.'}</p></div>
     : (
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">

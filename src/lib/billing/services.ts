@@ -20,9 +20,9 @@ const t = (name: string, short: string, includes: string[], delivery: string): S
 export const DEFAULT_SERVICES: (typeof services.$inferInsert)[] = [
   {
     code: 'SVC_PERSONAL_REPORT', sort: 1, featured: true, pricePaise: 2_100_00, mrpPaise: 4_200_00, intake: ['clientName', 'dob', 'gender', 'maritalStatus', 'partnerName', 'partnerDob', 'tob', 'pob', 'mobile', 'challenges', 'questions'],
-    en: t('Personal Numerology Report by Acharya Nandram', 'Your complete chart read personally by Acharya Nandram, with answers to your own questions and remedies that fit your life.',
+    en: t('Full Complete Life Report by Acharya Nandram', 'Your complete chart read personally by Acharya Nandram, with answers to your own questions and remedies that fit your life.',
       ['Moolank, Bhagyank, Kua and Lo Shu grid analysis', 'Name number and mobile number check', 'Destiny Matrix analysis', 'Current personal year and the next 3 years', 'Answers to up to 3 questions you send', 'Personal remedies: colours, days, mantra, daan', 'PDF in English, Hindi or Hinglish'], 'Delivered as a PDF within 3 hours'),
-    hi: t('आचार्य नंदराम द्वारा व्यक्तिगत अंक ज्योतिष रिपोर्ट', 'आपका पूरा चार्ट स्वयं आचार्य नंदराम द्वारा पढ़ा जाता है, आपके अपने प्रश्नों के उत्तर और आपके जीवन के अनुकूल उपायों के साथ।',
+    hi: t('आचार्य नंदराम द्वारा संपूर्ण जीवन अंक ज्योतिष रिपोर्ट', 'आपका पूरा चार्ट स्वयं आचार्य नंदराम द्वारा पढ़ा जाता है, आपके अपने प्रश्नों के उत्तर और आपके जीवन के अनुकूल उपायों के साथ।',
       ['मूलांक, भाग्यांक, कुआ और लो शू ग्रिड विश्लेषण', 'नामांक और मोबाइल नंबर की जाँच', 'डेस्टिनी मैट्रिक्स विश्लेषण', 'वर्तमान व्यक्तिगत वर्ष और अगले 3 वर्ष', 'आपके भेजे गए अधिकतम 3 प्रश्नों के उत्तर', 'व्यक्तिगत उपाय: रंग, दिन, मंत्र, दान', 'अंग्रेज़ी, हिंदी या हिंग्लिश में PDF'], '3 घंटे के भीतर PDF के रूप में'),
   },
   {
