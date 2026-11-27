@@ -71,7 +71,7 @@ const STEPS = [
   {
     step: 4,
     icon: Send,
-    title: { en: 'Instant Download · Email & WhatsApp', hi: 'तुरंत डाउनलोड · ईमेल और WhatsApp' },
+    title: { en: 'Download PDF Report', hi: 'PDF रिपोर्ट डाउनलोड करें' },
     sub: { en: 'High-res designed PDF delivered within 3 hours + instant dashboard download', hi: '3 घंटे के भीतर सुंदर PDF ईमेल, WhatsApp और सीधे डाउनलोड करें' },
   },
 ];
@@ -314,7 +314,6 @@ export async function ServiceLanding({ slug, children }: { slug: string; childre
             )}
             <div className="flex flex-wrap gap-3 pt-1">
               <a href="#book" className="cz-btn cz-btn-primary h-12 px-6 text-base"><Sparkles className="h-4 w-4" /><Bi en={svc?.payable ? 'Book my report' : 'Send an enquiry'} hi={svc?.payable ? 'मेरी रिपोर्ट बुक करें' : 'पूछताछ भेजें'} /></a>
-              <a href={`https://wa.me/${wa}?text=${encodeURIComponent(`Namaste Acharya ji, I want to know about ${page.h1.en}.`)}`} target="_blank" rel="noopener noreferrer" className="cz-btn cz-btn-ghost h-12 px-5 text-base"><MessageCircle className="h-4 w-4 text-success" /><Bi en="Ask on WhatsApp" hi="WhatsApp पर पूछें" /></a>
             </div>
           </header>
           <div id="book" className="scroll-mt-24 lg:relative lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
@@ -341,7 +340,7 @@ export async function ServiceLanding({ slug, children }: { slug: string; childre
               <ul className="grid grid-cols-2 gap-2 text-xs text-muted-foreground sm:flex sm:flex-wrap sm:gap-x-5">
                 <li className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-success" /><Bi en="Secure payment · Cashfree" hi="सुरक्षित भुगतान · Cashfree" /></li>
                 <li className="flex items-center gap-1.5"><Languages className="h-4 w-4 text-gold" /><Bi en="English & हिंदी" hi="हिंदी और English" /></li>
-                <li className="flex items-center gap-1.5"><Send className="h-4 w-4 text-gold" /><Bi en="Download · Email & WhatsApp" hi="डाउनलोड · ईमेल और WhatsApp" /></li>
+                <li className="flex items-center gap-1.5"><Send className="h-4 w-4 text-gold" /><Bi en="Download PDF Report" hi="PDF रिपोर्ट डाउनलोड करें" /></li>
                 <li><a href="#inside-report" className="flex items-center gap-1.5 text-gold hover:underline"><FileText className="h-4 w-4" /><Bi en="See sample report pages" hi="नमूना रिपोर्ट पृष्ठ देखें" /></a></li>
               </ul>
               {review && (

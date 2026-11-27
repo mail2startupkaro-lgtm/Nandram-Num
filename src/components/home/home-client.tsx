@@ -2,7 +2,8 @@
 import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Award, Calculator, CalendarDays, CheckCircle, Heart, IdCard, MapPin, Orbit, ScrollText, Smartphone, Sparkles, Type } from 'lucide-react';
+import { Award, Baby, Briefcase, Building2, Calculator, CalendarDays, CheckCircle, ChevronLeft, ChevronRight, Grid3x3, Heart, Landmark, MapPin, Orbit, PenLine, ScrollText, Sigma, Signature, Smartphone, Sparkles, Type, UserRound } from 'lucide-react';
+import { SERVICE_PAGES } from '@/lib/service-pages';
 import { useApp } from '@/components/layout/providers';
 import { Reveal } from '@/components/layout/cosmic-bg';
 import { YantraWheel } from '@/components/home/yantra-wheel';
@@ -11,7 +12,11 @@ import { planetOf } from '@/lib/numerology/data/planets';
 import { Bi } from '@/components/i18n/bi';
 import { tr } from '@/lib/i18n/hi-terms';
 
-const ICONS = [CalendarDays, Type, Smartphone, IdCard, Heart, ScrollText];
+const ICONS = [CalendarDays, Type, Smartphone, Briefcase, Heart, ScrollText];
+const SLIDER_ICONS: Record<string, typeof Sparkles> = {
+  SVC_PERSONAL_REPORT: UserRound, SVC_NAME_CORRECTION: PenLine, SVC_MOBILE_NUMBER: Smartphone, SVC_BABY_NAME: Baby, SVC_LOSHU: Grid3x3,
+  SVC_COUPLE: Heart, SVC_BUSINESS_NAME: Building2, SVC_BUSINESS_COMPAT: Briefcase, SVC_BUSINESS_COMPLETE: Landmark, SVC_PERSONAL_YEAR: CalendarDays, SVC_SIGNATURE: Signature, SVC_DESTINY_MATRIX: Orbit, SVC_BIRTH_CHART: Sigma,
+};
 const ORB: Record<number, string> = { 1: '#ffb347', 2: '#dfe7ff', 3: '#f6d365', 4: '#8fa3b8', 5: '#7ed6a5', 6: '#ff9ecb', 7: '#c7a6ff', 8: '#7f8cff', 9: '#ff6b5b' };
 
 const C = {
@@ -27,7 +32,7 @@ const C = {
       ['Date of Birth', 'Moolank, Bhagyank, Kua number, Lo Shu grid, personal year and the cycles of your life.'],
       ['Name Numerology', 'Chaldean and Pythagorean values, with spelling suggestions that harmonise with your birth numbers.'],
       ['Mobile Number', 'A clear score for your mobile number and whether its vibration supports your goals.'],
-      ['Aadhaar Vibration', 'Optional and consent-based. Calculated privately; only the last four digits are kept.'],
+      ['Business Compatibility', 'Discover which business sectors suit your Moolank, Bhagyank & Lo Shu grid – with timing, direction and remedies.'],
       ['Couple Compatibility', 'How two people’s numbers, planets and grids blend for marriage and partnership.'],
       ['Complete Life Report', 'Every module in one beautifully designed PDF with personal remedies.'],
     ],
@@ -59,7 +64,7 @@ const C = {
       ['जन्म तिथि', 'मूलांक, भाग्यांक, कुआ अंक, लो शू ग्रिड, व्यक्तिगत वर्ष और जीवन चक्र।'],
       ['नाम अंक ज्योतिष', 'कैल्डियन और पाइथागोरियन मान, और आपके अंकों के अनुरूप वर्तनी सुझाव।'],
       ['मोबाइल नंबर', 'आपके मोबाइल नंबर का स्कोर और यह आपके लक्ष्यों का साथ देता है या नहीं।'],
-      ['आधार वाइब्रेशन', 'वैकल्पिक और सहमति पर आधारित। केवल अंतिम चार अंक रखे जाते हैं।'],
+      ['व्यवसाय अनुकूलता', 'जानें कौन-सा व्यवसाय आपके मूलांक, भाग्यांक और लो शू ग्रिड के अनुकूल है – शुभ समय, दिशा और उपायों सहित।'],
       ['जोड़ी मिलान', 'विवाह और साझेदारी के लिए दो लोगों के अंकों, ग्रहों और ग्रिड का मेल।'],
       ['संपूर्ण जीवन रिपोर्ट', 'सभी मॉड्यूल और व्यक्तिगत उपाय एक सुंदर PDF में।'],
     ],
@@ -142,6 +147,75 @@ function useTilt() {
   };
 }
 
+function ServicesSlider({ lang }: { lang: 'en' | 'hi' }) {
+  const trackRef = React.useRef<HTMLDivElement>(null);
+  const hi = lang === 'hi';
+  const scrollBy = (dir: -1 | 1) => {
+    const el = trackRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * Math.max(300, Math.round(el.clientWidth * 0.75)), behavior: 'smooth' });
+  };
+  return (
+    <section className="container pb-14 pt-2" aria-labelledby="svc-slider-h">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <span className="cz-kicker">{hi ? 'व्यक्तिगत परामर्श' : 'Expert Consultations'}</span>
+          <h2 id="svc-slider-h" className="font-cinzel mt-1 text-2xl font-bold sm:text-3xl">
+            {hi ? 'हमारी विशेषज्ञ सेवाएँ' : 'Explore Our Numerology Services'}
+          </h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => scrollBy(-1)}
+            aria-label={hi ? 'पिछली सेवाएँ' : 'Previous services'}
+            className="grid h-10 w-10 place-items-center rounded-full border border-gold/40 bg-background/60 text-gold transition hover:bg-gold/15"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollBy(1)}
+            aria-label={hi ? 'अगली सेवाएँ' : 'Next services'}
+            className="grid h-10 w-10 place-items-center rounded-full border border-gold/40 bg-background/60 text-gold transition hover:bg-gold/15"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+          <Link href="/services" className="ml-2 text-sm font-medium text-gold hover:underline">
+            {hi ? 'सभी देखें →' : 'View all →'}
+          </Link>
+        </div>
+      </div>
+
+      <div
+        ref={trackRef}
+        className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 scrollbar-none"
+        style={{ scrollbarWidth: 'none' }}
+      >
+        {SERVICE_PAGES.map((sp) => {
+          const Icon = SLIDER_ICONS[sp.serviceCode] ?? Sparkles;
+          return (
+            <Link
+              key={sp.slug}
+              href={`/${sp.slug}`}
+              className="cz-card cz-mod group flex w-[280px] shrink-0 snap-start flex-col justify-between sm:w-[300px]"
+            >
+              <div>
+                <span className="cz-ic"><Icon className="h-6 w-6" /></span>
+                <h3 className="font-cinzel text-lg font-bold leading-snug group-hover:text-gold">{sp.menu[lang]}</h3>
+                <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{sp.menuSub[lang]}</p>
+              </div>
+              <span className="cz-go mt-4 inline-block text-[13px] tracking-wide text-gold">
+                {hi ? 'विवरण देखें →' : 'Explore →'}
+              </span>
+            </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 export function HomeClient() {
   const { lang } = useApp();
   const c = C[lang];
@@ -192,7 +266,7 @@ export function HomeClient() {
             const Icon = ICONS[i];
             return (
               <Reveal key={title} delay={0.08 * (i % 3)}>
-                <Link href={i === 5 ? '/pricing' : '/reading'} className="cz-card cz-mod h-full" {...tilt}>
+                <Link href={i === 3 ? '/business-compatibility-report' : i === 5 ? '/pricing' : '/reading'} className="cz-card cz-mod h-full" {...tilt}>
                   <span className="cz-num">{i + 1}</span>
                   <span className="cz-ic"><Icon className="h-6 w-6" /></span>
                   <h3 className="font-cinzel text-xl font-bold">{title}</h3>
@@ -204,6 +278,9 @@ export function HomeClient() {
           })}
         </div>
       </section>
+
+      {/* SERVICES SLIDER */}
+      <ServicesSlider lang={lang} />
 
       {/* EXPLORE – internal links to the free guides */}
       <section className="container pb-8">
