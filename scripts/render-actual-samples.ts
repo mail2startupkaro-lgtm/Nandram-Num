@@ -14,12 +14,12 @@ const SYSTEM_CHROME_PATHS = [
 async function run() {
   const result = generateNumerology(
     {
-      fullName: 'Riya Sharma',
-      commonName: 'Riya Sharma',
-      gender: 'female',
-      dob: '14-08-1992',
-      profession: 'Architect',
-      maritalStatus: 'single',
+      fullName: 'Ravi Kumar Sharma',
+      commonName: 'Ravi Kumar Sharma',
+      gender: 'male',
+      dob: '14-08-1990',
+      profession: 'Business & Consulting',
+      maritalStatus: 'married',
       city: 'Jaipur',
       state: 'Rajasthan',
       concerns: ['career', 'money', 'marriage'],

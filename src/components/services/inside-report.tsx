@@ -33,8 +33,8 @@ const SIGNATURE_PAGES: ReportPage[] = [
 const PERSONAL_PAGES: ReportPage[] = [
   { src: '/images/personal-report/cover.webp', caption: { en: 'Cover – your profile, core numbers & destiny chart', hi: 'मुखपृष्ठ – आपकी प्रोफ़ाइल, मूल अंक और भाग्य चार्ट' } },
   { src: '/images/personal-report/grid.webp', caption: { en: 'Lo Shu 3×3 Grid – energy planes, missing & repeated numbers', hi: 'लो शू ग्रिड – ऊर्जा तल, अनुपस्थित और दोहराए गए अंक' } },
-  { src: '/images/personal-report/forecast.webp', caption: { en: 'Career, money & answers to your 3 personal questions', hi: 'करियर, धन और आपके 3 व्यक्तिगत प्रश्नों के उत्तर' } },
-  { src: '/images/personal-report/remedies.webp', caption: { en: 'Personal remedies – colours, days, mantra & daan', hi: 'व्यक्तिगत उपाय – रंग, दिन, मंत्र और दान' } },
+  { src: '/images/personal-report/forecast.webp', caption: { en: 'Timing & Forecast – 9-year Personal Year chart & monthly cycle', hi: 'समय और भविष्यफल – 9-वर्षीय व्यक्तिगत वर्ष और मासिक चक्र' } },
+  { src: '/images/personal-report/remedies.webp', caption: { en: 'Remedies & Solutions – lucky colours, days, gemstone & mantra', hi: 'व्यक्तिगत उपाय – शुभ रंग, दिन, रत्न और मंत्र' } },
 ];
 
 
