@@ -304,6 +304,10 @@ export async function ServiceLanding({ slug, children }: { slug: string; childre
             <div className="space-y-5 pr-28 sm:pr-40 lg:pr-0">
             <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs font-semibold text-gold"><span className="cz-eyebrow-dot" /><HeroIc className="h-3.5 w-3.5" /><Bi en={hero.tag.en} hi={hero.tag.hi} /></span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/15 px-3 py-1 text-xs font-semibold text-gold" aria-label="5 Star Rating">
+                <span className="tracking-tight text-amber-400" aria-hidden>★★★★★</span>
+                <Bi en="5.0 · 5-Star Rated" hi="5.0 · 5-स्टार रेटिंग" />
+              </span>
               {offerOn && <span className="inline-flex items-center gap-1 rounded-full bg-danger/15 px-3 py-1 text-xs font-semibold text-danger"><Sparkles className="h-3.5 w-3.5" /><Bi en={offerOn.label.en} hi={offerOn.label.hi} /></span>}
             </div>
             <h1 id="sh-h1" className="font-cinzel text-4xl font-bold leading-tight sm:text-5xl"><span className="gold-text"><Bi en={page.h1.en} hi={page.h1.hi} /></span></h1>
