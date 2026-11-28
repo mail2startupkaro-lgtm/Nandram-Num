@@ -48,5 +48,5 @@ export async function POST(req: Request) {
     await destroyAllSessions(user.id, db);
 
     return json({ ok: true });
-  } catch (e) { return errorResponse(e); }
+  } catch (e) { return errorResponse(e, req); }
 }

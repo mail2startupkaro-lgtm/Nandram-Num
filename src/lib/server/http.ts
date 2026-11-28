@@ -6,13 +6,14 @@ import type { User } from '@/lib/db/schema';
 import { NotFoundError } from '@/lib/db/repo/profiles';
 import { NumerologyInputError } from '@/lib/numerology';
 import { rateLimit } from './rate-limit';
+import { reportSiteError } from './site-errors';
 
 export const NO_STORE = { 'cache-control': 'no-store, max-age=0' };
 
 export const json = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', ...NO_STORE, ...headers } });
 
-export function errorResponse(e: unknown): Response {
+export function errorResponse(e: unknown, req?: Request): Response {
   if (e instanceof UnauthorizedError) return json({ error: 'UNAUTHORIZED' }, 401);
   if (e instanceof ForbiddenError) return json({ error: e.message }, 403);
   if (e instanceof AuthError) return json({ error: e.code }, e.status);
@@ -22,9 +23,18 @@ export function errorResponse(e: unknown): Response {
   if (e instanceof ZodError) return json({ error: 'VALIDATION', issues: e.issues.map((i) => ({ path: i.path.join('.'), message: i.message })) }, 422);
   if (e instanceof NumerologyInputError) return json({ error: 'VALIDATION', issues: [{ path: e.code, message: e.message }] }, 422);
   if (e instanceof Error && e.message === 'REFUSING_TO_STORE_12_DIGIT_NUMBER') return json({ error: 'PII_REJECTED' }, 422);
-  if (e instanceof Error && /ENCRYPTION_KEY|DATABASE_URL|CASHFREE_|OTP delivery provider/.test(e.message)) { console.error('config error:', e.message); return json({ error: 'SERVER_NOT_CONFIGURED', issues: [{ path: 'server', message: 'The server is missing required settings (database, encryption, payments or OTP delivery). See .env.example.' }] }, 503); }
+  if (e instanceof Error && /ENCRYPTION_KEY|DATABASE_URL|CASHFREE_|OTP delivery provider/.test(e.message)) { console.error('config error:', e.message); trackError(e, req, 503, 'warning'); return json({ error: 'SERVER_NOT_CONFIGURED', issues: [{ path: 'server', message: 'The server is missing required settings (database, encryption, payments or OTP delivery). See .env.example.' }] }, 503); }
   console.error('api error:', e instanceof Error ? `${e.name}: ${e.message.slice(0, 160)}` : 'unknown'); // never log request bodies
+  trackError(e, req, 500);
   return json({ error: 'INTERNAL' }, 500);
+}
+
+/** Admin → Website Health: every unexpected API failure is recorded (message, stack, route – never the request body). */
+function trackError(e: unknown, req: Request | undefined, status: number, level: 'error' | 'warning' = 'error') {
+  let route: string | null = null;
+  try { route = req ? new URL(req.url).pathname : null; } catch { /* ignore */ }
+  reportSiteError({ source: 'api', level, status, route, method: req?.method ?? null,
+    message: e instanceof Error ? `${e.name}: ${e.message}` : String(e), stack: e instanceof Error ? e.stack : null });
 }
 
 export class PaymentRequiredError extends Error {}
@@ -52,7 +62,7 @@ export function withUser<P = Record<string, string>>(fn: (req: Request, user: Us
       const user = await getCurrentUser(req);
       return await fn(req, user, await resolveCtx(ctx));
     } catch (e) {
-      return errorResponse(e);
+      return errorResponse(e, req);
     }
   };
 }
@@ -65,7 +75,7 @@ export function withOptionalUser<P = Record<string, string>>(fn: (req: Request, 
       const limited = mutationLimit(req); if (limited) return limited;
       return await fn(req, await getOptionalUser(req), await resolveCtx(ctx));
     } catch (e) {
-      return errorResponse(e);
+      return errorResponse(e, req);
     }
   };
 }

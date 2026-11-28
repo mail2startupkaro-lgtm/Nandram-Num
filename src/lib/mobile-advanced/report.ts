@@ -19,6 +19,7 @@ import { guideCss, readingGuideHtml, servicesCss, servicesCtaHtml } from '@/lib/
 import type { Relation } from '@/lib/numerology/data/relations';
 import type { MobileAdvancedResult } from './analysis';
 import { catText, checkText, digitNoteText, L, pairEffect, relText, TOTAL_MEANING, type Lab, type Lang } from './text';
+import { qaHtml, type QA } from '@/lib/report/client-questions';
 
 export interface MobileReportOptions {
   lang: Lang;
@@ -26,6 +27,8 @@ export interface MobileReportOptions {
   /** Print the full number (default) or the masked form (98XXXXXX10). */
   showFullNumber?: boolean;
   expertNote?: string;
+  /** The client's own questions, answered (printed before the closing note). */
+  questions?: QA[];
 }
 export interface MobileReportExtras { contact?: ReportContact; qrWhatsapp?: string; qrWebsite?: string }
 
@@ -312,7 +315,7 @@ export function buildMobileReportHtml(r: MobileAdvancedResult, t: PdfTheme, b: B
   const cards: [string, string][] = [
     [l.rem.day, l.rem.dayD(T(rm.weekday), T(rm.planet))],
     [l.rem.colour, l.rem.colourD(rm.colours.map(T).join(', '))],
-    [l.rem.mantra, l.rem.mantraD(rm.mantra)],
+    [l.rem.mantra, l.rem.mantraD(T(rm.mantra))],
     [l.rem.daan, l.rem.daanD(T(rm.weekday), rm.daan.slice(0, 3).map(T).join(', '))],
   ];
   if (still.length) cards.push([l.rem.grid, `${l.rem.gridD(still.join(', '))} ${still.map((n) => `${n}: ${T(LOSHU_NUMBER_INFO[n].crystal)}`).join(' · ')}`]);
@@ -324,6 +327,7 @@ export function buildMobileReportHtml(r: MobileAdvancedResult, t: PdfTheme, b: B
     <div style="margin-top:2.5mm">${rm.colours.slice(0, 4).map(sw).join('')}</div>
     <h3 class="sub">${esc(l.monthsH)}</h3><p class="intro" style="margin-bottom:1mm">${esc(l.monthsD)}</p>
     <div class="months">${r.months.map((m) => `<div class="m${m.good ? ' good' : ''}"><div>${esc(MONTHS[lang][m.month - 1])}</div><b>${m.personalMonth}</b><div class="y">${m.year}${m.good ? ' ✓' : ''}</div></div>`).join('')}</div>
+    ${o.questions?.length ? qaHtml(o.questions, lang, { primary: t.primary, accent: t.accent, soft: t.soft, newPage: true }) : ''}
     ${o.expertNote ? `<div class="note"><b>${esc(l.expertNote)}:</b> ${esc(o.expertNote)}</div>` : ''}
     <div class="close"><div class="q">“${esc(l.closing)}”</div><div class="sgn">${b.signatureDataUrl ? `<img src="${esc(b.signatureDataUrl)}" style="max-height:14mm;display:block;margin:0 auto -10mm">` : ''}<div class="ln">${esc(expert)}<br><span class="muted">${esc(b.brandName)}</span></div></div></div>
     </section>`;

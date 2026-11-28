@@ -5,6 +5,7 @@
  * engine in the browser (plus suitable names from the curated bank) → branded PDF: cover, each section on a fresh page,
  * expert profile + services CTA at the end. Nothing is saved.
  */
+import { ClientQuestionsField, orderQuestions } from '@/components/admin/client-questions-field';
 import * as React from 'react';
 import { Baby, Check, Download, Loader2, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ function Ring({ value, label }: { value: number; label: string }) {
 export function BabyNameStudio({ preloadedOrder, onClearPreloadedOrder }: { preloadedOrder?: Order | null; onClearPreloadedOrder?: () => void }) {
   const today = iso(todayIST());
   const [f, setF] = React.useState({ dob: '', gender: 'any', country: 'India', nameStyle: 'auto' as NameStyleChoice, surname: '', timeOfBirth: '', placeOfBirth: '', fatherName: '', motherName: '', letters: '', nameFor: 'both' as 'formal' | 'nickname' | 'both', currentName: '', currentNickname: '', asOf: today, language: 'en' as 'en' | 'hi', theme: 'royal-gold-maroon', preparedBy: 'Acharya Nandram', expertNote: '' });
+  const [cq, setCq] = React.useState('');
   const [names, setNames] = React.useState<string[]>(['']);
   const [suggest, setSuggest] = React.useState(true);
   const [res, setRes] = React.useState<BabyNameResult | null>(null);
@@ -61,6 +63,7 @@ export function BabyNameStudio({ preloadedOrder, onClearPreloadedOrder }: { prel
     const [p1, p2] = bn.split(/\s*(?:\/|,|\(|\)|\balias\b|\bnickname\b)\s*/i).filter(Boolean);
     const cur = nt === 'nickname' ? { currentName: '', currentNickname: p1 ?? '' } : { currentName: p1 ?? '', currentNickname: nt === 'both' ? p2 ?? '' : '' };
     setF((x) => ({ ...x, nameFor: nt, ...cur, country: dt.country || 'India', nameStyle: (dt.nameStyle as NameStyleChoice) || 'auto', dob: dt.dob ? toIsoDob(dt.dob) : '', gender: g === 'male' || g === 'boy' ? 'boy' : g === 'female' || g === 'girl' ? 'girl' : 'any', timeOfBirth: dt.tob ?? '', placeOfBirth: dt.pob ?? '', fatherName: father, motherName: mother, surname, letters: dt.letters ?? '' }));
+    setCq(orderQuestions(dt));
     const preNames = (dt.consideredNames ?? '').split(/[\n,;]+/).map((s) => s.trim()).filter(Boolean);
     setNames(preNames.length ? preNames : ['']); setRes(null);
     setFromOrder(`ordered ${new Date(preloadedOrder.createdAt).toLocaleDateString('en-IN')}${dt.parents ? ` · parents: ${dt.parents}` : ''}${dt.questions ? ` · questions: ${dt.questions}` : ''} – check father / mother / surname below`);
@@ -84,7 +87,7 @@ export function BabyNameStudio({ preloadedOrder, onClearPreloadedOrder }: { prel
   async function downloadPdf() {
     setBusy(true); setErr('');
     try {
-      const body = { ...payload(), language: f.language, theme: f.theme, preparedBy: f.preparedBy || 'Acharya Nandram', expertNote: f.expertNote.trim() || undefined };
+      const body = { ...payload(), language: f.language, theme: f.theme, preparedBy: f.preparedBy || 'Acharya Nandram', expertNote: f.expertNote.trim() || undefined, clientQuestions: cq.trim() || undefined };
       const r = await fetch('/api/admin/baby-name/pdf', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
       if (!r.ok) {
         const j = await r.json().catch(() => null) as { issues?: { message: string }[] } | null;
@@ -103,7 +106,7 @@ export function BabyNameStudio({ preloadedOrder, onClearPreloadedOrder }: { prel
     <div className="space-y-6">
       <div className="glass rounded-lg p-5">
         <h2 className="flex items-center gap-2 text-2xl font-semibold"><Baby className="h-6 w-6 text-gold" />Advanced Baby Name Analysis</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Scores every name the family is considering against the baby&apos;s date of birth: first name and full name with surname (Chaldean), compound number, first letter, soul urge, Lo Shu grid and harmony with the parents&apos; names. Checks the baby&apos;s current name and nickname (keep / correct spelling / new name), suggests nicknames that suit both the birth numbers and the formal name, adds remedies for the child&apos;s development, adds well-suited names from a list of meaningful names (in the letters you give), suggests spelling tweaks that keep the sound, lucky letters and numbers, and good naming-ceremony dates. Download a branded PDF with cover page, every section on a fresh page, and your profile and services at the end. Nothing is saved.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Scores every name the family is considering against the baby&apos;s date of birth: first name and full name with surname (Chaldean), compound number, first letter, soul urge, Lo Shu grid and harmony with the parents&apos; names. Checks the baby&apos;s current name and nickname (keep / correct spelling / new name), suggests nicknames that suit both the birth numbers and the formal name, adds remedies for the child&apos;s development and the best career path from the baby&apos;s numbers, adds well-suited names from a list of meaningful names (in the letters you give), suggests spelling tweaks that keep the sound, lucky letters and numbers, and good naming-ceremony dates. Download a branded PDF with cover page, every section on a fresh page, and your profile and services at the end. Nothing is saved.</p>
       </div>
 
       {fromOrder && <p className="rounded-lg border border-gold/40 bg-gold/10 p-3 text-sm" role="status">From order: {fromOrder}</p>}
@@ -160,6 +163,7 @@ export function BabyNameStudio({ preloadedOrder, onClearPreloadedOrder }: { prel
             <Field label="Report date" htmlFor="bn-asof" hint="Naming dates start from here"><Input id="bn-asof" type="date" value={f.asOf} onChange={set('asOf')} /></Field>
             <Field label="Prepared by" htmlFor="bn-by"><Input id="bn-by" value={f.preparedBy} onChange={set('preparedBy')} /></Field>
           </div>
+          <ClientQuestionsField id="bn-cq" value={cq} onChange={setCq} />
           <Field label="Note from the numerologist (printed in the report)" htmlFor="bn-note"><textarea id="bn-note" value={f.expertNote} onChange={set('expertNote')} maxLength={1200} rows={2} className="w-full rounded-md border border-input bg-background/70 px-3 py-2 text-sm" /></Field>
         </section>
         {err && <p className="text-sm text-danger" role="alert">{err}</p>}
@@ -233,7 +237,13 @@ export function BabyNameStudio({ preloadedOrder, onClearPreloadedOrder }: { prel
               )}
             </div>
           )}
-          <p className="text-xs text-muted-foreground">PDF: cover (recommended name as letter tiles) · summary with top-3 · birth numbers & Lo Shu · lucky name blueprint · all names compared · recommended name in depth{res.top.length > 1 ? ' · second and third choices' : ''}{res.parents.father || res.parents.mother ? ' · family harmony' : ''}{res.suggestions.length ? ' · more suitable names' : ''} {res.current || res.nickname?.current ? ' · current name check & correction' : ''}{res.nickname ? ' · formal name & nickname' : ''} · remedies for child development · naming ceremony & guidance · about the numerologist, services, WhatsApp/website QR codes. Each section starts on a new page.</p>
+          <div className="rounded-lg border border-gold/40 bg-gold/5 p-4">
+            <p className="font-serif text-lg font-semibold text-gold">Best career path – Bhagyank {res.career.primary} · Moolank {res.career.secondary}{res.career.nameNumber ? ` · name number ${res.career.nameNumber}` : ''}</p>
+            <p className="mt-1 text-sm">{res.career.theme.en}</p>
+            <ol className="mt-2 grid gap-1 text-sm sm:grid-cols-2">{res.career.fields.map((f, i) => <li key={f.id} className="flex justify-between gap-2"><span>{i + 1}. {f.label.en}</span><b className="text-gold">{f.score}</b></li>)}</ol>
+            <p className="mt-2 text-xs text-muted-foreground">Subjects: {res.career.subjects.en}</p>
+          </div>
+          <p className="text-xs text-muted-foreground">PDF: cover (recommended name as letter tiles) · summary with top-3 · birth numbers & Lo Shu · lucky name blueprint · all names compared · recommended name in depth{res.top.length > 1 ? ' · second and third choices' : ''}{res.parents.father || res.parents.mother ? ' · family harmony' : ''}{res.suggestions.length ? ' · more suitable names' : ''} {res.current || res.nickname?.current ? ' · current name check & correction' : ''}{res.nickname ? ' · formal name & nickname' : ''} · remedies for child development · best career path · naming ceremony & guidance · about the numerologist, services, WhatsApp/website QR codes. Each section starts on a new page.</p>
         </div>
       )}
     </div>

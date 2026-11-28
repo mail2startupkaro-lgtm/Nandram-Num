@@ -48,6 +48,6 @@ export async function POST(req: Request) {
     const token = await createSession(user.id, req.headers.get('user-agent'));
     return json({ user: { id: user.id, name: user.name, role } }, 200, { 'set-cookie': sessionCookie(token) });
   } catch (e) {
-    return errorResponse(e);
+    return errorResponse(e, req);
   }
 }

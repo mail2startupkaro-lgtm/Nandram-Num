@@ -22,6 +22,7 @@ import type { Advice, BabyNameResult, EvaluatedName, LetterClass, NickEval } fro
 import { SAFETY } from './remedies';
 import { styleLabel } from './world-names';
 import { CHILD_NATURE, checkText, L, LIFE_PATH, NAME_NUMBER_TEXT, relText, type Lab, type Lang } from './text';
+import { qaHtml, type QA } from '@/lib/report/client-questions';
 
 export interface BabyReportOptions {
   lang: Lang;
@@ -29,6 +30,8 @@ export interface BabyReportOptions {
   /** Family name for the salutation ("Dear Sharma family"); defaults to the surname. */
   familyName?: string;
   expertNote?: string;
+  /** The parents' own questions, answered (printed before the closing note). */
+  questions?: QA[];
 }
 export interface BabyReportExtras { contact?: ReportContact; qrWhatsapp?: string; qrWebsite?: string }
 
@@ -169,7 +172,7 @@ export function buildBabyReportHtml(r: BabyNameResult, t: PdfTheme, b: Branding,
   const plan: { key: keyof Lab['sec']; on: boolean }[] = [
     { key: 'birth', on: true }, { key: 'blueprint', on: true }, { key: 'current', on: !!(r.current || r.nickname?.current) }, { key: 'ranking', on: true }, { key: 'top', on: true },
     { key: 'runners', on: runners.length > 0 }, { key: 'nickname', on: !!r.nickname }, { key: 'family', on: hasParents }, { key: 'bank', on: bankList.length > 0 },
-    { key: 'remedies', on: true }, { key: 'ceremony', on: true }, { key: 'about', on: true },
+    { key: 'remedies', on: true }, { key: 'career', on: true }, { key: 'ceremony', on: true }, { key: 'about', on: true },
   ];
   const active = plan.filter((x) => x.on).map((x) => x.key);
   const no = (k: keyof Lab['sec']) => active.indexOf(k) + 1;
@@ -322,10 +325,11 @@ export function buildBabyReportHtml(r: BabyNameResult, t: PdfTheme, b: Branding,
       <div class="r"><h4>${esc(l.luckyDay)}</h4><p>${esc(T(r.guidance.weekday))} – ${esc(lang === 'hi' ? `मूलांक ${c.moolank.value} के ग्रह ${T(c.moolank.planet)} का दिन। टीकाकरण के बाद की पहली पूजा या शुभ शुरुआत इसी दिन करें।` : `the day of ${c.moolank.planet}, planet of Moolank ${c.moolank.value}. Good for first pujas and new beginnings for the baby.`)}</p></div>
       ${foreign(r) && !r.nameStyle.mix
         ? `<div class="r"><h4>${esc(lang === 'hi' ? 'स्पेलिंग और रजिस्ट्रेशन' : 'Spelling and registration')}</h4><p>${esc(lang === 'hi' ? `${r.client.country || 'आपके देश'} में जन्म प्रमाणपत्र पर जो स्पेलिंग लिखी जाएगी, वही अंकों में गिनी जाती है। रजिस्ट्रेशन से पहले स्पेलिंग पक्की कर लें – एक्सेंट (é, ñ) से अंक नहीं बदलते।` : `The spelling written on the birth certificate${r.client.country ? ` in ${r.client.country}` : ''} is the one that counts. Fix the spelling before you register the name – accents (é, ñ) do not change the numbers.`)}</p></div>`
-        : `<div class="r"><h4>${esc(l.mantra)}</h4><p>${esc(r.guidance.mantra)} – ${esc(lang === 'hi' ? 'माता-पिता नामकरण के दिन 11 बार जप करें।' : 'parents may chant it 11 times on the naming day.')}</p></div>`}
+        : `<div class="r"><h4>${esc(l.mantra)}</h4><p>${esc(T(r.guidance.mantra))} – ${esc(lang === 'hi' ? 'माता-पिता नामकरण के दिन 11 बार जप करें।' : 'parents may chant it 11 times on the naming day.')}</p></div>`}
       ${nursery.length ? `<div class="r"><h4>${esc(l.nursery)}</h4><p>${esc(nursery.join(' | '))}</p></div>` : ''}
     </div>
     <div class="box advice" style="margin-top:4mm"><div class="bt">${esc(l.useH)}</div><ul class="lst" style="margin-top:1mm">${l.useList.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>
+    ${o.questions?.length ? qaHtml(o.questions, lang, { primary: t.primary, accent: t.accent, soft: t.soft, newPage: true }) : ''}
     ${o.expertNote ? `<div class="note"><b>${esc(l.expertNote)}:</b> ${esc(o.expertNote)}</div>` : ''}
     <div class="close"><div class="q">“${esc(l.closing)}”</div><div class="sgn">${b.signatureDataUrl ? `<img src="${esc(b.signatureDataUrl)}" style="max-height:14mm;display:block;margin:0 auto -10mm">` : ''}<div class="ln">${esc(expert)}<br><span class="muted">${esc(b.brandName)}</span></div></div></div>
   </section>`;
@@ -403,9 +407,35 @@ export function buildBabyReportHtml(r: BabyNameResult, t: PdfTheme, b: Branding,
       ${rm.missing.map((x) => `<tr><td class="big">${x.n}</td><td><b>${esc(x.area[lang])}</b></td><td class="small">${esc(x.activity[lang])}</td><td class="small">${esc(x.home[lang])}</td></tr>`).join('')}</tbody></table>` : `<p class="small muted">${esc(l.rem.noMissing)}</p>`}
     <h3 class="sub">${esc(vedic ? l.rem.planetsH : l.rem.colourDay)}</h3>
     <table class="ftab"><thead><tr><th>${esc(l.planet)}</th><th>${esc(l.rem.day)}</th><th>${esc(l.colours)}</th>${vedic ? `<th>${esc(l.rem.daan)}</th><th>${esc(l.rem.practice)}</th>` : ''}</tr></thead><tbody>
-      ${rm.planets.map((p) => `<tr><td><b>${esc(T(p.planet))}</b> <span class="small muted">(${p.n === c.moolank.value ? esc(l.moolank) : ''}${p.n === c.moolank.value && p.n === c.bhagyank.value ? ' · ' : ''}${p.n === c.bhagyank.value ? esc(l.bhagyank) : ''} ${p.n})</span></td><td>${esc(T(p.weekday))}</td><td>${p.colours.slice(0, 3).map(sw).join('')}</td>${vedic ? `<td class="small">${esc(p.daan[lang])}</td><td class="small">${esc(p.practice[lang])}${p.mantra ? ` <span class="muted">· ${esc(l.rem.mantra)}: ${esc(p.mantra)}</span>` : ''}</td>` : ''}</tr>`).join('')}
+      ${rm.planets.map((p) => `<tr><td><b>${esc(T(p.planet))}</b> <span class="small muted">(${p.n === c.moolank.value ? esc(l.moolank) : ''}${p.n === c.moolank.value && p.n === c.bhagyank.value ? ' · ' : ''}${p.n === c.bhagyank.value ? esc(l.bhagyank) : ''} ${p.n})</span></td><td>${esc(T(p.weekday))}</td><td>${p.colours.slice(0, 3).map(sw).join('')}</td>${vedic ? `<td class="small">${esc(p.daan[lang])}</td><td class="small">${esc(p.practice[lang])}${p.mantra ? ` <span class="muted">· ${esc(l.rem.mantra)}: ${esc(T(p.mantra))}</span>` : ''}</td>` : ''}</tr>`).join('')}
     </tbody></table>
     <div class="box watch" style="margin-top:4mm"><div class="bt">${esc(l.rem.safetyH)}</div><ul class="lst" style="margin-top:1mm">${SAFETY.map((x) => `<li>${esc(x[lang])}</li>`).join('')}</ul></div>
+  </section>`;
+
+  // ---------- Best career path ----------
+  const cr = r.career;
+  const CL = lang === 'hi'
+    ? { dir: 'जीवन दिशा', talent: 'प्राकृतिक प्रतिभा', fields: 'सबसे उपयुक्त करियर क्षेत्र', field: 'करियर क्षेत्र', why: 'क्यों उपयुक्त', match: 'मेल', talents: 'स्वाभाविक क्षमताएँ', subjects: 'इन विषयों को प्रोत्साहित करें', apt: 'लो शू ग्रिड से विशेष योग्यता', nurture: 'उम्र के अनुसार कैसे निखारें', build: 'जल्दी विकसित करने योग्य कौशल (अनुपस्थित अंक)', keep: 'ध्यान रखें', final: 'अंक केवल स्वाभाविक झुकाव दिखाते हैं; अंतिम करियर चयन बच्चे की रुचि, योग्यता और शिक्षा पर आधारित होना चाहिए। दबाव न डालें – मार्गदर्शन करें।' }
+    : { dir: 'Life direction', talent: 'Natural talent', fields: 'Best career fields', field: 'Career field', why: 'Why it suits', match: 'Match', talents: 'Natural strengths', subjects: 'Subjects to encourage', apt: 'Special aptitude from the Lo Shu grid', nurture: 'How to nurture it – age by age', build: 'Skills to build early (missing numbers)', keep: 'Keep in mind', final: 'Numbers show natural inclinations only; the final career choice should follow your child’s interests, abilities and education. Guide, never force.' };
+  const sCareer = `<section class="page">${secHead(no('career'), l.sec.career)}<p class="intro">${esc(l.secD.career)}</p>
+    <div class="two">
+      <div class="box strength"><div class="bt">${esc(CL.dir)} – ${esc(l.bhagyank)} ${cr.primary}</div><p>${esc(cr.theme[lang])}</p></div>
+      <div class="box advice"><div class="bt">${esc(CL.talent)} – ${esc(l.moolank)} ${cr.secondary}</div><p>${esc((cr.secondaryTheme ?? cr.theme)[lang])}</p></div>
+    </div>
+    <h3 class="sub">${esc(CL.fields)}</h3>
+    <table class="ftab"><thead><tr><th>#</th><th>${esc(CL.field)}</th><th>${esc(CL.why)}</th><th>${esc(CL.match)}</th></tr></thead><tbody>
+      ${cr.fields.map((f, i) => `<tr${i < 3 ? ' class="rk-row top"' : ''}><td class="big">${i + 1}${i === 0 ? ' <span class="star">★</span>' : ''}</td><td><b>${esc(f.label[lang])}</b></td><td class="small">${esc(f.why[lang])}</td><td><span class="scb" style="color:${scoreColour(f.score, t)}">${f.score}</span></td></tr>`).join('')}
+    </tbody></table>
+    <div class="two" style="margin-top:3mm">
+      <div class="stat"><div class="k">${esc(CL.talents)}</div><p style="margin:1mm 0 0">${esc(cr.talents[lang])}</p></div>
+      <div class="stat"><div class="k">${esc(CL.subjects)}</div><p style="margin:1mm 0 0">${esc(cr.subjects[lang])}</p></div>
+    </div>
+    ${cr.aptitudes.length ? `<div class="box strength" style="margin-top:3mm"><div class="bt">${esc(CL.apt)}</div><ul class="lst" style="margin-top:1mm">${cr.aptitudes.map((x) => `<li>${esc(x[lang])}</li>`).join('')}</ul></div>` : ''}
+    ${cr.balance ? `<p class="small" style="margin-top:2.5mm">${esc(cr.balance[lang])}</p>` : ''}
+    <h3 class="sub">${esc(CL.nurture)}</h3>
+    <div class="grow">${cr.nurture.map((x, i) => `<div class="box ${['strength', 'advice', 'remedy'][i]}"><div class="bt">${esc(x.age[lang])}</div><p>${esc(x.text[lang])}</p></div>`).join('')}</div>
+    ${cr.build.length ? `<h3 class="sub">${esc(CL.build)}</h3><ul class="lst">${cr.build.map((x) => `<li><b>${x.n}</b> – ${esc(x.text[lang])}</li>`).join('')}</ul>` : ''}
+    <div class="box watch" style="margin-top:3mm"><div class="bt">${esc(CL.keep)}</div><p>${esc(cr.avoid[lang])}</p><p class="small" style="margin-top:1mm">${esc(CL.final)}</p></div>
   </section>`;
 
   // ---------- About + services CTA ----------
@@ -424,7 +454,7 @@ export function buildBabyReportHtml(r: BabyNameResult, t: PdfTheme, b: Branding,
     </div>
     <p class="disc">${esc(l.disclaimer)} <b>${esc(l.madeLine(expert))}.</b></p></section>`;
 
-  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${baseCss(t, lang)}${css(t)}${guideCss(t)}${servicesCss(t)}</style></head><body>${summary}${sBirth}${sBlue}${sCur}${sRank}${sTop}${sRun}${sNick}${sFam}${sBank}${sRem}${sCer}${sAbout}</body></html>`;
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${baseCss(t, lang)}${css(t)}${guideCss(t)}${servicesCss(t)}</style></head><body>${summary}${sBirth}${sBlue}${sCur}${sRank}${sTop}${sRun}${sNick}${sFam}${sBank}${sRem}${sCareer}${sCer}${sAbout}</body></html>`;
 }
 
 /** Full-page cover – same design family as the signature and mobile report covers, with the recommended name as letter tiles. */

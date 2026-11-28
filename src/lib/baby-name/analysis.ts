@@ -9,6 +9,7 @@
  * Also: lucky name numbers and letters, and good dates for the naming ceremony.
  * Runs in the browser (admin preview) and on the server (PDF). Nothing is saved.
  */
+import { babyCareer } from './career';
 import {
   analyseDob, analyseNameSystem, nameCompatibilityScore, normalizeName, NumerologyInputError, parseDate, reduce, suggestNameCorrections, sumDigits, todayIST, toIso,
   type DateParts, type NameSuggestion,
@@ -396,6 +397,8 @@ export function analyseBabyName(input: BabyNameInput) {
     lucky, letterGroups,
     family, suggestions, ranked, top, bestFamily, invalid,
     nameFor, current, correction, nickname, remedies,
+    /** Best career path for the child from Bhagyank, Moolank, the recommended name number and the Lo Shu grid. */
+    career: babyCareer({ moolank: m, bhagyank: b, nameNumber: top[0] ? (top[0].fullNum ?? top[0].firstNum).single : null, gridNumbers: [1, 2, 3, 4, 5, 6, 7, 8, 9].filter((x) => !missing.includes(x)), missing }),
     ceremony,
     guidance: { weekday: mp.weekday, colours: mp.colours, mantra: mp.mantra.beej, bColours: bp.colours },
   };

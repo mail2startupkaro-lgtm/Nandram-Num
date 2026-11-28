@@ -4,6 +4,7 @@ import { payments } from '@/lib/db/schema';
 import { isCashfreeOrder } from '@/lib/billing/cashfree';
 import { isRazorpayOrder } from '@/lib/billing/razorpay';
 import { syncCashfreeOrder, syncRazorpayFromGateway } from '@/lib/billing/checkout';
+import { reportSiteError } from '@/lib/server/site-errors';
 
 /**
  * Checks and reconciles any recent 'created' payments for a user against the payment gateways.
@@ -42,6 +43,7 @@ export async function syncPendingUserPayments(userId: string, opts: { force?: bo
       } catch (err) {
         // Individual order check failure should not block other checks or the page request
         console.warn(`[SyncPending] Failed to sync order ${orderId}:`, err instanceof Error ? err.message : err);
+        reportSiteError({ source: 'payment', level: 'warning', route: 'payment status check', message: `Could not confirm a pending payment with the gateway: ${err instanceof Error ? err.message : String(err)}` });
       }
     }
   } catch (err) {

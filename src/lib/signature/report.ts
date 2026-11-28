@@ -12,12 +12,13 @@ import { esc, gaugeSvg, mandala, monogram, numberMedallion, ringSvg, scoreColour
 import { baseCss } from '@/lib/pdf/template';
 import { COLOUR_HEX, DEFAULT_BRANDING, resolveTheme, type Branding, type PdfTheme, type ThemeId } from '@/lib/pdf/themes';
 import { renderSheetPdf } from '@/lib/pdf/render';
-import { compoundMeaningHi, dayHi, optionLabelHi, professionHi } from './hindi';
+import { compoundMeaningHi, dayHi, GOAL_HI, monthsHi, optionLabelHi, professionHi } from './hindi';
 import { humaniseDeep } from './humanise';
 import { tr } from '@/lib/i18n/hi-terms';
 import type { AgentResult, SignatureAnalysis } from './agent';
 import type { LetterValue, SignatureNumbers } from './numbers';
 import { guideCss, readingGuideHtml, servicesCss, servicesCtaHtml } from '@/lib/report/guide-cta';
+import { qaHtml, type QA } from '@/lib/report/client-questions';
 
 export interface SignatureReportData {
   client: { fullName: string; signatureName?: string; dob: string; gender?: string; profession: string; goals: string[]; language: 'en' | 'hi' | 'hinglish' };
@@ -29,6 +30,8 @@ export interface SignatureReportData {
   annotated?: string;
   samples?: string[];
   expertNote?: string;
+  /** The client's own questions, answered (printed in the practice section). */
+  questions?: QA[];
 }
 
 /** Contact details printed on the last page. Override with env vars for white-label use. */
@@ -51,7 +54,7 @@ const L = {
     s1: 'What your signature shows', s1d: 'I measured each feature from your sample and then checked it by eye. If you gave more than one sample, they were compared with each other.',
     marks: 'Marks on the sample', markList: ['Gold line: direction of the signature', 'Blue box: first letter', 'Red line: a stroke cutting through the name', 'Green line: underline', 'Purple arrow: the last stroke', 'Red circle: a dot or full stop'],
     feature: 'Feature', observed: 'What I see', meaning: 'What it indicates', impact: 'Effect', conf: 'Certainty', supports: 'Helps', neutral: 'Neutral', watch: 'Needs attention',
-    high: 'High', medium: 'Medium', low: 'Low', expert: 'Checked by hand', measured: 'Measured', samples: 'Samples received',
+    high: 'High', medium: 'Medium', low: 'Low', expert: 'Checked by hand', measured: 'Measured', ai: 'Visual check', fused: 'Measured + visual check', samples: 'Samples received',
     s2: 'The numbers behind your signature', s2d: 'Your signature carries the number of the name you write. Below, that number is compared with your Moolank (birth day) and Bhagyank (full date of birth), using the Chaldean letter values.',
     number: 'Number', value: 'Value', planet: 'Planet', toB: 'With Bhagyank', toM: 'With Moolank', nature: 'Nature', friendly: 'Numbers that suit you', avoid: 'Numbers to keep away from',
     friend: 'Friendly', neutralR: 'Neutral', enemy: 'Not friendly', favourable: 'Favourable', mixed: 'Mixed', unfavourable: 'Unfavourable',
@@ -86,7 +89,7 @@ const L = {
     s1: 'आपका हस्ताक्षर क्या दर्शाता है', s1d: 'मैंने आपके नमूने से हर विशेषता को मापा और फिर आँख से जाँचा। एक से अधिक नमूने होने पर उन्हें आपस में मिलाया गया।',
     marks: 'नमूने पर निशान', markList: ['सुनहरी रेखा: हस्ताक्षर की दिशा', 'नीला बॉक्स: पहला अक्षर', 'लाल रेखा: नाम को काटती रेखा', 'हरी रेखा: नीचे की रेखा', 'बैंगनी तीर: आख़िरी स्ट्रोक', 'लाल घेरा: बिंदु या पूर्ण विराम'],
     feature: 'विशेषता', observed: 'क्या दिखा', meaning: 'क्या दर्शाता है', impact: 'प्रभाव', conf: 'निश्चितता', supports: 'सहायक', neutral: 'सामान्य', watch: 'ध्यान दें',
-    high: 'उच्च', medium: 'मध्यम', low: 'कम', expert: 'हाथ से जाँचा', measured: 'मापा गया', samples: 'प्राप्त नमूने',
+    high: 'उच्च', medium: 'मध्यम', low: 'कम', expert: 'हाथ से जाँचा', measured: 'मापा गया', ai: 'आँखों से जाँचा', fused: 'मापा और जाँचा गया', samples: 'प्राप्त नमूने',
     s2: 'आपके हस्ताक्षर के पीछे के अंक', s2d: 'हस्ताक्षर में आप जो नाम लिखते हैं, उसका अपना अंक होता है। नीचे उस अंक की तुलना आपके मूलांक (जन्म का दिन) और भाग्यांक (पूरी जन्म तिथि) से की गई है, कैल्डियन अक्षर-मानों के अनुसार।',
     number: 'अंक', value: 'मान', planet: 'ग्रह', toB: 'भाग्यांक से', toM: 'मूलांक से', nature: 'प्रकृति', friendly: 'आपके अनुकूल अंक', avoid: 'जिन अंकों से बचें',
     friend: 'मित्र', neutralR: 'सम', enemy: 'शत्रु', favourable: 'शुभ', mixed: 'मिश्रित', unfavourable: 'अशुभ',
@@ -294,7 +297,7 @@ export function buildSignatureReportHtml(d: SignatureReportData, t: PdfTheme, b:
   const summary = `
   <div class="kicker">${esc(l.sub)}</div><h1 class="ttl">${esc(l.summary)}</h1>
   <div class="meta"><div><b>${esc(l.client)}</b>${esc(d.client.fullName)}</div><div><b>${esc(l.dob)}</b>${esc(dobText(d.client.dob))}</div><div><b>${esc(l.date)}</b>${esc(fmtDate(d.generatedAt, lang))}</div>
-    <div><b>${esc(l.profession)}</b>${esc(d.client.profession)}</div><div><b>${esc(l.signedAs)}</b>${esc(d.client.signatureName?.trim() || d.client.fullName)}</div><div><b>${esc(l.goals)}</b>${esc(d.client.goals.join(', ') || '-')}</div></div>
+    <div><b>${esc(l.profession)}</b>${esc(lang === 'hi' ? professionHi(d.client.profession) : d.client.profession)}</div><div><b>${esc(l.signedAs)}</b>${esc(d.client.signatureName?.trim() || d.client.fullName)}</div><div><b>${esc(l.goals)}</b>${esc(d.client.goals.map((g) => (lang === 'hi' ? GOAL_HI[g] ?? g : g)).join(', ') || '-')}</div></div>
   ${main ? `<div class="sigcard"><span class="tag">${esc(l.sig)}</span><img src="${esc(main)}" alt=""></div>` : ''}
   <div class="dash"><div class="center">${ringSvg(a.overallScore, t, l.overall, 160)}</div>
     <div class="verdict"><h2>${esc(a.headline)}</h2>
@@ -317,7 +320,7 @@ export function buildSignatureReportHtml(d: SignatureReportData, t: PdfTheme, b:
     ${d.annotated ? `<div class="kicker" style="margin-bottom:1mm">${esc(l.marks)}</div><div class="legend">${l.markList.map((x) => `<span>${esc(x)}</span>`).join('')}</div>` : ''}
     ${d.samples && d.samples.length > 1 ? `<div class="small muted" style="margin-bottom:1mm">${esc(l.samples)}: ${d.samples.length}</div><div class="samples">${d.samples.map((x) => `<img src="${esc(x)}" alt="">`).join('')}</div>` : ''}
     <table class="ftab flow"><thead><tr><th>${esc(l.feature)}</th><th>${esc(l.observed)}</th><th>${esc(l.meaning)}</th><th>${esc(l.impact)}</th><th>${esc(l.conf)}</th></tr></thead><tbody>
-    ${a.observations.map((o) => { const src = o.featureId ? bySource.get(o.featureId) : undefined; return `<tr><td>${esc(o.feature)}</td><td>${esc(o.observed)}</td><td>${esc(o.meaning)}</td><td>${impPill(o.impact, l)}</td><td>${confDots(o.confidence, l)}${src ? `<span class="src">${esc(src.by === 'expert' ? l.expert : l.measured)}</span>` : ''}</td></tr>`; }).join('')}
+    ${a.observations.map((o) => { const src = o.featureId ? bySource.get(o.featureId) : undefined; return `<tr><td>${esc(o.feature)}</td><td>${esc(o.observed)}</td><td>${esc(o.meaning)}</td><td>${impPill(o.impact, l)}</td><td>${confDots(o.confidence, l)}${src ? `<span class="src">${esc(l[src.by] ?? l.measured)}</span>` : ''}</td></tr>`; }).join('')}
     </tbody></table></section>`;
 
   // ---------- 2. The numbers behind your signature ----------
@@ -337,7 +340,7 @@ export function buildSignatureReportHtml(d: SignatureReportData, t: PdfTheme, b:
       <div class="panel"><b class="small">${esc(l.avoid)}</b><div class="chips" style="margin-top:1.5mm">${(n.avoid.length ? n.avoid : ['-']).map((x) => `<span class="chip bad">${num(x)}</span>`).join('')}</div></div></div>
     ${n.letters ? `<h3 class="sub">${esc(l.lettersH)}</h3><p class="intro" style="margin-bottom:2.5mm">${esc(l.lettersD)}</p>
       ${lettersRow(`${l.lSigned}: ${n.signName.text}`, n.letters.signed, l)}${n.letters.full.length !== n.letters.signed.length || n.fullName.text !== n.signName.text ? lettersRow(`${l.lFull}: ${n.fullName.text}`, n.letters.full, l) : ''}${n.bestOption && n.letters.best ? lettersRow(`${l.lBest}: ${n.bestOption.text}`, n.letters.best, l) : ''}` : ''}
-    ${py ? `<h3 class="sub">${esc(l.pyH)}</h3><div class="pycard"><div class="center">${numberMedallion(num(py.number), t, 62)}</div><div style="font-size:9.3pt"><b>${esc(l.pyNow(py.number, py.period))}</b> ${esc(PY_NOTE[lang][py.number] ?? '')}<div class="small muted" style="margin-top:1mm">${esc(l.pyNext(py.nextNumber, py.nextFrom))}</div></div></div>` : ''}
+    ${py ? `<h3 class="sub">${esc(l.pyH)}</h3><div class="pycard"><div class="center">${numberMedallion(num(py.number), t, 62)}</div><div style="font-size:9.3pt"><b>${esc(l.pyNow(py.number, lang === 'hi' ? monthsHi(py.period) : py.period))}</b> ${esc(PY_NOTE[lang][py.number] ?? '')}<div class="small muted" style="margin-top:1mm">${esc(l.pyNext(py.nextNumber, lang === 'hi' ? monthsHi(py.nextFrom) : py.nextFrom))}</div></div></div>` : ''}
     </section>`;
 
   // ---------- 3. The best way to sign your name ----------
@@ -377,6 +380,7 @@ export function buildSignatureReportHtml(d: SignatureReportData, t: PdfTheme, b:
   const s7 = `<section class="page">${secHead(7, l.s7)}<p class="intro">${esc(l.trackerD)}</p>
     <div class="grid21">${Array.from({ length: 21 }, (_, i) => `<div><span>${esc(l.day)} ${i + 1}</span></div>`).join('')}</div>
     <h3 class="sub">${esc(l.practice)}</h3>${list(l.practiceTips)}
+    ${d.questions?.length ? qaHtml(d.questions, lang, { primary: t.primary, accent: t.accent, soft: t.soft, newPage: true }) : ''}
     ${d.expertNote ? `<div class="note"><b>${esc(l.expertNote)}:</b> ${esc(d.expertNote)}</div>` : ''}
     <div class="close"><div class="q">“${esc(a.closing)}”</div><div class="sgn">${b.signatureDataUrl ? `<img src="${esc(b.signatureDataUrl)}" style="max-height:14mm;display:block;margin:0 auto -10mm">` : ''}<div class="ln">${esc(expert)}<br><span class="muted">${esc(b.brandName)}</span></div></div></div>
     </section>`;
@@ -427,7 +431,7 @@ export function buildSignatureCoverHtml(d: SignatureReportData, t: PdfTheme, b: 
   const sig = img && img.startsWith('data:image/') ? img : '';
   const photo = b.photoDataUrl ? `<img class="pf-img" src="${esc(b.photoDataUrl)}" alt="">` : `<div class="pf-img pf-mono">${monogram(b.expertName, t, 150, true)}</div>`;
   const site = (contact.website || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
-  const facts = ([[l.dob, dobText(d.client.dob)], [l.date, fmtDate(d.generatedAt, lang)], [l.profession, d.client.profession]] as [string, string][]).filter(([, v]) => v && v.trim());
+  const facts = ([[l.dob, dobText(d.client.dob)], [l.date, fmtDate(d.generatedAt, lang)], [l.profession, lang === 'hi' ? professionHi(d.client.profession) : d.client.profession]] as [string, string][]).filter(([, v]) => v && v.trim());
   const name = d.client.fullName.toLowerCase().replace(/(^|\s)\S/g, (x) => x.toUpperCase());
   const ink = t.coverInk, acc = t.coverAccent;
   return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><style>${baseCss(t, lang)}

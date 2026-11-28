@@ -1,5 +1,6 @@
 'use client';
 /** Admin: Angel Number Finder and Lucky Number Finder (Name + DOB). Runs in the browser; nothing is saved. */
+import { withTitleCase } from '@/lib/report/title-case';
 import * as React from 'react';
 import { Check, Clover, Copy, Printer, Sparkles, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -79,7 +80,7 @@ h1{color:#7a1f2b;margin:0 0 4px}h2{color:#7a1f2b;border-bottom:2px solid #c9a227
 table{width:100%;border-collapse:collapse;margin-top:6px}td,th{border:1px solid #e5d3a1;padding:6px 8px;text-align:left;vertical-align:top;font-size:13.5px}th{background:#fbf5e6}
 .muted{color:#7a6a55;font-size:12px}@media print{body{margin:0 auto}}</style></head><body>${body}</body></html>`;
   const w = window.open('', '_blank'); if (!w) return;
-  w.document.write(html); w.document.close(); setTimeout(() => w.print(), 400);
+  w.document.write(withTitleCase(html)); w.document.close(); setTimeout(() => w.print(), 400);
 }
 
 // ---------------------------------------------------------------- Angel

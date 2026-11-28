@@ -1,5 +1,6 @@
 'use client';
 /** Admin: Name Numerology Calculator. Runs in the browser on the shared engine; nothing is saved. */
+import { withTitleCase } from '@/lib/report/title-case';
 import * as React from 'react';
 import { CaseSensitive, Check, Copy, Plus, Printer, Star, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -281,5 +282,5 @@ h1{color:#7a1f2b;margin:0 0 4px}h2{color:#7a1f2b;border-bottom:2px solid #c9a227
 table{width:100%;border-collapse:collapse;margin-top:6px}td,th{border:1px solid #e5d3a1;padding:5px 7px;text-align:left;vertical-align:top;font-size:13px}th{background:#fbf5e6}
 table.lt{width:auto;margin:4px 0}table.lt td{text-align:center;min-width:24px;padding:3px 5px}table.lt td.v{background:#fbf0cf}table.lt td.tot{text-align:left;border:none;padding-left:10px;font-size:12px}
 tr.best td{background:#fbf0cf}@media print{body{margin:0 auto}h2{break-after:avoid}table{break-inside:avoid}}${extrasCss(ex)}</style></head><body>${body}</body></html>`;
-  w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 600);
+  w.document.open(); w.document.write(withTitleCase(html)); w.document.close(); setTimeout(() => w.print(), 600);
 }

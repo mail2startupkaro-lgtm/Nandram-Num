@@ -4,6 +4,8 @@
  * (Pythagoras Square). Same flow as the other generators: fill (or load from a paid order) → generate → read → Print / Save PDF
  * with the branded cover, in English or Hindi. Nothing is stored.
  */
+import { ClientQuestionsField, fetchAnswers, orderQuestions } from '@/components/admin/client-questions-field';
+import { withTitleCase } from '@/lib/report/title-case';
 import * as React from 'react';
 import { ClipboardList, Grid3x3, Loader2, Printer, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,7 +14,8 @@ import { api, ApiError } from '@/lib/client/api';
 import { SITE_NAME } from '@/lib/seo/site';
 import { blockHtml, escHtml as esc, fmtDob, type Blk, type WrittenReport } from '@/lib/report/blocks';
 import type { Order } from '@/components/admin/services-admin';
-import { contentsAndGuide, endCta, extrasCss, type CoverWithExtras } from '@/lib/report/print-extras';
+import type { CoverWithExtras } from '@/lib/report/print-extras';
+import { chartCoverRequest, chartReportHtml } from '@/lib/report/print-html';
 
 export type ChartKind = 'destiny' | 'psychomatrix';
 interface Result { kind: ChartKind; name: string; dob: string; report: { en: WrittenReport; hi: WrittenReport }; generatedAt: string }
@@ -41,37 +44,19 @@ function BlockView({ b }: { b: Blk }) {
   }
 }
 
-async function printReport(r: Result, lang: 'en' | 'hi', by: string) {
+async function printReport(r: Result, lang: 'en' | 'hi', by: string, questions = '') {
   const w = window.open('', '_blank'); if (!w) return;
-  const R = r.report[lang], hi = lang === 'hi', m = META[r.kind];
-  w.document.write(`<p style="font-family:Georgia,serif;padding:40px;color:#7a1f2b">${hi ? 'रिपोर्ट तैयार हो रही है…' : 'Preparing the report…'}</p>`);
-  const date = new Date(r.generatedAt).toLocaleDateString(hi ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
-  const tiles = R.sections[0]?.blocks.find((b): b is Extract<Blk, { k: 'tiles' }> => b.k === 'tiles')?.items ?? [];
-  const cover = await api<CoverWithExtras>('/api/admin/report-cover', { method: 'POST', json: {
-    extras: r.kind, title: R.title.slice(0, 80), subtitle: R.subtitle.slice(0, 120), clientName: r.name, preparedBy: by, lang,
-    facts: [[hi ? 'जन्म तिथि' : 'Date of birth', fmtDob(r.dob, lang)], ...tiles.slice(0, 2).map((t) => [t.label.slice(0, 40), t.value.slice(0, 120)]), [hi ? 'रिपोर्ट तिथि' : 'Report date', date]],
-  } }).catch(() => null);
-  const html = `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><title>${esc(R.title)} – ${esc(r.name)}</title><style>
-@page{size:A4;margin:16mm 14mm}${cover ? '@page:first{margin:0}' : ''}body{font-family:Georgia,'Noto Serif Devanagari',serif;color:#2a1a10;margin:0;line-height:1.55;-webkit-print-color-adjust:exact;print-color-adjust:exact}.doc{max-width:860px;margin:0 auto;padding:0 18px}
-h1{color:#7a1f2b;margin:0;font-size:28px}h2{color:#7a1f2b;border-bottom:2px solid #c9a227;padding-bottom:4px;margin-top:26px;font-size:20px;break-after:avoid}h3{color:#8a6d12;font-size:15px;margin:14px 0 4px;break-after:avoid}
-.head{border:3px double #c9a227;border-radius:14px;padding:22px 26px;margin:18px 0 8px;background:linear-gradient(135deg,#fffaf0,#fbf1d9)}.brand{letter-spacing:.3em;text-transform:uppercase;font-size:11px;color:#8a6d12;margin:0 0 6px}
-.k{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:12px 0}.k div{border:1px solid #e5d3a1;border-radius:8px;padding:8px;text-align:center;background:#fff;font-size:11px}.k b{display:block;font-size:20px;color:#7a1f2b}
-table{border-collapse:collapse;width:100%;font-size:12.5px;margin:8px 0}td,th{border:1px solid #e5d3a1;padding:5px 7px;text-align:left;vertical-align:top}th{background:#fbf1d9}tr{break-inside:avoid}tr.hl td{background:#f6e2a8;font-weight:700}
-.tip{border-left:4px solid #c9a227;background:#fbf1d9;padding:8px 12px;border-radius:6px}.chart{margin:10px auto;max-width:520px;text-align:center;break-inside:avoid}.chart figcaption{font-size:12px;color:#7a6a55}
-.foot{margin-top:30px;border-top:1px solid #e5d3a1;padding-top:8px;font-size:11px;color:#7a6a55}
-${extrasCss(cover?.extras)}${cover?.css ?? ''}</style></head><body>${cover?.html ?? ''}<main class="doc">
-<div class="head"><p class="brand">${esc(SITE_NAME)} · ${esc(m.brand[lang])}</p><h1>${esc(R.title)}</h1><p style="margin:6px 0 0"><b style="font-size:18px">${esc(r.name)}</b> · ${esc(R.subtitle)}<br><small>${hi ? 'द्वारा तैयार' : 'Prepared by'} ${esc(by)} · ${date}</small></p></div>
-${contentsAndGuide(R.sections.map((s) => s.title), lang, cover?.extras)}
-${R.sections.map((s, i) => `<section><h2>${i + 1}. ${esc(s.title)}</h2>${s.blocks.map(blockHtml).join('')}</section>`).join('')}
-${endCta(cover?.extras)}
-<p class="foot">${hi ? 'द्वारा तैयार' : 'Prepared by'} ${esc(by)} · ${esc(SITE_NAME)}. ${hi ? 'अंक ज्योतिष पारंपरिक मार्गदर्शन है; यह चिकित्सा, वित्तीय, कानूनी या पेशेवर सलाह का विकल्प नहीं है।' : 'Numerology is traditional guidance; it does not replace medical, financial, legal or professional advice.'}</p></main></body></html>`;
-  w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 800);
+  w.document.write(`<p style="font-family:Georgia,serif;padding:40px;color:#7a1f2b">${lang === 'hi' ? 'रिपोर्ट तैयार हो रही है…' : 'Preparing the report…'}</p>`);
+  const [cover, qa] = await Promise.all([api<CoverWithExtras>('/api/admin/report-cover', { method: 'POST', json: chartCoverRequest(r, lang, by) }).catch(() => null), fetchAnswers({ questions, name: r.name, dob: r.dob, lang })]);
+  const html = chartReportHtml(r, lang, by, cover, qa);
+  w.document.open(); w.document.write(withTitleCase(html)); w.document.close(); setTimeout(() => w.print(), 800);
 }
 
 export function ChartReportStudio({ kind, preloadedOrder, onClearPreloadedOrder }: { kind: ChartKind; preloadedOrder?: Order | null; onClearPreloadedOrder?: () => void }) {
   const M = META[kind];
   const [f, setF] = React.useState({ name: '', dob: '', lang: 'en' as 'en' | 'hi', preparedBy: 'Acharya Nandram' });
   const [fromOrder, setFromOrder] = React.useState<string | null>(null);
+  const [cq, setCq] = React.useState('');
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState('');
   const [res, setRes] = React.useState<Result | null>(null);
@@ -80,7 +65,7 @@ export function ChartReportStudio({ kind, preloadedOrder, onClearPreloadedOrder 
   React.useEffect(() => {
     if (!preloadedOrder) return;
     const dt = preloadedOrder.details ?? {};
-    setF((x) => ({ ...x, name: dt.clientName ?? dt.currentName ?? '', dob: dt.dob ?? '' }));
+    setF((x) => ({ ...x, name: dt.clientName ?? dt.currentName ?? '', dob: dt.dob ?? '' })); setCq(orderQuestions(dt));
     setFromOrder(`${dt.clientName ?? 'Client'} · ordered ${new Date(preloadedOrder.createdAt).toLocaleDateString('en-IN')}${dt.questions ? ` · questions: ${dt.questions}` : ''}`);
     setRes(null); onClearPreloadedOrder?.();
   }, [preloadedOrder]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -109,6 +94,7 @@ export function ChartReportStudio({ kind, preloadedOrder, onClearPreloadedOrder 
         <Field label="Date of birth" htmlFor={`cr-d-${kind}`} required><Input id={`cr-d-${kind}`} type="date" value={f.dob} onChange={(e) => setF({ ...f, dob: e.target.value })} required /></Field>
         <Field label="Report language" htmlFor={`cr-l-${kind}`}><Select id={`cr-l-${kind}`} value={f.lang} onChange={(e) => setF({ ...f, lang: e.target.value as 'en' | 'hi' })}><option value="en">English</option><option value="hi">हिंदी</option></Select></Field>
         <Field label="Prepared by" htmlFor={`cr-by-${kind}`}><Input id={`cr-by-${kind}`} value={f.preparedBy} onChange={(e) => setF({ ...f, preparedBy: e.target.value })} /></Field>
+        <div className="sm:col-span-2 lg:col-span-4"><ClientQuestionsField id={`cr-cq-${kind}`} value={cq} onChange={setCq} /></div>
         {err && <p className="text-sm text-danger sm:col-span-2 lg:col-span-4" role="alert">{err}</p>}
         <div className="sm:col-span-2 lg:col-span-4"><Button type="submit" variant="gold" size="lg" disabled={busy}>{busy ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Generating…</> : 'Generate report'}</Button></div>
       </form>
@@ -119,7 +105,7 @@ export function ChartReportStudio({ kind, preloadedOrder, onClearPreloadedOrder 
             <div><h3 className="font-serif text-2xl font-semibold">{R.title}</h3><p className="text-sm text-muted-foreground">{res.name} · {R.subtitle}</p></div>
             <div className="flex gap-2">
               <Select aria-label="Report language" value={f.lang} onChange={(e) => setF({ ...f, lang: e.target.value as 'en' | 'hi' })} className="w-32"><option value="en">English</option><option value="hi">हिंदी</option></Select>
-              <Button type="button" size="sm" onClick={() => printReport(res, f.lang, f.preparedBy || 'Acharya Nandram')}><Printer className="mr-1 h-4 w-4" />Print / Save PDF</Button>
+              <Button type="button" size="sm" onClick={() => printReport(res, f.lang, f.preparedBy || 'Acharya Nandram', cq)}><Printer className="mr-1 h-4 w-4" />Print / Save PDF</Button>
             </div>
           </div>
           {R.sections.map((s, i) => (

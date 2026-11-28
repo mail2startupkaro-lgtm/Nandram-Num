@@ -66,10 +66,43 @@ export const FEATURES: Feature[] = [
     { id: 'open', label: 'Open (not enclosed)', meaning: 'Open to people, ideas and opportunities.', impact: 'neutral' },
     { id: 'circled', label: 'Enclosed in a circle or loop', meaning: 'Self-protective and guarded; traditionally believed to keep opportunities and support out.', impact: 'watch', fix: 'Do not draw a circle or loop around the signature – leave it open on all sides.' },
   ] },
+  { id: 'curve', label: 'Shape of the line', options: [
+    { id: 'even', label: 'Even all the way', meaning: 'Effort stays steady from the start of a task to its end.', impact: 'positive' },
+    { id: 'arched', label: 'Rises, then falls (arch)', meaning: 'Starts with enthusiasm but energy or confidence may drop before the result comes; in Indian practice an arched signature is believed to bring early gains that do not last.', impact: 'watch', fix: 'Keep the line rising right to the last letter; do not let the second half bend down.' },
+    { id: 'dip', label: 'Sinks, then recovers', meaning: 'Goes through a low phase in the middle of things but recovers and finishes well.', impact: 'neutral' },
+    { id: 'dropEnd', label: 'Drops at the end', meaning: 'The last part falls away: tasks may lose support or be finished in a tired mood.', impact: 'watch', fix: 'Write the last letters on the same rising line as the rest of the name.' },
+  ] },
+  { id: 'zones', label: 'Upper and lower zones', options: [
+    { id: 'balanced', label: 'Balanced', meaning: 'Ideas, daily life and practical needs are kept in good balance.', impact: 'positive' },
+    { id: 'upper', label: 'Tall upper strokes', meaning: 'Strong ideals, plans and ambition; the mind is often on the bigger picture.', impact: 'neutral' },
+    { id: 'lower', label: 'Long lower strokes', meaning: 'Practical, physical and money-minded; values comfort and security.', impact: 'neutral' },
+  ] },
+  { id: 'loops', label: 'Loops and curves', options: [
+    { id: 'rounded', label: 'Many round loops', meaning: 'Warm, imaginative and emotional; relationships matter a lot.', impact: 'positive' },
+    { id: 'balanced', label: 'Some loops', meaning: 'Feeling and reason are well balanced.', impact: 'neutral' },
+    { id: 'angular', label: 'Few loops, angular', meaning: 'Practical, direct and decisive; may come across as strict.', impact: 'neutral' },
+  ] },
+  { id: 'progression', label: 'Letter size from start to end', options: [
+    { id: 'even', label: 'Same size throughout', meaning: 'Consistent effort and a steady approach.', impact: 'positive' },
+    { id: 'shrinking', label: 'Gets smaller towards the end', meaning: 'Tact and caution, but confidence or energy may fade before work is finished.', impact: 'watch', fix: 'Keep the last letters as tall as the middle ones.' },
+    { id: 'growing', label: 'Gets larger towards the end', meaning: 'Frank and open; can become impatient as things go on.', impact: 'neutral' },
+  ] },
+  { id: 'fluency', label: 'Flow of writing', options: [
+    { id: 'fluent', label: 'Fluent, few pen lifts', meaning: 'Quick thinking and confident action.', impact: 'positive' },
+    { id: 'steady', label: 'A few pen lifts', meaning: 'Thinks before acting; careful and methodical.', impact: 'neutral' },
+    { id: 'broken', label: 'Many pen lifts', meaning: 'Hesitation or extra caution before decisions; ideas may come in pieces.', impact: 'watch', fix: 'Practise writing the name in one or two smooth movements.' },
+  ] },
+  { id: 'ink', label: 'Ink colour', options: [
+    { id: 'blue', label: 'Blue ink', meaning: 'Traditionally preferred for signatures: calm, trust and steady growth.', impact: 'positive' },
+    { id: 'black', label: 'Black ink', meaning: 'Formal and firm; correct for official papers, though many practitioners prefer blue for growth.', impact: 'neutral' },
+    { id: 'red', label: 'Red ink', meaning: 'Traditionally avoided for signatures: linked with conflict, debt and loss.', impact: 'watch', fix: 'Sign in blue (or black for official papers), never in red.' },
+    { id: 'green', label: 'Green ink', meaning: 'Linked with Mercury: business and communication; unusual for official documents.', impact: 'neutral' },
+    { id: 'other', label: 'Other colour', meaning: 'An unusual ink colour; it is better to keep to blue or black on documents.', impact: 'neutral' },
+  ] },
 ];
 
 /** How much each feature counts in the graphology score (signature-correction practice gives most weight to direction, first letter and cutting strokes). */
-export const FEATURE_WEIGHT: Record<string, number> = { baseline: 1.4, first: 1.2, underline: 1.3, ending: 1.0, legibility: 0.9, slant: 0.9, dots: 0.8, enclosure: 0.8, size: 0.6, spacing: 0.5, pressure: 0.5 };
+export const FEATURE_WEIGHT: Record<string, number> = { baseline: 1.4, first: 1.2, underline: 1.3, ending: 1.0, curve: 1.0, legibility: 0.9, slant: 0.9, dots: 0.8, enclosure: 0.8, size: 0.6, progression: 0.6, ink: 0.6, spacing: 0.5, pressure: 0.5, fluency: 0.5, zones: 0.4, loops: 0.3 };
 
 export const featureLabel = (fid: string, oid: string) => {
   const f = FEATURES.find((x) => x.id === fid); const o = f?.options.find((x) => x.id === oid);

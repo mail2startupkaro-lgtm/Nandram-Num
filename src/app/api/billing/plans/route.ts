@@ -19,5 +19,5 @@ export async function GET(req: Request) {
         return { code, name, description, pricePaise, intervalDays, credits, features: rest, price: planPrice({ code, pricePaise, credits, features }, currency) };
       }),
     }, 200, { vary: 'cookie, x-vercel-ip-country' });
-  } catch (e) { return errorResponse(e); }
+  } catch (e) { return errorResponse(e, req); }
 }

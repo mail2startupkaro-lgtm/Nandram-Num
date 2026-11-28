@@ -25,7 +25,7 @@ const en = {
   sec: {
     birth: 'Your baby’s birth numbers', blueprint: 'Lucky name blueprint', ranking: 'All names compared', top: 'The recommended name in depth',
     runners: 'Second and third choices', family: 'Family name harmony', bank: 'More names that suit your baby', ceremony: 'Naming ceremony and guidance', about: 'About your numerologist',
-    current: 'Your baby’s current name – check and correction', nickname: 'Formal name and nickname', remedies: 'Remedies for your child’s development',
+    current: 'Your baby’s current name – check and correction', nickname: 'Formal name and nickname', remedies: 'Remedies for your child’s development', career: 'Best career path for your child',
   },
   secD: {
     birth: 'Every name is checked against two numbers from the date of birth: the Moolank (from the day) shapes nature and habits, and the Bhagyank (from the full date) shows the path of life. A good name is a friend of both.',
@@ -39,6 +39,7 @@ const en = {
     current: 'Your baby already has a name. Here I check it with the same method as every other name and tell you plainly whether to keep it, correct its spelling, or choose a new name.',
     nickname: 'The formal name goes on the birth certificate and school records. The nickname is the name your child hears many times every day at home, so its sound works on the child daily. Both should be friends of the birth numbers and of each other.',
     remedies: 'Simple, safe practices chosen from your baby’s numbers to support health, learning and a happy, confident nature. Small daily habits work better than big one-time rituals.',
+    career: 'The work your child is naturally made for, worked out from the Bhagyank (life direction), the Moolank (natural talent), the recommended name number and the Lo Shu grid. Numbers show natural inclinations – observe your child, encourage these strengths and let their own interests decide.',
   },
   nature: 'Nature (from Moolank)', path: 'Life path (from Bhagyank)', mb: 'Moolank and Bhagyank',
   grid: 'Lo Shu grid from the date of birth', missing: 'Missing numbers', repeated: 'Repeated numbers', none: 'None',
@@ -139,7 +140,7 @@ const hi: Lab = {
   sec: {
     birth: 'आपके शिशु के जन्म अंक', blueprint: 'शुभ नाम का खाका', ranking: 'सभी नामों की तुलना', top: 'सुझाया गया नाम – विस्तार से',
     runners: 'दूसरा और तीसरा विकल्प', family: 'परिवार के नामों से तालमेल', bank: 'आपके शिशु के लिए और उपयुक्त नाम', ceremony: 'नामकरण और मार्गदर्शन', about: 'आपके अंक ज्योतिषी के बारे में',
-    current: 'शिशु का वर्तमान नाम – जाँच और सुधार', nickname: 'औपचारिक नाम और निकनेम', remedies: 'बच्चे के विकास के लिए उपाय',
+    current: 'शिशु का वर्तमान नाम – जाँच और सुधार', nickname: 'औपचारिक नाम और निकनेम', remedies: 'बच्चे के विकास के लिए उपाय', career: 'बच्चे के लिए सर्वश्रेष्ठ करियर पथ',
   },
   secD: {
     birth: 'हर नाम को जन्म तिथि के दो अंकों से जाँचा जाता है: मूलांक (जन्म दिन से) स्वभाव और आदतें बनाता है, और भाग्यांक (पूरी तिथि से) जीवन का रास्ता दिखाता है। अच्छा नाम दोनों का मित्र होता है।',
@@ -153,6 +154,7 @@ const hi: Lab = {
     current: 'आपके शिशु का नाम पहले से रखा हुआ है। यहाँ मैंने उसे उसी पद्धति से जाँचा है जिससे बाकी नाम, और साफ़ बताया है कि नाम रखें, उसकी स्पेलिंग सुधारें या नया नाम चुनें।',
     nickname: 'औपचारिक नाम जन्म प्रमाण पत्र और स्कूल के रिकॉर्ड में जाता है। निकनेम वह नाम है जिससे घर में बच्चे को दिन में कई बार पुकारा जाता है, इसलिए उसकी ध्वनि रोज़ बच्चे पर असर करती है। दोनों जन्म अंकों के और आपस में भी मित्र होने चाहिए।',
     remedies: 'शिशु के अंकों से चुने गए सरल और सुरक्षित उपाय, जो स्वास्थ्य, पढ़ाई और ख़ुशमिज़ाज, आत्मविश्वासी स्वभाव में सहायक हैं। बड़े एक-बार के अनुष्ठानों से ज़्यादा छोटी रोज़ की आदतें काम करती हैं।',
+    career: 'बच्चा स्वाभाविक रूप से किस काम के लिए बना है – भाग्यांक (जीवन दिशा), मूलांक (प्राकृतिक प्रतिभा), सुझाए गए नाम के नामांक और लो शू ग्रिड से निकाला गया। अंक स्वाभाविक झुकाव दिखाते हैं – बच्चे को ध्यान से देखें, इन क्षमताओं को प्रोत्साहित करें और अंतिम निर्णय उसकी अपनी रुचि पर छोड़ें।',
   },
   nature: 'स्वभाव (मूलांक से)', path: 'जीवन पथ (भाग्यांक से)', mb: 'मूलांक और भाग्यांक',
   grid: 'जन्म तिथि का लो शू ग्रिड', missing: 'अनुपस्थित अंक', repeated: 'दोहराए अंक', none: 'कोई नहीं',

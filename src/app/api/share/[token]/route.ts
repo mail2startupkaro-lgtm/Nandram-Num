@@ -70,6 +70,6 @@ export async function POST(req: Request, props: { params: Promise<{ token: strin
       },
     });
   } catch (e) {
-    return errorResponse(e);
+    return errorResponse(e, req);
   }
 }

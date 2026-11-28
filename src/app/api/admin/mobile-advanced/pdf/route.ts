@@ -3,6 +3,8 @@ import { withAdmin } from '@/lib/server/admin';
 import { pdfResponse, readJson, slug } from '@/lib/server/http';
 import { rateLimit, tooMany } from '@/lib/server/rate-limit';
 import { analyseMobileAdvanced } from '@/lib/mobile-advanced/analysis';
+import { answerClientQuestions } from '@/lib/report/client-questions';
+import { isoDob } from '@/lib/service-delivery';
 import { renderMobileAdvancedPdf } from '@/lib/mobile-advanced/report';
 
 export const runtime = 'nodejs';
@@ -21,6 +23,7 @@ const Body = z.object({
   preparedBy: z.string().trim().max(80).default('Acharya Nandram'),
   showFullNumber: z.boolean().default(true),
   expertNote: z.string().trim().max(1200).optional(),
+  clientQuestions: z.string().max(3000).optional(),
 });
 
 /** Admin → Advanced mobile number analysis → "Download PDF". Re-runs the engine on the server; nothing is stored. */
@@ -29,6 +32,7 @@ export const POST = withAdmin(async (req, user) => {
   if (!rl.ok) return tooMany(rl.retryAfter);
   const b = Body.parse(await readJson(req, 50_000));
   const result = analyseMobileAdvanced(b);
-  const { pdf } = await renderMobileAdvancedPdf(result, { lang: b.language, preparedBy: b.preparedBy, showFullNumber: b.showFullNumber, expertNote: b.expertNote || undefined, theme: b.theme });
+  const questions = await answerClientQuestions({ questions: b.clientQuestions, name: b.fullName, dob: isoDob(b.dob), gender: b.gender, lang: b.language });
+  const { pdf } = await renderMobileAdvancedPdf(result, { lang: b.language, preparedBy: b.preparedBy, showFullNumber: b.showFullNumber, expertNote: b.expertNote || undefined, theme: b.theme, questions });
   return pdfResponse(pdf, `mobile-number-analysis-${slug(b.fullName)}.pdf`);
 });

@@ -26,7 +26,7 @@ export interface ReportEmailResult {
 }
 
 /** Escapes special HTML characters to prevent HTML/XSS injection in emails. */
-function escHtml(s: string): string {
+export function escHtml(s: string): string {
   return String(s ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -36,12 +36,12 @@ function escHtml(s: string): string {
 }
 
 /** Strips CRLF, control, and non-printable characters to prevent Email Header Injection. */
-function sanitizeOneLine(s: string): string {
+export function sanitizeOneLine(s: string): string {
   return String(s ?? '').replace(/[\r\n\x00-\x1f\x7f]+/g, ' ').trim();
 }
 
 /** Validates that a URL is strictly http(s) to prevent javascript: or data: URL injection. */
-function safeUrl(u?: string): string | undefined {
+export function safeUrl(u?: string): string | undefined {
   if (!u) return undefined;
   try {
     const parsed = new URL(u);
@@ -202,7 +202,22 @@ export async function sendReportEmail(opts: ReportEmailOptions): Promise<ReportE
     hi,
   });
 
-  const base64Pdf = Buffer.from(opts.reportPdf).toString('base64');
+  return sendEmailWithAttachments({ to, subject, html, text, brandName, attachments: [{ filename: fileName, content: opts.reportPdf }], fetchImpl: opts.fetchImpl });
+}
+
+export interface EmailAttachment { filename: string; content: Uint8Array | Buffer }
+
+/**
+ * Sends one email through the configured provider: Hostinger Mail API (HOSTINGER_MAIL_API_TOKEN), else Resend
+ * (RESEND_API_KEY), else a logged simulation in development. Attachments are PDFs.
+ */
+export async function sendEmailWithAttachments(opts: { to: string; subject: string; html: string; text: string; brandName?: string; attachments?: EmailAttachment[]; fetchImpl?: typeof fetch }): Promise<ReportEmailResult> {
+  const to = sanitizeOneLine(opts.to).toLowerCase();
+  if (!to || !to.includes('@')) return { ok: false, sentTo: to, error: 'Invalid recipient email' };
+  const subject = sanitizeOneLine(opts.subject);
+  const { html, text } = opts;
+  const brandName = sanitizeOneLine(opts.brandName || process.env.BRAND_NAME || 'mynumerologist.com');
+  const files = (opts.attachments ?? []).map((a) => ({ filename: sanitizeOneLine(a.filename.replace(/[^A-Za-z0-9._-]+/g, '_')), content: Buffer.from(a.content).toString('base64'), bytes: a.content.length }));
   const fetchImpl = opts.fetchImpl || fetch;
 
   const hostingerToken = process.env.HOSTINGER_MAIL_API_TOKEN || process.env.HOSTINGER_API_TOKEN || process.env.HOSTINGER_TOKEN;
@@ -235,19 +250,7 @@ export async function sendReportEmail(opts: ReportEmailOptions): Promise<ReportE
             'content-type': 'application/json',
             accept: 'application/json',
           },
-          body: JSON.stringify({
-            to: [to],
-            subject,
-            html,
-            text,
-            attachments: [
-              {
-                filename: fileName,
-                contentType: 'application/pdf',
-                content: base64Pdf,
-              },
-            ],
-          }),
+          body: JSON.stringify({ to: [to], subject, html, text, attachments: files.map((f) => ({ filename: f.filename, contentType: 'application/pdf', content: f.content })) }),
         });
 
         if (!sendRes.ok) {
@@ -257,7 +260,7 @@ export async function sendReportEmail(opts: ReportEmailOptions): Promise<ReportE
         }
 
         const json = await sendRes.json().catch(() => ({}));
-        console.info(`[Report Email] Report PDF successfully sent via Hostinger to ${to}`);
+        console.info(`[Report Email] Email sent via Hostinger to ${to}`);
         return { ok: true, sentTo: to, id: (json as { data?: { id?: string } })?.data?.id };
       } else {
         console.warn('[Report Email] No Hostinger mailboxResourceId resolved from /api/v1/me');
@@ -278,19 +281,7 @@ export async function sendReportEmail(opts: ReportEmailOptions): Promise<ReportE
           authorization: `Bearer ${process.env.RESEND_API_KEY}`,
           'content-type': 'application/json',
         },
-        body: JSON.stringify({
-          from,
-          to: [to],
-          subject,
-          html,
-          text,
-          attachments: [
-            {
-              filename: fileName,
-              content: base64Pdf,
-            },
-          ],
-        }),
+        body: JSON.stringify({ from, to: [to], subject, html, text, attachments: files.map((f) => ({ filename: f.filename, content: f.content })) }),
       });
 
       if (!res.ok) {
@@ -300,7 +291,7 @@ export async function sendReportEmail(opts: ReportEmailOptions): Promise<ReportE
       }
 
       const json = await res.json().catch(() => ({}));
-      console.info(`[Report Email] Report PDF successfully sent to ${to} (id: ${json.id ?? 'unknown'})`);
+      console.info(`[Report Email] Email sent to ${to} (id: ${json.id ?? 'unknown'})`);
       return { ok: true, sentTo: to, id: json.id };
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Network error';
@@ -310,6 +301,7 @@ export async function sendReportEmail(opts: ReportEmailOptions): Promise<ReportE
   }
 
   // Development/testing mode without email provider configured
-  console.info(`[Report Email] (Dev/Simulation) Attached "${fileName}" (${opts.reportPdf.length} bytes) to ${to}`);
+  console.info(`[Report Email] (Dev/Simulation) "${subject}" to ${to} with ${files.map((f) => `${f.filename} (${f.bytes} bytes)`).join(', ') || 'no attachments'}`);
   return { ok: true, sentTo: to, dev: true };
 }
+

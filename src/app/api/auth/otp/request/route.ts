@@ -19,6 +19,6 @@ export async function POST(req: Request) {
     const out = await requestOtp(body.channel, body.identifier, { ip });
     return json({ sent: true, ...out });
   } catch (e) {
-    return errorResponse(e);
+    return errorResponse(e, req);
   }
 }

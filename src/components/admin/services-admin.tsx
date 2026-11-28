@@ -1,7 +1,7 @@
 'use client';
 import { STANDARD_USD } from '@/lib/billing/currency';
 import * as React from 'react';
-import { Download, FileUp, ImageIcon, Mail, MessageCircle, Pause, Phone, Play, Plus, RefreshCw, Save, Sparkles, Trash2 } from 'lucide-react';
+import { Download, FileUp, ImageIcon, Mail, MessageCircle, Pause, Phone, Play, Plus, RefreshCw, Save, Send, Sparkles, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Select } from '@/components/ui/form';
 import { Badge } from '@/components/ui/misc';
@@ -37,7 +37,11 @@ export function ServicesAdmin({ onGenerateReport }: { onGenerateReport?: (order:
   );
 }
 
-export interface Order { id: string; serviceCode: string; status: string; adminNote: string | null; createdAt: string; deliveredAt: string | null; details: Record<string, string>; payment: { amountPaise: number; currency?: string; invoiceNumber: string | null; billingName: string | null; paidAt: string | null }; userId: string | null; /** The client uploaded a signature photo with the booking (fetch with ?image=<id>). */ hasSignatureImage?: boolean; /** A finished report PDF is stored on the order (client can download it). */ hasReportFile?: boolean; onHold?: boolean }
+export interface Order { id: string; serviceCode: string; status: string; adminNote: string | null; createdAt: string; deliveredAt: string | null; details: Record<string, string>; payment: { amountPaise: number; currency?: string; invoiceNumber: string | null; billingName: string | null; paidAt: string | null }; userId: string | null; /** The client uploaded a signature photo with the booking (fetch with ?image=<id>). */ hasSignatureImage?: boolean; /** A finished report PDF is stored on the order (client can download it). */ hasReportFile?: boolean; onHold?: boolean;
+  hasReportEn?: boolean; hasReportHi?: boolean; /** The system can write this report from the booking details. */ canAuto?: boolean;
+  deliveredBy?: 'admin' | 'auto' | null; deliveryError?: string | null; deliveryAttempts?: number; notifiedAt?: string | null;
+  notify?: { sms?: NotifyResult; email?: NotifyResult } | null }
+interface NotifyResult { ok: boolean; to?: string; error?: string; skipped?: string; at: string }
 
 function Orders({ onGenerateReport }: { onGenerateReport?: (order: Order) => void }) {
   const [status, setStatus] = React.useState('all');
@@ -74,7 +78,7 @@ function OrderCard({ o, name, onChanged, onGenerateReport }: { o: Order; name: s
               <Sparkles className="h-4 w-4" /> Generate Report
             </Button>
           )}
-          <Select value={o.status} onChange={(e) => patch({ status: e.target.value }, 'Status updated')} className="h-8 w-40 text-sm" aria-label="Status">{STATUS.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}</Select>
+          <Select value={o.status} onChange={(e) => patch({ status: e.target.value }, e.target.value === 'delivered' ? 'Approved – delivered to the client (English + Hindi) and notified' : 'Status updated')} className="h-8 w-40 text-sm" aria-label="Status">{STATUS.map((s) => <option key={s} value={s}>{STATUS_LABEL[s]}</option>)}</Select>
         </div>
       </div>
       <dl className="mt-3 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">{rows.map(([k, v]) => <div key={k} className={k === 'Questions / notes' ? 'sm:col-span-2' : ''}><dt className="inline text-muted-foreground">{k}: </dt><dd className="inline whitespace-pre-wrap">{v}</dd></div>)}</dl>
@@ -90,45 +94,80 @@ function OrderCard({ o, name, onChanged, onGenerateReport }: { o: Order; name: s
   );
 }
 
-/** Client delivery: when the report reaches the client's report area, hold / release, and the finished PDF (upload, download, remove). */
+/**
+ * Client delivery. Approve (or upload the finished PDF) to deliver now; otherwise the system writes the report and
+ * delivers it automatically 3 hours after payment. Every delivery: English + Hindi in the client's report area, then SMS + email.
+ */
 function OrderDelivery({ o, onChanged, patch }: { o: Order; onChanged: () => void; patch: (b: Record<string, unknown>, ok: string) => Promise<void> }) {
-  const auto = isAutoService(o.serviceCode);
+  const auto = o.canAuto ?? isAutoService(o.serviceCode);
   const dl = deliveryState({ status: o.status, paidAt: o.payment.paidAt, deliveredAt: o.deliveredAt, onHold: o.onHold, hasFile: !!o.hasReportFile, auto });
   const fileRef = React.useRef<HTMLInputElement>(null);
-  const [busy, setBusy] = React.useState(false);
+  const [upLang, setUpLang] = React.useState<'en' | 'hi'>('en');
+  const [busy, setBusy] = React.useState<string | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
+  const [info, setInfo] = React.useState<string | null>(null);
   const when = (s: string) => new Date(s).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+  const delivered = o.status === 'delivered';
   async function upload(f: File) {
-    setErr(null);
+    setErr(null); setInfo(null);
     if (f.type && f.type !== 'application/pdf') { setErr('Choose a PDF file.'); return; }
     if (f.size > 15 * 1024 * 1024) { setErr('The PDF is larger than 15 MB.'); return; }
-    setBusy(true);
+    setBusy('upload');
     try {
       const b64 = await new Promise<string>((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result).replace(/^data:[^,]*,/, '')); r.onerror = () => bad(r.error); r.readAsDataURL(f); });
-      await api('/api/admin/service-orders', { method: 'PUT', json: { id: o.id, fileName: f.name, pdf: b64 } });
-      onChanged();
+      await api('/api/admin/service-orders', { method: 'PUT', json: { id: o.id, fileName: f.name, pdf: b64, lang: upLang } });
+      setInfo(`${upLang === 'hi' ? 'Hindi' : 'English'} PDF saved and delivered. ${auto ? 'The other language is written by the system and' : 'The client'} is notified by SMS + email in a minute.`);
+      onChanged(); setTimeout(onChanged, 60_000);
     } catch (e) { setErr(e instanceof ApiError && e.body.error === 'NOT_A_PDF' ? 'That file is not a PDF.' : e instanceof ApiError && e.status === 413 ? 'The file is too large for the server.' : 'Upload failed. Please try again.'); }
-    finally { setBusy(false); }
+    finally { setBusy(null); }
   }
+  async function action(a: 'approve' | 'retry' | 'renotify') {
+    setErr(null); setInfo(null); setBusy(a);
+    try {
+      const r = await api<{ ok: boolean; delivery: { result: string; error?: string; reason?: string; notify?: Order['notify'] } }>('/api/admin/service-orders', { method: 'POST', json: { id: o.id, action: a } });
+      setInfo(r.delivery.result === 'delivered' ? 'Delivered to the client (English + Hindi) and notified.' : r.delivery.result === 'notified' ? 'Notification sent.' : `Nothing to do (${r.delivery.reason ?? r.delivery.result}).`);
+      onChanged();
+    } catch (e) { setErr(e instanceof ApiError ? `Could not deliver: ${((e.body as Record<string, unknown>).delivery as { error?: string } | undefined)?.error ?? e.message}` : 'Could not deliver.'); onChanged(); }
+    finally { setBusy(null); }
+  }
+  const channel = (label: string, c?: NotifyResult) => !c ? null : (
+    <span className={cn('inline-flex items-center gap-1', c.ok ? 'text-success' : c.skipped ? 'text-muted-foreground' : 'text-danger')}>
+      {label} {c.ok ? `✓ ${c.to ?? ''}` : c.skipped ? `– ${c.skipped}` : `✗ ${c.error ?? 'failed'}`}
+    </span>
+  );
   if (o.status === 'cancelled') return null;
   return (
     <div className="mt-3 space-y-2 rounded-lg border border-border/70 bg-background/40 p-3 text-sm">
-      <p className="font-medium">Client delivery {auto ? <Badge tone="gold" className="ml-1">Auto report</Badge> : <Badge className="ml-1">Upload PDF</Badge>}</p>
+      <p className="font-medium">Client delivery {auto ? <Badge tone="gold" className="ml-1">Auto-delivers after 3 h</Badge> : <Badge tone="warn" className="ml-1">Needs your PDF</Badge>}
+        {delivered && o.deliveredBy && <Badge tone={o.deliveredBy === 'admin' ? 'good' : 'gold'} className="ml-1">{o.deliveredBy === 'admin' ? 'Approved by admin' : 'Delivered automatically'}</Badge>}</p>
       <p className="text-xs text-muted-foreground">
-        {dl.state === 'ready' ? (dl.download ? `Ready in the client's report area since ${when(dl.readyAt)}.` : 'Marked delivered – no PDF stored, so the client has no download. Upload the PDF to add one.')
-          : dl.state === 'preparing' ? `${o.onHold ? 'On hold – will not be released automatically. ' : ''}${auto ? `The system releases the report to the client at ${when(dl.readyAt)}.` : `Due ${when(dl.readyAt)} – upload the finished PDF to release it to the client.`}${dl.overdue && !auto ? ' (overdue)' : ''}`
-          : 'Waiting for payment.'}
+        {dl.state === 'ready'
+          ? (delivered ? `In the client's report area since ${when(o.deliveredAt ?? dl.readyAt)}.` : `3-hour mark passed ${when(dl.readyAt)} – being delivered automatically now.`)
+          : dl.state === 'preparing'
+            ? (o.onHold ? 'On hold – will NOT be delivered automatically until you remove the hold or approve it.'
+              : auto ? `Waiting for your approval. If not approved by ${when(dl.readyAt)}, the system writes the report and delivers it automatically in English + Hindi, then sends the client an SMS and email.`
+                : `Due ${when(dl.readyAt)}. The system cannot write this report from the booking (missing details${o.serviceCode === 'SVC_SIGNATURE' ? ' or signature photo' : ''}) – upload the finished PDF to deliver it.${dl.overdue ? ' (overdue)' : ''}`)
+            : 'Waiting for payment.'}
       </p>
-      <div className="flex flex-wrap gap-2">
-        {o.hasReportFile && <Button size="sm" variant="outline" onClick={() => download(`/api/admin/service-orders?report=${encodeURIComponent(o.id)}`).catch(() => setErr('Could not download.'))}><Download className="h-4 w-4" /> Report PDF</Button>}
-        <Button size="sm" variant={auto ? 'outline' : 'gold'} disabled={busy} onClick={() => fileRef.current?.click()}><FileUp className="h-4 w-4" /> {busy ? 'Uploading…' : o.hasReportFile ? 'Replace PDF' : 'Upload finished PDF'}</Button>
+      <p className="text-xs">Stored: English {o.hasReportEn ? '✓' : '–'} · Hindi {o.hasReportHi ? '✓' : '–'}{(o.notify?.sms || o.notify?.email) && <> · Notified: {channel('SMS', o.notify?.sms)} · {channel('Email', o.notify?.email)}</>}</p>
+      {o.deliveryError && <p className="rounded bg-danger/10 p-2 text-xs text-danger">Last delivery problem{o.deliveryAttempts ? ` (attempt ${o.deliveryAttempts})` : ''}: {o.deliveryError}</p>}
+      <div className="flex flex-wrap items-center gap-2">
+        {!delivered && (auto || o.hasReportFile) && <Button size="sm" variant="gold" disabled={!!busy} onClick={() => action('approve')}><Send className="h-4 w-4" /> {busy === 'approve' ? 'Delivering… (up to 2 min)' : 'Approve & deliver now'}</Button>}
+        {o.hasReportEn && <Button size="sm" variant="outline" onClick={() => download(`/api/admin/service-orders?report=${encodeURIComponent(o.id)}&lang=en`).catch(() => setErr('Could not download.'))}><Download className="h-4 w-4" /> English PDF</Button>}
+        {o.hasReportHi && <Button size="sm" variant="outline" onClick={() => download(`/api/admin/service-orders?report=${encodeURIComponent(o.id)}&lang=hi`).catch(() => setErr('Could not download.'))}><Download className="h-4 w-4" /> Hindi PDF</Button>}
+        <span className="inline-flex items-center gap-1">
+          <Select value={upLang} onChange={(e) => setUpLang(e.target.value as 'en' | 'hi')} className="h-8 w-28 text-sm" aria-label="Language of the PDF to upload"><option value="en">English</option><option value="hi">Hindi</option></Select>
+          <Button size="sm" variant={auto ? 'outline' : 'gold'} disabled={!!busy} onClick={() => fileRef.current?.click()}><FileUp className="h-4 w-4" /> {busy === 'upload' ? 'Uploading…' : (upLang === 'en' ? o.hasReportEn : o.hasReportHi) ? 'Replace PDF' : 'Upload PDF'}</Button>
+        </span>
         <input ref={fileRef} type="file" accept="application/pdf,.pdf" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ''; }} />
-        {o.hasReportFile && <Button size="sm" variant="ghost" className="text-danger" onClick={async () => { if (!confirm('Remove the stored report PDF from this order?')) return; try { await api(`/api/admin/service-orders?id=${encodeURIComponent(o.id)}`, { method: 'DELETE' }); onChanged(); } catch { setErr('Could not remove.'); } }}><Trash2 className="h-4 w-4" /> Remove PDF</Button>}
+        {o.hasReportFile && <Button size="sm" variant="ghost" className="text-danger" onClick={async () => { if (!confirm('Remove the stored report PDFs (English and Hindi) from this order?')) return; try { await api(`/api/admin/service-orders?id=${encodeURIComponent(o.id)}`, { method: 'DELETE' }); onChanged(); } catch { setErr('Could not remove.'); } }}><Trash2 className="h-4 w-4" /> Remove PDFs</Button>}
         {dl.state === 'preparing' && (o.onHold
           ? <Button size="sm" variant="ghost" onClick={() => patch({ onHold: false }, 'Hold removed')}><Play className="h-4 w-4" /> Remove hold</Button>
           : <Button size="sm" variant="ghost" onClick={() => patch({ onHold: true }, 'On hold')}><Pause className="h-4 w-4" /> Hold</Button>)}
-        {dl.state === 'preparing' && auto && <Button size="sm" variant="ghost" onClick={() => patch({ status: 'delivered', onHold: false }, 'Released to the client')}>Release now</Button>}
+        {o.deliveryError && !delivered && <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => action('retry')}><RefreshCw className="h-4 w-4" /> {busy === 'retry' ? 'Retrying…' : 'Retry now'}</Button>}
+        {delivered && <Button size="sm" variant="ghost" disabled={!!busy} onClick={() => action('renotify')}><MessageCircle className="h-4 w-4" /> {busy === 'renotify' ? 'Sending…' : 'Send SMS + email again'}</Button>}
       </div>
+      {info && <p className="text-xs text-success" role="status">{info}</p>}
       {err && <p className="text-xs text-danger" role="alert">{err}</p>}
     </div>
   );

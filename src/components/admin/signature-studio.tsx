@@ -5,6 +5,7 @@
  * browser (baseline, slant, first letter, underline / strike-through, ending, dots, gaps …) and annotated ·
  * 4. Expert observations (override measurements) → AI agent / rule-based analyst → structured result + branded PDF.
  */
+import { ClientQuestionsField, orderQuestions } from '@/components/admin/client-questions-field';
 import * as React from 'react';
 import { Bot, Brush, CalendarDays, Copy, Download, Gauge, ImageUp, Loader2, PenLine, Ruler, ScanLine, Sparkles, Wand2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,14 +15,16 @@ import { api, ApiError } from '@/lib/client/api';
 import { FEATURES, GOALS, PROFESSIONS, featureLabel } from '@/lib/signature/catalogue';
 import type { AgentResult, SignatureAnalysis } from '@/lib/signature/agent';
 import { classifyMetrics, combineSamples, consistencyScore, type MeasuredFeatures, type SignatureMetrics } from '@/lib/signature/measure';
-import { analyseSample, shrink } from '@/lib/client/signature-image';
+import { analyseSample, shrink, type SampleView } from '@/lib/client/signature-image';
 import { DrawPad } from '@/components/signature/draw-pad';
 import type { SignatureNumbers } from '@/lib/signature/numbers';
 import { cn } from '@/lib/utils';
 import type { Order } from './services-admin';
 
 interface Result extends AgentResult { numbers: SignatureNumbers; generatedAt: string }
-interface Sample { id: string; dataUrl: string; source: 'photo' | 'drawn'; metrics: SignatureMetrics | null; annotated: string | null; width: number; height: number }
+interface Sample { id: string; dataUrl: string; source: 'photo' | 'drawn'; metrics: SignatureMetrics | null; annotated: string | null; views?: SampleView[]; width: number; height: number }
+const BY_LABEL = { expert: 'Expert', measured: 'Measured', ai: 'Visual check', fused: 'Measured + visual' } as const;
+const AGREE = { agree: ['Agree', 'good'], near: ['Close', 'default'], conflict: ['Differ', 'warn'], single: ['One source', 'default'] } as const;
 const IMPACT = { positive: ['Supports', 'good'], neutral: ['Neutral', 'default'], watch: ['Needs attention', 'warn'] } as const;
 const REL = { friend: 'Friendly', neutral: 'Neutral', enemy: 'Not friendly' } as const;
 const REL_TONE = { friend: 'good', neutral: 'default', enemy: 'warn' } as const;
@@ -67,6 +70,7 @@ function reportText(name: string, r: Result) {
 export function SignatureStudio({ preloadedOrder, onClearPreloadedOrder }: { preloadedOrder?: Order | null; onClearPreloadedOrder?: () => void } = {}) {
   const [fromOrder, setFromOrder] = React.useState<string | null>(null);
   const [f, setF] = React.useState({ fullName: '', signatureName: '', dob: '', gender: '', hand: 'right', professionId: 'business', professionText: '', experienceYears: '', concerns: '', language: 'en' as 'en' | 'hi' | 'hinglish', preparedBy: 'Acharya Nandram', theme: 'royal-gold-maroon', expertNote: '' });
+  const [cq, setCq] = React.useState('');
   const [goals, setGoals] = React.useState<string[]>([]);
   const [obs, setObs] = React.useState<Record<string, string>>({});
   const [samples, setSamples] = React.useState<Sample[]>([]);
@@ -87,7 +91,7 @@ export function SignatureStudio({ preloadedOrder, onClearPreloadedOrder }: { pre
     const q = d.questions ?? '';
     const lang = /hinglish/i.test(q) ? 'hinglish' : /hindi|हिंदी/i.test(q) ? 'hi' : 'en';
     setF((x) => ({ ...x, fullName: d.clientName ?? '', signatureName: d.currentName ?? '', dob: dob ?? '', gender: ['male', 'female', 'other'].includes(d.gender ?? '') ? d.gender : '', concerns: q.slice(0, 1000), language: lang }));
-    setSamples([]); setObs({}); setRes(null);
+    setSamples([]); setObs({}); setRes(null); setCq(orderQuestions(d));
     const when = `${d.clientName ?? 'Client'} · ordered ${new Date(preloadedOrder.createdAt).toLocaleDateString('en-IN')}`;
     setFromOrder(preloadedOrder.hasSignatureImage ? `${when} – loading the signature photo the client uploaded…` : `${when} – add the signature photos the client sent on WhatsApp`);
     // The client's uploaded signature photo is added as the first sample and measured like any other.
@@ -130,7 +134,10 @@ export function SignatureStudio({ preloadedOrder, onClearPreloadedOrder }: { pre
       const r = await api<Result>('/api/admin/signature', { method: 'POST', json: {
         fullName: f.fullName, signatureName: f.signatureName || undefined, dob: f.dob, gender: f.gender || undefined, hand: f.hand || undefined,
         professionId: f.professionId, professionText: f.professionText || undefined, experienceYears: f.experienceYears ? Number(f.experienceYears) : undefined,
-        goals, concerns: f.concerns || undefined, language: f.language, images: samples.map((s) => s.dataUrl), measured, consistency, observations: obs } });
+        goals, concerns: f.concerns || undefined, language: f.language, images: samples.map((s) => s.dataUrl), measured, consistency, observations: obs,
+        // Close-ups for the AI inspector: all three for the first sample, the cleaned copy for the others.
+        views: samples.flatMap((s, k) => (s.views ?? []).filter((v) => k === 0 || v.kind === 'clean').map((v) => ({ sample: k, kind: v.kind, image: v.dataUrl }))).slice(0, 6),
+        quality: samples.map((s) => s.metrics?.quality?.score).filter((q): q is number => typeof q === 'number').map(Math.round) } });
       analysedWith.current = { f: { ...f }, goals: [...goals] };
       setRes(r);
       setTimeout(() => document.getElementById('sig-result')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
@@ -147,7 +154,7 @@ export function SignatureStudio({ preloadedOrder, onClearPreloadedOrder }: { pre
       const prof = PROFESSIONS.find((p) => p.id === c.professionId) ?? PROFESSIONS[PROFESSIONS.length - 1];
       const body = {
         client: { fullName: c.fullName, signatureName: c.signatureName || undefined, dob: c.dob, gender: c.gender || undefined, profession: prof.id === 'other' ? c.professionText || 'Other' : `${prof.label}${c.professionText ? `, ${c.professionText}` : ''}`, goals: g, language: c.language },
-        preparedBy: f.preparedBy || 'Acharya Nandram', theme: f.theme, expertNote: f.expertNote || undefined, generatedAt: res.generatedAt, numbers: res.numbers,
+        preparedBy: f.preparedBy || 'Acharya Nandram', theme: f.theme, expertNote: f.expertNote || undefined, clientQuestions: cq.trim() || undefined, generatedAt: res.generatedAt, numbers: res.numbers,
         result: { analysis: res.analysis, source: res.source, scores: res.scores, features: res.features },
         annotated: samples[0]?.annotated ?? samples[0]?.dataUrl, samples: samples.length > 1 ? samples.map((s) => s.dataUrl) : undefined,
       };
@@ -169,7 +176,7 @@ export function SignatureStudio({ preloadedOrder, onClearPreloadedOrder }: { pre
     <div className="space-y-6">
       <div className="glass rounded-lg p-5">
         <h2 className="flex items-center gap-2 text-2xl font-semibold"><PenLine className="h-6 w-6 text-gold" />Signature Analysis</h2>
-        <p className="mt-1 text-sm text-muted-foreground">Each sample is measured from its pixels (baseline angle, slant, first-letter size, cutting strokes, ending, dots, gaps) and checked across samples; the AI agent then reads the images with those measurements, the client&apos;s numbers, profession and goals. Numbers always come from the engine. Nothing is saved.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Each sample is cleaned (shadows and ruled lines removed), checked for photo quality and measured five times from its pixels: baseline and line shape, slant, first-letter size, cutting strokes, ending, dots, gaps, zones, loops, size from start to end, pen lifts and ink colour. The AI then inspects every sample and close-up independently, the two readings are cross-checked, and only then is the report written with the client&apos;s numbers, profession and goals. Numbers always come from the engine. Nothing is saved.</p>
       </div>
 
       {fromOrder && <p className="rounded-lg border border-gold/40 bg-gold/10 p-3 text-sm" role="status">From order: {fromOrder}</p>}
@@ -214,7 +221,7 @@ export function SignatureStudio({ preloadedOrder, onClearPreloadedOrder }: { pre
                   <div className="mt-2 flex flex-wrap gap-1 text-[11px]">
                     {!s.metrics ? <span className="flex items-center gap-1 text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" />Measuring…</span>
                       : !s.metrics.strokeWidth ? <Badge tone="warn">No ink found</Badge>
-                        : <><Badge>Baseline {s.metrics.baseline.angle > 0 ? '+' : ''}{s.metrics.baseline.angle}°</Badge><Badge>Slant {s.metrics.slant.relative > 0 ? '+' : ''}{s.metrics.slant.relative}°</Badge><Badge>First letter {s.metrics.firstLetter.ratio}×</Badge>{s.metrics.lines.length > 0 && <Badge tone={s.metrics.lines.some((l) => l.kind === 'through') ? 'warn' : 'default'}>{s.metrics.lines.map((l) => l.kind).join(' + ')}</Badge>}{s.metrics.dots.end > 0 && <Badge tone="warn">full stop</Badge>}</>}
+                        : <><Badge>Baseline {s.metrics.baseline.angle > 0 ? '+' : ''}{s.metrics.baseline.angle}°</Badge><Badge>Slant {s.metrics.slant.relative > 0 ? '+' : ''}{s.metrics.slant.relative}°</Badge><Badge>First letter {s.metrics.firstLetter.ratio}×</Badge>{s.metrics.lines.length > 0 && <Badge tone={s.metrics.lines.some((l) => l.kind === 'through') ? 'warn' : 'default'}>{s.metrics.lines.map((l) => l.kind).join(' + ')}</Badge>}{s.metrics.dots.end > 0 && <Badge tone="warn">full stop</Badge>}{s.metrics.curve?.shape && s.metrics.curve.shape !== 'even' && <Badge tone="warn">{s.metrics.curve.shape === 'arched' ? 'arched line' : s.metrics.curve.shape === 'dip' ? 'dips, recovers' : 'drops at end'}</Badge>}{s.metrics.ink && <Badge tone={s.metrics.ink.colour === 'red' ? 'warn' : 'default'}>{s.metrics.ink.colour} ink</Badge>}{s.metrics.quality && <Badge tone={s.metrics.quality.score >= 75 ? 'good' : 'warn'}>Photo {s.metrics.quality.score}/100</Badge>}{s.metrics.ruled?.count ? <Badge>ruled lines removed</Badge> : null}</>}
                   </div>
                 </div>
               ))}
@@ -242,7 +249,7 @@ export function SignatureStudio({ preloadedOrder, onClearPreloadedOrder }: { pre
                     <span className="h-1.5 rounded-full bg-muted" title={`confidence ${Math.round(m.confidence * 100)}%`}><span className="block h-full rounded-full bg-gold" style={{ width: `${m.confidence * 100}%` }} /></span>
                   </div>); })}
               </div>
-              <p className="mt-2 text-[11px] text-muted-foreground">Bar = measurement certainty. Size, pressure and legibility are estimates from a photo – confirm or correct them below.</p>
+              <p className="mt-2 text-[11px] text-muted-foreground">Bar = measurement certainty. Each sample is measured five times (three image sizes, lighter and darker ink threshold) after shadows and ruled lines are removed; readings that stay the same get more certainty. Size, pressure and legibility are estimates from a photo – the AI visual check cross-checks them when you run the analysis.</p>
             </div>
           )}
         </section>
@@ -270,6 +277,7 @@ export function SignatureStudio({ preloadedOrder, onClearPreloadedOrder }: { pre
             <Badge tone={res.source === 'ai' ? 'gold' : 'default'} className="mb-2"><Bot className="mr-1 inline h-3 w-3" />{res.source === 'ai' ? `AI agent${res.model ? ` · ${res.model}` : ''} + measurements` : 'Measurements + numerology (no AI)'}</Badge>
             <Field label="Prepared by"><Input value={f.preparedBy} onChange={set('preparedBy')} className="w-48" /></Field>
             <Field label="PDF theme"><Select value={f.theme} onChange={set('theme')} className="w-44"><option value="royal-gold-maroon">Royal Gold &amp; Maroon</option><option value="cosmic-blue">Cosmic Blue</option><option value="saffron-cream">Saffron &amp; Cream</option><option value="minimal-white">Minimal White</option></Select></Field>
+            <div className="w-full"><ClientQuestionsField id="sg-cq" value={cq} onChange={setCq} /></div>
             <Field label="Personal note in the PDF (optional)" className="min-w-[220px] flex-1"><Input value={f.expertNote} onChange={set('expertNote')} maxLength={1200} placeholder="e.g. Start the new signature on Sunday after Surya arghya" /></Field>
             <div className="mb-0.5 flex gap-2">
               <Button type="button" variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(reportText(f.fullName, res))}><Copy className="mr-1 h-4 w-4" />Copy text</Button>
@@ -293,17 +301,35 @@ export function SignatureStudio({ preloadedOrder, onClearPreloadedOrder }: { pre
               </div>
             </div>
             {mainImg && <div className="mt-5 flex justify-center rounded-lg border border-gold/30 bg-white p-3"><img src={mainImg} alt="Analysed signature" className="max-h-56 object-contain" /></div>}
-            {mainImg && showMarks && samples[0]?.annotated && <p className="mt-1 text-center text-[11px] text-muted-foreground"><span className="text-amber-500">━</span> baseline · <span className="text-blue-500">▢</span> first letter · <span className="text-red-500">━</span> stroke through the name · <span className="text-emerald-500">━</span> underline · <span className="text-purple-500">➜</span> ending · <span className="text-red-500">◯</span> dot</p>}
+            {mainImg && showMarks && samples[0]?.annotated && <p className="mt-1 text-center text-[11px] text-muted-foreground"><span className="text-amber-500">━</span> baseline · <span className="text-blue-500">▢</span> first letter · <span className="text-red-500">━</span> stroke through the name · <span className="text-emerald-500">━</span> underline · <span className="text-purple-500">➜</span> ending · <span className="text-orange-500">┅</span> line bends · <span className="text-red-500">◯</span> dot</p>}
           </div>
 
-          <nav className="flex flex-wrap gap-2 text-xs">{[['sig-obs', 'Observations'], ['sig-num', 'Numerology'], ['sig-life', 'Personality & life'], ['sig-fix', 'Corrections'], ['sig-plan', 'Ideal signature']].map(([id, l]) => <a key={id} href={`#${id}`} className="rounded-full border border-gold/30 px-3 py-1 hover:bg-gold/10">{l}</a>)}</nav>
+          <nav className="flex flex-wrap gap-2 text-xs">{[['sig-obs', 'Observations'], ...(res.inspection ? [['sig-cross', 'Cross-check']] : []), ['sig-num', 'Numerology'], ['sig-life', 'Personality & life'], ['sig-fix', 'Corrections'], ['sig-plan', 'Ideal signature']].map(([id, l]) => <a key={id} href={`#${id}`} className="rounded-full border border-gold/30 px-3 py-1 hover:bg-gold/10">{l}</a>)}</nav>
 
           <Section id="sig-obs" title="What the signature shows" icon={<ScanLine className="h-5 w-5" />}>
             <div className="overflow-x-auto"><table className="w-full min-w-[640px] text-sm"><thead><tr className="border-b border-gold/20 text-left text-muted-foreground"><th className="p-2">Feature</th><th className="p-2">Observed</th><th className="p-2">What it indicates</th><th className="p-2">Effect</th><th className="p-2">Certainty</th></tr></thead>
               <tbody>{a.observations.map((o, i) => { const src = o.featureId ? res.features.find((x) => x.id === o.featureId) : undefined; return (
                 <tr key={i} className="border-b border-border/50 align-top last:border-0"><td className="p-2 font-medium">{o.feature}</td><td className="p-2">{o.observed}</td><td className="p-2 text-muted-foreground">{o.meaning}</td><td className="p-2"><Badge tone={IMPACT[o.impact][1]}>{IMPACT[o.impact][0]}</Badge></td>
-                  <td className="p-2"><ConfDots c={o.confidence} />{src && <span className="block text-[10px] text-muted-foreground">{src.by === 'expert' ? 'Expert' : 'Measured'}</span>}</td></tr>); })}</tbody></table></div>
+                  <td className="p-2"><ConfDots c={o.confidence} />{src && <span className="block text-[10px] text-muted-foreground">{BY_LABEL[src.by]}{src.agreement && src.agreement !== 'single' ? ` · ${AGREE[src.agreement][0].toLowerCase()}` : ''}</span>}</td></tr>); })}</tbody></table></div>
           </Section>
+
+          {res.inspection && (
+            <Section id="sig-cross" title="Cross-check: measurement vs visual inspection" icon={<ScanLine className="h-5 w-5" />}>
+              <div className="flex flex-wrap gap-2 text-sm">
+                <Badge tone={res.inspection.compared && res.inspection.agreed / res.inspection.compared >= 0.7 ? 'good' : 'warn'}>{res.inspection.agreed} of {res.inspection.compared} features agree</Badge>
+                {res.inspection.readsAs && <Badge>Reads as “{res.inspection.readsAs}”</Badge>}
+              </div>
+              {res.inspection.photoIssues.length > 0 && <ul className="mt-2 space-y-0.5 text-xs text-warning">{res.inspection.photoIssues.map((x) => <li key={x}>⚠ {x}</li>)}</ul>}
+              {res.inspection.conflicts.length > 0 ? (
+                <div className="mt-3 overflow-x-auto"><table className="w-full min-w-[620px] text-sm"><thead><tr className="border-b border-gold/20 text-left text-muted-foreground"><th className="p-2">Feature</th><th className="p-2">Pixel measurement</th><th className="p-2">Visual inspection</th><th className="p-2">Used in report</th><th className="p-2">Settle it</th></tr></thead>
+                  <tbody>{res.inspection.conflicts.map((c) => { const ft = FEATURES.find((x) => x.id === c.id); const idOf = (lab: string) => ft?.options.find((o) => o.label === lab)?.id; return (
+                    <tr key={c.id} className="border-b border-border/50 align-top last:border-0"><td className="p-2 font-medium">{c.feature}</td><td className="p-2">{c.measured}</td><td className="p-2">{c.vision}{c.evidence && <span className="block text-[11px] text-muted-foreground">{c.evidence}</span>}</td><td className="p-2"><b>{c.chosen}</b></td>
+                      <td className="p-2"><div className="flex flex-wrap gap-1">{[c.measured, c.vision].map((lab) => { const id = idOf(lab); return id ? <button key={lab} type="button" onClick={() => setObs({ ...obs, [c.id]: id })} className={cn('rounded-full border px-2 py-0.5 text-[11px]', obs[c.id] === id ? 'border-gold bg-gold/20' : 'border-border hover:bg-muted')}>{lab}</button> : null; })}</div></td></tr>); })}</tbody></table>
+                  <p className="mt-2 text-[11px] text-muted-foreground">Look at the sample, pick the right reading (it is saved as your expert observation), then run the analysis again.</p></div>
+              ) : <p className="mt-2 text-sm text-muted-foreground">The pixel measurement and the visual inspection gave the same or close readings for every feature they both checked.</p>}
+              {res.inspection.extras.length > 0 && <ul className="mt-3 space-y-1 text-sm">{res.inspection.extras.map((x) => <li key={x.feature}><b>{x.feature}:</b> <span className="text-muted-foreground">{x.observed}</span></li>)}</ul>}
+            </Section>
+          )}
 
           <Section id="sig-num" title="Numerology of the signature" icon={<Gauge className="h-5 w-5" />}>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">

@@ -15,6 +15,9 @@ import type { LlmProvider } from '@/lib/narrative/providers/llm';
 import type { NarrativeLanguage } from '@/lib/narrative/plan';
 import { buildBodyHtml, buildCoverHtml, headerFooter, labelsFor, type TemplateInput } from './template';
 import { contactQrs } from '@/lib/report/guide-cta';
+import { TITLE_CASE_SCRIPT } from '@/lib/report/title-case';
+import { HINDI_POLISH_SCRIPT, hindiPolish } from '@/lib/report/hindi-polish';
+import type { QA } from '@/lib/report/client-questions';
 import { DEFAULT_BRANDING, resolveTheme, type Branding, type PdfTheme, type ThemeId } from './themes';
 
 export interface PdfRequest {
@@ -29,6 +32,8 @@ export interface PdfRequest {
   hiddenChapters?: string[];
   expertNote?: string;
   reportTitle?: string;
+  /** The client's questions answered (see lib/report/client-questions.ts). */
+  questions?: QA[];
 }
 
 export interface PdfOutput {
@@ -146,13 +151,17 @@ async function printPageToPdf(page: Page, html: string, opts: { margin0?: boolea
     page.evaluate(() => (document as Document & { fonts: FontFaceSet }).fonts.ready.then(() => true)),
     new Promise((r) => setTimeout(r, 2000)),
   ]);
+  // Every report heading in Title Case (first letter of each word a capital).
+  const hiPage = /<html[^>]*\blang="hi/.test(html.slice(0, 400));
+  await page.evaluate(HINDI_POLISH_SCRIPT).catch(() => 0);
+  await page.evaluate(TITLE_CASE_SCRIPT).catch(() => 0);
   const buf = await page.pdf({
     format: 'A4',
     printBackground: true,
     preferCSSPageSize: true,
     displayHeaderFooter: !!(opts.header || opts.footer),
-    headerTemplate: opts.header ?? '<span></span>',
-    footerTemplate: opts.footer ?? '<span></span>',
+    headerTemplate: hiPage && opts.header ? hindiPolish(opts.header) : opts.header ?? '<span></span>',
+    footerTemplate: hiPage && opts.footer ? hindiPolish(opts.footer) : opts.footer ?? '<span></span>',
     margin: opts.margin0 ? { top: '0', right: '0', bottom: '0', left: '0' } : undefined,
   });
   return new Uint8Array(buf);
@@ -259,13 +268,51 @@ export async function renderSheetPdf(opts: { html: string; header: string; foote
   return { pdf, pageCount: out.getPageCount(), ms: Date.now() - t0 };
 }
 
+/**
+ * A complete print-ready HTML document (its own @page rules and full-bleed cover) → branded PDF.
+ * Used for the reports the admin screens print from HTML, so the automatic delivery produces the same document.
+ */
+export async function renderHtmlDocumentPdf(html: string, meta: { title: string; subject: string; language: string; branding?: Partial<Branding> }): Promise<{ pdf: Uint8Array; pageCount: number; ms: number }> {
+  const t0 = Date.now();
+  const browser = await getBrowser();
+  const raw = await htmlToPdf(browser, html, {});
+  const doc = await PDFDocument.load(raw);
+  doc.setTitle(meta.title, { showInWindowTitleBar: true });
+  brandMetadata(doc, { ...DEFAULT_BRANDING, ...(meta.branding ?? {}) } as Branding, meta.subject, new Date().toISOString().slice(0, 10), meta.language);
+  const pdf = await doc.save({ useObjectStreams: true });
+  return { pdf, pageCount: doc.getPageCount(), ms: Date.now() - t0 };
+}
+
+/** Decodes a JPEG/PNG/WEBP data URL to RGBA pixels with the PDF browser (for the signature measurement engine on the server). */
+export async function decodeImageRgba(dataUrl: string, maxSide = 1400): Promise<{ width: number; height: number; rgba: Uint8Array }> {
+  if (!/^data:image\/(png|jpeg|webp);base64,/.test(dataUrl)) throw new Error('NOT_AN_IMAGE');
+  const browser = await getBrowser();
+  const ctx = await browser.newContext();
+  try {
+    const page = await ctx.newPage();
+    await page.route('**', (route) => (route.request().url().startsWith('data:') || route.request().url().startsWith('about:') ? route.continue() : route.abort()));
+    const out = await page.evaluate(async ({ src, maxSide }) => {
+      const img = new Image();
+      await new Promise<void>((ok, bad) => { img.onload = () => ok(); img.onerror = () => bad(new Error('decode failed')); img.src = src; });
+      const k = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.max(1, Math.round(img.naturalWidth * k)), h = Math.max(1, Math.round(img.naturalHeight * k));
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      const g = c.getContext('2d')!; g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); g.drawImage(img, 0, 0, w, h);
+      const d = g.getImageData(0, 0, w, h).data;
+      let bin = ''; for (let i = 0; i < d.length; i += 0x8000) bin += String.fromCharCode.apply(null, Array.from(d.subarray(i, i + 0x8000)));
+      return { width: w, height: h, b64: btoa(bin) };
+    }, { src: dataUrl, maxSide });
+    return { width: out.width, height: out.height, rgba: new Uint8Array(Buffer.from(out.b64, 'base64')) };
+  } finally { await ctx.close().catch(() => {}); }
+}
+
 export async function renderReportPdf(req: PdfRequest): Promise<PdfOutput> {
   const t0 = Date.now();
   const branding: Branding = { ...DEFAULT_BRANDING, ...(req.branding ?? {}) } as Branding;
   const theme = resolveTheme(req.theme, branding);
   const narrative = req.narrative ?? (await generateNarrative(req.result, { language: req.language, provider: req.provider ?? null }));
 
-  const inp: TemplateInput = { result: req.result, narrative, theme, branding, reportDate: req.reportDate ?? req.result.asOf, watermark: req.watermark, hiddenChapters: req.hiddenChapters, expertNote: req.expertNote, reportTitle: req.reportTitle };
+  const inp: TemplateInput = { result: req.result, narrative, theme, branding, reportDate: req.reportDate ?? req.result.asOf, watermark: req.watermark, hiddenChapters: req.hiddenChapters, expertNote: req.expertNote, reportTitle: req.reportTitle, questions: req.questions };
   const qrSvg = await QRCode.toString(branding.bookingUrl || DEFAULT_BRANDING.bookingUrl || 'https://www.mynumerologist.com', { type: 'svg', margin: 0, width: 150, errorCorrectionLevel: 'M', color: { dark: '#111111', light: '#ffffff' } });
   const qrs = await contactQrs();
   const hf = headerFooter(inp);

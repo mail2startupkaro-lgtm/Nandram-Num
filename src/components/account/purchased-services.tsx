@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 
 export interface MyServiceOrder {
   id: string; serviceCode: string; name: { en: string; hi: string } | null; status: string; createdAt: string; paidAt: string | null; deliveredAt: string | null;
-  invoiceNumber: string | null; forName: string | null; forRelation: string | null; forProfileId: string | null; auto: boolean; needsDetails: boolean; delivery: DeliveryState;
+  invoiceNumber: string | null; forName: string | null; forRelation: string | null; forProfileId: string | null; auto: boolean; needsDetails: boolean; languages?: { en: boolean; hi: boolean }; delivery: DeliveryState;
 }
 
 const T = {
@@ -148,7 +148,7 @@ function OrderCard({ o, onReload }: { o: MyServiceOrder; onReload: () => void })
   async function get(targetLang?: 'en' | 'hi') {
     setBusyLang(targetLang ?? 'default'); setErr(null);
     try { await download(`/api/service-orders/${o.id}/pdf${targetLang ? `?lang=${targetLang}` : ''}`); }
-    catch (e) { setErr(e instanceof ApiError && e.body.error === 'DETAILS_INCOMPLETE' ? t.details : t.err); if (e instanceof ApiError && e.status === 409) onReload(); }
+    catch (e) { setErr(e instanceof ApiError && (e.body.error === 'DETAILS_INCOMPLETE' || e.body.error === 'LANGUAGE_NOT_AVAILABLE') ? t.details : t.err); if (e instanceof ApiError && e.status === 409) onReload(); }
     finally { setBusyLang(null); }
   }
   return (
@@ -176,18 +176,13 @@ function OrderCard({ o, onReload }: { o: MyServiceOrder; onReload: () => void })
       {ready && d.state === 'ready' && (d.download ? (
         <div className="space-y-1.5">
           <m.div initial={{ scale: 0.95 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300 }} className="flex flex-wrap gap-2">
-            {o.auto ? (
-              <>
-                <Button variant="gold" size="lg" disabled={busyLang !== null} onClick={() => get('en')} className="shadow-lg shadow-gold/30">
-                  {busyLang === 'en' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                  {busyLang === 'en' ? t.downloading : (hi ? 'अंग्रेज़ी PDF डाउनलोड' : 'Download English (PDF)')}
-                </Button>
-                <Button variant="outline" size="lg" disabled={busyLang !== null} onClick={() => get('hi')} className="border-gold/60 text-gold hover:bg-gold/10">
-                  {busyLang === 'hi' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                  {busyLang === 'hi' ? t.downloading : (hi ? 'हिंदी PDF डाउनलोड' : 'Download Hindi (PDF)')}
-                </Button>
-              </>
-            ) : (
+            {(['en', 'hi'] as const).filter((l) => (o.languages ? o.languages[l] : o.auto)).map((l, i) => (
+              <Button key={l} variant={i === 0 ? 'gold' : 'outline'} size="lg" disabled={busyLang !== null} onClick={() => get(l)} className={i === 0 ? 'shadow-lg shadow-gold/30' : 'border-gold/60 text-gold hover:bg-gold/10'}>
+                {busyLang === l ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                {busyLang === l ? t.downloading : l === 'en' ? (hi ? 'अंग्रेज़ी PDF डाउनलोड' : 'Download English (PDF)') : (hi ? 'हिंदी PDF डाउनलोड' : 'Download Hindi (PDF)')}
+              </Button>
+            ))}
+            {o.languages && !o.languages.en && !o.languages.hi && (
               <Button variant="gold" size="lg" disabled={busyLang !== null} onClick={() => get()} className="shadow-lg shadow-gold/30">
                 {busyLang !== null ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}{busyLang !== null ? t.downloading : t.download}
               </Button>

@@ -4,6 +4,7 @@
  * Name + date of birth → our engine calculates the numbers, Gemini writes the background and the reading as an
  * SEO blog post → edit → Publish to the blog (/blog/celebrity/<slug>) or Save draft, and Download PDF (English / Hindi).
  */
+import { withTitleCase } from '@/lib/report/title-case';
 import * as React from 'react';
 import { CheckCircle2, Circle, ExternalLink, Eye, EyeOff, FileDown, Languages, Loader2, Pencil, Save, Send, Star, Trash2, TriangleAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -61,7 +62,7 @@ ${c.sections.map((s) => `<section><h2>${esc(s.h2)}</h2>${s.paras.map((p) => `<p>
 ${c.conclusion ? `<p class="tip">${esc(c.conclusion)}</p>` : ''}
 ${endCta(cover?.extras)}
 <p class="foot">${L.by} ${esc(by)} · ${esc(SITE_NAME)}. ${L.note}</p></main></body></html>`;
-  w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 800);
+  w.document.open(); w.document.write(withTitleCase(html)); w.document.close(); setTimeout(() => w.print(), 800);
 }
 
 // ───────────────────────── editor for one language version

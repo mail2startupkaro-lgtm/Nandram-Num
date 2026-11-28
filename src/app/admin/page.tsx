@@ -1,7 +1,7 @@
 'use client';
 import { STANDARD_USD } from '@/lib/billing/currency';
 import * as React from 'react';
-import { Activity, CaseSensitive, BadgePercent, Globe2, Contact2, MessageSquareQuote, BarChart3, BookOpen, Inbox, Briefcase, Clover, Copy, CreditCard, FileText, LayoutDashboard, Mail, Palette, PenLine, Plus, Receipt, Save, ScrollText, Sparkles, Tag, Trash2, UserCheck, Users, Wand2, FileSignature, ListChecks, Building2, IndianRupee, Landmark, Orbit, Grid3x3, Star, Smartphone, Baby, Handshake, Wallet, Settings2 } from 'lucide-react';
+import { ShieldAlert, Activity, CaseSensitive, BadgePercent, Globe2, Contact2, MessageSquareQuote, BarChart3, BookOpen, Inbox, Briefcase, Clover, Copy, CreditCard, FileText, LayoutDashboard, Mail, Palette, PenLine, Plus, Receipt, Save, ScrollText, Sparkles, Tag, Trash2, UserCheck, Users, Wand2, FileSignature, ListChecks, Building2, IndianRupee, Landmark, Orbit, Grid3x3, Star, Smartphone, Baby, Handshake, Wallet, Settings2 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { ExpertsTab } from '@/components/admin/experts';
 import { PaymentReport, SalesReport } from '@/components/admin/finance';
@@ -18,6 +18,7 @@ import { VisitorAnalytics } from '@/components/admin/visitor-analytics';
 import { FunnelAdmin } from '@/components/admin/funnel-admin';
 import { CrmAdmin } from '@/components/admin/crm';
 import { TestimonialsAdmin } from '@/components/admin/testimonials-admin';
+import { SiteHealth } from '@/components/admin/site-health';
 // Finders pull in the angel-number content library – load only when the tab is opened.
 const finderLoading = () => <div className="glass h-40 animate-pulse rounded-lg" aria-busy="true" />;
 const AngelFinderTab = dynamic(() => import('@/components/admin/finders').then((m) => m.AngelFinderTab), { ssr: false, loading: finderLoading });
@@ -67,6 +68,9 @@ const ADMIN_SECTIONS = [
     { label: 'Pricing', tabs: [{ id: 'plans', label: 'Plan editor', icon: CreditCard }, { id: 'coupons', label: 'Coupons', icon: Tag }] },
     { label: 'Invoicing', tabs: [{ id: 'seller', label: 'Invoice settings', icon: ScrollText }] },
   ] },
+  { id: 'health', label: 'Website Health', desc: 'Live errors, problems & running requirements', icon: ShieldAlert, groups: [
+    { label: 'Monitoring', tabs: [{ id: 'health', label: 'Errors, problems & requirements', icon: ShieldAlert }] },
+  ] },
 ] as const;
 type SectionId = (typeof ADMIN_SECTIONS)[number]['id'];
 type TabId = (typeof ADMIN_SECTIONS)[number]['groups'][number]['tabs'][number]['id'];
@@ -93,6 +97,7 @@ export default function AdminPage() {
   const [newMsgs, setNewMsgs] = React.useState(0);
   const [ordersToDo, setOrdersToDo] = React.useState(0);
   const [affToReview, setAffToReview] = React.useState(0);
+  const [openErrors, setOpenErrors] = React.useState(0);
   const section = sectionOf(tab);
   // The open tab is kept in the address (#signature, #sales…) so a refresh or a bookmark returns to it.
   const setTab = React.useCallback((t: TabId) => { setTabState(t); if (window.location.hash !== `#${t}`) window.history.replaceState(null, '', `#${t}`); }, []);
@@ -106,11 +111,12 @@ export default function AdminPage() {
     api<{ counts: { new: number } }>('/api/admin/messages?status=new').then((r) => setNewMsgs(r.counts.new)).catch(() => {});
     api<{ orders: unknown[] }>('/api/admin/service-orders?status=paid').then((r) => setOrdersToDo(r.orders.length)).catch(() => {});
     api<{ totals: { affiliates: { pending: number } } }>('/api/admin/affiliates').then((r) => setAffToReview(r.totals.affiliates.pending)).catch(() => {});
+    api<{ open: number }>('/api/admin/health?view=badge').then((r) => setOpenErrors(r.open)).catch(() => {});
   }, [me?.user?.role, tab]);
   React.useEffect(() => { if (me && (!me.user || me.user.role !== 'super_admin')) window.location.replace('/'); }, [me]);
   if (!me?.user || me.user.role !== 'super_admin') return null;
-  const badge = (id: string) => (id === 'messages' ? newMsgs : id === 'services' ? ordersToDo : id === 'affiliates' ? affToReview : 0);
-  const sectionBadge = (id: SectionId) => (id === 'reports' ? ordersToDo : id === 'website' ? newMsgs : id === 'affiliate' ? affToReview : 0);
+  const badge = (id: string) => (id === 'messages' ? newMsgs : id === 'services' ? ordersToDo : id === 'affiliates' ? affToReview : id === 'health' ? openErrors : 0);
+  const sectionBadge = (id: SectionId) => (id === 'reports' ? ordersToDo : id === 'website' ? newMsgs : id === 'affiliate' ? affToReview : id === 'health' ? openErrors : 0);
   const Pill = ({ n }: { n: number }) => (n > 0 ? <span className="ml-auto rounded-full bg-gold px-1.5 text-[11px] font-bold text-[hsl(250_45%_10%)]">{n}</span> : null);
   const current = ADMIN_SECTIONS.find((s) => s.id === section)!;
   return (
@@ -141,7 +147,7 @@ export default function AdminPage() {
           </nav>
         )}
         <div className="min-w-0">
-          {tab === 'overview' && <><QuickLinks onOpen={setTab} ordersToDo={ordersToDo} newMsgs={newMsgs} /><Overview /></>}{tab === 'visitors' && <VisitorAnalytics />}{tab === 'crm' && <CrmAdmin />}{tab === 'testimonials' && <TestimonialsAdmin />}{tab === 'analytics' && <AnalyticsAdmin />}{tab === 'messages' && <MessagesTab onCounts={setNewMsgs} />}{tab === 'services' && <ServicesAdmin onGenerateReport={(ord) => { setPreloadedOrder(ord); setTab(ord.serviceCode === 'SVC_BUSINESS_COMPAT' ? 'business' : ord.serviceCode === 'SVC_BUSINESS_COMPLETE' ? 'bizreport' : ord.serviceCode === 'SVC_DESTINY_MATRIX' ? 'destiny' : ord.serviceCode === 'SVC_BIRTH_CHART' ? 'psychomatrix' : ord.serviceCode === 'SVC_SIGNATURE' ? 'signature' : ord.serviceCode === 'SVC_MOBILE_NUMBER' ? 'mobileadv' : ord.serviceCode === 'SVC_BABY_NAME' ? 'babyname' : 'studio'); }} />}{tab === 'queue' && <ReportQueueAdmin />}{tab === 'destiny' && <ChartReportStudio kind="destiny" preloadedOrder={preloadedOrder?.serviceCode === 'SVC_DESTINY_MATRIX' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'psychomatrix' && <ChartReportStudio kind="psychomatrix" preloadedOrder={preloadedOrder?.serviceCode === 'SVC_BIRTH_CHART' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'funnel' && <FunnelAdmin />}{tab === 'email-marketing' && <EmailMarketingAdmin />}{tab === 'studio' && <ReportStudio preloadedOrder={preloadedOrder} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'signature' && <SignatureStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_SIGNATURE' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'business' && <BusinessStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_BUSINESS_COMPAT' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'bizreport' && <BusinessReportStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_BUSINESS_COMPLETE' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'angel' && <AngelFinderTab />}{tab === 'lucky' && <LuckyFinderTab />}{tab === 'namecalc' && <NameCalculatorTab />}{tab === 'mobileadv' && <MobileAdvancedStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_MOBILE_NUMBER' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'babyname' && <BabyNameStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_BABY_NAME' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'celebrity' && <CelebrityStudio />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'experts' && <ExpertsTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
+          {tab === 'overview' && <><QuickLinks onOpen={setTab} ordersToDo={ordersToDo} newMsgs={newMsgs} /><Overview /></>}{tab === 'visitors' && <VisitorAnalytics />}{tab === 'crm' && <CrmAdmin />}{tab === 'testimonials' && <TestimonialsAdmin />}{tab === 'analytics' && <AnalyticsAdmin />}{tab === 'messages' && <MessagesTab onCounts={setNewMsgs} />}{tab === 'services' && <ServicesAdmin onGenerateReport={(ord) => { setPreloadedOrder(ord); setTab(ord.serviceCode === 'SVC_BUSINESS_COMPAT' ? 'business' : ord.serviceCode === 'SVC_BUSINESS_COMPLETE' ? 'bizreport' : ord.serviceCode === 'SVC_DESTINY_MATRIX' ? 'destiny' : ord.serviceCode === 'SVC_BIRTH_CHART' ? 'psychomatrix' : ord.serviceCode === 'SVC_SIGNATURE' ? 'signature' : ord.serviceCode === 'SVC_MOBILE_NUMBER' ? 'mobileadv' : ord.serviceCode === 'SVC_BABY_NAME' ? 'babyname' : 'studio'); }} />}{tab === 'queue' && <ReportQueueAdmin />}{tab === 'health' && <SiteHealth onOpen={(t) => setTab(t as TabId)} />}{tab === 'destiny' && <ChartReportStudio kind="destiny" preloadedOrder={preloadedOrder?.serviceCode === 'SVC_DESTINY_MATRIX' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'psychomatrix' && <ChartReportStudio kind="psychomatrix" preloadedOrder={preloadedOrder?.serviceCode === 'SVC_BIRTH_CHART' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'funnel' && <FunnelAdmin />}{tab === 'email-marketing' && <EmailMarketingAdmin />}{tab === 'studio' && <ReportStudio preloadedOrder={preloadedOrder} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'signature' && <SignatureStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_SIGNATURE' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'business' && <BusinessStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_BUSINESS_COMPAT' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'bizreport' && <BusinessReportStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_BUSINESS_COMPLETE' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'angel' && <AngelFinderTab />}{tab === 'lucky' && <LuckyFinderTab />}{tab === 'namecalc' && <NameCalculatorTab />}{tab === 'mobileadv' && <MobileAdvancedStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_MOBILE_NUMBER' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'babyname' && <BabyNameStudio preloadedOrder={preloadedOrder?.serviceCode === 'SVC_BABY_NAME' ? preloadedOrder : null} onClearPreloadedOrder={() => setPreloadedOrder(null)} />}{tab === 'celebrity' && <CelebrityStudio />}{tab === 'sales' && <SalesReport />}{tab === 'users' && <UsersTab />}{tab === 'experts' && <ExpertsTab />}{tab === 'plans' && <PlansTab />}{tab === 'coupons' && <CouponsTab />}
           {tab === 'knowledge' && <KnowledgeTab />}{tab === 'themes' && <ThemesTab />}{tab === 'prompts' && <PromptsTab />}{tab === 'seller' && <SellerTab />}{tab === 'payments' && <PaymentReport />}
           {tab === 'affiliates' && <AffiliatesAdmin view="affiliates" />}{tab === 'affcommissions' && <AffiliatesAdmin view="commissions" />}{tab === 'affpayouts' && <AffiliatesAdmin view="payouts" />}{tab === 'affsettings' && <AffiliatesAdmin view="settings" />}
         </div>

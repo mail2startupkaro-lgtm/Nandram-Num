@@ -144,8 +144,8 @@ export const W_HI: Record<string, HindiWriter> = {
     if (!cur) return [];
     const trait = NUMBER_TRAITS.hi[cur.number as number];
     return [
-      `${f.age} वर्ष की आयु में आप शिखर अंक ${cur.number} के काल में हैं, जो ${range(cur)} चलता है। इसका विषय ${trait.keyword} है: यह ${trait.plus} बनने का समय है, साथ ही ${trait.minus} से सावधान रहने का भी।`,
-      ch ? `इसी अवधि का चुनौती अंक ${ch.number} है${ch.number === 0 ? ', जो चुनाव की चुनौती है: कोई एक रुकावट तय नहीं है, इसलिए सीख यह है कि अपनी प्राथमिकताएँ समझदारी से चुनें' : ', और इसकी सीख पर काम करने से रुकावटें शक्ति में बदल जाती हैं'}।` : '',
+      `${f.age} वर्ष की आयु में आप शिखर अंक ${cur.number} के काल में हैं, जो ${range(cur)} चलता है। इसका विषय ${trait.keyword} है। इस काल में आपके ये गुण खिलते हैं: ${trait.plus}। इन बातों से सावधान रहें: ${trait.minus}।`,
+      ch ? `इसी अवधि की चुनौती का अंक ${ch.number} है${ch.number === 0 ? ', जो चुनाव की चुनौती है: कोई एक रुकावट तय नहीं है, इसलिए सीख यह है कि अपनी प्राथमिकताएँ समझदारी से चुनें' : ', और इसकी सीख पर काम करने से रुकावटें शक्ति में बदल जाती हैं'}।` : '',
       next ? (next.number === cur.number ? `यही शिखर अंक ${range(next)} फिर लौटता है, इसलिए इस काल की सीख बदलती नहीं बल्कि और गहरी होती है।` : `अगला शिखर अंक ${next.number} है, जो ${range(next)} चलेगा और ध्यान को ${NUMBER_TRAITS.hi[next.number as number].keyword} की ओर ले जाएगा।`) : '',
     ].filter(Boolean);
   },
@@ -157,7 +157,7 @@ export const W_HI: Record<string, HindiWriter> = {
     const balance = c.gender === 'female' && c.maritalStatus === 'married' && f.careerScore >= 60
       ? 'आपके अंक बढ़ते करियर और स्थिर घर दोनों का साथ देते हैं, इसलिए एक के लिए दूसरे को छोड़ने की ज़रूरत नहीं; सप्ताह की योजना पहले से बनाने से संतुलन बना रहता है।' : '';
     return [
-      `आपके अंक ${listT(f.suitableFields)} जैसे क्षेत्रों की ओर संकेत करते हैं${prof ? `, और ${prof} के रूप में आपका वर्तमान काम इनमें से कई गुणों का लाभ ले सकता है` : ''}।`,
+      `आपके अंक इन क्षेत्रों की ओर संकेत करते हैं: ${listT(f.suitableFields)}।${prof ? ` ${prof} के रूप में आपका वर्तमान काम इनमें से कई गुणों का लाभ ले सकता है।` : ''}`,
       `आपका करियर संकेतक 100 में से ${f.careerScore} और धन संकेतक ${f.moneyScore} है। ${f.careerScore > f.moneyScore + 10 ? 'पहचान धन से पहले मिल सकती है, इसलिए बचत की आदत अभी से बनाएँ।' : f.moneyScore > f.careerScore + 10 ? 'धन पद की तुलना में अधिक सहजता से आता है; पद में आगे बढ़ने के लिए अपने कौशल में निवेश करें।' : 'जब आप निरंतरता बनाए रखते हैं, तब करियर और धन साथ-साथ बढ़ते हैं।'}`,
       `${STAGE_HI[student ? 'student' : f.stage] ?? ''} ${balance}`.trim(),
       [jobs ? `नौकरी बदलने के लिए सबसे अनुकूल वर्ष ${list(jobs)} हैं।` : '', biz ? `नया व्यवसाय या नया काम शुरू करने के लिए ${list(biz)} में सही ऊर्जा है।` : ''].join(' ').trim(),
@@ -229,7 +229,7 @@ export const W_HI: Record<string, HindiWriter> = {
       `हर ${T(f.mantraDay)} को ${T(f.deity)} की पूजा करें और "${T(f.mantra)}" मंत्र का ${f.mantraCount} बार जप करें। महत्वपूर्ण दिनों पर ${listT(f.luckyColours, true)} रंग पहनें, नया काम ${listT(f.luckyDays, true)} को शुरू करें, और यदि स्वास्थ्य अनुमति दे तो ${T(f.fastingDay)} का व्रत रखें।`,
       `आपका रत्न ${T(f.gemstone)} है, और ${T(f.rudraksha)} रुद्राक्ष एक सौम्य विकल्प है। ${gem} दान के लिए ${listT(f.daan)} उत्तम हैं; यह दान इसी ऊर्जा को मज़बूत करता है।`,
       grid.length ? `घर में ये छोटे बदलाव आपके अनुपस्थित अंकों को सहारा देते हैं: ${grid.map((g) => T(g.placement).replace(/[.।]$/, '')).join('; ')}। ${T(grid[0].wristband)} पहनना एक आसान उपाय है।` : '',
-      f.avoidColours.length ? `महत्वपूर्ण अवसरों पर ${listT(f.avoidColours)} रंग का उपयोग कम करें। ${habits}` : habits,
+      f.avoidColours.length ? `महत्वपूर्ण अवसरों पर इन रंगों का उपयोग कम करें: ${listT(f.avoidColours)}। ${habits}` : habits,
     ].filter(Boolean);
   },
 

@@ -9,5 +9,5 @@ export async function POST(req: Request) {
     assertSameOrigin(req);
     await destroySession(readCookie(req));
     return json({ ok: true }, 200, { 'set-cookie': clearSessionCookie() });
-  } catch (e) { return errorResponse(e); }
+  } catch (e) { return errorResponse(e, req); }
 }

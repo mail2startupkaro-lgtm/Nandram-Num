@@ -1,4 +1,6 @@
 'use client';
+import { ClientQuestionsField, fetchAnswers, orderQuestions } from '@/components/admin/client-questions-field';
+import { withTitleCase } from '@/lib/report/title-case';
 import * as React from 'react';
 import { ClipboardList, Landmark, Loader2, Plus, Printer, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -7,7 +9,8 @@ import { api, ApiError } from '@/lib/client/api';
 import { SITE_NAME } from '@/lib/seo/site';
 import { fmtDate, parsePartners, splitNames, type Blk, type BizSection, type CompleteBizData } from '@/lib/business/complete';
 import type { Order } from '@/components/admin/services-admin';
-import { contentsAndGuide, endCta, extrasCss, type CoverWithExtras } from '@/lib/report/print-extras';
+import type { CoverWithExtras } from '@/lib/report/print-extras';
+import { bizCoverRequest, bizReportHtml } from '@/lib/report/print-html';
 
 type Written = { title: string; subtitle: string; summary: string; sections: BizSection[] };
 interface Result { data: CompleteBizData; report: { en: Written; hi: Written }; generatedAt: string }
@@ -28,47 +31,19 @@ function BlockView({ b }: { b: Blk }) {
 }
 
 /* ---------- print / PDF ---------- */
-function blockHtml(b: Blk): string {
-  switch (b.k) {
-    case 'p': return `<p>${esc(b.t)}</p>`;
-    case 'tip': return `<p class="tip">${esc(b.t)}</p>`;
-    case 'list': return `<ul>${b.items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
-    case 'tiles': return `<div class="k">${b.items.map((x) => `<div>${esc(x.label)}<b>${esc(x.value)}</b></div>`).join('')}</div>`;
-    case 'bars': return b.items.map((x) => `<div class="bar"><span>${esc(x.label)}</span><b>${x.value}</b><i style="width:${Math.max(2, Math.min(100, x.value))}%"></i></div>`).join('');
-    case 'table': return `<table><thead><tr>${b.head.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${b.rows.map((r) => `<tr>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
-  }
-}
 
-async function printReport(r: Result, lang: 'en' | 'hi', by: string) {
+async function printReport(r: Result, lang: 'en' | 'hi', by: string, questions = '') {
   const w = window.open('', '_blank'); if (!w) return;
-  const R = r.report[lang], d = r.data, hi = lang === 'hi';
-  w.document.write(`<p style="font-family:Georgia,serif;padding:40px;color:#7a1f2b">${hi ? 'रिपोर्ट तैयार हो रही है…' : 'Preparing the report…'}</p>`);
-  const loc = hi ? 'hi-IN' : 'en-IN';
-  const date = new Date(r.generatedAt).toLocaleDateString(loc, { day: 'numeric', month: 'long', year: 'numeric' });
-  const cover = await api<CoverWithExtras>('/api/admin/report-cover', { method: 'POST', json: {
-    extras: 'business', title: R.title, subtitle: R.subtitle, clientName: d.owner.name, preparedBy: by, lang,
-    facts: [[hi ? 'जन्म तिथि' : 'Date of birth', fmtDate(d.owner.dob, lang)], [hi ? 'व्यवसाय' : 'Business', d.best.text], [hi ? 'समग्र स्कोर' : 'Overall score', `${d.overall}/100`], [hi ? 'रिपोर्ट तिथि' : 'Report date', date]],
-  } }).catch(() => null);
-  const html = `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><title>${esc(R.title)} – ${esc(d.owner.name)}</title><style>
-@page{size:A4;margin:16mm 14mm}${cover ? '@page:first{margin:0}' : ''}body{font-family:Georgia,'Noto Serif Devanagari',serif;color:#2a1a10;margin:0;line-height:1.55;-webkit-print-color-adjust:exact;print-color-adjust:exact}.doc{max-width:860px;margin:0 auto;padding:0 18px}
-h1{color:#7a1f2b;margin:0;font-size:28px}h2{color:#7a1f2b;border-bottom:2px solid #c9a227;padding-bottom:4px;margin-top:26px;font-size:20px;break-after:avoid}
-.head{border:3px double #c9a227;border-radius:14px;padding:22px 26px;margin:18px 0 8px;background:linear-gradient(135deg,#fffaf0,#fbf1d9)}.brand{letter-spacing:.3em;text-transform:uppercase;font-size:11px;color:#8a6d12;margin:0 0 6px}
-.k{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:12px 0}.k div{border:1px solid #e5d3a1;border-radius:8px;padding:8px;text-align:center;background:#fff;font-size:11px}.k b{display:block;font-size:20px;color:#7a1f2b}
-.bar{position:relative;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #eee;padding:5px 0;font-size:13px}.bar i{position:absolute;left:0;bottom:-1px;height:3px;background:#c9a227}
-table{border-collapse:collapse;width:100%;font-size:12.5px;margin:8px 0}td,th{border:1px solid #e5d3a1;padding:5px 7px;text-align:left;vertical-align:top}th{background:#fbf1d9}tr{break-inside:avoid}
-.tip{border-left:4px solid #c9a227;background:#fbf1d9;padding:8px 12px;border-radius:6px}section{break-inside:auto}.pb{break-before:page}.foot{margin-top:30px;border-top:1px solid #e5d3a1;padding-top:8px;font-size:11px;color:#7a6a55}
-${extrasCss(cover?.extras)}${cover?.css ?? ''}</style></head><body>${cover?.html ?? ''}<main class="doc">
-<div class="head"><p class="brand">${esc(SITE_NAME)} · ${hi ? 'व्यवसाय अंक ज्योतिष' : 'Business numerology'}</p><h1>${esc(R.title)}</h1><p style="margin:6px 0 0"><b style="font-size:18px">${esc(d.owner.name)}</b> · ${esc(d.names.map((n) => n.text).join(' · '))}<br><small>${hi ? 'द्वारा तैयार' : 'Prepared by'} ${esc(by)} · ${date}</small></p></div>
-${contentsAndGuide(R.sections.map((s) => s.title), lang, cover?.extras)}
-${R.sections.map((s, i) => `<section${i === 6 ? ' class="pb"' : ''}><h2>${i + 1}. ${esc(s.title)}</h2>${s.blocks.map(blockHtml).join('')}</section>`).join('')}
-${endCta(cover?.extras)}
-<p class="foot">${hi ? 'द्वारा तैयार' : 'Prepared by'} ${esc(by)} · ${esc(SITE_NAME)}. ${hi ? 'अंक ज्योतिष पारंपरिक मार्गदर्शन है; यह वित्तीय, कानूनी या पेशेवर सलाह का विकल्प नहीं है।' : 'Numerology is traditional guidance; it does not replace financial, legal or professional advice.'}</p></main></body></html>`;
-  w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 800);
+  w.document.write(`<p style="font-family:Georgia,serif;padding:40px;color:#7a1f2b">${lang === 'hi' ? 'रिपोर्ट तैयार हो रही है…' : 'Preparing the report…'}</p>`);
+  const [cover, qa] = await Promise.all([api<CoverWithExtras>('/api/admin/report-cover', { method: 'POST', json: bizCoverRequest(r, lang, by) }).catch(() => null), fetchAnswers({ questions, name: r.data.owner.name, dob: r.data.owner.dob, gender: r.data.owner.gender, lang })]);
+  const html = bizReportHtml(r, lang, by, cover, qa);
+  w.document.open(); w.document.write(withTitleCase(html)); w.document.close(); setTimeout(() => w.print(), 800);
 }
 
 export function BusinessReportStudio({ preloadedOrder, onClearPreloadedOrder }: { preloadedOrder?: Order | null; onClearPreloadedOrder?: () => void } = {}) {
   const [f, setF] = React.useState(BLANK);
   const [partners, setPartners] = React.useState<{ name: string; dob: string }[]>([]);
+  const [cq, setCq] = React.useState('');
   const [fromOrder, setFromOrder] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [err, setErr] = React.useState('');
@@ -81,7 +56,7 @@ export function BusinessReportStudio({ preloadedOrder, onClearPreloadedOrder }: 
     const brand = dt.brand ?? '';
     setF({ ...BLANK, ownerName: dt.clientName ?? '', dob: dt.dob ?? '', gender: dt.gender ?? 'male', names: splitNames(dt.businessName ?? dt.currentName ?? '').join('\n'), businessType: dt.businesses ?? '',
       launchDate: dt.launchDate ?? '', brandColours: brand, businessMobile: dt.mobile ?? '' });
-    setPartners(parsePartners(dt.partners ?? ''));
+    setPartners(parsePartners(dt.partners ?? '')); setCq(orderQuestions(dt));
     setFromOrder(`${dt.clientName ?? 'Client'} · ordered ${new Date(preloadedOrder.createdAt).toLocaleDateString('en-IN')}${dt.partners ? ` · partners as typed: ${dt.partners.replace(/\n/g, '; ')}` : ''}${dt.questions ? ` · notes: ${dt.questions}` : ''}`);
     setRes(null); onClearPreloadedOrder?.();
   }, [preloadedOrder]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -128,6 +103,7 @@ export function BusinessReportStudio({ preloadedOrder, onClearPreloadedOrder }: 
             <Field label="Current brand colours" htmlFor="bzr-c"><Input id="bzr-c" value={f.brandColours} onChange={set('brandColours')} maxLength={200} placeholder="e.g. green and gold" /></Field>
             <Field label="Business mobile number" htmlFor="bzr-m"><Input id="bzr-m" value={f.businessMobile} onChange={set('businessMobile')} inputMode="numeric" maxLength={20} /></Field>
             <Field label="Prepared by" htmlFor="bzr-by"><Input id="bzr-by" value={f.preparedBy} onChange={set('preparedBy')} /></Field>
+            <div className="sm:col-span-2"><ClientQuestionsField id="bzr-cq" value={cq} onChange={setCq} /></div>
           </div>
         </section>
         <section className="space-y-3"><h3 className="font-serif text-lg font-semibold text-gold">3. Business partners</h3>
@@ -150,7 +126,7 @@ export function BusinessReportStudio({ preloadedOrder, onClearPreloadedOrder }: 
             <div><h3 className="font-serif text-2xl font-semibold">{R.title}</h3><p className="text-sm text-muted-foreground">{res.data.owner.name} · {R.subtitle}</p></div>
             <div className="flex gap-2">
               <Select aria-label="Report language" value={f.lang} onChange={(e) => setF({ ...f, lang: e.target.value as 'en' | 'hi' })} className="w-32"><option value="en">English</option><option value="hi">हिंदी</option></Select>
-              <Button type="button" size="sm" onClick={() => printReport(res, f.lang, f.preparedBy || 'Acharya Nandram')}><Printer className="mr-1 h-4 w-4" />Print / Save PDF</Button>
+              <Button type="button" size="sm" onClick={() => printReport(res, f.lang, f.preparedBy || 'Acharya Nandram', cq)}><Printer className="mr-1 h-4 w-4" />Print / Save PDF</Button>
             </div>
           </div>
           {R.sections.map((s, i) => (

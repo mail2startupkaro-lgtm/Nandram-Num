@@ -3,6 +3,7 @@ import * as React from 'react';
 import { LazyMotion } from 'framer-motion';
 import { DICT, type Dict, type Lang } from '@/lib/i18n/dictionary';
 import { safeStorage } from '@/lib/utils';
+import { installErrorReporter } from '@/lib/client/error-reporter';
 
 type Theme = 'light' | 'dark';
 export interface Me {
@@ -23,6 +24,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     catch { setMe({ user: null, providers: { email: true, sms: true, google: false } }); }
   }, []);
   React.useEffect(() => { refreshMe(); }, [refreshMe]);
+  React.useEffect(() => installErrorReporter(), []);
 
   React.useEffect(() => {
     const s = safeStorage();

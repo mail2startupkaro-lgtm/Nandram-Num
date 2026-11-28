@@ -7,6 +7,7 @@ import { guideCss, readingGuideHtml, RECOMMEND, servicesCss, servicesCtaHtml } f
 import { planetOf, NUMBER_PLANET } from '@/lib/numerology/data/planets';
 import type { Narrative, NarrativeSection } from '@/lib/narrative/service';
 import { fontFaceCss } from './fonts';
+import { qaHtml, type QA } from '@/lib/report/client-questions';
 import { barsSvg, compassSvg, divider, esc, gaugeSvg, gridSvg, mandala, monogram, numberMedallion, planetIcon, portraitPlaceholder, radarSvg, remedyIcon, ringSvg, swatches, timelineSvg, type RemedyIcon } from './svg';
 import type { Branding, PdfTheme } from './themes';
 import { DISCLAIMER } from '@/lib/disclaimer';
@@ -21,7 +22,7 @@ const L = {
   en: {
     reportTypes: { complete: 'Complete Life Report', dob: 'Date of Birth Numerology', name: 'Name Numerology', mobile: 'Mobile Number Numerology', aadhaar: 'Aadhaar Vibration Report', couple: 'Couple Compatibility Report' } as Record<string, string>,
     preparedFor: 'Prepared for', dob: 'Date of birth', reportDate: 'Report date', by: 'Prepared by', contents: 'Contents', chapter: 'Chapter',
-    ch: { glance: 'Your Numbers at a Glance', core: 'Moolank & Bhagyank', grid: 'Lo Shu Grid Analysis', kua: 'Kua & Directions', timing: 'Timing & Forecast', life: 'Career, Love & Wellbeing', name: 'Name Numerology', numbers: 'Mobile & Aadhaar', couple: 'Couple Compatibility', destiny: 'Destiny Matrix Analysis', remedies: 'Remedies & Solutions', closing: 'Closing & Consultation' } as Record<string, string>,
+    ch: { glance: 'Your Numbers at a Glance', core: 'Moolank & Bhagyank', grid: 'Lo Shu Grid Analysis', kua: 'Kua & Directions', timing: 'Timing & Forecast', life: 'Career, Love & Wellbeing', name: 'Name Numerology', numbers: 'Mobile & Aadhaar', couple: 'Couple Compatibility', destiny: 'Destiny Matrix Analysis', remedies: 'Remedies & Solutions', closing: 'Closing & Consultation', questions: 'Your Questions Answered' } as Record<string, string>,
     moolank: 'Moolank', bhagyank: 'Bhagyank', kua: 'Kua', nameNo: 'Name number', py: 'Personal Year', strengths: 'Key Strengths', watch: 'Watch Out For', advice: 'Expert Advice', remedy: 'Your Remedy',
     loShu: 'Lo Shu Grid', vedic: 'Vedic Grid', present: 'Present', repeated: 'Repeated', missing: 'Missing', lifeAreas: 'Life areas', friendly: 'Friendly', neutral: 'Neutral', enemy: 'Challenging',
     planes: 'Planes, arrows & yogs', plane: 'Plane', status: 'Status', complete: 'Complete', partial: 'Partial', empty: 'Empty', pyTimeline: 'Personal Year energy (birthday to birthday; year = when it begins)',
@@ -52,7 +53,7 @@ const L = {
   hi: {
     reportTypes: { complete: 'संपूर्ण जीवन रिपोर्ट', dob: 'जन्म तिथि अंक ज्योतिष', name: 'नाम अंक ज्योतिष', mobile: 'मोबाइल नंबर अंक ज्योतिष', aadhaar: 'आधार कंपन रिपोर्ट', couple: 'दंपति मिलान रिपोर्ट' } as Record<string, string>,
     preparedFor: 'विशेष रूप से तैयार', dob: 'जन्म तिथि', reportDate: 'रिपोर्ट तिथि', by: 'प्रस्तुतकर्ता', contents: 'विषय सूची', chapter: 'अध्याय',
-    ch: { glance: 'आपके अंक एक नज़र में', core: 'मूलांक और भाग्यांक', grid: 'लो शू ग्रिड विश्लेषण', kua: 'कुआ और दिशाएँ', timing: 'समय और भविष्यफल', life: 'करियर, प्रेम और स्वास्थ्य', name: 'नाम अंक ज्योतिष', numbers: 'मोबाइल और आधार', couple: 'दंपति मिलान', destiny: 'डेस्टिनी मैट्रिक्स विश्लेषण', remedies: 'उपाय और समाधान', closing: 'समापन और परामर्श' } as Record<string, string>,
+    ch: { glance: 'आपके अंक एक नज़र में', core: 'मूलांक और भाग्यांक', grid: 'लो शू ग्रिड विश्लेषण', kua: 'कुआ और दिशाएँ', timing: 'समय और भविष्यफल', life: 'करियर, प्रेम और स्वास्थ्य', name: 'नाम अंक ज्योतिष', numbers: 'मोबाइल और आधार', couple: 'दंपति मिलान', destiny: 'डेस्टिनी मैट्रिक्स विश्लेषण', remedies: 'उपाय और समाधान', closing: 'समापन और परामर्श', questions: 'आपके प्रश्नों के उत्तर' } as Record<string, string>,
     moolank: 'मूलांक', bhagyank: 'भाग्यांक', kua: 'कुआ', nameNo: 'नामांक', py: 'व्यक्तिगत वर्ष', strengths: 'मुख्य शक्तियाँ', watch: 'ध्यान दें', advice: 'विशेषज्ञ सलाह', remedy: 'आपका उपाय',
     loShu: 'लो शू ग्रिड', vedic: 'वैदिक ग्रिड', present: 'उपस्थित', repeated: 'दोहराया', missing: 'अनुपस्थित', lifeAreas: 'जीवन क्षेत्र', friendly: 'मित्र', neutral: 'सम', enemy: 'शत्रु',
     planes: 'तल, तीर और योग', plane: 'तल', status: 'स्थिति', complete: 'पूर्ण', partial: 'आंशिक', empty: 'रिक्त', pyTimeline: 'व्यक्तिगत वर्ष ऊर्जा (जन्मदिन से जन्मदिन तक)',
@@ -99,6 +100,8 @@ export interface TemplateInput {
   expertNote?: string;
   /** Custom report title / service name to print on the cover and header. */
   reportTitle?: string;
+  /** The client's own questions from the booking, answered from their numbers (chapter 2: "Your Questions Answered"). */
+  questions?: QA[];
 }
 
 const fmtDate = (iso: string) => iso.split('-').reverse().join('-');
@@ -554,6 +557,10 @@ export function buildBodyHtml(inp: TemplateInput, pages: Record<string, number> 
   const lang: Lang = narrative.language === 'hi' ? 'hi' : 'en';
   const lab = labelsFor(narrative.language);
   const chapters = buildChapters(inp, lab).filter((c) => !inp.hiddenChapters?.includes(c.id));
+  if (inp.questions?.length) {
+    chapters.splice(Math.min(1, chapters.length), 0, { id: 'questions', title: lab.ch.questions, icon: remedyIcon('habit', t, 40), intro: '',
+      inner: qaHtml(inp.questions, lang, { heading: 'none', primary: t.primary, accent: t.accent, soft: t.soft }) });
+  }
   const S = Object.fromEntries(narrative.sections.map((s) => [s.id, s])) as Record<string, NarrativeSection | undefined>;
 
   const closing = `<section class="chapter newpage" id="ch-closing"><div class="ch-intro"><div class="ch-head"><div class="ch-icon">${remedyIcon('signature', t, 40)}</div><div><div class="ch-num">${esc(lab.chapter)} ${String(chapters.length + 1).padStart(2, '0')}</div><h2 class="ch-title">${esc(lab.ch.closing)}<span class="mk">@@C:closing@@</span></h2></div></div><div class="orn">${divider(t, 200)}</div>

@@ -8,6 +8,7 @@ import type { SignatureNumbers } from './numbers';
 export const FEATURE_NAME_HI: Record<string, string> = {
   baseline: 'हस्ताक्षर की दिशा', slant: 'अक्षरों का झुकाव', size: 'आकार', first: 'पहला अक्षर', legibility: 'पढ़ने में आसानी', pressure: 'पेन का दबाव',
   underline: 'नीचे की रेखा', ending: 'आख़िरी स्ट्रोक', dots: 'बिंदु और पूर्ण विराम', spacing: 'नाम के हिस्सों के बीच जगह', enclosure: 'घेरा',
+  curve: 'रेखा का आकार', zones: 'ऊपरी और निचला भाग', loops: 'लूप और गोलाई', progression: 'शुरू से अंत तक अक्षरों का आकार', fluency: 'लिखावट का प्रवाह', ink: 'स्याही का रंग',
 };
 
 /** [label, meaning, fix?] per feature:option – written in plain words. */
@@ -46,6 +47,27 @@ export const OPTION_HI: Record<string, [string, string, string?]> = {
   'spacing:gaps': ['शब्दों के बीच साफ़ जगह', 'स्वतंत्र सोच और साफ़ सीमाएँ।'],
   'spacing:overlap': ['एक-दूसरे पर चढ़ा / भीड़ भरा', 'ज़रूरत से ज़्यादा ज़िम्मेदारियाँ ले लेना; काम और घर को अलग रखना कठिन।', 'पहले नाम और उपनाम के बीच थोड़ी बराबर जगह छोड़ें।'],
   'enclosure:open': ['खुला (कोई घेरा नहीं)', 'लोगों, विचारों और अवसरों के लिए खुले हैं।'],
+  'curve:even': ['शुरू से अंत तक एक-सी', 'काम की शुरुआत से अंत तक मेहनत एक जैसी बनी रहती है।'],
+  'curve:arched': ['पहले ऊपर, फिर नीचे (मेहराब जैसी)', 'काम उत्साह से शुरू होता है, पर परिणाम आने से पहले ऊर्जा या भरोसा घट सकता है। भारतीय परंपरा में ऐसा हस्ताक्षर शुरुआती लाभ देकर उसे टिकने नहीं देता माना जाता है।', 'आख़िरी अक्षर तक लाइन को ऊपर उठता रखें; दूसरा आधा भाग नीचे न झुकने दें।'],
+  'curve:dip': ['बीच में नीचे, फिर ऊपर', 'काम के बीच में कठिन दौर आता है, पर आप सँभलकर अच्छा अंत करते हैं।'],
+  'curve:dropEnd': ['अंत में नीचे गिरती', 'आख़िरी हिस्सा नीचे गिरता है: काम के अंत में सहारा कम हो सकता है या काम थकान में पूरा होता है।', 'नाम के आख़िरी अक्षर भी बाक़ी नाम की तरह ऊपर उठती लाइन पर लिखें।'],
+  'zones:balanced': ['संतुलित', 'विचार, रोज़ का जीवन और व्यावहारिक ज़रूरतें अच्छे संतुलन में रहती हैं।'],
+  'zones:upper': ['ऊपर के स्ट्रोक लंबे', 'ऊँचे आदर्श, योजनाएँ और महत्वाकांक्षा; मन अक्सर बड़ी तस्वीर पर रहता है।'],
+  'zones:lower': ['नीचे के स्ट्रोक लंबे', 'व्यावहारिक और धन पर ध्यान रखने वाले; आराम और सुरक्षा को महत्व देते हैं।'],
+  'loops:rounded': ['कई गोल लूप', 'स्नेही, कल्पनाशील और भावुक; रिश्ते आपके लिए बहुत मायने रखते हैं।'],
+  'loops:balanced': ['कुछ लूप', 'भावना और तर्क में अच्छा संतुलन।'],
+  'loops:angular': ['कम लूप, नुकीले अक्षर', 'व्यावहारिक, स्पष्ट और फ़ैसला लेने वाले; कभी-कभी सख़्त लग सकते हैं।'],
+  'progression:even': ['शुरू से अंत तक एक जैसा', 'लगातार मेहनत और स्थिर तरीक़ा।'],
+  'progression:shrinking': ['अंत की ओर छोटा होता', 'समझदारी और सावधानी, पर काम पूरा होने से पहले भरोसा या ऊर्जा घट सकती है।', 'आख़िरी अक्षर भी बीच के अक्षरों जितने ऊँचे लिखें।'],
+  'progression:growing': ['अंत की ओर बड़ा होता', 'खुले और स्पष्ट स्वभाव के; समय के साथ अधीर हो सकते हैं।'],
+  'fluency:fluent': ['सहज, पेन कम उठता है', 'तेज़ सोच और आत्मविश्वास से काम।'],
+  'fluency:steady': ['पेन कुछ बार उठता है', 'काम से पहले सोचते हैं; सावधान और व्यवस्थित।'],
+  'fluency:broken': ['पेन बार-बार उठता है', 'फ़ैसले से पहले झिझक या ज़्यादा सावधानी; विचार टुकड़ों में आ सकते हैं।', 'नाम को एक या दो सहज गतियों में लिखने का अभ्यास करें।'],
+  'ink:blue': ['नीली स्याही', 'परंपरा में हस्ताक्षर के लिए सबसे अच्छी मानी जाती है: शांति, भरोसा और लगातार उन्नति।'],
+  'ink:black': ['काली स्याही', 'औपचारिक और दृढ़; सरकारी काग़ज़ों के लिए सही, पर उन्नति के लिए कई जानकार नीली स्याही पसंद करते हैं।'],
+  'ink:red': ['लाल स्याही', 'परंपरा में हस्ताक्षर के लिए वर्जित: झगड़े, कर्ज़ और नुकसान से जोड़ी जाती है।', 'नीली स्याही से हस्ताक्षर करें (सरकारी काग़ज़ों पर काली भी ठीक है), लाल से कभी नहीं।'],
+  'ink:green': ['हरी स्याही', 'बुध ग्रह से जुड़ी: व्यापार और बातचीत; सरकारी दस्तावेज़ों के लिए असामान्य।'],
+  'ink:other': ['अन्य रंग', 'असामान्य रंग; दस्तावेज़ों पर नीली या काली स्याही ही रखें।'],
   'enclosure:circled': ['घेरे या लूप में बंद', 'ख़ुद को बचाकर रखते हैं; परंपरा में माना जाता है कि घेरा अवसरों और सहारे को बाहर रोकता है।', 'हस्ताक्षर के चारों ओर घेरा या लूप न बनाएँ – उसे हर तरफ़ से खुला रखें।'],
 };
 
@@ -57,12 +79,18 @@ const PERSONALITY_HI: Record<string, Record<string, string>> = {
   underline: { single: 'आत्मविश्वासी और मज़बूत आधार वाले।', double: 'पहचान और सुरक्षा चाहते हैं।', through: 'ख़ुद की बहुत आलोचना करते हैं और अपनी ही तरक्की रोक सकते हैं।' },
   ending: { upward: 'आशा और महत्वाकांक्षा के साथ काम पूरा करते हैं।', downward: 'काम के अंत तक थक जाते हैं या शंका में रहते हैं।' },
   enclosure: { circled: 'सतर्क रहते हैं – लोगों और प्रस्तावों को दूर रखते हैं।' },
+  curve: { arched: 'जोश से शुरुआत करते हैं; अंत तक वही ऊर्जा बनाए रखना आपकी मुख्य सीख है।', dropEnd: 'काम के आख़िरी चरण में थकान आ सकती है; अंत की योजना पहले से बनाएँ।' },
+  zones: { upper: 'आदर्शवादी और बड़ी योजनाएँ बनाने वाले।', lower: 'व्यावहारिक और ज़मीन से जुड़े।' },
+  loops: { rounded: 'भावुक और स्नेही – लोगों का ख़याल रखते हैं।', angular: 'सीधी बात करने वाले और जल्दी फ़ैसला लेने वाले।' },
+  progression: { shrinking: 'शुरुआत में उत्साह, अंत में सावधानी – काम पूरा करने पर ध्यान दें।' },
+  fluency: { fluent: 'तेज़ सोचते हैं और आत्मविश्वास से आगे बढ़ते हैं।', broken: 'फ़ैसले से पहले बहुत सोचते हैं।' },
 };
 
 const FIX_TITLE_HI: Record<string, string> = {
   'baseline:falling': 'हस्ताक्षर को ऊपर उठाएँ', 'baseline:wavy': 'हस्ताक्षर की लाइन सीधी करें', 'slant:left': 'अक्षरों को हल्का आगे झुकाएँ', 'slant:mixed': 'एक ही झुकाव रखें',
   size: 'थोड़ा बड़ा लिखें', first: 'पहला अक्षर बड़ा करें', legibility: 'नाम पढ़ने योग्य रखें', 'underline:through': 'नाम काटने वाली लाइन हटाएँ',
   ending: 'अंत ऊपर उठते स्ट्रोक से करें', dots: 'पूर्ण विराम हटाएँ', spacing: 'नाम के हिस्सों में बराबर जगह दें', enclosure: 'घेरा हटाएँ',
+  'curve:arched': 'लाइन को अंत तक ऊपर उठता रखें', 'curve:dropEnd': 'अंत के अक्षर नीचे न गिरने दें', progression: 'आख़िरी अक्षर छोटे न करें', fluency: 'नाम एक प्रवाह में लिखें', ink: 'नीली स्याही से हस्ताक्षर करें',
 };
 
 const REL_HI: Record<string, string> = { friend: 'मित्र (साथ देता है)', neutral: 'सम (न साथ, न विरोध)', enemy: 'विरोधी (साथ नहीं देता)' };
@@ -73,12 +101,12 @@ export const relHi = (r: string) => REL_HI[r] ?? r;
 export const dayHi = (d: string) => DAY_HI[d] ?? tr('hi', d);
 export const catHi = (c: string) => CAT_HI[c] ?? c;
 
-interface FeatureLike { id: string; option: string; feature: string; label: string; meaning: string; fix?: string; impact: 'positive' | 'neutral' | 'watch'; value?: string }
+interface FeatureLike { id: string; option: string; feature: string; label: string; meaning: string; fix?: string; impact: 'positive' | 'neutral' | 'watch'; value?: string; valueHi?: string }
 
-/** The same feature, with Hindi name, label, meaning and fix. */
+/** The same feature, with Hindi name, label, meaning, fix and measured value. */
 export function featureHi<T extends FeatureLike>(f: T): T {
   const o = OPTION_HI[`${f.id}:${f.option}`];
-  return { ...f, feature: FEATURE_NAME_HI[f.id] ?? f.feature, label: o?.[0] ?? f.label, meaning: o?.[1] ?? f.meaning, fix: o?.[2] ?? f.fix };
+  return { ...f, feature: FEATURE_NAME_HI[f.id] ?? f.feature, label: o?.[0] ?? f.label, meaning: o?.[1] ?? f.meaning, fix: o?.[2] ?? f.fix, value: f.valueHi ?? (f.value && /[A-Za-z]{3,}/.test(f.value) ? undefined : f.value) };
 }
 
 export interface HiAnalysisParts {
@@ -151,3 +179,16 @@ const PROFESSION_HI: Record<string, string> = {
   'Hospitality / Food / Beauty': 'होटल / खान-पान / ब्यूटी', 'Politics / Public life': 'राजनीति / सार्वजनिक जीवन', Student: 'विद्यार्थी', Homemaker: 'गृहिणी', Other: 'अन्य',
 };
 export const professionHi = (s: string) => PROFESSION_HI[s] ?? s;
+
+const MONTHS_HI: Record<string, string> = { jan: 'जनवरी', feb: 'फ़रवरी', mar: 'मार्च', apr: 'अप्रैल', may: 'मई', jun: 'जून', jul: 'जुलाई', aug: 'अगस्त', sep: 'सितंबर', oct: 'अक्टूबर', nov: 'नवंबर', dec: 'दिसंबर' };
+/** English month names in a date text → Hindi ("28 Aug 2026" → "28 अगस्त 2026"). */
+export function monthsHi(s: string): string {
+  return s.replace(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\.?(?=\s|$|,)/g, (m, k: string) => MONTHS_HI[k.slice(0, 3).toLowerCase()] ?? m);
+}
+
+/** The goal options of the signature form in Hindi. */
+export const GOAL_HI: Record<string, string> = {
+  'Career growth': 'करियर में उन्नति', 'Business expansion': 'व्यवसाय का विस्तार', 'Wealth & finance': 'धन और वित्त', 'Marriage & relationships': 'विवाह और रिश्ते',
+  'Confidence & leadership': 'आत्मविश्वास और नेतृत्व', 'Health & energy': 'स्वास्थ्य और ऊर्जा', 'Education & exams': 'शिक्षा और परीक्षाएँ', 'Peace of mind': 'मन की शांति',
+  'Fame & recognition': 'प्रसिद्धि और पहचान', 'Foreign travel / settlement': 'विदेश यात्रा / बसना',
+};

@@ -38,6 +38,6 @@ export async function POST(req: Request, props: { params: Promise<{ token: strin
     const out = await renderReportPdf({ result: rep.result, narrative: rep.narrative, ...style });
     return pdfResponse(out.pdf, `${slug(rep.result.client.commonName || rep.result.client.fullName)}-numerology-report.pdf`);
   } catch (e) {
-    return errorResponse(e);
+    return errorResponse(e, req);
   }
 }

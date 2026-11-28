@@ -5,7 +5,9 @@ import { getDb } from '@/lib/db/client';
 import { creditLedger, payments, users } from '@/lib/db/schema';
 import { eraseAccount } from '@/lib/auth/account-security';
 import { listServiceOrders, listServices } from '@/lib/billing/services';
-import { deliveryState, intakeToClientInput, isAutoService } from '@/lib/service-delivery';
+import { after } from 'next/server';
+import { canAutoGenerate, deliveryState, SERVICE_TURNAROUND_MIN } from '@/lib/service-delivery';
+import { runDueDeliveries, shouldKick } from '@/lib/server/service-delivery-run';
 import { clearSessionCookie } from '@/lib/auth/session';
 import { json, readJson, withUser } from '@/lib/server/http';
 import { rateLimit, tooMany } from '@/lib/server/rate-limit';
@@ -13,6 +15,7 @@ import { syncPendingUserPayments } from '@/lib/server/sync-pending-payments';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
 
 export const GET = withUser(async (_req, user) => {
   // Reconcile pending gateway payments (throttled to once a minute per user; a slow gateway never blocks the page for long).
@@ -31,20 +34,28 @@ export const GET = withUser(async (_req, user) => {
 });
 
 /** Paid service orders with their live delivery status (shown in My reports and My account). */
-async function myServiceOrders(userId: string, email: string | null) {
+async function myServiceOrders(userId: string, _email: string | null) {
   const [orders, catalogue] = await Promise.all([listServiceOrders({ userId }), listServices({ includeInactive: true }).catch(() => [])]);
   const names = new Map(catalogue.map((s) => [s.code, { en: s.en.name, hi: s.hi.name }]));
   const now = new Date();
-  return orders.filter((o) => o.status !== 'awaiting_payment' && o.payment.status === 'paid').map((o) => {
-    const auto = isAutoService(o.serviceCode);
+  const list = orders.filter((o) => o.status !== 'awaiting_payment' && o.payment.status === 'paid').map((o) => {
     const d = o.details as Record<string, string | undefined>;
+    const canWrite = canAutoGenerate(o.serviceCode, d, { hasSignatureImage: o.hasSignatureImage });
+    const auto = canWrite || o.hasReportFile;
+    const delivery = deliveryState({ status: o.status, paidAt: o.payment.paidAt, deliveredAt: o.deliveredAt, onHold: o.onHold, hasFile: o.hasReportFile, auto: canWrite }, now);
     return {
       id: o.id, serviceCode: o.serviceCode, name: names.get(o.serviceCode) ?? null, status: o.status, createdAt: o.createdAt, paidAt: o.payment.paidAt, deliveredAt: o.deliveredAt,
       invoiceNumber: o.payment.invoiceNumber, forName: d.clientName || d.currentName || d.businessName || null, forRelation: d.forRelation ?? null, forProfileId: d.forProfileId ?? null,
-      auto, needsDetails: auto && !intakeToClientInput(o.serviceCode, d, { email }),
-      delivery: deliveryState({ status: o.status, paidAt: o.payment.paidAt, deliveredAt: o.deliveredAt, onHold: o.onHold, hasFile: o.hasReportFile, auto }, now),
+      auto, needsDetails: !canWrite && !o.hasReportFile && o.status !== 'delivered',
+      /** Languages the client can download: stored PDFs, or any language the system can write. */
+      languages: { en: o.hasReportEn || canWrite, hi: o.hasReportHi || canWrite },
+      delivery,
     };
   });
+  // Reports past the 3-hour mark are delivered (both languages + SMS / email) in the background, right after this response.
+  const due = orders.some((o) => (o.status === 'paid' || o.status === 'in_progress') && !o.onHold && o.payment.paidAt && now.getTime() - new Date(o.payment.paidAt).getTime() >= SERVICE_TURNAROUND_MIN * 60_000);
+  if (due && shouldKick(`user:${userId}`)) after(() => runDueDeliveries({ userId, budgetMs: 200_000 }).then(() => undefined).catch((e) => console.error('[account] delivery:', e)));
+  return list;
 }
 
 export const PATCH = withUser(async (req, user) => {

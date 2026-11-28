@@ -1,5 +1,6 @@
 'use client';
 /** Admin → Report generator: build a fully customised, service-tailored report for any client, verify it, edit the text, download the PDF. */
+import { ClientQuestionsField, orderQuestions } from '@/components/admin/client-questions-field';
 import * as React from 'react';
 import { AlertTriangle, Check, CheckCircle2, FileDown, FileText, Info, Mail, RefreshCw, ShieldCheck, Sparkles, X, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -88,6 +89,8 @@ export function ReportStudio({
   });
 
   const [p, setP] = React.useState<Preview | null>(null);
+  /** The client's questions / problems from the booking – answered in the report. */
+  const [cq, setCq] = React.useState('');
   const [edits, setEdits] = React.useState<Record<string, string>>({});
   const [busy, setBusy] = React.useState<'' | 'preview' | 'pdf' | 'email'>('');
   const [err, setErr] = React.useState<string | null>(null);
@@ -172,12 +175,7 @@ export function ReportStudio({
       profession: d.profession || '',
     }));
 
-    if (d.questions?.trim()) {
-      setO((prev) => ({
-        ...prev,
-        note: prev.note ? `${prev.note}\n\nClient questions:\n${d.questions}` : `Client questions:\n${d.questions}`,
-      }));
-    }
+    setCq(orderQuestions(d));
 
     setSelectedOrderId(ord.id);
     const preset = getServicePreset(ord.serviceCode);
@@ -212,7 +210,7 @@ export function ReportStudio({
     const branding = Object.fromEntries((['brandName', 'expertName', 'expertTitle', 'contactLine', 'bookingUrl'] as const).filter((k) => o[k].trim()).map((k) => [k, o[k].trim()]));
     return {
       action, email: c.email.trim() || undefined, sendEmailIfProvided: action === 'pdf' ? sendEmailWithPdf : false, input, modules: o.modules, language: o.language, theme: o.theme, asOf: o.asOf || undefined, reportDate: o.reportDate || undefined, useAi: o.useAi,
-      hiddenChapters: o.hidden, expertNote: o.note || undefined, watermark: o.watermark || undefined, branding, sectionEdits: (action === 'pdf' || action === 'email') ? edits : {},
+      hiddenChapters: o.hidden, expertNote: o.note || undefined, clientQuestions: cq.trim() || undefined, watermark: o.watermark || undefined, branding, sectionEdits: (action === 'pdf' || action === 'email') ? edits : {},
       reportTitle: o.reportTitle || undefined, serviceCode: o.serviceCode || undefined,
     };
   }
@@ -452,6 +450,7 @@ export function ReportStudio({
             ))}
           </div>
         </details>
+        <div className="mt-4"><ClientQuestionsField id="rs-cq" value={cq} onChange={setCq} /></div>
         <Field label="Personal note from the expert (printed in the closing chapter)" htmlFor="o-n" className="mt-4"><textarea id="o-n" rows={3} className={ta} value={o.note} onChange={(e) => setOv('note', e.target.value)} /></Field>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Button variant="gold" onClick={preview} disabled={!!busy || c.fullName.trim().length < 2 || !c.dob.trim()}>{busy === 'preview' ? <RefreshCw className="animate-spin" /> : <ShieldCheck />} Calculate & check accuracy</Button>

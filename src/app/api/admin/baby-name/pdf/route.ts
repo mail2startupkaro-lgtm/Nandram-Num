@@ -3,6 +3,8 @@ import { withAdmin } from '@/lib/server/admin';
 import { pdfResponse, readJson, slug } from '@/lib/server/http';
 import { rateLimit, tooMany } from '@/lib/server/rate-limit';
 import { analyseBabyName } from '@/lib/baby-name/analysis';
+import { answerClientQuestions } from '@/lib/report/client-questions';
+import { isoDob } from '@/lib/service-delivery';
 import { renderBabyNamePdf } from '@/lib/baby-name/report';
 
 export const runtime = 'nodejs';
@@ -31,6 +33,7 @@ const Body = z.object({
   preparedBy: z.string().trim().max(80).default('Acharya Nandram'),
   familyName: z.string().trim().max(60).optional(),
   expertNote: z.string().trim().max(1200).optional(),
+  clientQuestions: z.string().max(3000).optional(),
 });
 
 /** Admin → Baby name analysis → "Download PDF". Re-runs the engine on the server; nothing is stored. */
@@ -39,6 +42,7 @@ export const POST = withAdmin(async (req, user) => {
   if (!rl.ok) return tooMany(rl.retryAfter);
   const b = Body.parse(await readJson(req, 50_000));
   const result = analyseBabyName(b);
-  const { pdf } = await renderBabyNamePdf(result, { lang: b.language, preparedBy: b.preparedBy, familyName: b.familyName || undefined, expertNote: b.expertNote || undefined, theme: b.theme });
+  const questions = await answerClientQuestions({ questions: b.clientQuestions, name: b.currentName || b.surname, dob: isoDob(b.dob), gender: b.gender === 'girl' ? 'female' : 'male', lang: b.language });
+  const { pdf } = await renderBabyNamePdf(result, { lang: b.language, preparedBy: b.preparedBy, familyName: b.familyName || undefined, expertNote: b.expertNote || undefined, theme: b.theme, questions });
   return pdfResponse(pdf, `baby-name-report-${slug(b.surname || result.top[0].first)}.pdf`);
 });

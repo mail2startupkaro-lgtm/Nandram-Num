@@ -1,4 +1,5 @@
 {
   "framework": "nextjs",
-  "regions": ["hnd1"]
+  "regions": ["hnd1"],
+  "crons": [{ "path": "/api/cron/deliver-reports", "schedule": "30 2 * * *" }]
 }

@@ -52,5 +52,5 @@ export async function POST(req: Request) {
     await db.update(users).set({ lastLoginAt: new Date(), role, failedLogins: 0, lockedUntil: null }).where(eq(users.id, u.id));
     const token = await createSession(u.id, req.headers.get('user-agent'));
     return json({ user: { id: u.id, name: u.name, role } }, 200, { 'set-cookie': sessionCookie(token) });
-  } catch (e) { return errorResponse(e); }
+  } catch (e) { return errorResponse(e, req); }
 }

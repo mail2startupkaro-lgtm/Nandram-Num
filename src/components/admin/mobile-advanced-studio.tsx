@@ -4,6 +4,7 @@
  * Client details + current number + up to 5 shortlisted numbers → instant analysis on the shared engine (in the browser)
  * → branded PDF (signature-style cover, every section on a fresh page, CTA + expert profile at the end). Nothing is saved.
  */
+import { ClientQuestionsField, orderQuestions } from '@/components/admin/client-questions-field';
 import * as React from 'react';
 import { Check, Download, Loader2, Plus, Smartphone, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -35,6 +36,7 @@ function Ring({ value, label }: { value: number; label: string }) {
 export function MobileAdvancedStudio({ preloadedOrder, onClearPreloadedOrder }: { preloadedOrder?: Order | null; onClearPreloadedOrder?: () => void }) {
   const today = iso(todayIST());
   const [f, setF] = React.useState({ fullName: '', dob: '', gender: 'male', mobile: '', asOf: today, language: 'en' as 'en' | 'hi', theme: 'royal-gold-maroon', preparedBy: 'Acharya Nandram', expertNote: '' });
+  const [cq, setCq] = React.useState('');
   const [alts, setAlts] = React.useState<string[]>(['']);
   const [showFull, setShowFull] = React.useState(true);
   const [res, setRes] = React.useState<MobileAdvancedResult | null>(null);
@@ -51,6 +53,7 @@ export function MobileAdvancedStudio({ preloadedOrder, onClearPreloadedOrder }: 
     const found = [dt.mobile ?? '', ...((dt.questions ?? '').match(/(?:\+?91[\s-]?)?[6-9]\d{4}[\s-]?\d{5}/g) ?? [])].map((x) => x.trim()).filter(Boolean);
     setF((x) => ({ ...x, fullName: dt.clientName ?? dt.currentName ?? '', dob: dt.dob ? toIsoDob(dt.dob) : '', gender: dt.gender || 'male', mobile: found[0] ?? '' }));
     setAlts(found.length > 1 ? [...found.slice(1, 6), ''] : ['']);
+    setCq(orderQuestions(dt));
     setFromOrder(`${dt.clientName ?? 'Client'} · ordered ${new Date(preloadedOrder.createdAt).toLocaleDateString('en-IN')}${dt.questions ? ` · questions: ${dt.questions}` : ''}`);
     setRes(null); onClearPreloadedOrder?.();
   }, [preloadedOrder]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -68,7 +71,7 @@ export function MobileAdvancedStudio({ preloadedOrder, onClearPreloadedOrder }: 
   async function downloadPdf() {
     setBusy(true); setErr('');
     try {
-      const body = { ...payload(), language: f.language, theme: f.theme, preparedBy: f.preparedBy || 'Acharya Nandram', showFullNumber: showFull, expertNote: f.expertNote.trim() || undefined };
+      const body = { ...payload(), language: f.language, theme: f.theme, preparedBy: f.preparedBy || 'Acharya Nandram', showFullNumber: showFull, expertNote: f.expertNote.trim() || undefined, clientQuestions: cq.trim() || undefined };
       const r = await fetch('/api/admin/mobile-advanced/pdf', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
       if (!r.ok) {
         const j = await r.json().catch(() => null) as { issues?: { message: string }[] } | null;
@@ -120,6 +123,7 @@ export function MobileAdvancedStudio({ preloadedOrder, onClearPreloadedOrder }: 
             <Field label="Report date" htmlFor="ma-asof" hint="For Personal Year and months"><Input id="ma-asof" type="date" value={f.asOf} onChange={set('asOf')} /></Field>
             <Field label="Prepared by" htmlFor="ma-by"><Input id="ma-by" value={f.preparedBy} onChange={set('preparedBy')} /></Field>
           </div>
+          <ClientQuestionsField id="ma-cq" value={cq} onChange={setCq} />
           <Field label="Note from the numerologist (printed in the report)" htmlFor="ma-note"><textarea id="ma-note" value={f.expertNote} onChange={set('expertNote')} maxLength={1200} rows={2} className="w-full rounded-md border border-input bg-background/70 px-3 py-2 text-sm" /></Field>
           <Checkbox id="ma-full" checked={showFull} onChange={setShowFull} label="Print the full mobile number (untick to mask it as 98XXXXXX10)" />
         </section>

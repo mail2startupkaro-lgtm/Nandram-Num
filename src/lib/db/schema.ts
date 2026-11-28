@@ -456,6 +456,18 @@ export const serviceOrders = pgTable('service_orders', {
   reportSavedAt: timestamp('report_saved_at', { withTimezone: true }),
   /** Admin hold: the report is not released at the 3-hour mark while this is set. */
   onHold: boolean('on_hold').notNull().default(false),
+  /** Hindi version of the finished report (reportPdf / reportFileName hold the English one). */
+  reportPdfHi: text('report_pdf_hi'),
+  reportFileNameHi: varchar('report_file_name_hi', { length: 160 }),
+  /** Who released the report: 'admin' (approved / uploaded) or 'auto' (3-hour automatic delivery). */
+  deliveredBy: varchar('delivered_by', { length: 10 }),
+  /** Automatic delivery bookkeeping: lock while a worker writes the report, attempts and the last error. */
+  deliveryLockAt: timestamp('delivery_lock_at', { withTimezone: true }),
+  deliveryAttempts: integer('delivery_attempts').notNull().default(0),
+  deliveryError: text('delivery_error'),
+  /** "Report ready" SMS + email sent to the client (once), with the per-channel result as JSON. */
+  notifiedAt: timestamp('notified_at', { withTimezone: true }),
+  notifyLog: text('notify_log'),
   createdAt: created(),
   updatedAt: updated(),
 }, (t) => ({ statusIdx: index('service_orders_status_idx').on(t.status, t.createdAt), userIdx: index('service_orders_user_idx').on(t.userId) }));
@@ -523,3 +535,34 @@ export const affiliatePayouts = pgTable('affiliate_payouts', {
 }, (t) => ({ aff: index('affiliate_payouts_aff_idx').on(t.affiliateId, t.createdAt) }));
 export type Affiliate = typeof affiliates.$inferSelect;
 export type AffiliateCommission = typeof affiliateCommissions.$inferSelect;
+
+/**
+ * Website health: errors and problems recorded from the server (API + page rendering), the browser, the automatic
+ * report delivery, payments and messaging. Same kind of error = one row (fingerprint) with a counter, so a repeating
+ * error never floods the table. Created on first use too (lib/server/site-errors.ts).
+ */
+export const siteErrors = pgTable('site_errors', {
+  id: text('id').primaryKey().default(sql`gen_random_uuid()::text`),
+  fingerprint: varchar('fingerprint', { length: 64 }).notNull().unique(),
+  source: varchar('source', { length: 20 }).notNull(), // server | api | client | delivery | notify | payment | pdf | cron
+  level: varchar('level', { length: 10 }).notNull().default('error'), // error | warning
+  message: text('message').notNull(),
+  stack: text('stack'),
+  route: varchar('route', { length: 300 }),
+  method: varchar('method', { length: 10 }),
+  status: integer('status'),
+  count: integer('count').notNull().default(1),
+  meta: jsonb('meta'),
+  firstSeen: timestamp('first_seen', { withTimezone: true }).notNull().defaultNow(),
+  lastSeen: timestamp('last_seen', { withTimezone: true }).notNull().defaultNow(),
+  resolvedAt: timestamp('resolved_at', { withTimezone: true }),
+}, (t) => ({ lastIdx: index('site_errors_last_idx').on(t.lastSeen) }));
+export type SiteError = typeof siteErrors.$inferSelect;
+
+/** One row per day and source/level: how many errors happened (for the 14-day report, kept after errors are deleted). */
+export const siteErrorDays = pgTable('site_error_days', {
+  day: varchar('day', { length: 10 }).notNull(), // YYYY-MM-DD (IST)
+  source: varchar('source', { length: 20 }).notNull(),
+  level: varchar('level', { length: 10 }).notNull(),
+  count: integer('count').notNull().default(0),
+}, (t) => ({ pk: primaryKey({ columns: [t.day, t.source, t.level] }) }));

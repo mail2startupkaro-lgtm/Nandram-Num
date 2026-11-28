@@ -14,6 +14,7 @@ import { THEMES, type ThemeId } from '@/lib/pdf/themes';
 import { withAdmin } from '@/lib/server/admin';
 import { json, pdfResponse, readJson, slug } from '@/lib/server/http';
 import { writeNarrative } from '@/lib/server/reports';
+import { answerClientQuestions } from '@/lib/report/client-questions';
 import { sendReportEmail } from '@/lib/email/report-email';
 
 export const runtime = 'nodejs';
@@ -37,6 +38,8 @@ const Body = z.object({
   watermark: z.string().max(40).optional(),
   sectionEdits: z.record(z.string(), z.string().max(20000)).default({}),
   reportTitle: z.string().max(120).optional(),
+  /** The client's own questions / problems – answered in a "Your Questions Answered" chapter. */
+  clientQuestions: z.string().max(3000).optional(),
   serviceCode: z.string().max(40).optional(),
   branding: z.object({
     brandName: z.string().max(80), expertName: z.string().max(80), expertTitle: z.string().max(120),
@@ -69,6 +72,9 @@ export const POST = withAdmin(async (req, user) => {
     });
   }
 
+  const questions = b.clientQuestions?.trim()
+    ? await answerClientQuestions({ questions: b.clientQuestions, name: result.client.commonName || result.client.fullName, dob: result.results.dob.dob.iso, gender: result.client.gender, lang: b.language === 'hi' ? 'hi' : 'en' }, { useAi: b.useAi })
+    : [];
   const final = applyExpertEdits(narrative, b.sectionEdits as Partial<Record<SectionId, string>>, true);
   const style = await pdfStyleFor(user.id, b.theme);
   const overrides = Object.fromEntries(Object.entries(b.branding ?? {}).filter(([, v]) => v && v.trim()));
@@ -76,7 +82,7 @@ export const POST = withAdmin(async (req, user) => {
     result, narrative: final, language: b.language, theme: style.theme,
     branding: { ...(style.branding ?? {}), ...overrides },
     watermark: b.watermark?.trim() || undefined, reportDate: b.reportDate, hiddenChapters: b.hiddenChapters, expertNote: b.expertNote,
-    reportTitle: b.reportTitle?.trim() || undefined,
+    reportTitle: b.reportTitle?.trim() || undefined, questions,
   });
   const filePrefix = b.reportTitle ? slug(b.reportTitle) : 'numerology-report';
   const clientName = result.client.commonName || result.client.fullName || 'Client';

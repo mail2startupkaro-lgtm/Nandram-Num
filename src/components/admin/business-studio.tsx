@@ -1,4 +1,6 @@
 'use client';
+import { ClientQuestionsField, fetchAnswers, orderQuestions } from '@/components/admin/client-questions-field';
+import { withTitleCase } from '@/lib/report/title-case';
 import * as React from 'react';
 import { Bot, Briefcase, ChevronLeft, ChevronRight, ClipboardList, Copy, Loader2, Printer, Search, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,13 +12,13 @@ import { verdictOf, type BizAnalytics } from '@/lib/business/engine';
 import { matchCategories } from '@/lib/business/match';
 import { SITE_NAME } from '@/lib/seo/site';
 import type { Order } from '@/components/admin/services-admin';
-import { contentsAndGuide, endCta, extrasCss, type CoverWithExtras } from '@/lib/report/print-extras';
+import type { CoverWithExtras } from '@/lib/report/print-extras';
+import { compatCoverRequest, compatReportHtml, escText as esc, fmt, label, LOSHU, PL, score, VERDICT_CSS } from '@/lib/report/print-html';
 import type { BizReport } from '@/lib/business/agent';
 import { cn } from '@/lib/utils';
 import { tr } from '@/lib/i18n/hi-terms';
 
 interface Result { data: BizAnalytics; report: BizReport; source: 'ai' | 'rules'; model?: string; note?: string; generatedAt: string }
-const LOSHU = [[4, 9, 2], [3, 5, 7], [8, 1, 6]];
 const REL = { friend: 'Friendly', neutral: 'Neutral', enemy: 'Not friendly' } as const;
 const tone = (v: number) => (v >= 75 ? 'from-emerald-600 to-emerald-400' : v >= 55 ? 'from-[hsl(43_75%_42%)] to-[hsl(43_85%_58%)]' : 'from-rose-700 to-rose-500');
 
@@ -31,11 +33,7 @@ function Bar({ label, value, sub, onClick, active }: { label: React.ReactNode; v
 }
 const Card = ({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) => <section className={cn('glass rounded-lg p-5', className)}><h3 className="mb-3 font-serif text-lg font-semibold text-gold">{title}</h3>{children}</section>;
 const Kpi = ({ label, value, sub }: { label: string; value: React.ReactNode; sub?: string }) => <div className="rounded-lg border border-gold/30 bg-gold/5 p-3 text-center"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p><p className="gold-text font-serif text-3xl font-bold">{value}</p>{sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}</div>;
-const fmt = (n: number) => n.toLocaleString('en-IN');
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
-function label(d: BizAnalytics, id: string) { return d.all.find((x) => x.id === id)?.label ?? id; }
-function score(d: BizAnalytics, id: string) { return d.all.find((x) => x.id === id)?.score ?? 0; }
 
 function asText(name: string, r: Result) {
   const d = r.data, p = r.report;
@@ -47,81 +45,16 @@ function asText(name: string, r: Result) {
     'REMEDIES', ...p.remedies.map((x) => `• ${x}`), '', 'ACTION PLAN', ...p.actionPlan.map((x, i) => `${i + 1}. ${x}`), '', p.closing].join('\n');
 }
 
-const VERDICT_CSS: Record<string, string> = { excellent: '#1f7a46', good: '#8a6d12', moderate: '#b5651d', weak: '#9b2335' };
 
-/** Print labels for the Business compatibility report (category and business names stay as written). */
-const PL = {
-  en: { preparing: 'Preparing the report…', title: 'Business Compatibility Report', subtitle: 'Business & career numerology', brandLine: 'Business Numerology', dob: 'Date of birth', place: 'Birth place', bizName: 'Business name', reportDate: 'Report date', by: 'Prepared by',
-    analysed: (n: string) => `${n} categories analysed`, appendix: (n: string) => `Appendix – Complete Ranking of ${n} Categories`, appendixNote: (name: string) => `Every business and profession in the catalogue, ranked for ${name}. Scores: 75+ highly compatible · 62–74 compatible · 48–61 moderate · below 48 not advised.`,
-    category: 'Category', group: 'Group', score: 'Score', moolank: 'Moolank', bhagyank: 'Bhagyank', nameNo: 'Name no.', py: 'Personal year', bestSector: 'Best sector', bestMatch: 'Best match', loshu: 'Lo Shu grid', missing: 'Missing', none: 'none',
-    friendlyH: 'Friendly & difficult numbers', friendlyTo: (b: number) => `Friendly to Bhagyank ${b}`, difficult: 'Difficult', planet: 'Ruling planet', day: 'lucky day', colours: 'Colours',
-    considering: 'Businesses You Are Considering', business: 'Business', rank: 'Rank', verdict: 'Verdict', numbers: 'numbers', rankOf: (r: string, n: string) => `${r} of ${n}`,
-    top: 'Top Recommendations', howStart: 'How to start', watch: 'Watch', yourTop: (k: number, n: string) => `Your Top ${k} of ${n}`, sectors: 'Sector Analysis', bestInSector: 'Best businesses in each sector', groups: 'Strongest business groups', categories: 'categories',
-    least: 'Least Suited', timingH: 'Timing, Name, Place & Partnership', timing: 'Timing', goodTotals: 'Good Chaldean totals', placeDir: 'Place & direction', partner: 'Partnership', remedies: 'Remedies', plan: 'Action Plan',
-    disclaimer: 'Numerology offers guidance based on traditional methods. It is not financial, investment, tax or legal advice – check market demand, licences and finances with qualified professionals before investing.' },
-  hi: { preparing: 'रिपोर्ट तैयार हो रही है…', title: 'व्यवसाय अनुकूलता रिपोर्ट', subtitle: 'व्यवसाय एवं करियर अंक ज्योतिष', brandLine: 'व्यवसाय अंक ज्योतिष', dob: 'जन्म तिथि', place: 'जन्म स्थान', bizName: 'व्यवसाय का नाम', reportDate: 'रिपोर्ट तिथि', by: 'द्वारा तैयार:',
-    analysed: (n: string) => `${n} श्रेणियों का विश्लेषण`, appendix: (n: string) => `परिशिष्ट – सभी ${n} श्रेणियों की पूरी रैंकिंग`, appendixNote: (name: string) => `सूची के हर व्यवसाय और पेशे की ${name} के लिए रैंकिंग। स्कोर: 75+ अत्यंत अनुकूल · 62–74 अनुकूल · 48–61 सामान्य · 48 से कम अनुशंसित नहीं।`,
-    category: 'श्रेणी', group: 'समूह', score: 'स्कोर', moolank: 'मूलांक', bhagyank: 'भाग्यांक', nameNo: 'नामांक', py: 'व्यक्तिगत वर्ष', bestSector: 'सर्वश्रेष्ठ क्षेत्र', bestMatch: 'सर्वश्रेष्ठ मेल', loshu: 'लो शू ग्रिड', missing: 'अनुपस्थित', none: 'कोई नहीं',
-    friendlyH: 'मित्र और कठिन अंक', friendlyTo: (b: number) => `भाग्यांक ${b} के मित्र अंक`, difficult: 'कठिन', planet: 'स्वामी ग्रह', day: 'शुभ दिन', colours: 'रंग',
-    considering: 'जिन व्यवसायों पर आप विचार कर रहे हैं', business: 'व्यवसाय', rank: 'रैंक', verdict: 'निर्णय', numbers: 'अंक', rankOf: (r: string, n: string) => `${n} में ${r}`,
-    top: 'शीर्ष सुझाव', howStart: 'कैसे शुरू करें', watch: 'ध्यान रखें', yourTop: (k: number, n: string) => `${n} में से आपके शीर्ष ${k}`, sectors: 'क्षेत्र विश्लेषण', bestInSector: 'हर क्षेत्र के सर्वश्रेष्ठ व्यवसाय', groups: 'सबसे मज़बूत व्यवसाय समूह', categories: 'श्रेणियाँ',
-    least: 'सबसे कम अनुकूल', timingH: 'समय, नाम, स्थान और साझेदारी', timing: 'समय', goodTotals: 'शुभ कैल्डियन योग', placeDir: 'स्थान और दिशा', partner: 'साझेदारी', remedies: 'उपाय', plan: 'कार्य योजना',
-    disclaimer: 'अंक ज्योतिष पारंपरिक पद्धतियों पर आधारित मार्गदर्शन है। यह वित्तीय, निवेश, कर या कानूनी सलाह नहीं है – निवेश से पहले बाज़ार की माँग, लाइसेंस और वित्त की जाँच योग्य विशेषज्ञों से करें।' },
-};
 
-async function printReport(name: string, r: Result, opts: { by: string; appendix: boolean; lang?: 'en' | 'hi'; meta: { dob: string; place: string; business?: string } }) {
-  const L = opts.lang === 'hi' ? 'hi' : 'en'; const B = PL[L]; const loc = L === 'hi' ? 'hi-IN' : 'en-IN';
+async function printReport(name: string, r: Result, opts: { by: string; appendix: boolean; lang?: 'en' | 'hi'; meta: { dob: string; place: string; business?: string }; questions?: string; dob?: string; gender?: string }) {
   // Open the window first (inside the click) so the browser does not block it, then fetch the branded cover page.
   const w = window.open('', '_blank'); if (!w) return;
-  w.document.write(`<p style="font-family:Georgia,serif;padding:40px;color:#7a1f2b">${B.preparing}</p>`);
-  const coverPage = await api<CoverWithExtras>('/api/admin/report-cover', { method: 'POST', json: {
-    extras: 'compat', title: B.title, subtitle: B.subtitle, clientName: name, preparedBy: opts.by, lang: L,
-    facts: [[B.dob, opts.meta.dob], [B.place, opts.meta.place], [B.bizName, opts.meta.business ?? ''], [B.reportDate, new Date(r.generatedAt).toLocaleDateString(loc, { day: 'numeric', month: 'long', year: 'numeric' })]],
-  } }).catch(() => null);
-  const d = r.data, p = r.report;
-  const date = new Date(r.generatedAt).toLocaleDateString(loc, { day: 'numeric', month: 'long', year: 'numeric' });
-  const bars = (xs: { l: string; v: number }[]) => xs.map((x) => `<div class="bar"><span>${esc(x.l)}</span><b>${x.v}</b><i style="width:${x.v}%"></i></div>`).join('');
-  const grid = LOSHU.map((row) => `<tr>${row.map((n) => `<td class="${d.grid.counts[n] ? '' : 'miss'}">${d.grid.counts[n] ? String(n).repeat(d.grid.counts[n]) : '–'}</td>`).join('')}</tr>`).join('');
-  const appendix = opts.appendix ? `<section class="pb"><h2>${B.appendix(fmt(d.totals.analysed))}</h2><p><small>${B.appendixNote(esc(name))}</small></p>
-    <table class="app"><thead><tr><th>#</th><th>${B.category}</th><th>${B.group}</th><th>${B.score}</th></tr></thead><tbody>${d.all.map((x, i) => `<tr><td>${i + 1}</td><td>${esc(x.label)}</td><td>${esc(x.group)}</td><td style="color:${VERDICT_CSS[verdictOf(x.score).key]}"><b>${x.score}</b></td></tr>`).join('')}</tbody></table></section>` : '';
-  const toc = [p.headline, d.checked.length ? B.considering : '', B.top, B.yourTop(d.top.length, fmt(d.totals.analysed)), B.sectors, B.least, B.timingH, B.remedies, B.plan, opts.appendix ? B.appendix(fmt(d.totals.analysed)) : ''].filter(Boolean);
-  const html = `<!doctype html><html lang="${L}"><head><meta charset="utf-8"><title>${B.title} – ${esc(name)}</title><style>
-@page{size:A4;margin:16mm 14mm}${coverPage ? '@page:first{margin:0}' : ''}body{font-family:Georgia,'Noto Serif Devanagari',serif;color:#2a1a10;margin:0;padding:0;line-height:1.55;-webkit-print-color-adjust:exact;print-color-adjust:exact}.doc{max-width:860px;margin:0 auto;padding:0 18px}
-h1{color:#7a1f2b;margin:0;font-size:30px}h2{color:#7a1f2b;border-bottom:2px solid #c9a227;padding-bottom:4px;margin-top:28px;font-size:20px}h3{margin:14px 0 4px;color:#5a2a10}
-.cover{border:3px double #c9a227;border-radius:14px;padding:26px 28px;margin:18px 0 8px;background:linear-gradient(135deg,#fffaf0,#fbf1d9)}.brand{letter-spacing:.3em;text-transform:uppercase;font-size:11px;color:#8a6d12}
-.k{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:16px}.k div{border:1px solid #e5d3a1;border-radius:8px;padding:8px;text-align:center;background:#fff;font-size:11px}.k b{display:block;font-size:22px;color:#7a1f2b}
-.bar{position:relative;display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #eee;padding:5px 0;font-size:13.5px}.bar i{position:absolute;left:0;bottom:-1px;height:3px;background:#c9a227}
-.pick{border:1px solid #e5d3a1;border-radius:10px;padding:10px 14px;margin:8px 0;break-inside:avoid}small{color:#7a6a55}
-table{border-collapse:collapse;width:100%;font-size:13px}td,th{border:1px solid #e5d3a1;padding:5px 8px;text-align:left}th{background:#fbf1d9}
-.lo td{width:52px;height:46px;text-align:center;font-size:18px;font-weight:bold;color:#7a1f2b}.lo td.miss{color:#bbb;background:#fafafa}.lo{width:auto}
-.v{display:inline-block;border-radius:99px;padding:1px 9px;color:#fff;font-size:12px}.two{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.app{font-size:10.5px}.app td,.app th{padding:2px 6px}.pb{break-before:page}.foot{margin-top:30px;border-top:1px solid #e5d3a1;padding-top:8px;font-size:11px;color:#7a6a55}
-@media print{.noprint{display:none}}${extrasCss(coverPage?.extras)}${coverPage?.css ?? ''}</style></head><body>${coverPage?.html ?? ''}<main class="doc">
-<div class="cover"><p class="brand">${esc(SITE_NAME)} · ${B.brandLine}</p><h1>${B.title}</h1>
-<p style="margin:6px 0 0"><b style="font-size:18px">${esc(name)}</b><br>${B.dob} ${esc(opts.meta.dob)}${opts.meta.place ? ` · ${B.place} ${esc(opts.meta.place)}` : ''}${opts.meta.business ? ` · ${B.bizName} “${esc(opts.meta.business)}”` : ''}<br><small>${B.by} ${esc(opts.by)} · ${date} · ${B.analysed(fmt(d.totals.analysed))}</small></p>
-<div class="k"><div>${B.moolank}<b>${d.person.moolank}</b></div><div>${B.bhagyank}<b>${d.person.bhagyankMaster ? `${d.person.bhagyankMaster}/${d.person.bhagyank}` : d.person.bhagyank}</b></div><div>${B.nameNo}<b>${d.person.nameCompound}/${d.person.nameNumber}</b></div><div>${B.py}<b>${d.currentYear.personalYear}</b></div><div>${B.bestSector}<b>${d.sectorScores[0].score}</b></div><div>${B.bestMatch}<b>${d.top[0].score}</b></div></div></div>
-${contentsAndGuide(toc, L, coverPage?.extras)}
-
-<h2>${esc(p.headline)}</h2><p>${esc(p.summary)}</p><ul>${p.businessPersonality.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
-<div class="two"><div><h3>${B.loshu}</h3><table class="lo">${grid}</table><p><small>${B.missing}: ${d.grid.missing.join(', ') || B.none}${d.grid.yogs.length ? ` · ${esc(d.grid.yogs.join(', '))}` : ''}</small></p></div>
-<div><h3>${B.friendlyH}</h3><p>${B.friendlyTo(d.person.bhagyank)}: <b>${d.person.friendly.join(', ')}</b><br>${B.difficult}: <b>${d.person.avoid.join(', ') || B.none}</b><br>${B.planet}: ${esc(tr(L, d.person.planet.name))} · ${B.day} ${esc(tr(L, d.person.planet.weekday))}<br>${B.colours}: ${esc(d.person.planet.colours.map((x) => tr(L, x)).join(', '))}</p></div></div>
-
-${d.checked.length ? `<h2>${B.considering}</h2><table><thead><tr><th>${B.business}</th><th>${B.score}</th><th>${B.rank}</th><th>${B.verdict}</th></tr></thead><tbody>${d.checked.map((c) => `<tr><td>${esc(c.label)}<br><small>${esc(c.group)} · ${B.numbers} ${c.numbers.join(', ')}${c.factors.length ? ` · ${esc(c.factors.join('; '))}` : ''}</small></td><td><b>${c.score}</b>/100</td><td>${B.rankOf(fmt(c.rank), fmt(d.totals.analysed))}</td><td><span class="v" style="background:${VERDICT_CSS[c.verdict.key]}">${c.verdict[L]}</span></td></tr>`).join('')}</tbody></table>${p.shortlistAdvice ? `<p>${esc(p.shortlistAdvice)}</p>` : ''}` : ''}
-
-<h2>${B.top}</h2>${p.topPicks.map((t, i) => `<div class="pick"><b>${i + 1}. ${esc(label(d, t.id))} – ${score(d, t.id)}/100</b><p>${esc(t.why)}</p><p><b>${B.howStart}:</b> ${esc(t.howToStart)}</p><p><b>${B.watch}:</b> ${esc(t.watch)}</p></div>`).join('')}
-<h2>${B.yourTop(d.top.length, fmt(d.totals.analysed))}</h2>${bars(d.top.map((x) => ({ l: `${x.label} · ${x.group}`, v: x.score })))}
-<h2>${B.sectors}</h2>${bars(d.sectorScores.map((x) => ({ l: x.sector, v: x.score })))}
-<h3>${B.bestInSector}</h3><table><tbody>${d.bestBySector.map((s) => `<tr><td><b>${esc(s.sector)}</b> (${s.score})</td><td>${s.items.map((x) => `${esc(x.label)} <small>${x.score}</small>`).join(' · ')}</td></tr>`).join('')}</tbody></table>
-<h3>${B.groups}</h3>${bars(d.groupScores.slice(0, 10).map((x) => ({ l: `${x.group} (${x.count} ${B.categories})`, v: x.score })))}
-<h2>${B.least}</h2><p>${esc(p.avoidNote)}</p><p><small>${d.avoid.map((x) => `${esc(x.label)} (${x.score})`).join(' · ')}</small></p>
-<h2>${B.timingH}</h2><p><b>${B.timing}:</b> ${esc(p.timingAdvice)}</p>${bars(d.timing.map((t) => ({ l: L === 'hi' ? `${t.year} – ${B.py} ${t.personalYear}` : `${t.year} – personal year ${t.personalYear}: ${t.theme}`, v: t.score })))}
-<p><b>${B.bizName}:</b> ${esc(p.nameAdvice)}</p><p><small>${B.goodTotals}: ${d.nameTargets.map((t) => `${t.single} (${t.compounds.join(', ')})`).join(' · ')}</small></p>
-<p><b>${B.placeDir}:</b> ${esc(p.placeAdvice)}</p><p><b>${B.partner}:</b> ${esc(p.partnership)}</p>
-<h2>${B.remedies}</h2><ul>${p.remedies.map((x) => `<li>${esc(x)}</li>`).join('')}</ul><h2>${B.plan}</h2><ol>${p.actionPlan.map((x) => `<li>${esc(x)}</li>`).join('')}</ol><p><i>${esc(p.closing)}</i></p>
-${appendix}
-${endCta(coverPage?.extras)}
-<p class="foot">${B.by} ${esc(opts.by)} · ${esc(SITE_NAME)}. ${B.disclaimer}</p></main></body></html>`;
-  w.document.open(); w.document.write(html); w.document.close(); setTimeout(() => w.print(), 800);
+  w.document.write(`<p style="font-family:Georgia,serif;padding:40px;color:#7a1f2b">${PL[opts.lang === 'hi' ? 'hi' : 'en'].preparing}</p>`);
+  const [coverPage, qa] = await Promise.all([api<CoverWithExtras>('/api/admin/report-cover', { method: 'POST', json: compatCoverRequest(name, r, opts) }).catch(() => null),
+    fetchAnswers({ questions: opts.questions ?? '', name, dob: opts.dob ?? '', gender: opts.gender, lang: opts.lang === 'hi' ? 'hi' : 'en' })]);
+  const html = compatReportHtml(name, r, opts, coverPage, qa);
+  w.document.open(); w.document.write(withTitleCase(html)); w.document.close(); setTimeout(() => w.print(), 800);
 }
 
 /** Search across all 1000+ categories and pick the ones the client is considering. */
@@ -186,13 +119,14 @@ export function BusinessStudio({ preloadedOrder, onClearPreloadedOrder }: { prel
   const [shortlist, setShortlist] = React.useState<string[]>([]);
   const [appendix, setAppendix] = React.useState(true);
   const [fromOrder, setFromOrder] = React.useState<string | null>(null);
+  const [cq, setCq] = React.useState('');
   React.useEffect(() => {
     if (!preloadedOrder) return;
     const dt = preloadedOrder.details ?? {};
     const m = matchCategories(dt.businesses ?? '');
     setF({ ...BLANK, fullName: dt.clientName ?? '', dob: dt.dob ?? '', gender: dt.gender ?? 'male', birthPlace: dt.pob ?? '', businessName: dt.currentName ?? '',
       goals: [m.unmatched.length ? `Also considering (not in catalogue): ${m.unmatched.join(', ')}` : '', dt.questions ?? ''].filter(Boolean).join('\n').slice(0, 1000) });
-    setShortlist(m.ids); setFromOrder(`${dt.clientName ?? 'Client'} · ordered ${new Date(preloadedOrder.createdAt).toLocaleDateString('en-IN')}${dt.businesses ? ` · considering: ${dt.businesses}` : ''}`);
+    setShortlist(m.ids); setCq(orderQuestions(dt)); setFromOrder(`${dt.clientName ?? 'Client'} · ordered ${new Date(preloadedOrder.createdAt).toLocaleDateString('en-IN')}${dt.businesses ? ` · considering: ${dt.businesses}` : ''}`);
     setRes(null); onClearPreloadedOrder?.();
   }, [preloadedOrder]); // eslint-disable-line react-hooks/exhaustive-deps
   const [busy, setBusy] = React.useState(false);
@@ -244,6 +178,7 @@ export function BusinessStudio({ preloadedOrder, onClearPreloadedOrder }: { prel
             <Field label="Current work" htmlFor="bz-w"><Input id="bz-w" value={f.currentWork} onChange={set('currentWork')} placeholder="e.g. Sales manager, 8 yrs" /></Field>
           </div>
           <div><p className="mb-2 text-sm font-medium">Interested sectors</p><div className="flex flex-wrap gap-2">{SECTORS.map((s) => <button key={s} type="button" aria-pressed={interests.includes(s)} onClick={() => setInterests(interests.includes(s) ? interests.filter((x) => x !== s) : [...interests, s])} className={cn('rounded-full border px-3 py-1.5 text-xs', interests.includes(s) ? 'border-gold bg-gold/20 font-semibold' : 'border-border hover:bg-muted')}>{s}</button>)}</div></div>
+          <ClientQuestionsField id="bz-cq" value={cq} onChange={setCq} />
           <Field label="Goals / notes for the agent" htmlFor="bz-gl"><textarea id="bz-gl" rows={3} maxLength={1000} value={f.goals} onChange={set('goals')} placeholder="e.g. Wants to leave job in 2 years, family has a cloth shop, prefers low-risk…" className="w-full rounded-md border border-input bg-background/70 px-3 py-2 text-sm" /></Field>
         </section>
         <section className="space-y-3"><h3 className="font-serif text-lg font-semibold text-gold">3. Businesses the client is considering</h3><ShortlistPicker value={shortlist} onChange={setShortlist} /></section>
@@ -261,7 +196,7 @@ export function BusinessStudio({ preloadedOrder, onClearPreloadedOrder }: { prel
             <Badge tone={res.source === 'ai' ? 'gold' : 'default'}><Bot className="mr-1 inline h-3 w-3" />{res.source === 'ai' ? `AI agent${res.model ? ` · ${res.model}` : ''}` : 'Built-in analyst'}</Badge>
             {res.note && <span className="text-muted-foreground">{res.note}</span>}
             <div className="ml-auto flex gap-2"><Button type="button" variant="outline" size="sm" onClick={() => navigator.clipboard.writeText(asText(f.fullName, res))}><Copy className="mr-1 h-4 w-4" />Copy text</Button>
-              <Button type="button" size="sm" onClick={() => printReport(f.fullName, res, { by: f.preparedBy || 'Acharya Nandram', appendix, lang: f.language === 'hi' ? 'hi' : 'en', meta: { dob: f.dob ? new Date(`${f.dob}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : '', place: f.birthPlace, business: f.businessName || undefined } })}><Printer className="mr-1 h-4 w-4" />Print / Save PDF</Button></div>
+              <Button type="button" size="sm" onClick={() => printReport(f.fullName, res, { by: f.preparedBy || 'Acharya Nandram', appendix, lang: f.language === 'hi' ? 'hi' : 'en', meta: { dob: f.dob ? new Date(`${f.dob}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : '', place: f.birthPlace, business: f.businessName || undefined }, questions: cq, dob: f.dob, gender: f.gender })}><Printer className="mr-1 h-4 w-4" />Print / Save PDF</Button></div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">

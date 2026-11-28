@@ -3,10 +3,10 @@
  * Codes start with "SVC_" and are stored in payments.plan_code, so checkout, invoices and finance reports work unchanged.
  * Seeded draft prices are NOT payable until the owner confirms them in Admin → Services (priceConfirmed).
  */
-import { and, asc, desc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNull, lt, lte, or, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { getDb, type Db } from '@/lib/db/client';
-import { appSettings, payments, serviceOrders, services, type Service, type ServiceIntakeField, type ServiceText } from '@/lib/db/schema';
+import { appSettings, payments, serviceOrders, services, users, type Service, type ServiceIntakeField, type ServiceText } from '@/lib/db/schema';
 import { decryptJson, encryptJson } from '@/lib/security/crypto';
 
 export const SERVICE_PREFIX = 'SVC_';
@@ -43,9 +43,9 @@ export const DEFAULT_SERVICES: (typeof services.$inferInsert)[] = [
   {
     code: 'SVC_BABY_NAME', sort: 5, featured: false, pricePaise: 1_100_00, mrpPaise: 2_100_00, intake: ['dob', 'gender', 'tob', 'pob', 'parents', 'letters', 'questions'],
     en: t('Baby Name Numerology', 'Meaningful baby names (Formal Name & Nickname) whose numbers suit your child\'s date of birth, in the starting letters you prefer.',
-      ['7 shortlisted names with meanings', 'Formal name & auspicious nickname (calling name) compatibility', 'Name number of each and how it matches the date of birth', 'Spelling advice for documents', 'Lucky colours and numbers for the child'], 'Delivered within 3 hours'),
+      ['7 shortlisted names with meanings', 'Formal name & auspicious nickname (calling name) compatibility', 'Name number of each and how it matches the date of birth', 'Spelling advice for documents', 'Lucky colours and numbers for the child', 'Best career path for your child – career fields, subjects and age-wise guidance'], 'Delivered within 3 hours'),
     hi: t('शिशु नाम अंक ज्योतिष', 'अर्थपूर्ण शिशु नाम (औपचारिक नाम व निकनेम) जिनके अंक आपके बच्चे की जन्म तिथि के अनुकूल हों, आपके पसंदीदा आरंभिक अक्षरों में।',
-      ['अर्थ सहित 7 चुने हुए नाम', 'औपचारिक नाम व शुभ निकनेम (पुकारने के नाम) का सामंजस्य', 'हर नाम का नामांक और जन्म तिथि से उसका मेल', 'दस्तावेज़ों के लिए वर्तनी संबंधी सलाह', 'बच्चे के शुभ रंग और अंक'], '3 घंटे के भीतर'),
+      ['अर्थ सहित 7 चुने हुए नाम', 'औपचारिक नाम व शुभ निकनेम (पुकारने के नाम) का सामंजस्य', 'हर नाम का नामांक और जन्म तिथि से उसका मेल', 'दस्तावेज़ों के लिए वर्तनी संबंधी सलाह', 'बच्चे के शुभ रंग और अंक', 'बच्चे के लिए सर्वश्रेष्ठ करियर पथ – करियर क्षेत्र, विषय और उम्र के अनुसार मार्गदर्शन'], '3 घंटे के भीतर'),
   },
   {
     code: 'SVC_LOSHU', sort: 3, featured: false, pricePaise: 1_100_00, mrpPaise: 2_100_00, intake: ['clientName', 'dob', 'gender', 'questions'],
@@ -235,7 +235,36 @@ export function parseIntake(svc: Service, raw: unknown): IntakeDetails {
   return Object.fromEntries(Object.entries(parsed).filter(([, v]) => v !== undefined && v !== '').map(([k, v]) => [k, mask(String(v))]));
 }
 
+/**
+ * The automatic-delivery columns (migration 0015) are also added on first use, so orders keep working on a database
+ * where `npm run db:migrate` has not been run yet. Same statements as drizzle/0015_auto_delivery.sql.
+ */
+const DELIVERY_DDL = [
+  'ALTER TABLE "service_orders" ADD COLUMN IF NOT EXISTS "report_pdf_hi" text',
+  'ALTER TABLE "service_orders" ADD COLUMN IF NOT EXISTS "report_file_name_hi" varchar(160)',
+  'ALTER TABLE "service_orders" ADD COLUMN IF NOT EXISTS "delivered_by" varchar(10)',
+  'ALTER TABLE "service_orders" ADD COLUMN IF NOT EXISTS "delivery_lock_at" timestamp with time zone',
+  'ALTER TABLE "service_orders" ADD COLUMN IF NOT EXISTS "delivery_attempts" integer DEFAULT 0 NOT NULL',
+  'ALTER TABLE "service_orders" ADD COLUMN IF NOT EXISTS "delivery_error" text',
+  'ALTER TABLE "service_orders" ADD COLUMN IF NOT EXISTS "notified_at" timestamp with time zone',
+  'ALTER TABLE "service_orders" ADD COLUMN IF NOT EXISTS "notify_log" text',
+];
+const ensured = new WeakMap<object, Promise<void>>();
+export function ensureDeliveryColumns(db: Db = getDb()): Promise<void> {
+  let p = ensured.get(db);
+  if (!p) {
+    p = (async () => {
+      const [{ n }] = (await db.execute(sql`select count(*)::int as n from information_schema.columns where table_name = 'service_orders' and column_name = 'notify_log'`)).rows as { n: number }[];
+      if (n > 0) return;
+      for (const q of DELIVERY_DDL) await db.execute(sql.raw(q));
+    })().catch((e) => { ensured.delete(db); console.warn('[services] could not add delivery columns:', e instanceof Error ? e.message : e); });
+    ensured.set(db, p);
+  }
+  return p;
+}
+
 export async function createServiceOrder(paymentId: string, userId: string, serviceCode: string, details: IntakeDetails, db: Db = getDb()) {
+  await ensureDeliveryColumns(db);
   await db.insert(serviceOrders).values({ paymentId, userId, serviceCode, detailsEnc: encryptJson(details) });
 }
 
@@ -245,52 +274,72 @@ export async function markServiceOrderPaid(paymentId: string, db: Db) {
 }
 
 export async function listServiceOrders(filter: { status?: string; userId?: string } = {}, db: Db = getDb()) {
+  await ensureDeliveryColumns(db);
   const rows = await db.select({ o: serviceOrders, p: { amountPaise: payments.amountPaise, currency: payments.currency, status: payments.status, invoiceNumber: payments.invoiceNumber, billingName: payments.billingName, paidAt: payments.paidAt } })
     .from(serviceOrders).innerJoin(payments, eq(payments.id, serviceOrders.paymentId))
     .where(and(filter.userId ? eq(serviceOrders.userId, filter.userId) : undefined,
       filter.status && filter.status !== 'all' ? eq(serviceOrders.status, filter.status) : filter.userId ? undefined : inArray(serviceOrders.status, ['paid', 'in_progress', 'delivered', 'cancelled'])))
     .orderBy(desc(serviceOrders.createdAt)).limit(300);
   // The signature photo is left out of the list (it can be ~1 MB per order) and fetched on its own with getServiceOrderImage.
-  return rows.map(({ o: { detailsEnc, reportPdf, ...o }, p }) => {
+  return rows.map(({ o: { detailsEnc, reportPdf, reportPdfHi, notifyLog, ...o }, p }) => {
     const { signatureImage, ...details } = decryptJson<IntakeDetails>(detailsEnc);
-    return { ...o, payment: p, details, hasSignatureImage: !!signatureImage, hasReportFile: !!reportPdf };
+    return { ...o, payment: p, details, hasSignatureImage: !!signatureImage, hasReportFile: !!(reportPdf || reportPdfHi), hasReportEn: !!reportPdf, hasReportHi: !!reportPdfHi, notify: parseNotifyLog(notifyLog) };
   });
 }
 
 /** One order of this customer (details decrypted, PDF left out), or null. */
 export async function getUserServiceOrder(userId: string, id: string, db: Db = getDb()) {
+  await ensureDeliveryColumns(db);
   const [row] = await db.select({ o: serviceOrders, paidAt: payments.paidAt, invoiceNumber: payments.invoiceNumber })
     .from(serviceOrders).innerJoin(payments, eq(payments.id, serviceOrders.paymentId))
     .where(and(eq(serviceOrders.id, id), eq(serviceOrders.userId, userId))).limit(1);
   if (!row) return null;
-  const { detailsEnc, reportPdf, ...o } = row.o;
+  const { detailsEnc, reportPdf, reportPdfHi, notifyLog: _log, ...o } = row.o;
   const { signatureImage: _img, ...details } = decryptJson<IntakeDetails>(detailsEnc);
-  void _img;
-  return { ...o, details, paidAt: row.paidAt, invoiceNumber: row.invoiceNumber, hasReportFile: !!reportPdf };
+  void _img; void _log;
+  return { ...o, details, paidAt: row.paidAt, invoiceNumber: row.invoiceNumber, hasReportFile: !!(reportPdf || reportPdfHi), hasReportEn: !!reportPdf, hasReportHi: !!reportPdfHi, hasSignatureImage: !!_img };
 }
 
-/** The stored report PDF of an order (bytes + file name), or null. */
-export async function getServiceOrderReport(id: string, db: Db = getDb()): Promise<{ pdf: Uint8Array; fileName: string } | null> {
-  const [row] = await db.select({ pdf: serviceOrders.reportPdf, name: serviceOrders.reportFileName }).from(serviceOrders).where(eq(serviceOrders.id, id)).limit(1);
-  if (!row?.pdf) return null;
-  return { pdf: new Uint8Array(Buffer.from(row.pdf, 'base64')), fileName: row.name || 'numerology-report.pdf' };
+export type ReportLanguage = 'en' | 'hi';
+
+/** The stored report PDF of an order in one language (bytes + file name), or null. Without a language: English, else Hindi. */
+export async function getServiceOrderReport(id: string, db: Db = getDb(), lang?: ReportLanguage): Promise<{ pdf: Uint8Array; fileName: string; lang: ReportLanguage } | null> {
+  await ensureDeliveryColumns(db);
+  const [row] = await db.select({ en: serviceOrders.reportPdf, enName: serviceOrders.reportFileName, hi: serviceOrders.reportPdfHi, hiName: serviceOrders.reportFileNameHi }).from(serviceOrders).where(eq(serviceOrders.id, id)).limit(1);
+  if (!row) return null;
+  const pick = (l: ReportLanguage) => {
+    const b64 = l === 'en' ? row.en : row.hi;
+    return b64 ? { pdf: new Uint8Array(Buffer.from(b64, 'base64')), fileName: (l === 'en' ? row.enName : row.hiName) || `numerology-report-${l}.pdf`, lang: l } : null;
+  };
+  return lang ? pick(lang) : pick('en') ?? pick('hi');
 }
 
 /** Max size of a report PDF stored on an order (base64 in the database). */
 export const SERVICE_REPORT_MAX_BYTES = 15 * 1024 * 1024;
 
-/** Stores the finished report on the order. `markDelivered` (admin upload) also sets the order to Delivered. */
-export async function saveServiceOrderReport(id: string, pdf: Uint8Array, fileName: string, opts: { markDelivered?: boolean } = {}, db: Db = getDb()) {
+/**
+ * Stores the finished report (one language) on the order. `markDelivered` (admin upload) also sets the order to Delivered.
+ */
+export async function saveServiceOrderReport(id: string, pdf: Uint8Array, fileName: string, opts: { markDelivered?: boolean; lang?: ReportLanguage; deliveredBy?: 'admin' | 'auto' } = {}, db: Db = getDb()) {
   if (pdf.byteLength > SERVICE_REPORT_MAX_BYTES) throw new Error('REPORT_TOO_LARGE');
   if (!(pdf[0] === 0x25 && pdf[1] === 0x50 && pdf[2] === 0x44 && pdf[3] === 0x46)) throw new Error('NOT_A_PDF'); // %PDF
-  const set: Partial<typeof serviceOrders.$inferInsert> = { reportPdf: Buffer.from(pdf).toString('base64'), reportFileName: fileName.slice(0, 160), reportSavedAt: new Date(), updatedAt: new Date() };
-  if (opts.markDelivered) { set.status = 'delivered'; set.deliveredAt = new Date(); }
+  await ensureDeliveryColumns(db);
+  const b64 = Buffer.from(pdf).toString('base64'), name = fileName.slice(0, 160);
+  const set: Partial<typeof serviceOrders.$inferInsert> = opts.lang === 'hi' ? { reportPdfHi: b64, reportFileNameHi: name } : { reportPdf: b64, reportFileName: name };
+  set.reportSavedAt = new Date(); set.updatedAt = new Date();
+  if (opts.markDelivered) { set.status = 'delivered'; set.deliveredAt = new Date(); set.deliveredBy = opts.deliveredBy ?? 'admin'; set.deliveryError = null; }
   const [r] = await db.update(serviceOrders).set(set).where(eq(serviceOrders.id, id)).returning({ id: serviceOrders.id });
   return !!r;
 }
 
-export async function removeServiceOrderReport(id: string, db: Db = getDb()) {
-  const [r] = await db.update(serviceOrders).set({ reportPdf: null, reportFileName: null, reportSavedAt: null, updatedAt: new Date() }).where(eq(serviceOrders.id, id)).returning({ id: serviceOrders.id });
+/** Removes the stored report – one language, or both when none is given. */
+export async function removeServiceOrderReport(id: string, db: Db = getDb(), lang?: ReportLanguage) {
+  await ensureDeliveryColumns(db);
+  const set: Partial<typeof serviceOrders.$inferInsert> = { updatedAt: new Date() };
+  if (lang !== 'hi') { set.reportPdf = null; set.reportFileName = null; }
+  if (lang !== 'en') { set.reportPdfHi = null; set.reportFileNameHi = null; }
+  if (!lang) set.reportSavedAt = null;
+  const [r] = await db.update(serviceOrders).set(set).where(eq(serviceOrders.id, id)).returning({ id: serviceOrders.id });
   return !!r;
 }
 
@@ -302,10 +351,99 @@ export async function getServiceOrderImage(id: string, db: Db = getDb()): Promis
 
 export const ServiceOrderUpdate = z.object({ id: z.string().min(1), status: z.enum(SERVICE_ORDER_STATUSES).optional(), adminNote: z.string().max(2000).nullable().optional(), onHold: z.boolean().optional() });
 export async function updateServiceOrder(u: z.infer<typeof ServiceOrderUpdate>, db: Db = getDb()) {
+  await ensureDeliveryColumns(db);
   const set: Partial<typeof serviceOrders.$inferInsert> = { updatedAt: new Date() };
-  if (u.status) { set.status = u.status; set.deliveredAt = u.status === 'delivered' ? new Date() : null; }
+  if (u.status) { set.status = u.status; set.deliveredAt = u.status === 'delivered' ? new Date() : null; set.deliveredBy = u.status === 'delivered' ? 'admin' : null; }
   if (u.onHold !== undefined) set.onHold = u.onHold;
   if (u.adminNote !== undefined) set.adminNote = u.adminNote?.trim() || null;
   const [r] = await db.update(serviceOrders).set(set).where(eq(serviceOrders.id, u.id)).returning({ id: serviceOrders.id });
+  return !!r;
+}
+
+/* ---------- automatic delivery (lib/server/service-delivery-run.ts) ---------- */
+
+export interface NotifyChannelResult { ok: boolean; to?: string; error?: string; skipped?: string; at: string }
+export interface NotifyLog { sms?: NotifyChannelResult; email?: NotifyChannelResult }
+export function parseNotifyLog(raw: string | null | undefined): NotifyLog | null {
+  if (!raw) return null;
+  try { return JSON.parse(raw) as NotifyLog; } catch { return null; }
+}
+
+/** Minutes after which a worker's lock on an order is considered abandoned (the worker crashed or timed out). */
+export const DELIVERY_LOCK_MIN = 12;
+/** After this many failed attempts the order stays for the numerologist (shown with the error in Admin → Services). */
+export const DELIVERY_MAX_ATTEMPTS = 4;
+
+/** Everything the delivery needs about one order: details incl. the signature photo, payment time, the customer's contacts. */
+export async function getServiceOrderForDelivery(id: string, db: Db = getDb()) {
+  await ensureDeliveryColumns(db);
+  const [row] = await db.select({ o: serviceOrders, paidAt: payments.paidAt, payStatus: payments.status, userEmail: users.email, userPhone: users.phone, userName: users.name })
+    .from(serviceOrders).innerJoin(payments, eq(payments.id, serviceOrders.paymentId)).leftJoin(users, eq(users.id, serviceOrders.userId))
+    .where(eq(serviceOrders.id, id)).limit(1);
+  if (!row) return null;
+  const { detailsEnc, reportPdf, reportPdfHi, notifyLog, ...o } = row.o;
+  const { signatureImage, ...details } = decryptJson<IntakeDetails>(detailsEnc);
+  return { ...o, details, signatureImage: signatureImage ?? null, hasReportEn: !!reportPdf, hasReportHi: !!reportPdfHi, notify: parseNotifyLog(notifyLog), paidAt: row.paidAt, paymentStatus: row.payStatus,
+    user: { email: row.userEmail, phone: row.userPhone, name: row.userName } };
+}
+export type DeliveryOrder = NonNullable<Awaited<ReturnType<typeof getServiceOrderForDelivery>>>;
+
+/**
+ * Paid orders whose 3-hour mark has passed, that nobody has approved or put on hold, oldest first.
+ * Orders already delivered but not yet notified are included (the notification is retried).
+ */
+export async function listDueServiceOrderIds(opts: { now?: Date; turnaroundMin: number; limit?: number; userId?: string } , db: Db = getDb()): Promise<string[]> {
+  await ensureDeliveryColumns(db);
+  const now = opts.now ?? new Date();
+  const due = new Date(now.getTime() - opts.turnaroundMin * 60_000);
+  const lockStale = new Date(now.getTime() - DELIVERY_LOCK_MIN * 60_000);
+  const rows = await db.select({ id: serviceOrders.id }).from(serviceOrders).innerJoin(payments, eq(payments.id, serviceOrders.paymentId))
+    .where(and(
+      eq(payments.status, 'paid'), lte(payments.paidAt, due),
+      opts.userId ? eq(serviceOrders.userId, opts.userId) : undefined,
+      or(isNull(serviceOrders.deliveryLockAt), lt(serviceOrders.deliveryLockAt, lockStale)),
+      lt(serviceOrders.deliveryAttempts, DELIVERY_MAX_ATTEMPTS),
+      or(
+        and(inArray(serviceOrders.status, ['paid', 'in_progress']), eq(serviceOrders.onHold, false)),
+        // delivered (by admin or automatically) but the client has not been told yet – only recent ones
+        and(eq(serviceOrders.status, 'delivered'), isNull(serviceOrders.notifiedAt), sql`${serviceOrders.deliveredAt} > now() - interval '3 days'`),
+      ),
+    ))
+    .orderBy(asc(payments.paidAt)).limit(opts.limit ?? 20);
+  return rows.map((r) => r.id);
+}
+
+/** Takes the order for one worker (atomic). Returns false when another worker holds it. */
+export async function claimServiceOrder(id: string, db: Db = getDb(), now = new Date()): Promise<boolean> {
+  const lockStale = new Date(now.getTime() - DELIVERY_LOCK_MIN * 60_000);
+  const [r] = await db.update(serviceOrders).set({ deliveryLockAt: now })
+    .where(and(eq(serviceOrders.id, id), or(isNull(serviceOrders.deliveryLockAt), lt(serviceOrders.deliveryLockAt, lockStale))))
+    .returning({ id: serviceOrders.id });
+  return !!r;
+}
+
+export async function releaseServiceOrder(id: string, outcome: { delivered?: { by: 'admin' | 'auto' }; error?: string | null; keepLock?: boolean }, db: Db = getDb()) {
+  const set: Partial<typeof serviceOrders.$inferInsert> = { deliveryLockAt: outcome.keepLock ? new Date() : null, updatedAt: new Date() };
+  if (outcome.delivered) {
+    set.deliveryError = null;
+    await db.update(serviceOrders).set({ ...set, status: 'delivered', deliveredBy: outcome.delivered.by, deliveredAt: sql`coalesce(${serviceOrders.deliveredAt}, now())` as unknown as Date })
+      .where(eq(serviceOrders.id, id));
+    // an order that was already delivered keeps its delivered time and "delivered by"
+    return;
+  }
+  if (outcome.error !== undefined) { set.deliveryError = outcome.error?.slice(0, 500) ?? null; if (outcome.error) set.deliveryAttempts = sql`${serviceOrders.deliveryAttempts} + 1` as unknown as number; }
+  await db.update(serviceOrders).set(set).where(eq(serviceOrders.id, id));
+}
+
+/** Records the "report ready" notification. `done` marks it sent so it is never repeated. */
+export async function recordServiceOrderNotification(id: string, log: NotifyLog, done: boolean, db: Db = getDb()) {
+  await db.update(serviceOrders).set({ notifyLog: JSON.stringify(log), ...(done ? { notifiedAt: new Date() } : {}), updatedAt: new Date() }).where(eq(serviceOrders.id, id));
+}
+
+/** Admin "Retry": clears the attempts counter and the error so the next run tries again. */
+export async function resetServiceOrderDelivery(id: string, opts: { renotify?: boolean } = {}, db: Db = getDb()) {
+  await ensureDeliveryColumns(db);
+  const [r] = await db.update(serviceOrders).set({ deliveryAttempts: 0, deliveryError: null, deliveryLockAt: null, ...(opts.renotify ? { notifiedAt: null, notifyLog: null } : {}), updatedAt: new Date() })
+    .where(eq(serviceOrders.id, id)).returning({ id: serviceOrders.id });
   return !!r;
 }

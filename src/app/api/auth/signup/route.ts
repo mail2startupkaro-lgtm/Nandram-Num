@@ -49,5 +49,5 @@ export async function POST(req: Request) {
     if (user.disabledAt) throw new AuthError('ACCOUNT_DISABLED', 403);
     const token = await createSession(user.id, req.headers.get('user-agent'));
     return json({ user: { id: user.id, name: user.name, role: user.role } }, 200, { 'set-cookie': sessionCookie(token) });
-  } catch (e) { return errorResponse(e); }
+  } catch (e) { return errorResponse(e, req); }
 }

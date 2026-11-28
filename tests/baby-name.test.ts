@@ -58,8 +58,8 @@ describe('baby name analysis', () => {
     const t = resolveTheme('royal-gold-maroon');
     for (const lang of ['en', 'hi'] as const) {
       const html = buildBabyReportHtml(r, t, DEFAULT_BRANDING, { lang, preparedBy: 'Acharya Nandram' });
-      // 9 earlier sections + formal & nickname page (default "both") + remedies page.
-      expect((html.match(/<section class="page">/g) ?? []).length).toBe(11);
+      // 9 earlier sections + formal & nickname page (default "both") + remedies + career path pages.
+      expect((html.match(/<section class="page">/g) ?? []).length).toBe(12);
       expect(html).toContain('class="cta"');
       const cover = buildBabyCoverHtml(r, t, DEFAULT_BRANDING, { lang, preparedBy: 'Acharya Nandram' });
       expect(cover).toContain(r.top[0].full);
@@ -97,7 +97,7 @@ describe('formal name, nickname, correction and remedies', () => {
     const f = analyseBabyName({ ...base, nameFor: 'formal' });
     expect(f.nickname).toBeNull();
     const html = buildBabyReportHtml(r, resolveTheme('royal-gold-maroon'), DEFAULT_BRANDING, { lang: 'en', preparedBy: 'Acharya Nandram' });
-    expect((html.match(/<section class="page">/g) ?? []).length).toBe(12); // + current name page
+    expect((html.match(/<section class="page">/g) ?? []).length).toBe(13); // + current name page (12 incl. the career path page)
     expect(html).toContain('No gemstones');
   });
 });
