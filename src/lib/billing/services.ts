@@ -41,7 +41,7 @@ export const DEFAULT_SERVICES: (typeof services.$inferInsert)[] = [
       ['आपके वर्तमान नंबर का पूरा विश्लेषण', 'आपके सर्वोत्तम योग और अंक-जोड़ियाँ', 'बचने योग्य अंक और जोड़ियाँ', 'आपके चुने हुए अधिकतम 5 नंबरों में से चयन में मदद'], '3 घंटे के भीतर'),
   },
   {
-    code: 'SVC_BABY_NAME', sort: 5, featured: false, pricePaise: 1_100_00, mrpPaise: 2_100_00, intake: ['dob', 'gender', 'tob', 'pob', 'parents', 'letters', 'questions'],
+    code: 'SVC_BABY_NAME', sort: 5, featured: false, pricePaise: 1_100_00, mrpPaise: 2_100_00, intake: ['dob', 'gender', 'tob', 'pob', 'parents', 'letters'],
     en: t('Baby Name Numerology', 'Meaningful baby names (Formal Name & Nickname) whose numbers suit your child\'s date of birth, in the starting letters you prefer.',
       ['7 shortlisted names with meanings', 'Formal name & auspicious nickname (calling name) compatibility', 'Name number of each and how it matches the date of birth', 'Spelling advice for documents', 'Lucky colours and numbers for the child', 'Best career path for your child – career fields, subjects and age-wise guidance'], 'Delivered within 3 hours'),
     hi: t('शिशु नाम अंक ज्योतिष', 'अर्थपूर्ण शिशु नाम (औपचारिक नाम व निकनेम) जिनके अंक आपके बच्चे की जन्म तिथि के अनुकूल हों, आपके पसंदीदा आरंभिक अक्षरों में।',

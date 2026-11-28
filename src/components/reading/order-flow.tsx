@@ -394,7 +394,7 @@ export function OrderFlow({ code, forId, onChangeReading }: { code: string; forI
                 />
               </Field>
             )}
-            {has('questions') && (
+            {has('questions') && !baby && (
               <Field
                 label={label('questions')}
                 htmlFor="of-q"
