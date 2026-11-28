@@ -100,7 +100,7 @@ export function EbookLeadPopup() {
   // Automatic popup trigger for visitors (after 4 seconds)
   React.useEffect(() => {
     if (!hasMounted) return;
-    if (/^\/(admin|login|account|settings)(\/|$)/.test(window.location.pathname)) return; // never interrupt admin / account screens
+    if (/^\/(admin|login|account|settings|lp)(\/|$)/.test(window.location.pathname)) return; // never interrupt admin / account screens or ad landing pages (/lp/…)
 
     try {
       const claimed = localStorage.getItem(STORAGE_CLAIMED) === '1';

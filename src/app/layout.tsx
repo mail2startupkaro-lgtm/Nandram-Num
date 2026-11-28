@@ -6,6 +6,7 @@ import { Providers } from '@/components/layout/providers';
 import { Footer, Header } from '@/components/layout/chrome';
 import { CosmicBackground } from '@/components/layout/cosmic-bg';
 import { GoogleAnalytics } from '@/components/analytics/google-analytics';
+import { MetaPixel } from '@/components/analytics/meta-pixel';
 import { VisitTracker } from '@/components/analytics/visit-tracker';
 import { AffiliateRefClick } from '@/components/affiliate/ref-click';
 import { SecretAdminLogin } from '@/components/auth/secret-admin-login';
@@ -78,6 +79,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Providers>
           <Suspense fallback={null}>
             <GoogleAnalytics />
+            <MetaPixel />
             <VisitTracker />
             <AffiliateRefClick />
           </Suspense>

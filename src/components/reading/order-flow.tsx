@@ -9,6 +9,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { ChipGroup, Field, Input, Select } from '@/components/ui/form';
 import { DisclaimerNote } from '@/components/legal/disclaimer-note';
 import { api, ApiError } from '@/lib/client/api';
+import { trackCheckoutStarted, trackPurchase } from '@/lib/client/analytics';
 import { confirmCashfreeOrder, loadCashfree } from '@/lib/client/cashfree';
 import { PurchasedServices } from '@/components/account/purchased-services';
 import { confirmRazorpayPayment, openRazorpayCheckout } from '@/lib/client/razorpay';
@@ -599,6 +600,9 @@ function PayStep({ svc, details, forName, relation, personId, onBack, onDone, si
     try {
       const o = await api<Order>('/api/billing/checkout', { method: 'POST', json: { planCode: svc.code, intake: shown, profileId: personId ?? undefined, billingState: bill.state, billingName: bill.name || undefined, phone: bill.phone || undefined, gstin: abroad ? undefined : bill.gstin || undefined, signatureImage: signatureImage || undefined } });
       setOrder(o);
+      const cur = o.currency || (usd ? 'USD' : 'INR');
+      trackCheckoutStarted(svc.code, o.amountPaise, cur);
+      const paid = () => { trackPurchase({ orderId: o.orderId, paymentId: '', amountPaise: o.amountPaise, planCode: svc.code, currency: cur }); onDone(); };
       if (o.gateway === 'razorpay') {
         try {
           const resp = await openRazorpayCheckout({
@@ -617,7 +621,7 @@ function PayStep({ svc, details, forName, relation, personId, onBack, onDone, si
           });
           setStage('confirming');
           const st = await confirmRazorpayPayment(resp);
-          if (st === 'paid') onDone();
+          if (st === 'paid') paid();
           else setStage(st === 'failed' ? 'fail' : 'pending');
         } catch (err: unknown) {
           if ((err as Error)?.message !== 'PAYMENT_CANCELLED') {
@@ -634,7 +638,7 @@ function PayStep({ svc, details, forName, relation, personId, onBack, onDone, si
         setStage('confirming');
         // The customer closed the payment window without paying: one quick check, then back to the form.
         const st = await confirmCashfreeOrder(o.orderId, r.error ? 2 : 6);
-        if (st === 'paid') onDone();
+        if (st === 'paid') paid();
         else if (st === 'failed' || r.error) setStage('fail');
         else setStage('pending');
       }

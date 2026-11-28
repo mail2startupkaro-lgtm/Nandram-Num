@@ -1,16 +1,16 @@
 const isProd = process.env.NODE_ENV === 'production';
 /**
  * Content Security Policy: only our own code plus the payment gateways (Cashfree for India, Razorpay for international
- * clients) and Google Tag Manager may run; no framing of our pages, no plugins.
+ * clients), Google Tag Manager and the Meta Pixel may run; no framing of our pages, no plugins.
  */
 const RZP = 'https://checkout.razorpay.com https://api.razorpay.com';
 const CSP = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' https://*.cashfree.com https://checkout.razorpay.com https://www.googletagmanager.com https://*.googletagmanager.com${isProd ? '' : " 'unsafe-eval'"}`,
+  `script-src 'self' 'unsafe-inline' https://*.cashfree.com https://checkout.razorpay.com https://www.googletagmanager.com https://*.googletagmanager.com https://connect.facebook.net${isProd ? '' : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self' https://*.cashfree.com ${RZP} https://lumberjack.razorpay.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com${isProd ? '' : ' ws: wss:'}`,
+  `connect-src 'self' https://*.cashfree.com ${RZP} https://lumberjack.razorpay.com https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://www.facebook.com https://connect.facebook.net${isProd ? '' : ' ws: wss:'}`,
   `frame-src 'self' https://*.cashfree.com ${RZP} https://www.googletagmanager.com`,
   "worker-src 'self' blob:",
   "media-src 'self' blob: data:",
