@@ -39,15 +39,25 @@ export function configFromEnv(env: Record<string, string | undefined> = process.
 }
 
 async function postJson(url: string, headers: Record<string, string>, body: unknown, timeoutMs: number, fetchImpl: typeof fetch) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetchImpl(url, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body), signal: ctrl.signal });
-    if (!res.ok) throw new Error(`LLM HTTP ${res.status}`);
-    return await res.json();
-  } finally {
-    clearTimeout(timer);
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+      const res = await fetchImpl(url, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body), signal: ctrl.signal });
+      if ((res.status === 429 || res.status === 503) && attempt < maxAttempts) {
+        const retryHdr = Number(res.headers.get('retry-after') ?? 0);
+        const waitMs = Math.min(8000, retryHdr > 0 ? retryHdr * 1000 : 600 * attempt + Math.floor(Math.random() * 500));
+        await new Promise((r) => setTimeout(r, waitMs));
+        continue;
+      }
+      if (!res.ok) throw new Error(`LLM HTTP ${res.status}`);
+      return await res.json();
+    } finally {
+      clearTimeout(timer);
+    }
   }
+  throw new Error('LLM HTTP 429');
 }
 
 export class AnthropicProvider implements LlmProvider {

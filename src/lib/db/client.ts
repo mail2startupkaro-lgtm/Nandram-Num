@@ -16,9 +16,10 @@ export function getDb(): Db {
   if (!g.__numerologyDb) {
     const url = process.env.DATABASE_URL;
     if (!url) throw new Error('DATABASE_URL is not set');
+    const isServerless = !!(process.env.VERCEL || process.env.AWS_EXECUTION_ENV);
     g.__numerologyPool = new Pool({
       connectionString: url,
-      max: Number(process.env.DATABASE_POOL_MAX ?? 5),
+      max: Number(process.env.DATABASE_POOL_MAX ?? (isServerless ? 2 : 5)),
       // Fail fast instead of hanging a page when the database is unreachable; keep warm connections between requests.
       connectionTimeoutMillis: 10_000,
       idleTimeoutMillis: 30_000,

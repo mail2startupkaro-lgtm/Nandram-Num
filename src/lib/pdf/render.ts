@@ -67,7 +67,25 @@ function resolveLocalChrome(): string | undefined {
   return undefined;
 }
 
-// ---------- browser pool (one shared browser per server instance) ----------
+// ---------- browser pool + per-container concurrency semaphore ----------
+const MAX_CONCURRENT_RENDERS = 2;
+let activeRenders = 0;
+const renderWaiters: (() => void)[] = [];
+
+async function withPdfSlot<T>(fn: () => Promise<T>): Promise<T> {
+  if (activeRenders >= MAX_CONCURRENT_RENDERS) {
+    await new Promise<void>((resolve) => renderWaiters.push(resolve));
+  }
+  activeRenders++;
+  try {
+    return await fn();
+  } finally {
+    activeRenders--;
+    const next = renderWaiters.shift();
+    if (next) next();
+  }
+}
+
 let browserPromise: Promise<Browser> | null = null;
 async function getBrowser(): Promise<Browser> {
   if (browserPromise) {
@@ -97,7 +115,13 @@ async function getBrowser(): Promise<Browser> {
               ? 'https://github.com/Sparticuz/chromium/releases/download/v153.0.0/chromium-v153.0.0-pack.arm64.tar'
               : 'https://github.com/Sparticuz/chromium/releases/download/v153.0.0/chromium-v153.0.0-pack.x64.tar');
           console.log(`[pdf] resolving executablePath from ${packUrl}...`);
-          executablePath = await chromiumMin.executablePath(packUrl);
+          try {
+            executablePath = await chromiumMin.executablePath(packUrl);
+          } catch (dlErr) {
+            console.warn('[pdf] Chromium pack download failed, retrying once:', dlErr);
+            await new Promise((r) => setTimeout(r, 800));
+            executablePath = await chromiumMin.executablePath(packUrl);
+          }
           console.log(`[pdf] executablePath resolved in ${Date.now() - t0}ms: ${executablePath}`);
           if (chromiumMin.args && chromiumMin.args.length > 0) {
             args = chromiumMin.args.filter((a: string) => a !== '--single-process');
@@ -316,47 +340,49 @@ export async function renderReportPdf(req: PdfRequest): Promise<PdfOutput> {
   const qrSvg = await QRCode.toString(branding.bookingUrl || DEFAULT_BRANDING.bookingUrl || 'https://www.mynumerologist.com', { type: 'svg', margin: 0, width: 150, errorCorrectionLevel: 'M', color: { dark: '#111111', light: '#ffffff' } });
   const qrs = await contactQrs();
   const hf = headerFooter(inp);
-  const browser = await getBrowser();
+  const { cover, body, tocPages } = await withPdfSlot(async () => {
+    const browser = await getBrowser();
+    const ctx = await browser.newContext();
+    let coverBuf: Uint8Array;
+    let pass1: Uint8Array;
+    let toc: Record<string, number>;
+    let bodyBuf: Uint8Array;
 
-  const ctx = await browser.newContext();
-  let cover: Uint8Array;
-  let pass1: Uint8Array;
-  let tocPages: Record<string, number>;
-  let body: Uint8Array;
+    try {
+      const page = await ctx.newPage();
+      await page.route('**', (route) => {
+        const u = route.request().url();
+        if (u.startsWith('data:') || u.startsWith('blob:') || u.startsWith('about:')) return route.continue();
+        return route.abort();
+      });
 
-  try {
-    const page = await ctx.newPage();
-    await page.route('**', (route) => {
-      const u = route.request().url();
-      if (u.startsWith('data:') || u.startsWith('blob:') || u.startsWith('about:')) return route.continue();
-      return route.abort();
-    });
+      console.log('[pdf] rendering cover...');
+      const tCover = Date.now();
+      coverBuf = await printPageToPdf(page, buildCoverHtml(inp), { margin0: true });
+      console.log(`[pdf] cover rendered in ${Date.now() - tCover}ms`);
 
-    console.log('[pdf] rendering cover...');
-    const tCover = Date.now();
-    cover = await printPageToPdf(page, buildCoverHtml(inp), { margin0: true });
-    console.log(`[pdf] cover rendered in ${Date.now() - tCover}ms`);
+      console.log('[pdf] rendering pass1...');
+      const tPass1 = Date.now();
+      pass1 = await printPageToPdf(page, buildBodyHtml(inp, null, qrSvg, qrs).html, hf);
+      console.log(`[pdf] pass1 rendered in ${Date.now() - tPass1}ms`);
 
-    console.log('[pdf] rendering pass1...');
-    const tPass1 = Date.now();
-    pass1 = await printPageToPdf(page, buildBodyHtml(inp, null, qrSvg, qrs).html, hf);
-    console.log(`[pdf] pass1 rendered in ${Date.now() - tPass1}ms`);
+      console.log('[pdf] finding chapter pages...');
+      const tToc = Date.now();
+      toc = await findChapterPages(pass1);
+      console.log(`[pdf] TOC pages found in ${Date.now() - tToc}ms`);
 
-    console.log('[pdf] finding chapter pages...');
-    const tToc = Date.now();
-    tocPages = await findChapterPages(pass1);
-    console.log(`[pdf] TOC pages found in ${Date.now() - tToc}ms`);
-
-    console.log('[pdf] rendering body with TOC...');
-    const tBody = Date.now();
-    body = await printPageToPdf(page, buildBodyHtml(inp, tocPages, qrSvg, qrs).html, hf);
-    console.log(`[pdf] body rendered in ${Date.now() - tBody}ms`);
-  } catch (err) {
-    browserPromise = null;
-    throw err;
-  } finally {
-    await ctx.close().catch(() => {});
-  }
+      console.log('[pdf] rendering body with TOC...');
+      const tBody = Date.now();
+      bodyBuf = await printPageToPdf(page, buildBodyHtml(inp, toc, qrSvg, qrs).html, hf);
+      console.log(`[pdf] body rendered in ${Date.now() - tBody}ms`);
+    } catch (err) {
+      browserPromise = null;
+      throw err;
+    } finally {
+      await ctx.close().catch(() => {});
+    }
+    return { cover: coverBuf, body: bodyBuf, tocPages: toc };
+  });
 
   // ---------- compose ----------
   const out = await PDFDocument.create();
