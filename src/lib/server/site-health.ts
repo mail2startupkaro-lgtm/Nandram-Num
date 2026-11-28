@@ -5,7 +5,7 @@
 import { and, eq, gte, inArray, isNotNull, isNull, lt, lte, sql } from 'drizzle-orm';
 import { getDb, type Db } from '@/lib/db/client';
 import { appSettings, payments, serviceOrders } from '@/lib/db/schema';
-import { configFromEnv } from '@/lib/narrative/providers/llm';
+import { configFromEnv, providerFromConfig } from '@/lib/narrative/providers/llm';
 import { SERVICE_TURNAROUND_MIN } from '@/lib/service-delivery';
 import { ensureDeliveryColumns } from '@/lib/billing/services';
 
@@ -129,6 +129,94 @@ export function runtimeInfo() {
     uptimeMin: Math.round(process.uptime() / 60), memoryMb: Math.round(m.rss / 1048576), heapMb: Math.round(m.heapUsed / 1048576),
     serverTime: new Date().toISOString(),
   };
+}
+
+export interface AiEngineStatus {
+  configured: boolean;
+  provider: string;
+  model: string;
+  status: CheckStatus;
+  stateLabel: string;
+  detail: string;
+  lastTestAt?: string;
+  latencyMs?: number;
+  error?: string;
+}
+
+/** Current AI engine configuration + last live test outcome. */
+export async function aiEngineStatus(db: Db = getDb(), env: Record<string, string | undefined> = process.env): Promise<AiEngineStatus> {
+  const cfg = configFromEnv(env);
+  const configured = cfg.provider !== 'template' && !!cfg.apiKey;
+  if (!configured) {
+    return { configured: false, provider: cfg.provider, model: cfg.model || 'template', status: 'warn', stateLabel: 'Template fallback', detail: 'No AI key configured – built-in writer active' };
+  }
+  try {
+    const [row] = await db.select({ value: appSettings.value }).from(appSettings).where(eq(appSettings.key, 'ai_last_test')).limit(1);
+    const last = row?.value as { ok?: boolean; provider?: string; model?: string; ms?: number; error?: string; at?: string } | undefined;
+    if (last && typeof last.ok === 'boolean') {
+      if (last.ok) {
+        return {
+          configured: true,
+          provider: last.provider ?? cfg.provider,
+          model: last.model ?? cfg.model,
+          status: 'ok',
+          stateLabel: 'Working',
+          detail: `${last.provider ?? cfg.provider} · ${last.model ?? cfg.model}${last.ms ? ` · ${last.ms} ms` : ''}`,
+          lastTestAt: last.at,
+          latencyMs: last.ms,
+        };
+      }
+      return {
+        configured: true,
+        provider: last.provider ?? cfg.provider,
+        model: last.model ?? cfg.model,
+        status: 'fail',
+        stateLabel: 'Error',
+        detail: `${last.provider ?? cfg.provider} · ${last.error ?? 'Last test failed'}`,
+        lastTestAt: last.at,
+        error: last.error,
+      };
+    }
+  } catch { /* ignore if appSettings unreadable */ }
+  return {
+    configured: true,
+    provider: cfg.provider,
+    model: cfg.model || 'default',
+    status: 'ok',
+    stateLabel: 'Configured',
+    detail: `${cfg.provider} · ${cfg.model || 'default'} (not live-tested yet)`,
+  };
+}
+
+/** Sends a minimal prompt to the configured AI provider, records latency/status, and returns the outcome. */
+export async function testAiEngine(db: Db = getDb(), env: Record<string, string | undefined> = process.env): Promise<{ ok: boolean; detail: string }> {
+  const cfg = configFromEnv(env);
+  const provider = providerFromConfig(cfg);
+  const now = new Date().toISOString();
+  if (!provider) {
+    const val = { ok: false, provider: cfg.provider, model: cfg.model || 'template', ms: 0, error: 'No AI API key configured', at: now };
+    await db.insert(appSettings).values({ key: 'ai_last_test', value: val }).onConflictDoUpdate({ target: appSettings.key, set: { value: val, updatedAt: new Date() } }).catch(() => {});
+    return { ok: false, detail: 'AI engine is not configured (LLM_PROVIDER / GEMINI_API_KEY missing).' };
+  }
+  const t0 = Date.now();
+  try {
+    const text = await provider.complete({
+      system: 'Health check.',
+      messages: [{ role: 'user', content: 'Reply with OK.' }],
+      maxTokens: 16,
+    });
+    const ms = Date.now() - t0;
+    if (!text.trim()) throw new Error('Empty response from AI provider');
+    const val = { ok: true, provider: provider.id, model: provider.model, ms, at: now };
+    await db.insert(appSettings).values({ key: 'ai_last_test', value: val }).onConflictDoUpdate({ target: appSettings.key, set: { value: val, updatedAt: new Date() } }).catch(() => {});
+    return { ok: true, detail: `Working: ${provider.id} (${provider.model}) responded "${text.trim().slice(0, 24)}" in ${ms} ms` };
+  } catch (e) {
+    const ms = Date.now() - t0;
+    const msg = e instanceof Error ? e.message.slice(0, 200) : 'Unknown error';
+    const val = { ok: false, provider: cfg.provider, model: cfg.model, ms, error: msg, at: now };
+    await db.insert(appSettings).values({ key: 'ai_last_test', value: val }).onConflictDoUpdate({ target: appSettings.key, set: { value: val, updatedAt: new Date() } }).catch(() => {});
+    return { ok: false, detail: `AI engine failed (${cfg.provider} / ${cfg.model}): ${msg}` };
+  }
 }
 
 export const overall = (xs: { status: CheckStatus }[]): CheckStatus => (xs.some((x) => x.status === 'fail') ? 'fail' : xs.some((x) => x.status === 'warn') ? 'warn' : 'ok');

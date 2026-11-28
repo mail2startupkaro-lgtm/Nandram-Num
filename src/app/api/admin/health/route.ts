@@ -3,7 +3,7 @@ import { withAdmin } from '@/lib/server/admin';
 import { json, readJson } from '@/lib/server/http';
 import { rateLimit, tooMany } from '@/lib/server/rate-limit';
 import { deleteResolvedSiteErrors, ERROR_SOURCES, errorSummary, listSiteErrors, recordSiteError, resolveSiteErrors } from '@/lib/server/site-errors';
-import { configChecks, databaseChecks, overall, problemChecks, runtimeInfo } from '@/lib/server/site-health';
+import { aiEngineStatus, configChecks, databaseChecks, overall, problemChecks, runtimeInfo, testAiEngine } from '@/lib/server/site-health';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -30,14 +30,19 @@ export const GET = withAdmin(async (req) => {
     }
     return json({ errors: rows, sources: ERROR_SOURCES });
   }
-  const [summary, problems, db] = await Promise.all([errorSummary().catch(() => null), problemChecks().catch((e) => [{ id: 'problems', label: 'Problem checks', status: 'fail' as const, count: 0, detail: e instanceof Error ? e.message : 'failed' }]), databaseChecks()]);
+  const [summary, problems, db, ai] = await Promise.all([
+    errorSummary().catch(() => null),
+    problemChecks().catch((e) => [{ id: 'problems', label: 'Problem checks', status: 'fail' as const, count: 0, detail: e instanceof Error ? e.message : 'failed' }]),
+    databaseChecks(),
+    aiEngineStatus().catch(() => null),
+  ]);
   const requirements = [...db, ...configChecks()];
-  return json({ summary, problems, requirements, runtime: runtimeInfo(),
+  return json({ summary, problems, requirements, ai, runtime: runtimeInfo(),
     status: { requirements: overall(requirements), problems: overall(problems), errors: (summary?.openErrors ?? 0) > 0 ? 'warn' : 'ok' } });
 });
 
 const Action = z.object({
-  action: z.enum(['resolve', 'reopen', 'resolve-all', 'delete-resolved', 'test-pdf', 'test-email', 'test-sms', 'run-delivery', 'test-error']),
+  action: z.enum(['resolve', 'reopen', 'resolve-all', 'delete-resolved', 'test-ai', 'test-pdf', 'test-email', 'test-sms', 'run-delivery', 'test-error']),
   ids: z.array(z.string().max(64)).max(500).optional(),
 });
 
@@ -52,6 +57,13 @@ export const POST = withAdmin(async (req, user) => {
   if (!rl.ok) return tooMany(rl.retryAfter);
   const t0 = Date.now();
   try {
+    if (b.action === 'test-ai') {
+      const r = await testAiEngine();
+      if (!r.ok) {
+        await recordSiteError({ source: 'api', level: 'error', route: '/api/admin/health', method: 'POST', message: r.detail });
+      }
+      return json(r, r.ok ? 200 : 502);
+    }
     if (b.action === 'test-pdf') {
       const { renderHtmlDocumentPdf } = await import('@/lib/pdf/render');
       const out = await renderHtmlDocumentPdf('<!doctype html><html lang="hi"><head><meta charset="utf-8"><style>@page{size:A4;margin:20mm}body{font-family:Georgia,"Noto Serif Devanagari",serif}</style></head><body><h1>PDF engine test</h1><p>अंक ज्योतिष रिपोर्ट – परीक्षण</p></body></html>', { title: 'PDF test', subject: 'Health check', language: 'hi' });

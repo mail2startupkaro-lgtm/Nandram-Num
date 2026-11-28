@@ -5,7 +5,7 @@
  * AI, automation) with one-click tests, and a 14-day error report. Refreshes itself every 30 seconds while open.
  */
 import * as React from 'react';
-import { Activity, AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Download, FileText, Mail, MessageSquare, Play, RefreshCw, Server, ShieldAlert, Trash2, XCircle, Zap } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle2, ChevronDown, ChevronRight, Download, FileText, Mail, MessageSquare, Play, RefreshCw, Server, ShieldAlert, Sparkles, Trash2, XCircle, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input, Select } from '@/components/ui/form';
 import { Badge } from '@/components/ui/misc';
@@ -17,7 +17,8 @@ interface Check { id: string; group: string; label: string; status: Status; deta
 interface Problem { id: string; label: string; status: Status; count: number; detail: string; items?: { id: string; text: string; at?: string }[]; tab?: string }
 interface Summary { openKinds: number; openErrors: number; kinds24h: number; today: number; daily: { day: string; error: number; warning: number }[]; bySource: { source: string; today: number; week: number }[];
   top: { id: string; message: string; source: string; level: string; route: string | null; count: number; lastSeen: string }[] }
-interface Health { summary: Summary | null; problems: Problem[]; requirements: Check[]; status: { requirements: Status; problems: Status; errors: Status };
+interface AiHealth { configured: boolean; provider: string; model: string; status: Status; stateLabel: string; detail: string; lastTestAt?: string; latencyMs?: number; error?: string }
+interface Health { summary: Summary | null; problems: Problem[]; requirements: Check[]; ai?: AiHealth | null; status: { requirements: Status; problems: Status; errors: Status };
   runtime: { node: string; platform: string; environment: string; host: string; commit: string | null; commitMessage: string | null; uptimeMin: number; memoryMb: number; heapMb: number; serverTime: string } }
 interface SiteError { id: string; source: string; level: string; message: string; stack: string | null; route: string | null; method: string | null; status: number | null; count: number; meta: Record<string, unknown> | null; firstSeen: string; lastSeen: string; resolvedAt: string | null }
 
@@ -58,8 +59,9 @@ export function SiteHealth({ onOpen }: { onOpen?: (tab: string) => void }) {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Kpi icon={<OI className={cn('h-5 w-5', TONE[overallStatus])} />} label="Overall" value={!h ? '…' : overallStatus === 'ok' ? 'All good' : overallStatus === 'fail' ? 'Needs action' : 'Check warnings'} sub={h ? `${reqBad} failing · ${reqWarn} warnings · ${probBad} problems` : ''} onClick={() => setView(reqBad ? 'requirements' : 'problems')} />
+        <Kpi icon={<Sparkles className={cn('h-5 w-5', h?.ai ? TONE[h.ai.status] : 'text-gold')} />} label="AI engine" value={h?.ai?.stateLabel ?? '…'} sub={h?.ai ? `${h.ai.detail}${h.ai.lastTestAt ? ` · ${ago(h.ai.lastTestAt)}` : ''}` : ''} onClick={() => setView('requirements')} />
         <Kpi icon={<XCircle className="h-5 w-5 text-danger" />} label="Open errors" value={String(h?.summary?.openErrors ?? '–')} sub={`${h?.summary?.openKinds ?? 0} open issues incl. warnings`} onClick={() => setView('errors')} />
         <Kpi icon={<Activity className="h-5 w-5 text-gold" />} label="Errors today" value={String(h?.summary?.today ?? '–')} sub={`${h?.summary?.kinds24h ?? 0} different issues in 24 h`} onClick={() => setView('reports')} />
         <Kpi icon={<Server className="h-5 w-5 text-gold" />} label="Server" value={h?.runtime.host ?? '…'} sub={h ? `${h.runtime.environment} · Node ${h.runtime.node}${h.runtime.commit ? ` · ${h.runtime.commit}` : ''}` : ''} onClick={() => setView('requirements')} />
@@ -190,7 +192,7 @@ function RequirementsView({ h, onChanged }: { h: Health | null; onChanged: () =>
   }
   if (!h) return <div className="glass h-32 animate-pulse rounded-lg" />;
   const groups = [...new Set(h.requirements.map((r) => r.group))];
-  const tests: [string, string, typeof FileText][] = [['test-pdf', 'Test PDF engine', FileText], ['test-email', 'Send test email to me', Mail], ['test-sms', 'Send test SMS to me', MessageSquare], ['run-delivery', 'Run automatic delivery now', Play], ['test-error', 'Record a test error', Zap]];
+  const tests: [string, string, typeof FileText][] = [['test-ai', 'Test AI engine', Sparkles], ['test-pdf', 'Test PDF engine', FileText], ['test-email', 'Send test email to me', Mail], ['test-sms', 'Send test SMS to me', MessageSquare], ['run-delivery', 'Run automatic delivery now', Play], ['test-error', 'Record a test error', Zap]];
   return (
     <div className="space-y-4">
       <div className="glass rounded-lg p-4">
